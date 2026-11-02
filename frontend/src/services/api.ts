@@ -27,7 +27,7 @@ export class ApiError extends Error {
 }
 
 // Central function for communicating with the backend.
-async function apiRequest<T>(
+export async function apiRequest<T>(
   path: string,
   method: 'GET' | 'POST' = 'GET',
   data?: unknown

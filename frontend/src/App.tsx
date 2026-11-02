@@ -1,6 +1,8 @@
-// Access the authenticated user and logout action.
-import { useAuth } from './auth/AuthContext'
+
 import { useEffect, useState } from 'react'
+import { useAuth } from './auth/AuthContext'
+import PatientsPage from './pages/PatientsPage'
+
 import {
   Activity,
   LayoutDashboard,
@@ -26,8 +28,7 @@ import {
 
 import './App.css'
 
-// Each menu item identifies a section of our application.
-// Later, the authenticated user's role will determine which items appear.
+// Each item represents a section in the dental management system.
 const navigation = [
   { name: 'Dashboard', icon: LayoutDashboard },
   { name: 'Patients', icon: Users },
@@ -44,21 +45,33 @@ const navigation = [
 type Section = (typeof navigation)[number]['name']
 
 export default function App() {
-
-  // Reads the user who successfully authenticated through ASP.NET Core.
+  // Gets the authenticated staff profile and logout function.
   const { user, logout } = useAuth()
-  // Tracks the currently displayed section.
+
+  // Tracks the currently selected application section.
   const [section, setSection] = useState<Section>('Dashboard')
 
-  // Tracks whether the mobile sidebar is visible.
+  // Controls the mobile sidebar.
   const [menuOpen, setMenuOpen] = useState(false)
 
-  // Loads the user's preferred theme from browser storage.
+  // Restores the user's preferred theme.
   const [darkMode, setDarkMode] = useState(
     () => localStorage.getItem('curvtab-theme') === 'dark'
   )
 
-  // Applies the selected theme to our entire application.
+  // A platform SuperAdmin does not belong to a dental practice
+  // and cannot read clinical patient records.
+  // Backend authorization remains the actual security enforcement.
+  const canViewPatients =
+    user?.role !== 'SuperAdmin' && Boolean(user?.dentalPracticeId)
+
+  // Hide the Patients navigation item when the user has no
+  // practice-level patient access.
+  const visibleNavigation = navigation.filter(
+    (item) => item.name !== 'Patients' || canViewPatients
+  )
+
+  // Apply dark or light mode across the application.
   useEffect(() => {
     document.documentElement.dataset.theme =
       darkMode ? 'dark' : 'light'
@@ -69,7 +82,7 @@ export default function App() {
     )
   }, [darkMode])
 
-  // Changes the visible section and closes the mobile menu.
+  // Navigate to another workspace section.
   function navigate(target: Section) {
     setSection(target)
     setMenuOpen(false)
@@ -77,17 +90,23 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      {/* Mobile navigation overlay */}
+
+      {/* Mobile sidebar overlay */}
       {menuOpen && (
         <button
           className="mobile-overlay"
+          type="button"
           onClick={() => setMenuOpen(false)}
           aria-label="Close navigation"
         />
       )}
 
-      {/* Permanent desktop sidebar */}
+      {/* =========================================
+          SIDEBAR
+          ========================================= */}
       <aside className={`sidebar ${menuOpen ? 'sidebar-open' : ''}`}>
+
+        {/* Application branding */}
         <div className="brand">
           <div className="brand-icon">
             <Activity size={25} />
@@ -99,23 +118,32 @@ export default function App() {
           </div>
         </div>
 
+        {/* Logged-in user's practice information */}
         <div className="practice-chip">
-  <Building2 size={18} />
-  <div>
-    <strong>{user?.practiceName ?? 'Platform administration'}</strong>
-    <span>{user?.role ?? 'Staff member'}</span>
-  </div>
-</div>
+          <Building2 size={18} />
+
+          <div>
+            <strong>
+              {user?.practiceName ?? 'Platform administration'}
+            </strong>
+
+            <span>
+              {user?.role ?? 'Staff member'}
+            </span>
+          </div>
+        </div>
 
         <p className="nav-heading">WORKSPACE</p>
 
+        {/* Sidebar navigation */}
         <nav className="side-nav" aria-label="Main navigation">
-          {navigation.map((item) => {
+          {visibleNavigation.map((item) => {
             const Icon = item.icon
 
             return (
               <button
                 key={item.name}
+                type="button"
                 className={
                   section === item.name
                     ? 'nav-item nav-active'
@@ -130,24 +158,34 @@ export default function App() {
           })}
         </nav>
 
+        {/* Sidebar footer */}
         <div className="sidebar-bottom">
           <div className="security-note">
             <ShieldCheck size={20} />
+
             <div>
               <strong>Secure foundation</strong>
               <span>API authentication verified</span>
             </div>
           </div>
+
           <p>CurvTab Dental 2.0</p>
         </div>
       </aside>
 
+      {/* =========================================
+          MAIN APPLICATION WORKSPACE
+          ========================================= */}
       <div className="workspace">
-        {/* Header remains visible while switching sections */}
+
+        {/* Top navigation bar */}
         <header className="topbar">
           <div className="topbar-left">
+
+            {/* Mobile navigation button */}
             <button
               className="icon-button mobile-menu"
+              type="button"
               onClick={() => setMenuOpen(true)}
               aria-label="Open menu"
             >
@@ -162,57 +200,99 @@ export default function App() {
           </div>
 
           <div className="topbar-actions">
+
+            {/* Search placeholder */}
             <div className="search-label">
               <Search size={17} />
               <span>Search coming soon</span>
             </div>
 
+            {/* Theme toggle */}
             <button
               className="icon-button"
+              type="button"
               onClick={() => setDarkMode(!darkMode)}
               aria-label="Toggle dark mode"
             >
-              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+              {darkMode
+                ? <Sun size={20} />
+                : <Moon size={20} />
+              }
             </button>
 
-            <span className="notification-icon" aria-label="Notifications not yet connected">
+            {/* Notifications placeholder */}
+            <span
+              className="notification-icon"
+              aria-label="Notifications not yet connected"
+            >
               <Bell size={20} />
             </span>
 
-            <div className="avatar">CT</div>\
-               <button
-                 className="secondary-button"
-                 onClick={() => void logout()}
-                >
-                      Sign out
-              </button>
+            {/* Logged-in user initials */}
+            <div className="avatar">
+              {user?.fullName
+                ?.split(' ')
+                .filter(Boolean)
+                .slice(0, 2)
+                .map((name) => name.charAt(0).toUpperCase())
+                .join('') || 'CT'}
+            </div>
+
+            {/* Logout through AuthProvider and ASP.NET Core */}
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => void logout()}
+            >
+              Sign out
+            </button>
           </div>
         </header>
 
+        {/* =========================================
+            PAGE CONTENT
+            Only ONE section is rendered at a time.
+            ========================================= */}
         <main className="main-content">
-          {section === 'Dashboard' ? (
+
+          {/* =====================================
+              DASHBOARD PAGE
+              ===================================== */}
+          {section === 'Dashboard' && (
             <>
               <div className="page-heading">
                 <div>
-                  <div className="eyebrow">PRACTICE OVERVIEW</div>
-                  <h1>Welcome to CurvTab Dental</h1>
+                  <div className="eyebrow">
+                    PRACTICE OVERVIEW
+                  </div>
+
+                  <h1>
+                    Welcome to CurvTab Dental
+                  </h1>
+
                   <p>
                     Your connected dental practice workspace.
                     Patient and financial data will appear here
-                    after API integration.
+                    as their dashboard integrations are completed.
                   </p>
                 </div>
 
-                <button
-                  className="primary-button"
-                  onClick={() => navigate('Patients')}
-                >
-                  Open Patients
-                  <ArrowRight size={18} />
-                </button>
+                {/* Only practice-bound users can open Patients */}
+                {canViewPatients && (
+                  <button
+                    type="button"
+                    className="primary-button"
+                    onClick={() => navigate('Patients')}
+                  >
+                    Open Patients
+                    <ArrowRight size={18} />
+                  </button>
+                )}
               </div>
 
-              {/* These are intentionally empty, not fabricated totals. */}
+              {/* Dashboard statistics.
+                  Do not invent patient or financial totals.
+                  These cards will later use real API data. */}
               <div className="stats-grid">
                 {[
                   { label: 'Patients Today', icon: Users },
@@ -223,28 +303,41 @@ export default function App() {
                   const Icon = stat.icon
 
                   return (
-                    <article className="stat-card" key={stat.label}>
+                    <article
+                      className="stat-card"
+                      key={stat.label}
+                    >
                       <div className="stat-top">
                         <span>{stat.label}</span>
+
                         <div className="stat-icon">
                           <Icon size={19} />
                         </div>
                       </div>
 
-                      <strong className="stat-value">—</strong>
-                      <small>Awaiting live API data</small>
+                      <strong className="stat-value">
+                        —
+                      </strong>
+
+                      <small>
+                        Awaiting live API data
+                      </small>
                     </article>
                   )
                 })}
               </div>
 
+              {/* Dashboard information panels */}
               <div className="dashboard-grid">
+
+                {/* Patient journey panel */}
                 <section className="panel">
                   <div className="panel-header">
                     <div>
                       <h2>Patient Journey</h2>
                       <p>Real-time clinic workflow</p>
                     </div>
+
                     <ClipboardList size={21} />
                   </div>
 
@@ -256,10 +349,17 @@ export default function App() {
                       'Laboratory (optional)',
                       'Checkout',
                     ].map((step, index) => (
-                      <div className="journey-item" key={step}>
-                        <div className="step-number">{index + 1}</div>
+                      <div
+                        className="journey-item"
+                        key={step}
+                      >
+                        <div className="step-number">
+                          {index + 1}
+                        </div>
+
                         <div>
                           <strong>{step}</strong>
+
                           <span>
                             {index === 0
                               ? 'Patient check-in and registration'
@@ -277,72 +377,118 @@ export default function App() {
                   </div>
                 </section>
 
+                {/* Phase 1 foundation panel */}
                 <section className="panel">
                   <div className="panel-header">
                     <div>
                       <h2>System Foundation</h2>
                       <p>Phase 1 implementation</p>
                     </div>
+
                     <ShieldCheck size={21} />
                   </div>
 
                   <div className="foundation-banner">
                     <Activity size={24} />
+
                     <div>
                       <strong>39 / 39</strong>
-                      <span>Backend smoke tests passed</span>
+                      <span>
+                        Backend smoke tests passed
+                      </span>
                     </div>
                   </div>
 
                   <div className="check-list">
-                    <div>✓ Authentication and session security</div>
-                    <div>✓ Staff roles and permissions</div>
-                    <div>✓ Multi-practice data isolation</div>
-                    <div>✓ Patient registration API</div>
-                    <div>✓ Audit logging</div>
+                    <div>
+                      ✓ Authentication and session security
+                    </div>
+
+                    <div>
+                      ✓ Staff roles and permissions
+                    </div>
+
+                    <div>
+                      ✓ Multi-practice data isolation
+                    </div>
+
+                    <div>
+                      ✓ Patient registration API
+                    </div>
+
+                    <div>
+                      ✓ Audit logging
+                    </div>
                   </div>
 
                   <p className="panel-note">
-                    The frontend is currently a preview.
-                    Its authentication and data views still need
-                    to be connected and tested.
+                    Phase 1 backend security tests have passed.
+                    Frontend modules and browser acceptance
+                    testing are still being completed.
                   </p>
                 </section>
+
               </div>
             </>
-          ) : (
-            <div className="page-heading">
-              <div>
-                <div className="eyebrow">CURVTAB DENTAL</div>
-                <h1>{section}</h1>
-                <p>
-                  This workspace is ready for its corresponding
-                  frontend module and backend integration.
-                </p>
-              </div>
-            </div>
           )}
 
-          {section !== 'Dashboard' && (
-            <section className="panel empty-panel">
-              <div className="empty-icon">
-                <ClipboardList size={30} />
-              </div>
-
-              <h2>{section} workspace</h2>
-              <p>
-                No live data is connected yet. We'll implement
-                this page using the existing ASP.NET Core API.
-              </p>
-
-              <button
-                className="secondary-button"
-                onClick={() => navigate('Dashboard')}
-              >
-                Return to dashboard
-              </button>
-            </section>
+          {/* =====================================
+              PATIENTS PAGE
+              Render ONLY when Patients is selected.
+              ===================================== */}
+          {section === 'Patients' && canViewPatients && (
+            <PatientsPage />
           )}
+
+          {/* =====================================
+              OTHER MODULES
+              These are Phase 2/3 placeholders.
+              ===================================== */}
+          {section !== 'Dashboard' &&
+            section !== 'Patients' && (
+              <>
+                <div className="page-heading">
+                  <div>
+                    <div className="eyebrow">
+                      CURVTAB DENTAL
+                    </div>
+
+                    <h1>{section}</h1>
+
+                    <p>
+                      This workspace is ready for its
+                      corresponding frontend module and
+                      backend integration.
+                    </p>
+                  </div>
+                </div>
+
+                <section className="panel empty-panel">
+                  <div className="empty-icon">
+                    <ClipboardList size={30} />
+                  </div>
+
+                  <h2>
+                    {section} workspace
+                  </h2>
+
+                  <p>
+                    No live data is connected yet.
+                    We will implement this page using
+                    the existing ASP.NET Core API.
+                  </p>
+
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => navigate('Dashboard')}
+                  >
+                    Return to dashboard
+                  </button>
+                </section>
+              </>
+            )}
+
         </main>
       </div>
     </div>
