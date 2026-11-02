@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="CurvTabDental.API/CurvTabDental.API.csproj" />
+  <Project Path="CurvTabDental.Application/CurvTabDental.Application.csproj" />
+  <Project Path="CurvTabDental.Domain/CurvTabDental.Domain.csproj" />
+  <Project Path="CurvTabDental.Infrastructure/CurvTabDental.Infrastructure.csproj" />
+</Solution>
