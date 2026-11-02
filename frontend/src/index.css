@@ -1,0 +1,17 @@
+/* Global styles are deliberately minimal.
+   App.css owns the CurvTab design system. */
+
+html {
+  min-width: 320px;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-width: 320px;
+}
+
+#root {
+  min-height: 100vh;
+}
