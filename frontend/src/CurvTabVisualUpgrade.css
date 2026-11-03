@@ -1,0 +1,74 @@
+/* CurvTab Dental 2.0 — additive design layer. Keeps current app behaviour. */
+:root{--ct-text:#18354a;--ct-muted:#647b90;--ct-surface:#fff;--ct-subtle:#edf5f8;--ct-line:#dce9ef;--ct-glow:rgba(22,146,161,.15)}
+:root[data-theme='dark']{--ct-text:#ecf5ff;--ct-muted:#b0c4d3;--ct-surface:#193242;--ct-subtle:#223b4b;--ct-line:#395466;--ct-glow:rgba(33,218,218,.20)}
+.app-shell{min-height:100vh;color:var(--ct-text);background:var(--ct-subtle)}
+.app-shell .workspace{background:linear-gradient(140deg,var(--ct-subtle) 0%,#f4f8fc 65%,#eef9fa 100%);min-width:0}
+:root[data-theme='dark'] .app-shell .workspace{background:linear-gradient(145deg,#122938,#192837)}
+.app-shell .main-content{padding:clamp(18px,2.5vw,34px);max-width:1650px;margin:0 auto;min-width:0}
+.app-shell .sidebar{background:linear-gradient(178deg,#10263a 0%,#132e46 55%,#1e375c 100%);color:#f3fbff;border-right:1px solid rgba(255,255,255,.09);box-shadow:6px 0 27px rgba(20,45,70,.07)}
+.app-shell .sidebar .brand{color:#fff}.app-shell .sidebar .brand strong{color:#fff}.app-shell .sidebar .brand span,.app-shell .sidebar .nav-heading,.app-shell .sidebar .sidebar-bottom>p{color:#a8c9d8}
+.app-shell .sidebar .brand-icon{background:linear-gradient(145deg,#0ba6ae,#245de7);color:white;box-shadow:0 8px 20px rgba(11,166,174,.25)}
+.app-shell .sidebar .practice-chip,.app-shell .sidebar .security-note{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);color:#eafaff;box-shadow:none}
+.app-shell .sidebar .practice-chip strong,.app-shell .sidebar .security-note strong{color:#fff}
+.app-shell .sidebar .practice-chip span,.app-shell .sidebar .security-note span{color:#bcd5e0}
+.app-shell .side-nav{display:flex;flex-direction:column;gap:4px;min-height:0}
+.app-shell .nav-item{order:0;display:flex;align-items:center;gap:12px;flex-shrink:0;width:100%;min-height:43px;color:#cbdce8;background:transparent;border:1px solid transparent;border-radius:11px;padding:10px 13px;transition:background .22s,border-color .22s,transform .22s,color .22s,box-shadow .22s;cursor:pointer;font-weight:600}
+.app-shell .nav-item:hover{background:rgba(255,255,255,.10);color:#fff;transform:translateX(4px)}
+.app-shell .nav-item.nav-active{background:linear-gradient(110deg,#078f9b,#3b6de6);color:#fff;border-color:rgba(255,255,255,.14);box-shadow:0 9px 19px rgba(11,112,162,.18)}
+.app-shell .nav-profile-last{order:999!important;margin-top:10px;border-top-color:rgba(255,255,255,.15)}
+.app-shell .nav-item svg{flex-shrink:0}
+.app-shell .topbar{background:var(--ct-surface);border-bottom:1px solid var(--ct-line);backdrop-filter:blur(12px)}
+.app-shell .breadcrumb,.app-shell .topbar-actions,.app-shell .topbar-actions span{color:var(--ct-text)}
+.app-shell .page-heading h1{letter-spacing:-.04em;line-height:1.14}
+.app-shell .page-heading p,.app-shell .panel-header p,.app-shell .panel-note{color:var(--ct-muted)}
+.app-shell .panel,.app-shell .stat-card{background:var(--ct-surface);border:1px solid var(--ct-line);border-radius:18px;box-shadow:0 12px 28px rgba(24,73,105,.045);color:var(--ct-text);min-width:0}
+.app-shell .panel{transition:box-shadow .25s,border-color .25s}.app-shell .panel:hover{box-shadow:0 15px 38px rgba(24,73,105,.085)}
+.app-shell .stat-card{transition:transform .22s,box-shadow .22s,border-color .22s;min-width:0}
+.app-shell .stat-card:hover{transform:translateY(-4px);border-color:#84d8dc;box-shadow:0 18px 38px rgba(17,114,137,.15)}
+.app-shell :is(.primary-button,.secondary-button,.icon-button,.appointment-month>button,.appointment-tabs>button,.ct-refresh){transition:transform .2s,box-shadow .2s,border-color .2s,background .2s,color .2s;cursor:pointer}
+.app-shell :is(.primary-button,.secondary-button){border-radius:11px;min-height:42px;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:700;line-height:1.3}
+.app-shell .primary-button{background:linear-gradient(115deg,#098e98,#2672cc);color:#fff;border-color:transparent;box-shadow:0 7px 16px rgba(16,116,153,.15)}
+.app-shell .primary-button:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 12px 24px rgba(10,115,168,.25);filter:brightness(1.07)}
+.app-shell .secondary-button{background:var(--ct-surface);border:1px solid var(--ct-line);color:var(--ct-text)}
+.app-shell .secondary-button:hover:not(:disabled){transform:translateY(-2px);border-color:#15a3ac;color:#068690;box-shadow:0 9px 19px var(--ct-glow)}
+.app-shell :is(.primary-button,.secondary-button,.icon-button):active:not(:disabled){transform:translateY(1px) scale(.985)}
+.app-shell :is(.primary-button,.secondary-button,.icon-button):disabled{cursor:not-allowed;opacity:.58}
+.app-shell :is(button,a,input,select,textarea):focus-visible{outline:3px solid #40c3be;outline-offset:2px}
+/* Make native forms and dropdown arrows visible. Avoid touching radios/checkboxes. */
+.app-shell :is(form,.clinical-label,.checkout-payment-form,.specialty-page,.appointment-page,.appointments-page) :is(input:not([type='checkbox']):not([type='radio']):not([type='hidden']),select,textarea){border:1.5px solid #aec9d5;border-radius:11px;background-color:var(--ct-surface);color:var(--ct-text);font:inherit;min-height:43px;padding:10px 13px;max-width:100%;box-sizing:border-box;transition:border-color .2s,box-shadow .2s,background .2s}
+.app-shell :is(form,.clinical-label,.checkout-payment-form,.specialty-page,.appointment-page,.appointments-page) :is(input:not([type='checkbox']):not([type='radio']),select,textarea):hover:not(:disabled){border-color:#4eabb5}
+.app-shell :is(form,.clinical-label,.checkout-payment-form,.specialty-page,.appointment-page,.appointments-page) :is(input:not([type='checkbox']):not([type='radio']),select,textarea):focus{outline:none;border-color:#0b9aa3;box-shadow:0 0 0 4px rgba(15,169,172,.16)}
+.app-shell :is(form,.clinical-label,.checkout-payment-form,.specialty-page,.appointment-page,.appointments-page) select{appearance:none!important;-webkit-appearance:none!important;padding-right:40px!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='19' height='19' viewBox='0 0 24 24' fill='none' stroke='%2306848c' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-position:right 13px center!important;background-size:19px!important;cursor:pointer}
+.app-shell select option{background:var(--ct-surface);color:var(--ct-text)}
+.app-shell textarea{line-height:1.6;resize:vertical}
+.app-shell :is(form,.clinical-label,.checkout-payment-form) label{font-weight:700;letter-spacing:.005em}
+.app-shell :is(form,.clinical-label,.checkout-payment-form) input::placeholder,.app-shell textarea::placeholder{color:#859aa8}
+/* Calendar: distinguish appointments at a glance, including multiple statuses on a date. */
+.app-shell .appointment-day{position:relative;min-height:45px;border-radius:11px;transition:transform .2s,box-shadow .2s,background .2s}
+.app-shell .appointment-day:hover:not(.selected){background:rgba(11,164,175,.11);transform:translateY(-2px);box-shadow:0 6px 13px rgba(5,112,139,.11)}
+.app-shell .appointment-day.selected{background:linear-gradient(135deg,#0b929e,#2775dc);color:#fff;box-shadow:0 8px 18px rgba(12,130,165,.22)}
+.app-shell .ct-calendar-status-dots{display:flex;position:absolute;left:50%;transform:translateX(-50%);bottom:3px;gap:3px;justify-content:center}
+.app-shell .ct-status-dot{width:6px;height:6px;display:block;background:#3B82F6;border-radius:50%;box-shadow:0 0 0 1px rgba(255,255,255,.6)}
+.app-shell .ct-status-dot.ct-status-waiting,.app-shell .ct-status-dot.ct-status-called,.app-shell .ct-status-dot.ct-status-inconsultation{background:#0da994}
+.app-shell .ct-status-dot.ct-status-awaitingcheckout{background:#fbbf24}
+.app-shell .ct-status-dot.ct-status-checkedout{background:#8b5cf6}
+.app-shell .ct-status-dot.ct-status-cancelled,.app-shell .ct-status-dot.ct-status-noshow{background:#94a3b8}
+.app-shell .ct-status{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:100px;background:#e7f0ff;color:#295eb4;font-weight:800;font-size:11px}
+.app-shell .ct-status.ct-status-waiting,.app-shell .ct-status.ct-status-called,.app-shell .ct-status.ct-status-inconsultation{background:#d9f8ed;color:#087565}
+.app-shell .ct-status.ct-status-awaitingcheckout{background:#fff2d5;color:#97620b}
+.app-shell .ct-status.ct-status-checkedout{background:#eee9ff;color:#6846a7}
+.app-shell .ct-status.ct-status-cancelled,.app-shell .ct-status.ct-status-noshow{background:#edf0f4;color:#64748b}
+.app-shell .appointment-entry,.app-shell .checkout-patient,.app-shell .clinical-visit{transition:transform .2s,box-shadow .2s,border-color .2s,background .2s}
+.app-shell .appointment-entry:hover,.app-shell .checkout-patient:hover,.app-shell .clinical-visit:hover{transform:translateY(-2px);box-shadow:0 8px 19px rgba(12,83,104,.1);border-color:#74cdd0}
+.app-shell .appointment-calendar .appointment-weekday{color:var(--ct-muted);font-weight:800}
+/* Responsive: protect layout, keep profile as the final navigation item. */
+@media(max-width:1100px){.app-shell .main-content{padding:20px}.app-shell .stats-grid{gap:13px}}
+@media(max-width:600px){.app-shell .main-content{padding:14px}.app-shell .panel,.app-shell .stat-card{border-radius:14px}.app-shell .page-heading h1{font-size:27px}}
+@media(prefers-reduced-motion:reduce){.app-shell *{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+.app-shell .ct-calendar-legend{display:flex;gap:10px 15px;align-items:center;flex-wrap:wrap;margin:10px 0;font-size:11px;color:var(--ct-muted)}
+.app-shell .ct-calendar-legend span{display:flex;align-items:center;gap:5px}
+.app-shell .ct-calendar-legend i{display:block;width:8px;height:8px;border-radius:50%;background:#3b82f6}
+.app-shell .ct-calendar-legend .ct-legend-progress{background:#0da994}
+.app-shell .ct-calendar-legend .ct-legend-checkout{background:#fbbf24}
+.app-shell .ct-calendar-legend .ct-legend-done{background:#8b5cf6}

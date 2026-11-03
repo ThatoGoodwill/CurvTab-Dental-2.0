@@ -1,3 +1,5 @@
+using CurvTabDental.API.Notifications;
+using Microsoft.AspNetCore.SignalR;
 using CurvTabDental.Application.Abstractions;
 using CurvTabDental.Domain.Entities;
 using CurvTabDental.Infrastructure.Persistence;
@@ -16,13 +18,19 @@ public sealed class ConsultationsController : ControllerBase
     private readonly DentalDbContext _db;
     private readonly ICurrentUser _current;
     private readonly IAuditService _audit;
+    private readonly IHubContext<ClinicNotificationsHub> _notifications;
+    private readonly ILogger<ConsultationsController> _logger;
 
     public ConsultationsController(
-        DentalDbContext db, ICurrentUser current, IAuditService audit)
+        DentalDbContext db, ICurrentUser current, IAuditService audit,
+        IHubContext<ClinicNotificationsHub> notifications,
+        ILogger<ConsultationsController> logger)
     {
         _db = db;
         _current = current;
         _audit = audit;
+        _notifications = notifications;
+        _logger = logger;
     }
 
     public record MedicalHistoryRequest(
@@ -340,6 +348,24 @@ public sealed class ConsultationsController : ControllerBase
         await transaction.CommitAsync(ct);
 
         await _audit.WriteAsync("CONSULTATION_FINALIZED", "Consultation", consultation.Id.ToString(), ct: ct);
+        // The clinical transaction has COMMITTED. Notify Reception in the
+        // same practice only; never send private medical notes over the hub.
+        try
+        {
+            await _notifications.Clients.Group(ClinicNotificationsHub.FrontDeskGroup(practiceId))
+                .SendAsync("ClinicEvent", new
+                {
+                    kind = "CheckoutReady",
+                    appointmentId,
+                    occurredAtUtc = changedAt
+                }, ct);
+        }
+        catch (Exception ex)
+        {
+            // Notifications are best effort; a failure must not undo treatment.
+            _logger.LogWarning(ex, "Checkout push failed for {AppointmentId}", appointmentId);
+        }
+
         return Ok(new { appointmentId, consultationId = consultation.Id,
             status = "AwaitingCheckout", completedAtUtc = changedAt });
     }

@@ -1,3 +1,4 @@
+using CurvTabDental.API.Notifications;
 using System.Threading.RateLimiting;
 using CurvTabDental.API.Middleware;
 using CurvTabDental.API.Security;
@@ -14,6 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ---------- Core services ----------
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddHttpContextAccessor();
@@ -138,6 +140,7 @@ app.UseAuthentication();
 app.UseMiddleware<ActiveUserMiddleware>();
 app.UseAuthorization();
 
+app.MapHub<ClinicNotificationsHub>("/api/hubs/clinic");
 app.MapControllers();
 
 app.Run();

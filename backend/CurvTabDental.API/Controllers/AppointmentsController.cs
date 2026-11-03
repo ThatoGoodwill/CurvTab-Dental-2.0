@@ -1,3 +1,5 @@
+using CurvTabDental.API.Notifications;
+using Microsoft.AspNetCore.SignalR;
 
 using CurvTabDental.Application.Abstractions;
 using CurvTabDental.Domain.Entities;
@@ -18,15 +20,21 @@ public class AppointmentsController : ControllerBase
     private readonly DentalDbContext _db;
     private readonly ICurrentUser _current;
     private readonly IAuditService _audit;
+    private readonly IHubContext<ClinicNotificationsHub> _notifications;
+    private readonly ILogger<AppointmentsController> _logger;
 
     public AppointmentsController(
         DentalDbContext db,
         ICurrentUser current,
-        IAuditService audit)
+        IAuditService audit,
+        IHubContext<ClinicNotificationsHub> notifications,
+        ILogger<AppointmentsController> logger)
     {
         _db = db;
         _current = current;
         _audit = audit;
+        _notifications = notifications;
+        _logger = logger;
     }
 
     // Request received when reception books an appointment.
@@ -274,6 +282,24 @@ public class AppointmentsController : ControllerBase
             ct: ct
         );
 
+        // Reception booked a visit -> notify DENTISTS of this practice.
+        // Publish only AFTER the booking and audit were saved.
+        try
+        {
+            await _notifications.Clients.Group(ClinicNotificationsHub.DentistGroup(practiceId))
+                .SendAsync("ClinicEvent", new
+                {
+                    kind = "AppointmentScheduled",
+                    appointmentId = appointment.Id,
+                    occurredAtUtc = DateTime.UtcNow
+                }, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Appointment notification failed for {AppointmentId}", appointment.Id);
+        }
+
+
         return Created(
             $"/api/appointments/{appointment.Id}",
             new AppointmentDto(
@@ -334,6 +360,22 @@ public class AppointmentsController : ControllerBase
             id.ToString(),
             ct: ct
         );
+        // A checked-in patient becomes visible to dentists instantly.
+        try
+        {
+            await _notifications.Clients.Group(ClinicNotificationsHub.DentistGroup(practiceId))
+                .SendAsync("ClinicEvent", new
+                {
+                    kind = "PatientWaiting",
+                    appointmentId = id,
+                    occurredAtUtc = DateTime.UtcNow
+                }, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Queue push failed for {AppointmentId}", id);
+        }
+
 
         return NoContent();
     }
@@ -383,6 +425,23 @@ public class AppointmentsController : ControllerBase
             id.ToString(),
             ct: ct
         );
+
+        // Dentist called the patient -> notify RECEPTION of this practice.
+        try
+        {
+            await _notifications.Clients.Group(ClinicNotificationsHub.FrontDeskGroup(practiceId))
+                .SendAsync("ClinicEvent", new
+                {
+                    kind = "PatientCalled",
+                    appointmentId = id,
+                    occurredAtUtc = DateTime.UtcNow
+                }, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Patient-called notification failed for {AppointmentId}", id);
+        }
+
 
         return NoContent();
     }

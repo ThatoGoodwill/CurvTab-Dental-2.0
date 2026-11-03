@@ -100,6 +100,13 @@ export default function ReceptionCheckoutPage() {
   const [revision, setRevision] = useState(0)
   const paymentRequestId = useRef<string | null>(null)
 
+  // Refresh checkout-ready and payment details after a live push.
+  useEffect(() => {
+    const onClinicUpdate = () => setRevision(value => value + 1)
+    window.addEventListener('curvtab:clinic-notification', onClinicUpdate)
+    return () => window.removeEventListener('curvtab:clinic-notification', onClinicUpdate)
+  }, [])
+
   useEffect(() => {
     let active = true
     Promise.all([

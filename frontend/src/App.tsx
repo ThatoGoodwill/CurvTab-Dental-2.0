@@ -1,3 +1,6 @@
+import LiveClinicNotifications from './components/LiveClinicNotifications'
+import ClinicDashboardEnhancements from './components/ClinicDashboardEnhancements'
+import './CurvTabVisualUpgrade.css'
 import DentalChartingPage from './pages/DentalChartingPage'
 import OrthodonticsPage from './pages/OrthodonticsPage'
 import ReceptionCheckoutPage from './pages/ReceptionCheckoutPage'
@@ -34,7 +37,6 @@ import {
   ChevronDown,
   ChevronRight,
   ArrowRight,
-  Bell,
   Sun,
   Moon,
   Menu,
@@ -494,7 +496,7 @@ export default function App() {
         <nav
           className="side-nav"
           aria-label="Main navigation"
-        >
+         style={{ display: 'flex', flexDirection: 'column' }}>
           {navigation.map((item) => {
             const Icon = item.icon
 
@@ -580,6 +582,8 @@ export default function App() {
               <button
                 type="button"
                 key={item.name}
+                style={{ order: item.name === 'My Profile' ? 999 : 0 }}
+                data-profile-nav={item.name === 'My Profile' ? 'true' : undefined}
                 className={
                   section === item.name
                     ? 'nav-item nav-active'
@@ -688,12 +692,13 @@ export default function App() {
               }
             </button>
 
-            <span
-              className="notification-icon"
-              aria-label="Notifications not connected"
-            >
-              <Bell size={20} />
-            </span>
+            <LiveClinicNotifications
+              role={role}
+              onOpen={() => {
+                if (role === 'Dentist') openAppointmentTab('In Queue')
+                else navigate('Checkout & Payments')
+              }}
+            />
 
             <div className="avatar">{initials}</div>
 
@@ -708,6 +713,17 @@ export default function App() {
         </header>
 
         <main className="main-content">
+          {/* Visual upgrade: slideshow and real-data appointment analytics. */}
+          {section === 'Dashboard' && (
+            <ClinicDashboardEnhancements
+              role={role}
+              onPrimaryAction={() => {
+                if (role === 'SuperAdmin') navigate('Dental Practices')
+                else openAppointmentTab('Scheduling')
+              }}
+            />
+          )}
+
 
           {/* ================================
               DASHBOARD

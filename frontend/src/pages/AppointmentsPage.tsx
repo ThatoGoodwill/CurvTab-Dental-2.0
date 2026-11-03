@@ -127,6 +127,16 @@ export default function AppointmentsPage({
   const [success, setSuccess] = useState('')
   const [reload, setReload] = useState(0)
 
+  // The Dentist queue refreshes automatically when Reception checks in a patient.
+  useEffect(() => {
+    const onClinicUpdate = () => {
+      setLoading(true)
+      setReload(value => value + 1)
+    }
+    window.addEventListener('curvtab:clinic-notification', onClinicUpdate)
+    return () => window.removeEventListener('curvtab:clinic-notification', onClinicUpdate)
+  }, [])
+
   const canBook =
     role === 'Receptionist' ||
     role === 'PracticeAdmin'
@@ -463,8 +473,12 @@ export default function AppointmentsPage({
                 const selected = key === selectedKey
                 const today = key === dateKey(new Date())
                 const booked = bookedDays.has(key)
+                const dayPatients = appointments
+                  .filter((appointment) => dateKey(new Date(appointment.startUtc)) === key)
+                  .sort((a, b) => a.startUtc.localeCompare(b.startUtc))
 
                 return (
+                  <div className="ct-day-hover-wrap" key={key}>
                   <button
                     key={key}
                     type="button"
@@ -474,11 +488,42 @@ export default function AppointmentsPage({
                       today ? 'today' : '',
                     ].join(' ')}
                     aria-pressed={selected}
+                    aria-label={`${day} ${displayMonth.toLocaleDateString('en-ZA', { month: 'long' })}: ${dayPatients.length} appointments`}
+                    aria-describedby={dayPatients.length ? `ct-scheduling-hover-${key}` : undefined}
                     onClick={() => setSelectedDate(date)}
                   >
                     <span>{day}</span>
-                    {booked && <span className="booking-dot" />}
+                    {booked && (
+                      <span className="ct-calendar-status-dots" aria-hidden="true">
+                        {Array.from(new Set(appointments
+                          .filter((appointment) => dateKey(new Date(appointment.startUtc)) === key)
+                          .map((appointment) => appointment.status)
+                        )).slice(0, 4).map((status) => (
+                          <span
+                            key={status}
+                            className={`ct-status-dot ct-status-${status.toLowerCase()}`}
+                            title={status}
+                          />
+                        ))}
+                      </span>
+                    )}
                   </button>
+                  {dayPatients.length > 0 && (
+                    <div className="ct-hover-popover" role="tooltip" id={`ct-scheduling-hover-${key}`}>
+                      <strong>{date.toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'long' })}</strong>
+                      <small>{dayPatients.length} appointment{dayPatients.length === 1 ? '' : 's'}</small>
+                      <ul>
+                        {dayPatients.map((patient) => (
+                          <li key={patient.id}>
+                            <time>{appointmentTime(patient.startUtc)}</time>
+                            <span>{patient.patientName}</span>
+                            <em>{patient.status}</em>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  </div>
                 )
               })}
             </div>
@@ -491,8 +536,14 @@ export default function AppointmentsPage({
               Today
             </button>
 
+            <div className="ct-calendar-legend" aria-label="Appointment calendar color legend">
+  <span><i className="ct-legend-scheduled"/>Scheduled</span>
+  <span><i className="ct-legend-progress"/>In progress</span>
+  <span><i className="ct-legend-checkout"/>Checkout</span>
+  <span><i className="ct-legend-done"/>Checked out</span>
+</div>
             <p className="panel-note">
-              A dot indicates saved bookings on that date.
+              Colored dots show saved appointment statuses for each day.
             </p>
           </section>
 
@@ -623,7 +674,7 @@ export default function AppointmentsPage({
                           {' · '}
                           {item.reason || 'Dental appointment'}
                         </p>
-                        <small>{item.status}</small>
+                        <small className={`ct-status ct-status-${item.status.toLowerCase()}`}>{item.status}</small>
                       </div>
 
                       {item.status === 'Scheduled' && canBook && (
@@ -700,7 +751,7 @@ export default function AppointmentsPage({
                     <p>
                       {item.reason || 'Dental appointment'}
                     </p>
-                    <small>Status: {item.status}</small>
+                    <small className={`ct-status ct-status-${item.status.toLowerCase()}`}>Status: {item.status}</small>
                   </div>
 
                   {canCall && item.status === 'Waiting' && (
