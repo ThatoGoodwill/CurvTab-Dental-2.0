@@ -1,0 +1,208 @@
+
+/* Staff management layout */
+
+.staff-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.staff-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.staff-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1.4fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.staff-section-title {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+  color: #0d969b;
+}
+
+.staff-section-title h2 {
+  color: var(--text-primary, inherit);
+  margin: 0;
+}
+
+.staff-description {
+  font-size: 13px;
+  opacity: 0.7;
+  line-height: 1.6;
+}
+
+.staff-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.staff-form label,
+.staff-reset-form label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.staff-form input,
+.staff-form select,
+.staff-search input,
+.staff-reset-form input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #c5d6db;
+  border-radius: 9px;
+  padding: 12px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.staff-form select option {
+  color: #172b34;
+  background: #ffffff;
+}
+
+.staff-form input:focus,
+.staff-form select:focus,
+.staff-search input:focus,
+.staff-reset-form input:focus {
+  outline: 2px solid #1ba3a8;
+  outline-offset: 1px;
+}
+
+.staff-form .primary-button {
+  margin-top: 10px;
+  justify-content: center;
+}
+
+.staff-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.staff-search input {
+  min-width: 0;
+}
+
+.staff-directory {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.staff-member {
+  border: 1px solid #a4bbc138;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.staff-member-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.staff-member-header > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.staff-member-header strong,
+.staff-member-header span {
+  overflow-wrap: anywhere;
+}
+
+.staff-member-header > div > span {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.staff-status {
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 20px;
+  padding: 5px 9px;
+  white-space: nowrap;
+}
+
+.staff-status.active {
+  color: #087b58;
+  background: #dff6e9;
+}
+
+.staff-status.inactive {
+  color: #a43a3a;
+  background: #fce8e8;
+}
+
+.staff-member-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  margin: 12px 0;
+  opacity: 0.75;
+}
+
+.staff-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.staff-actions button {
+  font-size: 12px;
+}
+
+.staff-reset-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 14px;
+}
+
+.staff-alert {
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.staff-error {
+  color: #b72c2c;
+  background: #fce9e9;
+}
+
+.staff-success {
+  color: #116f48;
+  background: #e2f6ea;
+}
+
+@media (max-width: 900px) {
+  .staff-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .staff-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .staff-member-header {
+    flex-wrap: wrap;
+  }
+}

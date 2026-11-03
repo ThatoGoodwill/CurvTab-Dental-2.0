@@ -1,0 +1,56 @@
+.clinical-page { display:grid; gap:20px; }
+.clinical-columns { display:grid; grid-template-columns:minmax(225px, 0.72fr) minmax(0, 2fr); gap:20px; align-items:start; }
+.clinical-page .panel { min-width:0; }
+.clinical-visit-list { display:grid; gap:12px; }
+.clinical-visits { display:grid; gap:7px; max-height:590px; overflow-y:auto; }
+.clinical-visit { display:grid; gap:5px; width:100%; text-align:left; padding:13px; border:1px solid #dbe5ec; border-radius:10px; background:transparent; color:inherit; cursor:pointer; }
+.clinical-visit span,.clinical-visit small,.clinical-muted { color:#65798b; font-size:13px; }
+.clinical-visit-active { border-color:#0c8b91; background:rgba(12,139,145,.07); }
+.clinical-editor { display:grid; gap:16px; }
+.clinical-empty { min-height:250px; display:flex; gap:12px; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:#5f7587; }
+.clinical-form { display:grid; gap:16px; }
+.clinical-form h3 { margin:8px 0; font-size:17px; }
+.clinical-field-grid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px; }
+.clinical-label { display:grid; gap:6px; font-weight:600; font-size:13px; color:inherit; }
+.clinical-label textarea,.clinical-label input { padding:10px 12px; border:1px solid #cbd9e4; background:transparent; color:inherit; border-radius:9px; font:inherit; font-size:14px; width:100%; min-width:0; box-sizing:border-box; }
+.clinical-label textarea { resize:vertical; }
+.clinical-label textarea:disabled,.clinical-label input:disabled { opacity:0.7; }
+.clinical-charge-heading { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; border-top:1px solid #dce5ec; padding-top:18px; }
+.clinical-charge-heading p { color:#697d8e; font-size:13px; }
+.clinical-charge { display:grid; grid-template-columns:minmax(0, 2fr) minmax(100px,1fr) auto; gap:10px; align-items:end; }
+.clinical-charge .secondary-button { min-height:42px; }
+.clinical-total { display:flex; justify-content:space-between; padding:16px 0; border-block:1px solid #dce5ec; font-size:18px; }
+.clinical-checkbox { display:flex; gap:10px; align-items:flex-start; font-size:13px; font-weight:600; }
+.clinical-checkbox input { width:auto; margin-top:3px; }
+.clinical-actions { display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-end; }
+.clinical-error,.clinical-success,.clinical-notice { border-radius:9px; padding:13px 15px; font-size:13px; }
+.clinical-error { color:#9b2733; background:rgba(233,74,74,.09); }
+.clinical-success { color:#12734e; background:rgba(30,152,99,.09); }
+.clinical-notice { color:#765600; background:rgba(226,166,36,.1); }
+.clinical-history { display:grid; gap:12px; margin-top:24px; border-top:1px solid #dce5ec; padding-top:16px; }
+.clinical-history-row { padding:12px 0; border-bottom:1px solid #e3ebef; }
+.clinical-history-row p { margin:5px 0; }
+.clinical-history-row small { color:#627888; }
+@media(max-width:1000px) { .clinical-columns { grid-template-columns:1fr; } .clinical-visits { max-height:230px; } }
+@media(max-width:650px) { .clinical-field-grid,.clinical-charge { grid-template-columns:1fr; } .clinical-actions { justify-content:stretch; } }
+
+/* Phase 2: Quick-select clinical entry prompts and optional service choices. */
+.clinical-label select {
+  padding: 10px 12px;
+  border: 1px solid #cbd9e4;
+  background: var(--panel-bg, transparent);
+  color: inherit;
+  border-radius: 9px;
+  font: inherit;
+  font-size: 14px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.clinical-label select:disabled { opacity: .7; }
+.clinical-quick-help {
+  margin: 0;
+  color: #65798b;
+  line-height: 1.5;
+  font-size: 13px;
+}

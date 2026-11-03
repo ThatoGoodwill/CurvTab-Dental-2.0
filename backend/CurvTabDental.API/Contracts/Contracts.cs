@@ -39,6 +39,7 @@ public record PracticeDto(
     string? Address,
     bool IsActive,
     DateTime CreatedAtUtc);
+    
 
 public record PlatformPracticeDto(
     Guid Id,

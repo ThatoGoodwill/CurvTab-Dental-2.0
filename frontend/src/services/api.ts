@@ -1,10 +1,11 @@
-// Information returned by our ASP.NET Core AuthController.
+
+ // Information returned by our ASP.NET Core AuthController.
 export interface UserProfile {
   id: string
   email: string
   fullName: string
-  role: string | null
-  dentalPracticeId: string | null
+  role: string
+  practiceId: string | null
   practiceName: string | null
   mustChangePassword: boolean
 }
@@ -29,7 +30,7 @@ export class ApiError extends Error {
 // Central function for communicating with the backend.
 export async function apiRequest<T>(
   path: string,
-  method: 'GET' | 'POST' = 'GET',
+  method: 'GET' | 'POST' | 'PATCH' | 'PUT' = 'GET',
   data?: unknown
 ): Promise<T> {
   const headers: Record<string, string> = {

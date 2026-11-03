@@ -7,10 +7,11 @@ export default defineConfig({
   server: {
     proxy: {
       // React calls /api/... on port 5173.
-      // Vite forwards those requests to ASP.NET Core on port 5138.
+      // Vite forwards those requests to the Docker container on port 8080.
       '/api': {
-        target: 'http://localhost:5138',
+        target: 'http://127.0.0.1:8080',
         changeOrigin: true,
+        secure: false,
       },
     },
   },

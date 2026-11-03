@@ -1,193 +1,908 @@
 
 import { useEffect, useState } from 'react'
-import { Search, RefreshCw, Users, AlertCircle } from 'lucide-react'
-import { apiRequest, ApiError } from '../services/api'
-import './PatientsPage.css'
+import type {
+  CSSProperties,
+  FormEvent,
+} from 'react'
 
-// The backend determines which patient fields each role may see.
-// We only read fields needed for the patient list.
-type Patient = Record<string, unknown>
+import {
+  Users,
+  UserPlus,
+  Search,
+  RefreshCw,
+  ArrowLeft,
+  AlertCircle,
+  CheckCircle2,
+  CalendarDays,
+  Phone,
+  Mail,
+  MapPin,
+} from 'lucide-react'
 
-// Convert an API value into a readable string without assuming
-// every patient response contains the same optional fields.
-function field(value: unknown): string {
-  return typeof value === 'string' ? value : ''
+import { useAuth } from '../auth/AuthContext'
+import {
+  apiRequest,
+  ApiError,
+} from '../services/api'
+
+// =============================================
+// PATIENT DATA
+//
+// The server controls the practice ID.
+// Never allow a user to choose another practice
+// when registering a patient.
+// =============================================
+
+interface Patient {
+  id: string
+  firstName: string
+  lastName: string
+  fullName: string
+  dateOfBirth: string | null
+  phoneNumber: string
+  email: string
+  address: string
+  patientNumber: string
 }
 
-// Accept common list-response structures.
-// We will tighten this once we inspect your actual Patient DTO.
-function extractPatients(response: unknown): Patient[] {
-  let data: unknown = response
+interface PatientForm {
+  firstName: string
+  lastName: string
+  dateOfBirth: string
+  phoneNumber: string
+  email: string
+  address: string
+}
 
-  if (!Array.isArray(data) && data && typeof data === 'object') {
-    const object = data as Record<string, unknown>
-    data = object.items ?? object.patients ?? object.data ?? object.results
+const emptyForm: PatientForm = {
+  firstName: '',
+  lastName: '',
+  dateOfBirth: '',
+  phoneNumber: '',
+  email: '',
+  address: '',
+}
+
+// =============================================
+// API RESPONSE HELPERS
+// =============================================
+
+function asRecord(
+  value: unknown
+): Record<string, unknown> | null {
+  if (
+    value === null ||
+    typeof value !== 'object' ||
+    Array.isArray(value)
+  ) {
+    return null
   }
 
-  if (!Array.isArray(data)) {
-    throw new Error('Unexpected patient response format.')
+  return value as Record<string, unknown>
+}
+
+function textField(
+  item: Record<string, unknown>,
+  ...names: string[]
+): string {
+  for (const name of names) {
+    if (typeof item[name] === 'string') {
+      return item[name] as string
+    }
   }
 
-  return data.filter(
-    (item): item is Patient =>
-      typeof item === 'object' && item !== null && !Array.isArray(item)
-  )
+  return ''
 }
 
-// Displays a patient's name using only fields actually returned.
-function patientName(patient: Patient): string {
-  const full = field(patient.fullName)
-  const combined = [
-    field(patient.firstName),
-    field(patient.lastName),
-  ].filter(Boolean).join(' ')
+function parsePatient(value: unknown): Patient {
+  const row = asRecord(value)
 
-  return full || combined || 'Patient'
+  if (!row) {
+    throw new Error('Invalid patient record from the API.')
+  }
+
+  const id = textField(row, 'id', 'patientId')
+
+  if (!id) {
+    throw new Error('Patient record is missing its ID.')
+  }
+
+  const firstName = textField(row, 'firstName', 'givenName')
+  const lastName = textField(row, 'lastName', 'surname')
+  const fullName =
+    textField(row, 'fullName', 'name') ||
+    [firstName, lastName].filter(Boolean).join(' ')
+
+  return {
+    id,
+    firstName,
+    lastName,
+    fullName,
+    dateOfBirth:
+      textField(row, 'dateOfBirth', 'dob') || null,
+    phoneNumber: textField(
+      row,
+      'phoneNumber',
+      'phone',
+      'mobileNumber'
+    ),
+    email: textField(row, 'email'),
+    address: textField(row, 'address'),
+    patientNumber: textField(
+      row,
+      'patientNumber',
+      'fileNumber'
+    ),
+  }
 }
+
+function parsePatients(response: unknown): Patient[] {
+  const root = asRecord(response)
+
+  const items: unknown = Array.isArray(response)
+    ? response
+    : root?.items ??
+      root?.patients ??
+      root?.data ??
+      root?.results
+
+  if (!Array.isArray(items)) {
+    throw new Error(
+      'Unexpected patient directory response.'
+    )
+  }
+
+  return items.map(parsePatient)
+}
+
+// =============================================
+// PATIENTS PAGE
+// =============================================
 
 export default function PatientsPage() {
+  const { user } = useAuth()
+
   const [patients, setPatients] = useState<Patient[]>([])
+  const [search, setSearch] = useState('')
+
+  const [showRegistration, setShowRegistration] =
+    useState(false)
+
+  const [selectedPatient, setSelectedPatient] =
+    useState<Patient | null>(null)
+
+  const [form, setForm] = useState<PatientForm>(emptyForm)
+
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
   const [error, setError] = useState('')
-  const [query, setQuery] = useState('')
+  const [success, setSuccess] = useState('')
+
+  const [duplicateWarning, setDuplicateWarning] =
+    useState(false)
+
   const [reloadKey, setReloadKey] = useState(0)
 
-  // Requests only the patient data allowed by the backend.
-  // React never supplies a practice ID or bypasses tenant isolation.
+  // Receptionist and PracticeAdmin can register patients.
+  // The backend is the final authority on permissions.
+  const canRegister =
+    user?.role === 'Receptionist' ||
+    user?.role === 'PracticeAdmin'
+
+  const fieldStyle: CSSProperties = {
+    width: '100%',
+    padding: '12px 14px',
+    boxSizing: 'border-box',
+    borderRadius: 9,
+    border: '1px solid #90a4ae70',
+    background: 'transparent',
+    color: 'inherit',
+    font: 'inherit',
+  }
+
+  const labelStyle: CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 7,
+    fontWeight: 600,
+    fontSize: 13,
+  }
+
+  // =========================================
+  // LOAD PATIENTS FROM POSTGRESQL VIA API
+  // =========================================
+
   useEffect(() => {
-    let active = true
+    let cancelled = false
 
     apiRequest<unknown>('/patients')
-      .then(response => {
-        if (!active) return
-        setPatients(extractPatients(response))
-        setError('')
-      })
-      .catch((err: unknown) => {
-        if (!active) return
+      .then(parsePatients)
+      .then((items) => {
+        if (cancelled) return
 
-        if (err instanceof ApiError && err.status === 403) {
-          setError('Your account does not have permission to view patients.')
-        } else {
-          setError(
-            err instanceof Error ? err.message : 'Unable to load patients.'
-          )
-        }
+        setPatients(items)
+        setError('')
+        setLoading(false)
       })
-      .finally(() => {
-        if (active) setLoading(false)
+      .catch((cause: unknown) => {
+        if (cancelled) return
+
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : 'Unable to load patients.'
+        )
+        setLoading(false)
       })
 
     return () => {
-      active = false
+      cancelled = true
     }
   }, [reloadKey])
 
-  // This searches the records returned by the current API request.
-  // Server-side pagination and global search come after DTO inspection.
-  const visiblePatients = patients.filter(patient => {
-    const searchable = [
-      patientName(patient),
-      field(patient.patientNumber),
-      field(patient.fileNumber),
-    ].join(' ').toLowerCase()
-
-    return searchable.includes(query.toLowerCase().trim())
-  })
-
-  function reload() {
+  function refresh() {
+    setError('')
     setLoading(true)
-    setReloadKey(value => value + 1)
+    setReloadKey((value) => value + 1)
   }
 
+  // Update individual registration fields.
+  function updateField(
+    field: keyof PatientForm,
+    value: string
+  ) {
+    setForm((current) => ({
+      ...current,
+      [field]: value,
+    }))
+  }
+
+  // =========================================
+  // REGISTER PATIENT
+  //
+  // POST /api/patients
+  //
+  // ASP.NET Core validates and saves the record.
+  // =========================================
+
+  async function savePatient(
+    allowDuplicate = false
+  ) {
+    setError('')
+    setSuccess('')
+
+    if (!form.firstName.trim() || !form.lastName.trim()) {
+      setError('First name and surname are required.')
+      return
+    }
+
+    if (!form.dateOfBirth) {
+      setError('Please enter the patient date of birth.')
+      return
+    }
+
+    if (form.dateOfBirth > new Date().toLocaleDateString('en-CA')) {
+      setError('Date of birth cannot be in the future.')
+      return
+    }
+
+    setSaving(true)
+
+    try {
+      // Keep these field names aligned with
+      // CreatePatientRequest in Contracts.cs.
+      const request = {
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        dateOfBirth: form.dateOfBirth,
+        phoneNumber: form.phoneNumber.trim() || null,
+        email: form.email.trim() || null,
+        address: form.address.trim() || null,
+      }
+
+      const path = allowDuplicate
+        ? '/patients?allowDuplicate=true'
+        : '/patients'
+
+      await apiRequest<unknown>(
+        path,
+        'POST',
+        request
+      )
+
+      // Save succeeded.
+      setSuccess('Patient registered successfully.')
+      setForm(emptyForm)
+      setDuplicateWarning(false)
+      setShowRegistration(false)
+      setSelectedPatient(null)
+
+      // Reload records from PostgreSQL.
+      refresh()
+    } catch (cause: unknown) {
+      if (
+        cause instanceof ApiError &&
+        cause.status === 409 &&
+        !allowDuplicate
+      ) {
+        setDuplicateWarning(true)
+        setError(
+          'A possible duplicate patient was found. ' +
+          'Check the existing records before proceeding.'
+        )
+      } else {
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : 'Patient registration failed.'
+        )
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleRegister(
+    event: FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault()
+    await savePatient()
+  }
+
+  // =========================================
+  // VIEW INDIVIDUAL PATIENT
+  // GET /api/patients/{id}
+  // =========================================
+
+  async function openPatient(patient: Patient) {
+    setError('')
+    setSelectedPatient(null)
+
+    try {
+      const response = await apiRequest<unknown>(
+        `/patients/${encodeURIComponent(patient.id)}`
+      )
+
+      setSelectedPatient(parsePatient(response))
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : 'Unable to open patient record.'
+      )
+    }
+  }
+
+  // Client-side search for currently loaded patients.
+  const visiblePatients = patients.filter((patient) => {
+    const query = search.trim().toLowerCase()
+
+    return [
+      patient.fullName,
+      patient.phoneNumber,
+      patient.patientNumber,
+      patient.email,
+    ].some((value) =>
+      value.toLowerCase().includes(query)
+    )
+  })
+
   return (
-    <div className="patients-page">
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 22,
+      }}
+    >
+
+      {/* ======================================
+          PAGE HEADER
+          ====================================== */}
       <div className="page-heading">
         <div>
-          <div className="eyebrow">PATIENT MANAGEMENT</div>
+          <div className="eyebrow">
+            PATIENT MANAGEMENT
+          </div>
+
           <h1>Patients</h1>
-          <p>View patient records available to your dental practice.</p>
+
+          <p>
+            Register patients and manage records
+            for {user?.practiceName ?? 'your practice'}.
+          </p>
         </div>
 
-        <button className="secondary-button" onClick={reload}>
-          <RefreshCw size={17} />
-          Refresh
-        </button>
+        {canRegister && !showRegistration && (
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => {
+              setShowRegistration(true)
+              setSelectedPatient(null)
+              setError('')
+              setSuccess('')
+              setDuplicateWarning(false)
+            }}
+          >
+            <UserPlus size={18} />
+            Register Patient
+          </button>
+        )}
       </div>
 
+      {/* ======================================
+          NOTIFICATIONS
+          ====================================== */}
+
+      {error && (
+        <div
+          role="alert"
+          style={{
+            padding: 15,
+            borderRadius: 10,
+            border: '1px solid #d77a7a',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 10,
+          }}
+        >
+          <AlertCircle size={19} />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {success && (
+        <div
+          role="status"
+          style={{
+            padding: 15,
+            borderRadius: 10,
+            border: '1px solid #5da98b',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+          }}
+        >
+          <CheckCircle2 size={19} />
+          <span>{success}</span>
+        </div>
+      )}
+
+      {/* ======================================
+          PATIENT REGISTRATION FORM
+          ====================================== */}
+
+      {showRegistration && (
+        <section className="panel">
+          <div className="panel-header">
+            <div>
+              <h2>Register New Patient</h2>
+              <p>Enter the patient's basic information.</p>
+            </div>
+
+            <UserPlus size={22} />
+          </div>
+
+          <form
+            onSubmit={handleRegister}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 20,
+              marginTop: 22,
+            }}
+          >
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns:
+                  'repeat(auto-fit, minmax(220px, 1fr))',
+                gap: 16,
+              }}
+            >
+              <label style={labelStyle}>
+                First name *
+
+                <input
+                  style={fieldStyle}
+                  required
+                  value={form.firstName}
+                  onChange={(event) =>
+                    updateField(
+                      'firstName',
+                      event.target.value
+                    )
+                  }
+                  placeholder="Patient first name"
+                />
+              </label>
+
+              <label style={labelStyle}>
+                Surname *
+
+                <input
+                  style={fieldStyle}
+                  required
+                  value={form.lastName}
+                  onChange={(event) =>
+                    updateField(
+                      'lastName',
+                      event.target.value
+                    )
+                  }
+                  placeholder="Patient surname"
+                />
+              </label>
+
+              <label style={labelStyle}>
+                Date of birth *
+
+                <input
+                  style={fieldStyle}
+                  required
+                  type="date"
+                  value={form.dateOfBirth}
+                  max={new Date().toLocaleDateString('en-CA')}
+                  onChange={(event) =>
+                    updateField(
+                      'dateOfBirth',
+                      event.target.value
+                    )
+                  }
+                />
+              </label>
+
+              <label style={labelStyle}>
+                Contact number
+
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  <Phone size={17} />
+
+                  <input
+                    style={fieldStyle}
+                    type="tel"
+                    value={form.phoneNumber}
+                    onChange={(event) =>
+                      updateField(
+                        'phoneNumber',
+                        event.target.value
+                      )
+                    }
+                    placeholder="e.g. 0821234567"
+                  />
+                </div>
+              </label>
+
+              <label style={labelStyle}>
+                Email address
+
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  <Mail size={17} />
+
+                  <input
+                    style={fieldStyle}
+                    type="email"
+                    value={form.email}
+                    onChange={(event) =>
+                      updateField(
+                        'email',
+                        event.target.value
+                      )
+                    }
+                    placeholder="patient@example.com"
+                  />
+                </div>
+              </label>
+
+              <label style={labelStyle}>
+                Residential address
+
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  <MapPin size={17} />
+
+                  <input
+                    style={fieldStyle}
+                    value={form.address}
+                    onChange={(event) =>
+                      updateField(
+                        'address',
+                        event.target.value
+                      )
+                    }
+                    placeholder="Patient address"
+                  />
+                </div>
+              </label>
+            </div>
+
+            <p className="panel-note">
+              Patient records are assigned to your current
+              dental practice by the backend.
+            </p>
+
+            {/* Duplicate warning */}
+            {duplicateWarning && (
+              <div
+                style={{
+                  padding: 16,
+                  border: '1px solid #d99e54',
+                  borderRadius: 10,
+                }}
+              >
+                <strong>Possible duplicate record</strong>
+
+                <p>
+                  Check the patient directory before
+                  registering another record with the
+                  same name and date of birth.
+                </p>
+
+                <button
+                  type="button"
+                  className="secondary-button"
+                  disabled={saving}
+                  onClick={() => void savePatient(true)}
+                >
+                  Register Anyway
+                </button>
+              </div>
+            )}
+
+            <div
+              style={{
+                display: 'flex',
+                gap: 12,
+                flexWrap: 'wrap',
+              }}
+            >
+              <button
+                type="submit"
+                className="primary-button"
+                disabled={saving}
+              >
+                <UserPlus size={17} />
+                {saving
+                  ? 'Saving Patient...'
+                  : 'Save Patient'}
+              </button>
+
+              <button
+                type="button"
+                className="secondary-button"
+                disabled={saving}
+                onClick={() => {
+                  setShowRegistration(false)
+                  setDuplicateWarning(false)
+                  setError('')
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
+
+      {/* ======================================
+          INDIVIDUAL PATIENT RECORD
+          ====================================== */}
+
+      {selectedPatient && !showRegistration && (
+        <section className="panel">
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => setSelectedPatient(null)}
+          >
+            <ArrowLeft size={17} />
+            Back to Patients
+          </button>
+
+          <div
+            className="panel-header"
+            style={{ marginTop: 22 }}
+          >
+            <div>
+              <h2>
+                {selectedPatient.fullName || 'Patient Record'}
+              </h2>
+              <p>
+                {selectedPatient.patientNumber ||
+                  selectedPatient.id}
+              </p>
+            </div>
+
+            <Users size={22} />
+          </div>
+
+          <div className="check-list">
+            <div>
+              <CalendarDays size={15} />{' '}
+              Date of birth:{' '}
+              {selectedPatient.dateOfBirth
+                ? selectedPatient.dateOfBirth.slice(0, 10)
+                : 'Not recorded'}
+            </div>
+
+            <div>
+              <Phone size={15} />{' '}
+              Contact:{' '}
+              {selectedPatient.phoneNumber ||
+                'Not recorded'}
+            </div>
+
+            <div>
+              <Mail size={15} />{' '}
+              Email:{' '}
+              {selectedPatient.email || 'Not recorded'}
+            </div>
+
+            <div>
+              <MapPin size={15} />{' '}
+              Address:{' '}
+              {selectedPatient.address || 'Not recorded'}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ======================================
+          PATIENT DIRECTORY
+          ====================================== */}
+
       <section className="panel">
-        <div className="patients-toolbar">
+        <div className="panel-header">
           <div>
             <h2>Patient Directory</h2>
             <p>
-              {loading ? 'Loading records...' : `${patients.length} records returned`}
+              Search registered patients in your practice.
             </p>
           </div>
 
-          <div className="patients-search">
-            <Search size={17} />
-            <input
-              value={query}
-              onChange={event => setQuery(event.target.value)}
-              placeholder="Search displayed patients"
-              aria-label="Search displayed patients"
-            />
-          </div>
+          <Users size={22} />
         </div>
 
-        {error && (
-          <div className="patients-error" role="alert">
-            <AlertCircle size={19} />
-            {error}
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 12,
+            margin: '20px 0',
+          }}
+        >
+          <div
+            style={{
+              flex: 1,
+              minWidth: 210,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <Search size={18} />
+
+            <input
+              type="search"
+              aria-label="Search patients"
+              placeholder="Search patients..."
+              value={search}
+              onChange={(event) =>
+                setSearch(event.target.value)
+              }
+              style={fieldStyle}
+            />
           </div>
-        )}
 
-        {!error && loading && (
-          <p className="patients-message">Loading patient records...</p>
-        )}
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={refresh}
+            disabled={loading}
+          >
+            <RefreshCw size={17} />
+            Refresh
+          </button>
+        </div>
 
-        {!error && !loading && visiblePatients.length === 0 && (
-          <div className="patients-empty">
-            <Users size={34} />
-            <h3>No matching patients</h3>
+        {loading ? (
+          <p>Loading patients...</p>
+        ) : error && patients.length === 0 ? (
+          <p>Unable to display patient records.</p>
+        ) : visiblePatients.length === 0 ? (
+          <div
+            style={{
+              textAlign: 'center',
+              padding: 35,
+            }}
+          >
+            <Users size={32} />
+
+            <h2>
+              {search
+                ? 'No matching patients'
+                : 'No patients registered yet'}
+            </h2>
+
             <p>
-              {query
-                ? 'Try a different name or patient number.'
-                : 'The API returned no patients for this request.'}
+              {search
+                ? 'Try a different search.'
+                : 'Register your first patient to get started.'}
             </p>
           </div>
-        )}
+        ) : (
+          <div className="check-list">
+            {visiblePatients.map((patient) => (
+              <button
+                type="button"
+                key={patient.id}
+                onClick={() => void openPatient(patient)}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: 14,
+                  textAlign: 'left',
+                  border: '1px solid #90a4ae50',
+                  borderRadius: 10,
+                  padding: 15,
+                  background: 'transparent',
+                  color: 'inherit',
+                  cursor: 'pointer',
+                }}
+              >
+                <div>
+                  <strong>
+                    {patient.fullName || 'Unnamed patient'}
+                  </strong>
 
-        {!error && !loading && visiblePatients.length > 0 && (
-          <div className="patients-table-scroll">
-            <table className="patients-table">
-              <thead>
-                <tr>
-                  <th>Patient</th>
-                  <th>Patient number</th>
-                  <th>Record ID</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visiblePatients.map((patient, index) => (
-                  <tr key={field(patient.id) || index}>
-                    <td>
-                      <strong>{patientName(patient)}</strong>
-                    </td>
-                    <td>
-                      {field(patient.patientNumber) ||
-                        field(patient.fileNumber) || '—'}
-                    </td>
-                    <td className="patient-id">
-                      {field(patient.id) || '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                  <p
+                    style={{
+                      fontSize: 12,
+                      opacity: 0.7,
+                      margin: '5px 0 0',
+                    }}
+                  >
+                    {patient.patientNumber || patient.phoneNumber ||
+                      'View patient information'}
+                  </p>
+                </div>
+
+                <ArrowLeft
+                  size={17}
+                  style={{ transform: 'rotate(180deg)' }}
+                />
+              </button>
+            ))}
           </div>
         )}
       </section>
+
+      <p className="panel-note">
+        The directory loads through the authenticated
+        CurvTab Dental API. Only use synthetic patient
+        information while testing.
+      </p>
     </div>
   )
 }

@@ -550,3 +550,30 @@ button {
     padding: 17px;
   }
 }
+
+/* Responsive dashboard cards.
+   Avoid narrow cards and unused horizontal space. */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, 260px), 1fr)
+  );
+  gap: 18px;
+}
+
+/* Give the content room to expand. */
+.main-content {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Keep sidebar content usable on smaller screens. */
+.side-nav {
+  min-height: 0;
+}
+
+/* Make dashboard action buttons easy to click. */
+.stat-card .secondary-button {
+  margin-top: 12px;
+}
