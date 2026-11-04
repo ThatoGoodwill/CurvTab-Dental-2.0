@@ -1,0 +1,272 @@
+/*
+ * CurvTab Dental 2.0 — Client-approved soft-white visual theme.
+ * FRONTEND PRESENTATION ONLY. No mock statistics, API calls, roles or workflow changes.
+ * Designed to layer over CurvTabVisualUpgrade.css and ClinicDashboardEnhancements.css.
+ * Dark mode is excluded where the app uses .dark or .dark-mode / data-theme=dark.
+ */
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) {
+  --ct-text: #1d3051;
+  --ct-muted: #667993;
+  --ct-surface: #ffffff;
+  --ct-subtle: #f5f8fc;
+  --ct-line: #e5edf5;
+  --ct-glow: rgba(13, 100, 211, .12);
+  --client-blue: #096fdf;
+  --client-blue-strong: #065ac4;
+  --client-ink: #203454;
+  --client-card-shadow: 0 5px 22px rgba(36, 68, 111, .045);
+  background: #f7f9fd;
+  color: var(--client-ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+/* Keep the page calm and softly lit, never the former dark-gradient sidebar. */
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .workspace {
+  background: linear-gradient(155deg,#fcfdff 0%,#f8faff 50%,#f5f8fc 100%);
+  min-width: 0;
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar {
+  background: #ffffff;
+  color: #283e61;
+  border-right: 1px solid #e6edf5;
+  box-shadow: 4px 0 22px rgba(54, 74, 112, .025);
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar :is(.brand,.brand strong,.brand-name) {
+  color:#1b3354;
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar :is(.brand span,.nav-heading,.sidebar-bottom > p,.sidebar-footer,.brand-subtitle) {
+  color:#71819a;
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar .brand-icon {
+  background: #eef7fd;
+  color:#0772bd;
+  box-shadow:none;
+  border:1px solid #e2eff8;
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar :is(.practice-chip,.security-note) {
+  background:#f8fbfe;
+  border:1px solid #e4edf6;
+  color:#334968;
+  box-shadow:none;
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar :is(.practice-chip,.security-note) strong {color:#293d5e}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar :is(.practice-chip,.security-note) span {color:#72849a}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar .nav-item {
+  color:#4b6080;
+  border:1px solid transparent;
+  background:transparent;
+  border-radius:11px;
+  box-shadow:none;
+  min-height:43px;
+  font-weight:600;
+  transition: background .2s ease, color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar .nav-item:hover {
+  background:#eff6ff;
+  color:#075bbd;
+  transform: translateX(3px);
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar .nav-item.nav-active,
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar .nav-item[aria-current='page'] {
+  background: linear-gradient(110deg,#0c79e9,#0866d2);
+  color:#fff;
+  border-color:#0a6ad5;
+  box-shadow: 0 5px 13px rgba(15, 104, 218, .15);
+  transform:none;
+}
+/* Preserve the last-position profile treatment where earlier installer uses CSS ordering. */
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar .nav-profile-last {border-top-color:#edf2f8}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .topbar {
+  background: rgba(255,255,255,.97);
+  color:#273a58;
+  border-bottom:1px solid #e7eef6;
+  backdrop-filter:blur(10px);
+  box-shadow:none;
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .breadcrumb {color:#506583}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .breadcrumb strong {color:#213653}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .main-content {
+  max-width:1650px;
+  margin:0 auto;
+  padding: clamp(18px,2.2vw,34px);
+  min-width:0;
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .page-heading h1,
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .panel h2 {
+  color:#203454;
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .panel,
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .stat-card,
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-chart-card,
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-live-calendar {
+  background:#fff;
+  border:1px solid #e5ebf3;
+  border-radius:17px;
+  box-shadow:var(--client-card-shadow);
+  color:#233958;
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) :is(.stat-card,.ct-chart-card,.panel,.ct-live-calendar) {
+  transition: box-shadow .24s ease,transform .24s ease,border-color .24s ease;
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) :is(.stat-card,.ct-chart-card):hover {
+  border-color:#c7dcf5;
+  transform:translateY(-3px);
+  box-shadow:0 14px 30px rgba(30,90,157,.09);
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .panel:hover {
+  border-color:#e1eaf6;
+  box-shadow:0 10px 26px rgba(30,90,157,.065);
+}
+/* Blue, quiet action controls, with clear keyboard focus. */
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .primary-button {
+  color:#fff;
+  background:linear-gradient(115deg,#0c7df0,#0967d8);
+  border:1px solid #096be1;
+  border-radius:10px;
+  box-shadow:0 5px 14px rgba(9,105,219,.16);
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .primary-button:hover:not(:disabled) {
+  transform:translateY(-2px);
+  filter:none;
+  background:linear-gradient(115deg,#0b72e0,#075abc);
+  box-shadow:0 10px 18px rgba(9,105,219,.2);
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .secondary-button {
+  background:#fff;
+  color:#1f527f;
+  border:1px solid #dde8f5;
+  box-shadow:none;
+  border-radius:10px;
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .secondary-button:hover:not(:disabled) {
+  border-color:#aacdf7;
+  color:#0869d9;
+  background:#f6faff;
+  box-shadow:0 7px 16px rgba(16,95,174,.09);
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) :is(button,a,input,select,textarea):focus-visible {
+  outline:3px solid rgba(14,115,223,.35);
+  outline-offset:2px;
+}
+/* Professional form fields and clearly visible dropdown arrows. */
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) :is(form,.clinical-label,.checkout-payment-form,.specialty-page,.appointments-page) :is(input:not([type='checkbox']):not([type='radio']):not([type='hidden']),select,textarea) {
+  background-color:#fff;
+  border:1.5px solid #d2deec;
+  border-radius:11px;
+  color:#203550;
+  box-shadow:0 1px 2px rgba(20,68,108,.02);
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) :is(form,.clinical-label,.checkout-payment-form,.specialty-page,.appointments-page) :is(input:not([type='checkbox']):not([type='radio']):not([type='hidden']),select,textarea):hover:not(:disabled) {border-color:#9fc2ec}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) :is(form,.clinical-label,.checkout-payment-form,.specialty-page,.appointments-page) :is(input:not([type='checkbox']):not([type='radio']):not([type='hidden']),select,textarea):focus {
+  outline:none;border-color:#348be7;box-shadow:0 0 0 4px rgba(52,139,231,.11);
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) select {
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='%230b66ca' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat:no-repeat !important;
+  background-position:right 12px center !important;
+  padding-right:40px !important;
+}
+/* Client reference: pale blue/white hero with dark readable text and a dental artwork area. */
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-hero,
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-hero-fresh,
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-hero-care {
+  --ct-hero1:#f7fbff;
+  --ct-hero2:#dfeffb;
+  color:#22395a;
+  min-height:250px;
+  border:1px solid #e4eef7;
+  border-radius:19px;
+  box-shadow:0 7px 25px rgba(23,81,151,.06);
+  background:linear-gradient(110deg,#fbfdff 0%,#f2f8ff 48%,#daebfa 100%);
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-hero::before {
+  background:rgba(255,255,255,.5);
+  width:550px;height:550px;top:-380px;left:0;
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-hero-copy {
+  padding:30px clamp(22px,3vw,44px) 52px;
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-hero-eyebrow {
+  color:#1268b0;
+  letter-spacing:.17em;
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-hero h2 {
+  color:#203452;
+  font-size:clamp(26px,3.25vw,40px);
+  letter-spacing:-.032em;
+  line-height:1.12;
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-hero p {
+  color:#637894;
+  font-size:14px;
+  max-width:420px;
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-hero-action {
+  color:#fff;
+  background:#096fdd;
+  border:1px solid #096fdd;
+  box-shadow:0 4px 12px rgba(9,104,216,.12);
+  border-radius:10px;
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-hero-action:hover {
+  color:#fff;
+  background:#075ab6;
+  box-shadow:0 9px 20px rgba(9,104,216,.18);
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-hero-art {
+  background:radial-gradient(ellipse at 70% 45%,#fbfdff 0%,#eaf4ff 43%,transparent 72%);
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-hero-art::after {
+  background:linear-gradient(90deg,#edf6ff 0%,rgba(240,248,255,0) 31%);
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-hero-art img {
+  filter:saturate(.8) brightness(1.05);
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-hero-controls > button {
+  color:#1b67b1;
+  background:rgba(255,255,255,.88);
+  border-color:#d9e9f8;
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-hero-controls > button:hover {background:#fff}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-slide-dots button {background:#a5c5e4}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-slide-dots .ct-dot-active {background:#0a73e1}
+/* Charts retain live appointment data; only colour/layout changes. */
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-analytics-kicker {color:#0b6fda}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-analytics-heading h2 {color:#233756}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-chart-card {padding:23px 25px}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-chart-card h3 {color:#203454}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-chart-grid {gap:18px;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr)}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-bar-fill {background:linear-gradient(0deg,#0b6edc,#76b7fa)}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-bar-track {background:#f0f6ff}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-refresh {color:#2a527c}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-period {background:#f2f6fc}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-period button.ct-period-active {color:#075bba;border:1px solid #e1eafa}
+/* Reference layout order: hero -> existing KPI actions/cards -> real graphs -> workspace. */
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .main-content:has(> .ct-dashboard-enhancements) {
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .main-content:has(> .ct-dashboard-enhancements) > .ct-dashboard-enhancements {
+  display:contents;
+}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .main-content:has(> .ct-dashboard-enhancements) > .page-heading {order:0;margin-bottom:0}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .main-content:has(> .ct-dashboard-enhancements) .ct-hero {order:1;margin:0}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .main-content:has(> .ct-dashboard-enhancements) > .stats-grid {order:2;margin:0;gap:16px}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .main-content:has(> .ct-dashboard-enhancements) .ct-analytics {order:3;margin:0}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .main-content:has(> .ct-dashboard-enhancements) > .panel {order:4;margin-top:0!important}
+/* The uploaded reference has a calm, flat calendar rather than very bright neon dates. */
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .appointment-day.selected {background:linear-gradient(125deg,#0c78e8,#075cb9);box-shadow:0 6px 14px rgba(17,105,217,.19)}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .appointment-day:hover:not(.selected){background:#eaf4ff;box-shadow:0 5px 12px rgba(28,108,198,.09)}
+:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-live-cal-day:hover,:root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-live-calendar button:hover {border-color:#b9d8f5}
+@media(max-width:1100px){
+  :root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-chart-grid {grid-template-columns:1fr}
+}
+@media(max-width:760px){
+  :root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .main-content{padding:16px}
+  :root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-hero{grid-template-columns:1fr}
+  :root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-hero-copy{padding:26px 22px 55px}
+  :root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-chart-card{padding:17px}
+}
+@media(prefers-reduced-motion:reduce){
+  :root:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) :is(.nav-item,.stat-card,.panel,.primary-button,.secondary-button,.ct-chart-card){transition:none!important;transform:none!important}
+}

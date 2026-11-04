@@ -1,12 +1,113 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { Activity, LockKeyhole, ShieldCheck } from 'lucide-react'
 import { useAuth } from './AuthContext'
 import './AuthPages.css'
+import { apiRequest } from '../services/api'
+import './PracticeAuthTheme.css'
+import PracticeBrandMark from './PracticeBrandMark'
+import { usePracticeAppearance } from '../hooks/usePracticeAppearance'
+
+
+type PublicPracticeBranding = {
+  displayName: string
+  tagline: string
+  primaryColor: string
+  accentColor: string
+  logoUrl?: string | null
+  badgeUrl?: string | null
+  loginBackgroundUrl?: string | null
+}
+
+function cachedPracticeBranding(practiceId: string | null | undefined) {
+  if (!practiceId) return null
+
+  try {
+    const raw = sessionStorage.getItem(`ct-branding:${practiceId}`)
+    if (!raw) return null
+
+    const value = JSON.parse(raw) as PublicPracticeBranding
+
+    if (
+      !/^#[0-9a-f]{6}$/i.test(value.primaryColor) ||
+      !/^#[0-9a-f]{6}$/i.test(value.accentColor)
+    ) return null
+
+    return value
+  } catch {
+    return null
+  }
+}
+
+function usePublicPracticeBranding(practiceId: string | null | undefined) {
+  const [saved, setSaved] = useState<{
+    practiceId: string
+    value: PublicPracticeBranding
+  } | null>(() => {
+    const cached = cachedPracticeBranding(practiceId)
+    return practiceId && cached
+      ? { practiceId, value: cached }
+      : null
+  })
+
+  useEffect(() => {
+    let active = true
+
+    if (
+      !practiceId ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(practiceId)
+    ) return
+
+    apiRequest<PublicPracticeBranding>(
+      `/public/practice-branding/${encodeURIComponent(practiceId)}`
+    )
+      .then(value => {
+        if (!active) return
+
+        setSaved({ practiceId, value })
+
+        try {
+          sessionStorage.setItem(
+            `ct-branding:${practiceId}`,
+            JSON.stringify(value)
+          )
+        } catch {
+          // Storage may be unavailable; API branding still works.
+        }
+      })
+      .catch(() => {
+        // Keep valid cached branding if the API is temporarily unavailable.
+      })
+
+    return () => { active = false }
+  }, [practiceId])
+
+  if (!practiceId) return null
+
+  return saved?.practiceId === practiceId
+    ? saved.value
+    : cachedPracticeBranding(practiceId)
+}
 
 // Login screen.
 function LoginScreen() {
   const { login } = useAuth()
+
+  const practiceFromUrl =
+    new URLSearchParams(window.location.search).get('practice')
+
+  const practiceId =
+    practiceFromUrl ||
+    localStorage.getItem('ct-last-practice-id')
+
+  const branding = usePublicPracticeBranding(practiceId)
+
+  useEffect(() => {
+    if (practiceFromUrl &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(practiceFromUrl)) {
+      localStorage.setItem('ct-last-practice-id', practiceFromUrl)
+    }
+  }, [practiceFromUrl])
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -30,16 +131,31 @@ function LoginScreen() {
   }
 
   return (
-    <div className="auth-screen">
+    <div
+      className="auth-screen ct-auth-login"
+      style={{
+        '--auth-primary': branding?.primaryColor || '#126ce5',
+        '--auth-accent': branding?.accentColor || '#14b8a6',
+        '--ct-login-bg-image': branding?.loginBackgroundUrl ? `url("${branding.loginBackgroundUrl}")` : undefined,
+      } as React.CSSProperties}
+    >
       <div className="auth-card">
         <div className="auth-logo">
-          <Activity size={28} />
+          <PracticeBrandMark
+            src={branding?.logoUrl || branding?.badgeUrl}
+            alt={branding?.displayName || 'Practice'}
+            fallback={<Activity size={28} />}
+          />
         </div>
 
-        <div className="auth-brand">CURVTAB DENTAL 2.0</div>
+        <div className="auth-brand">
+          {branding?.displayName || 'CURVTAB DENTAL 2.0'}
+        </div>
 
         <h1>Welcome back</h1>
-        <p>Sign in to your dental practice workspace.</p>
+        <p>
+          {branding?.tagline || 'Sign in to your dental practice workspace.'}
+        </p>
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <label>
@@ -92,6 +208,8 @@ function LoginScreen() {
 // Users with temporary passwords see this screen first.
 function ChangePasswordScreen() {
   const { user, changePassword, logout } = useAuth()
+  const publicBranding = usePublicPracticeBranding(user?.practiceId)
+  const { appearance } = usePracticeAppearance(user?.practiceId)
 
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -122,12 +240,38 @@ function ChangePasswordScreen() {
   }
 
   return (
-    <div className="auth-screen">
+    <div
+      className="auth-screen ct-auth-password"
+      style={{
+        '--auth-primary': publicBranding?.primaryColor || appearance?.primaryColor || '#126ce5',
+        '--auth-accent': publicBranding?.accentColor || appearance?.accentColor || '#14b8a6',
+        '--ct-login-bg-image': (publicBranding?.loginBackgroundUrl || appearance?.loginBackgroundUrl) ? `url("${publicBranding?.loginBackgroundUrl || appearance?.loginBackgroundUrl}")` : undefined,
+      } as React.CSSProperties}
+    >
       <div className="auth-card">
         <div className="auth-logo">
-          <LockKeyhole size={28} />
+          <PracticeBrandMark
+            src={
+              publicBranding?.logoUrl ||
+              appearance?.logoUrl ||
+              publicBranding?.badgeUrl ||
+              appearance?.badgeUrl
+            }
+            alt={
+              publicBranding?.displayName ||
+              appearance?.displayName ||
+              'Practice'
+            }
+            fallback={<LockKeyhole size={28} />}
+          />
         </div>
 
+        <div className="ct-auth-practice-name">
+          {publicBranding?.displayName || appearance?.displayName || user?.practiceName || 'Dental Practice'}
+        </div>
+        {(publicBranding?.tagline || appearance?.tagline) && (
+          <p className="ct-auth-tagline">{publicBranding?.tagline || appearance?.tagline}</p>
+        )}
         <h1>Secure your account</h1>
 
         <p>
@@ -202,6 +346,24 @@ function ChangePasswordScreen() {
 // NAMED EXPORT: main.tsx imports this exact function.
 export function AuthGate({ children }: { children: ReactNode }) {
   const { user, loading, startupError, refresh } = useAuth()
+
+  // AUTO-REMEMBER AUTHENTICATED PRACTICE
+  // On successful authentication, remember the employee's actual
+  // practice. This is a visual preference, not an access permission.
+  useEffect(() => {
+    if (!user) return
+
+    const id = user.practiceId
+
+    if (
+      id &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+    ) {
+      localStorage.setItem('ct-last-practice-id', id)
+    }
+  }, [user?.practiceId])
+
+
 
   if (loading) {
     return <div className="auth-loading">Checking your session...</div>

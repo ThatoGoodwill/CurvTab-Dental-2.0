@@ -1,0 +1,359 @@
+/* CurvTab Dental — Reusable confirmation dialog */
+
+.ct-confirm-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  box-sizing: border-box;
+
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+
+  padding: 0;
+  border: 1px solid var(--ct-line, #dce7f1);
+  border-radius: 20px;
+
+  background: var(--ct-surface, #ffffff);
+  color: var(--ct-text, #183456);
+
+  box-shadow: 0 25px 80px rgba(10, 25, 48, .24);
+}
+
+.ct-confirm-dialog::backdrop {
+  background: rgba(8, 21, 40, .6);
+  backdrop-filter: blur(4px);
+}
+
+.ct-confirm-content {
+  display: grid;
+  gap: 15px;
+  padding: 28px;
+}
+
+.ct-confirm-icon {
+  display: grid;
+  place-items: center;
+
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+
+  background: color-mix(
+    in srgb,
+    var(--practice-primary, #126ce5) 12%,
+    transparent
+  );
+  color: var(--practice-primary, #126ce5);
+}
+
+.ct-confirm-content h2 {
+  margin: 0;
+  color: inherit;
+  font-size: 21px;
+  line-height: 1.25;
+}
+
+.ct-confirm-content p {
+  margin: 0;
+  color: var(--ct-muted, #657b90);
+  font-size: 14px;
+  line-height: 1.65;
+  white-space: pre-line;
+}
+
+.ct-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.ct-confirm-actions button {
+  min-height: 43px;
+  padding: 11px 17px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.ct-confirm-cancel {
+  border: 1px solid var(--ct-line, #dce7f1);
+  background: transparent;
+  color: inherit;
+}
+
+.ct-confirm-accept {
+  border: 1px solid transparent;
+
+  background: linear-gradient(
+    115deg,
+    var(--practice-primary, #126ce5),
+    var(--practice-accent, #14b8a6)
+  );
+
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,.3);
+}
+
+.ct-confirm-accept.danger {
+  background: #b4233a;
+}
+
+.ct-confirm-actions button:hover {
+  filter: brightness(.94);
+}
+
+.ct-confirm-actions button:focus-visible {
+  outline: 3px solid var(--practice-primary, #126ce5);
+  outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+  .ct-confirm-content {
+    padding: 20px;
+  }
+
+  .ct-confirm-actions button {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-confirm-dialog::backdrop {
+    backdrop-filter: none;
+  }
+}
+
+/* CurvTab Dental — Theme-aware confirmation modal */
+
+html body dialog.ct-confirm-dialog {
+  width: min(460px, calc(100vw - 32px)) !important;
+  max-width: 460px !important;
+  max-height: calc(100dvh - 32px);
+  margin: auto !important;
+  padding: 0 !important;
+  border: 1px solid color-mix(
+    in srgb,
+    var(--practice-primary, #126ce5) 28%,
+    transparent
+  ) !important;
+  border-radius: 20px !important;
+  overflow: auto;
+
+  background: var(--ct-surface, #ffffff) !important;
+  color: var(--ct-text, #193653) !important;
+
+  box-shadow: 0 25px 80px rgba(8, 25, 50, .3) !important;
+}
+
+html body dialog.ct-confirm-dialog::backdrop {
+  background: rgba(7, 18, 36, .65);
+  backdrop-filter: blur(5px);
+}
+
+html body dialog.ct-confirm-dialog .ct-confirm-content {
+  display: grid !important;
+  gap: 16px !important;
+  padding: 28px !important;
+}
+
+html body dialog.ct-confirm-dialog .ct-confirm-icon {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 15px;
+
+  background: linear-gradient(
+    115deg,
+    var(--practice-primary, #126ce5),
+    var(--practice-accent, #14b8a6)
+  ) !important;
+
+  color: #ffffff !important;
+}
+
+html body dialog.ct-confirm-dialog .ct-confirm-content h2 {
+  margin: 0 !important;
+  font-size: 22px !important;
+  font-weight: 800;
+  line-height: 1.3;
+  color: inherit !important;
+}
+
+html body dialog.ct-confirm-dialog .ct-confirm-content p {
+  margin: 0 !important;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--ct-muted, #64748b) !important;
+}
+
+html body dialog.ct-confirm-dialog .ct-confirm-actions {
+  display: flex !important;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px !important;
+  margin-top: 10px;
+}
+
+html body dialog.ct-confirm-dialog .ct-confirm-actions button {
+  min-height: 44px;
+  padding: 11px 20px !important;
+  border-radius: 11px !important;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+html body dialog.ct-confirm-dialog .ct-confirm-cancel {
+  background: transparent !important;
+  color: inherit !important;
+  border: 1px solid var(--ct-line, #dce7f1) !important;
+}
+
+html body dialog.ct-confirm-dialog .ct-confirm-accept {
+  background: linear-gradient(
+    115deg,
+    var(--practice-primary, #126ce5),
+    var(--practice-accent, #14b8a6)
+  ) !important;
+
+  border: 1px solid transparent !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,.35);
+}
+
+html body dialog.ct-confirm-dialog .ct-confirm-accept.danger {
+  background: #b4233a !important;
+}
+
+html body dialog.ct-confirm-dialog button:focus-visible {
+  outline: 3px solid var(--practice-primary, #126ce5);
+  outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+  html body dialog.ct-confirm-dialog .ct-confirm-content {
+    padding: 20px !important;
+  }
+}
+
+/* CurvTab Dental — Theme-aware confirmation modal */
+
+html body dialog.ct-confirm-dialog {
+  width: min(460px, calc(100vw - 32px)) !important;
+  max-width: 460px !important;
+  max-height: calc(100dvh - 32px);
+  margin: auto !important;
+  padding: 0 !important;
+  border: 1px solid color-mix(
+    in srgb,
+    var(--practice-primary, #126ce5) 28%,
+    transparent
+  ) !important;
+  border-radius: 20px !important;
+  overflow: auto;
+
+  background: var(--ct-surface, #ffffff) !important;
+  color: var(--ct-text, #193653) !important;
+
+  box-shadow: 0 25px 80px rgba(8, 25, 50, .3) !important;
+}
+
+html body dialog.ct-confirm-dialog::backdrop {
+  background: rgba(7, 18, 36, .65);
+  backdrop-filter: blur(5px);
+}
+
+html body dialog.ct-confirm-dialog .ct-confirm-content {
+  display: grid !important;
+  gap: 16px !important;
+  padding: 28px !important;
+}
+
+html body dialog.ct-confirm-dialog .ct-confirm-icon {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 15px;
+
+  background: linear-gradient(
+    115deg,
+    var(--practice-primary, #126ce5),
+    var(--practice-accent, #14b8a6)
+  ) !important;
+
+  color: #ffffff !important;
+}
+
+html body dialog.ct-confirm-dialog .ct-confirm-content h2 {
+  margin: 0 !important;
+  font-size: 22px !important;
+  font-weight: 800;
+  line-height: 1.3;
+  color: inherit !important;
+}
+
+html body dialog.ct-confirm-dialog .ct-confirm-content p {
+  margin: 0 !important;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--ct-muted, #64748b) !important;
+}
+
+html body dialog.ct-confirm-dialog .ct-confirm-actions {
+  display: flex !important;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px !important;
+  margin-top: 10px;
+}
+
+html body dialog.ct-confirm-dialog .ct-confirm-actions button {
+  min-height: 44px;
+  padding: 11px 20px !important;
+  border-radius: 11px !important;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+html body dialog.ct-confirm-dialog .ct-confirm-cancel {
+  background: transparent !important;
+  color: inherit !important;
+  border: 1px solid var(--ct-line, #dce7f1) !important;
+}
+
+html body dialog.ct-confirm-dialog .ct-confirm-accept {
+  background: linear-gradient(
+    115deg,
+    var(--practice-primary, #126ce5),
+    var(--practice-accent, #14b8a6)
+  ) !important;
+
+  border: 1px solid transparent !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,.35);
+}
+
+html body dialog.ct-confirm-dialog .ct-confirm-accept.danger {
+  background: #b4233a !important;
+}
+
+html body dialog.ct-confirm-dialog button:focus-visible {
+  outline: 3px solid var(--practice-primary, #126ce5);
+  outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+  html body dialog.ct-confirm-dialog .ct-confirm-content {
+    padding: 20px !important;
+  }
+}

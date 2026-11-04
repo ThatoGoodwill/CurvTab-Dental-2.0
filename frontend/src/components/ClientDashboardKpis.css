@@ -1,0 +1,22 @@
+.client-kpis{width:100%;min-width:0}
+.client-kpis-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px;color:#64748b;font-size:12px;font-weight:600}
+.client-kpis-toolbar button{display:inline-flex;align-items:center;gap:7px;border:1px solid #dbe8f6;border-radius:9px;background:#fff;color:#28649a;padding:7px 10px;font:inherit;font-size:12px;cursor:pointer;transition:background .2s,border-color .2s,transform .2s}
+.client-kpis-toolbar button:hover:not(:disabled){background:#f2f8ff;border-color:#a9cdee;transform:translateY(-2px)}
+.client-kpis-toolbar button:disabled{opacity:.55;cursor:wait}
+.client-kpis-error{border:1px solid #efb7be;color:#a73545;background:#fff4f5;padding:10px 12px;border-radius:10px;margin:0 0 12px}
+.client-kpis-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.client-kpi{position:relative;display:flex;align-items:center;gap:14px;min-width:0;min-height:104px;padding:19px 18px;border:1px solid #e5ebf3;border-radius:16px;background:#fff;box-shadow:0 5px 18px rgba(25,58,106,.045);transition:transform .24s cubic-bezier(.21,.81,.29,1),box-shadow .24s,border-color .24s}
+.client-kpi:hover{transform:translateY(-5px);border-color:#b7d5f6;box-shadow:0 16px 30px rgba(23,86,162,.10)}
+.client-kpi-icon{display:grid;place-items:center;flex:none;width:52px;height:52px;border-radius:13px;background:#eaf4ff;color:#0a74dd}
+.client-kpi-patients .client-kpi-icon{background:#ebf6fc;color:#1776b0}
+.client-kpi-pending .client-kpi-icon{background:#fff3e6;color:#e28b22}
+.client-kpi-completed .client-kpi-icon{background:#ecf9f5;color:#118975}
+.client-kpi-text{min-width:0;display:flex;flex-direction:column;gap:6px;flex:1}
+.client-kpi-label{font-size:12px;font-weight:600;color:#586c85;line-height:1.35}
+.client-kpi-value{font-size:clamp(22px,2.2vw,30px);line-height:1.1;font-weight:800;font-variant-numeric:tabular-nums;color:#142b4c}
+.client-kpi-action{position:absolute;right:10px;top:12px;border:0;background:transparent;color:#6583aa;border-radius:7px;font:inherit;font-size:26px;width:28px;height:31px;cursor:pointer}
+.client-kpi-action:hover{background:#eff6ff;color:#0b70d8}
+.client-kpis-hint{font-size:11px;color:#71839b;margin:9px 0 0}
+@media(max-width:1160px){.client-kpis-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.client-kpis-grid{grid-template-columns:1fr}.client-kpi{min-height:85px;padding:15px}}
+@media(prefers-reduced-motion:reduce){.client-kpi,.client-kpi-action,.client-kpis-toolbar button{transition:none!important;transform:none!important}}

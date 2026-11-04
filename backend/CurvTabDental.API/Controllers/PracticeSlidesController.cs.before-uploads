@@ -1,0 +1,171 @@
+using System.Text.Json;
+using CurvTabDental.Application.Abstractions;
+using CurvTabDental.Domain.Entities;
+using CurvTabDental.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+namespace CurvTabDental.API.Controllers;
+
+[ApiController]
+[Route("api/practice/slides")]
+[Authorize(Roles = "PracticeAdmin,Dentist,Receptionist,Finance,LabTechnician")]
+public sealed class PracticeSlidesController : ControllerBase
+{
+    private readonly DentalDbContext _db;
+    private readonly ICurrentUser _current;
+
+    public PracticeSlidesController(
+        DentalDbContext db,
+        ICurrentUser current)
+    {
+        _db = db;
+        _current = current;
+    }
+
+    public sealed record Slide(
+        string Id,
+        string Eyebrow,
+        string Title,
+        string Description,
+        string Image,
+        string ImageAlt
+    );
+
+    private static readonly string[] AllowedImages =
+    [
+        "/dental-ui/smile-hero.webp",
+        "/dental-ui/tooth-fresh.svg",
+        "/dental-ui/tooth-care.svg"
+    ];
+
+    private static Slide[] Defaults() =>
+    [
+        new(
+            "smile",
+            "CURVTAB DENTAL · DAILY CARE",
+            "Healthy smiles, better every day.",
+            "A connected practice, from the first appointment to confident smiles.",
+            AllowedImages[0],
+            "Healthy smile"
+        ),
+        new(
+            "fresh",
+            "CONFIDENCE STARTS WITH CARE",
+            "Fresh smiles start here.",
+            "Keep your patients and appointments organised.",
+            AllowedImages[1],
+            "Smiling tooth illustration"
+        ),
+        new(
+            "care",
+            "PERSONALISED DENTAL CARE",
+            "Every smile has a story.",
+            "Clearer workflows and daily progress.",
+            AllowedImages[2],
+            "Dental care illustration"
+        )
+    ];
+
+    private static Slide[] ReadSlides(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+            return Defaults();
+
+        try
+        {
+            return JsonSerializer.Deserialize<Slide[]>(json) ?? Defaults();
+        }
+        catch (JsonException)
+        {
+            return Defaults();
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Get(CancellationToken ct)
+    {
+        if (_current.PracticeId is not Guid practiceId)
+            return Forbid();
+
+        var exists = await _db.DentalPractices.AsNoTracking()
+            .AnyAsync(p => p.Id == practiceId && p.IsActive, ct);
+
+        if (!exists) return NotFound();
+
+        var row = await _db.Set<PracticeAppearance>()
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                p => p.DentalPracticeId == practiceId, ct);
+
+        return Ok(ReadSlides(row?.SlidesJson));
+    }
+
+    [HttpPut]
+    [Authorize(Roles = "PracticeAdmin")]
+    public async Task<IActionResult> Put(
+        [FromBody] Slide[] slides,
+        CancellationToken ct)
+    {
+        if (_current.PracticeId is not Guid practiceId)
+            return Forbid();
+
+        if (slides is null || slides.Length is < 1 or > 8)
+            return BadRequest(new
+            {
+                message = "Choose between 1 and 8 slides."
+            });
+
+        var ids = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var slide in slides)
+        {
+            if (slide is null ||
+                string.IsNullOrWhiteSpace(slide.Id) ||
+                slide.Id.Length > 64 ||
+                !ids.Add(slide.Id) ||
+                string.IsNullOrWhiteSpace(slide.Title) ||
+                slide.Title.Length > 100 ||
+                (slide.Eyebrow?.Length ?? 0) > 80 ||
+                (slide.Description?.Length ?? 0) > 240 ||
+                (slide.ImageAlt?.Length ?? 0) > 140 ||
+                !AllowedImages.Contains(slide.Image))
+            {
+                return BadRequest(new
+                {
+                    message = "Invalid slide configuration."
+                });
+            }
+        }
+
+        var practice = await _db.DentalPractices
+            .AsNoTracking()
+            .Where(p => p.Id == practiceId && p.IsActive)
+            .Select(p => new { p.Name })
+            .SingleOrDefaultAsync(ct);
+
+        if (practice is null) return NotFound();
+
+        var row = await _db.Set<PracticeAppearance>()
+            .SingleOrDefaultAsync(
+                p => p.DentalPracticeId == practiceId, ct);
+
+        if (row is null)
+        {
+            row = new PracticeAppearance
+            {
+                DentalPracticeId = practiceId,
+                DisplayName = practice.Name
+            };
+            _db.Set<PracticeAppearance>().Add(row);
+        }
+
+        row.SlidesJson = JsonSerializer.Serialize(slides);
+        row.UpdatedAtUtc = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync(ct);
+
+        return Ok(slides);
+    }
+}

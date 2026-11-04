@@ -53,7 +53,18 @@ public class ActiveUserMiddleware
                 return;
             }
 
-            if (state.MustChangePassword && !context.Request.Path.StartsWithSegments("/api/auth"))
+            // Temporary-password users may access authentication endpoints
+            // and the public, read-only practice-branding endpoint only.
+            var isAuthEndpoint =
+                context.Request.Path.StartsWithSegments("/api/auth");
+
+            var isPublicBrandingEndpoint =
+                HttpMethods.IsGet(context.Request.Method) &&
+                context.Request.Path.StartsWithSegments("/api/public/practice-branding");
+
+            if (state.MustChangePassword &&
+                !isAuthEndpoint &&
+                !isPublicBrandingEndpoint)
             {
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
                 await context.Response.WriteAsJsonAsync(new

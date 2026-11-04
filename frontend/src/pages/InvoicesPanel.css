@@ -1,0 +1,179 @@
+.ct-invoices {
+  display: grid;
+  gap: 22px;
+  padding: 24px;
+  margin: 24px 0;
+  min-width: 0;
+}
+
+.ct-invoices-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ct-invoices-header h2,
+.ct-invoices-header p {
+  margin: 0;
+}
+
+.ct-invoices-header p {
+  margin-top: 6px;
+  opacity: .75;
+}
+
+.ct-invoices-section {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ct-invoices-section h3,
+.ct-invoices-section h4 {
+  margin: 0;
+}
+
+.ct-invoice-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  text-align: left;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--ct-clinical-border,#dce6ef);
+  border-radius: 11px;
+}
+
+.ct-invoice-row > div {
+  display: grid;
+  gap: 5px;
+}
+
+.ct-invoice-row small,
+.ct-invoices-note {
+  font-size: 12px;
+  opacity: .75;
+}
+
+.ct-invoice-choice {
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  width: 100%;
+  cursor: pointer;
+}
+
+.ct-invoice-choice.selected {
+  border-color: var(--practice-primary,#126ce5);
+  background: color-mix(
+    in srgb,
+    var(--practice-primary,#126ce5) 8%,
+    transparent
+  );
+}
+
+.ct-invoice-choice:focus-visible {
+  outline: 3px solid var(--practice-primary,#126ce5);
+}
+
+.ct-invoices-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  padding: 16px;
+  border-radius: 11px;
+  border: 1px solid var(--ct-clinical-border,#dce6ef);
+}
+
+.ct-invoice-allocation {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 13px;
+  padding: 18px;
+  border: 1px solid var(--ct-clinical-border,#dce6ef);
+  border-radius: 12px;
+}
+
+.ct-invoice-allocation h4 {
+  grid-column: 1 / -1;
+}
+
+.ct-invoice-allocation label {
+  display: grid;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ct-invoice-allocation input,
+.ct-invoice-allocation select {
+  min-width: 0;
+  width: 100%;
+  padding: 11px;
+  border: 1px solid var(--ct-clinical-border,#dce6ef);
+  border-radius: 9px;
+  background: var(--ct-clinical-surface,transparent);
+  color: var(--ct-clinical-text,inherit);
+  box-sizing: border-box;
+}
+
+.ct-invoice-allocation .primary-button {
+  justify-self: start;
+}
+
+.ct-invoices-error {
+  color: #c83b51;
+}
+
+.ct-invoices-success {
+  color: #168568;
+}
+
+@media (max-width:700px) {
+  .ct-invoices { padding: 15px; }
+  .ct-invoice-allocation { grid-template-columns: 1fr; }
+  .ct-invoice-allocation h4 { grid-column: 1; }
+}
+
+/* Phase 6F — invoice settlement */
+.ct-invoice-payment-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ct-invoice-payment-status.unpaid {
+  color: #a55d13;
+  background: rgba(245, 158, 11, .13);
+}
+
+.ct-invoice-payment-status.partial {
+  color: #2563eb;
+  background: rgba(59, 130, 246, .12);
+}
+
+.ct-invoice-payment-status.paid {
+  color: #168568;
+  background: rgba(22, 163, 116, .12);
+}
+
+.ct-invoice-settlement-summary {
+  display: grid;
+  gap: 8px;
+  padding: 15px;
+  border: 1px solid var(--ct-clinical-border, #dce6ef);
+  border-radius: 12px;
+}
+
+.ct-invoice-settlement-summary span {
+  font-size: 13px;
+  opacity: .75;
+}

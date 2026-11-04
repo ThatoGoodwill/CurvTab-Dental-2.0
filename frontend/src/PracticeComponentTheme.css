@@ -1,0 +1,420 @@
+/* Practice branding shared by patient, calendar and notification UI */
+
+.app-shell[data-practice-branded="true"] {
+  --tenant-gradient: linear-gradient(
+    115deg,
+    var(--practice-primary),
+    var(--practice-accent)
+  );
+}
+
+/* PATIENT TABS */
+html body .app-shell[data-practice-branded="true"]
+.ct-patient-tab.selected {
+  background: var(--tenant-gradient) !important;
+  background-image: var(--tenant-gradient) !important;
+  border-color: transparent !important;
+  color: white !important;
+}
+
+html body .app-shell[data-practice-branded="true"]
+.ct-patient-tab:hover:not(.selected) {
+  background: color-mix(
+    in srgb, var(--practice-primary) 12%, transparent
+  ) !important;
+  color: inherit !important;
+}
+
+/* PATIENT ICONS AND LINKS */
+.app-shell[data-practice-branded="true"]
+:is(.ct-patient-open, .ct-patient-link, .ct-patient-contact-stack svg) {
+  color: var(--practice-accent) !important;
+}
+
+.app-shell[data-practice-branded="true"] .ct-patient-avatar {
+  background: color-mix(
+    in srgb, var(--practice-primary) 13%, transparent
+  ) !important;
+  color: var(--practice-primary) !important;
+  border-color: var(--practice-accent) !important;
+}
+
+/* CALENDAR BUTTONS AND SELECTED DATES */
+html body .app-shell[data-practice-branded="true"]
+:is(.ct-live-open, .ct-live-day.ct-live-selected) {
+  background: var(--tenant-gradient) !important;
+  background-image: var(--tenant-gradient) !important;
+  color: white !important;
+  border-color: transparent !important;
+}
+
+.app-shell[data-practice-branded="true"]
+.ct-live-icon:hover {
+  border-color: var(--practice-accent) !important;
+  color: var(--practice-primary) !important;
+}
+
+/* SOFT GRADIENT ACCENT ON CARDS */
+.app-shell[data-practice-branded="true"]
+:is(.ct-patient-panel, .ct-patient-card, .stat-card, .ct-chart-card) {
+  position: relative;
+  border-top: 3px solid var(--practice-accent);
+}
+
+.app-shell[data-practice-branded="true"] .ct-patient-card:hover {
+  border-color: var(--practice-primary);
+}
+
+/* NOTIFICATIONS — these can render outside .app-shell */
+html[data-practice-theme="active"] .ct-live-open {
+  background: linear-gradient(
+    115deg,
+    var(--ct-tenant-primary),
+    var(--ct-tenant-accent)
+  ) !important;
+  background-image: linear-gradient(
+    115deg,
+    var(--ct-tenant-primary),
+    var(--ct-tenant-accent)
+  ) !important;
+  color: white !important;
+}
+
+html[data-practice-theme="active"] .ct-live-bell {
+  border-color: var(--ct-tenant-accent) !important;
+  color: var(--ct-tenant-primary) !important;
+}
+
+html[data-practice-theme="active"] .ct-live-bell:hover {
+  background: color-mix(
+    in srgb, var(--ct-tenant-primary) 12%, transparent
+  ) !important;
+}
+
+/* DARK MODE — PATIENT RECORDS */
+html[data-theme="dark"] body
+.app-shell[data-practice-branded="true"]
+.ct-patients-experience {
+  color: #eff5fc !important;
+}
+
+html[data-theme="dark"] body
+.app-shell[data-practice-branded="true"]
+:is(
+  .ct-patient-panel,
+  .ct-patient-card,
+  .ct-patient-detail-header,
+  .ct-patient-message
+) {
+  background: #203449 !important;
+  color: #eff5fc !important;
+  border-color: #425a71 !important;
+}
+
+html[data-theme="dark"] body
+.app-shell[data-practice-branded="true"]
+:is(
+  .ct-patient-subheading h2,
+  .ct-patient-panel h2,
+  .ct-patient-panel h3,
+  .ct-patient-header-identity h1,
+  .ct-patient-field strong,
+  .ct-patient-card-title strong
+) {
+  color: #f4f8fc !important;
+}
+
+html[data-theme="dark"] body
+.app-shell[data-practice-branded="true"]
+:is(
+  .ct-patient-subtext,
+  .ct-patient-subheading p,
+  .ct-patient-field span,
+  .ct-patient-header-identity p
+) {
+  color: #b8cadb !important;
+}
+
+/* DARK MODE — PORTALED NOTIFICATION PANEL */
+html[data-theme="dark"][data-practice-theme="active"]
+.ct-live-menu {
+  background: #203449 !important;
+  color: #f2f7fc !important;
+  border-color: #445d75 !important;
+}
+
+html[data-theme="dark"][data-practice-theme="active"]
+.ct-live-menu :is(h2, h3, strong) {
+  color: #f2f7fc !important;
+}
+
+html[data-theme="dark"][data-practice-theme="active"]
+.ct-live-menu :is(
+  .ct-live-connection,
+  .ct-live-empty,
+  .ct-live-item span,
+  .ct-live-menu-heading small
+) {
+  color: #b8cadb !important;
+}
+
+html[data-theme="dark"][data-practice-theme="active"]
+.ct-live-item {
+  border-color: #445d75 !important;
+}
+
+html[data-theme="dark"][data-practice-theme="active"]
+.ct-live-bell {
+  background: #253c52 !important;
+  border-color: #4b657c !important;
+  color: #f2f7fc !important;
+}
+
+/* Preserve clinical status colours and readable focus */
+html[data-practice-theme="active"]
+:is(.ct-live-bell, .ct-live-open):focus-visible {
+  outline: 2px solid var(--ct-tenant-accent) !important;
+  outline-offset: 3px;
+}
+
+/* =========================================
+   PRACTICE-BRANDED DASHBOARD KPI CARDS
+   ========================================= */
+
+.app-shell[data-practice-branded="true"]
+:is(.ct-kpi-card, .ct-dashboard-kpi, .stat-card) {
+  border: 1px solid
+    color-mix(in srgb, var(--practice-primary) 22%, #dce5ee) !important;
+  border-radius: 17px !important;
+  transition:
+    transform .25s ease,
+    box-shadow .25s ease,
+    border-color .25s ease !important;
+}
+
+/* Gradient edge and lift on hover */
+.app-shell[data-practice-branded="true"]
+:is(.ct-kpi-card, .ct-dashboard-kpi, .stat-card):hover {
+  transform: translateY(-5px) !important;
+  border-color: var(--practice-accent) !important;
+  box-shadow:
+    0 12px 30px
+    color-mix(in srgb, var(--practice-primary) 13%, transparent),
+    0 4px 14px
+    color-mix(in srgb, var(--practice-accent) 9%, transparent)
+    !important;
+}
+
+/* Icon containers */
+.app-shell[data-practice-branded="true"]
+:is(.ct-kpi-icon, .ct-dashboard-kpi-icon, .stat-icon) {
+  background: linear-gradient(
+    115deg,
+    color-mix(in srgb, var(--practice-primary) 22%, white),
+    color-mix(in srgb, var(--practice-accent) 22%, white)
+  ) !important;
+  border-radius: 12px !important;
+}
+
+/* Decorative line using both brand colours */
+.app-shell[data-practice-branded="true"]
+:is(.ct-kpi-card, .ct-dashboard-kpi, .stat-card)::after {
+  content: "";
+  display: block;
+  position: absolute;
+  bottom: 0;
+  left: 18px;
+  right: 18px;
+  height: 3px;
+  border-radius: 8px 8px 0 0;
+  background: linear-gradient(
+    90deg,
+    var(--practice-primary),
+    var(--practice-accent)
+  );
+  opacity: .65;
+  pointer-events: none;
+}
+
+.app-shell[data-practice-branded="true"]
+:is(.ct-kpi-card, .ct-dashboard-kpi, .stat-card) {
+  position: relative;
+  overflow: hidden;
+}
+
+.app-shell[data-practice-branded="true"]
+:is(.ct-kpi-card, .ct-dashboard-kpi, .stat-card):hover::after {
+  opacity: 1;
+}
+
+/* DASHBOARD PERIOD BUTTONS */
+html body .app-shell[data-practice-branded="true"]
+.ct-period button.ct-period-active {
+  background: var(--tenant-gradient) !important;
+  background-image: var(--tenant-gradient) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+}
+
+html body .app-shell[data-practice-branded="true"]
+.ct-period button:hover {
+  border-color: var(--practice-accent) !important;
+}
+
+/* DARK MODE KPI CARDS */
+html[data-theme="dark"] body
+.app-shell[data-practice-branded="true"]
+:is(.ct-kpi-card, .ct-dashboard-kpi, .stat-card) {
+  background: #203449 !important;
+  color: #f1f6fb !important;
+  border-color: #40576d !important;
+}
+
+html[data-theme="dark"] body
+.app-shell[data-practice-branded="true"]
+:is(.ct-kpi-card, .ct-dashboard-kpi, .stat-card):hover {
+  border-color: var(--practice-accent) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell[data-practice-branded="true"]
+  :is(.ct-kpi-card, .ct-dashboard-kpi, .stat-card) {
+    transition: none !important;
+  }
+
+  .app-shell[data-practice-branded="true"]
+  :is(.ct-kpi-card, .ct-dashboard-kpi, .stat-card):hover {
+    transform: none !important;
+  }
+}
+
+/* =========================================
+   WHITE-LABEL DASHBOARD KPI CARDS
+   Actual component: ClientDashboardKpis
+   ========================================= */
+
+/* Base card styling */
+html body .app-shell[data-practice-branded="true"]
+.client-kpis .client-kpi {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid
+    color-mix(in srgb, var(--practice-primary) 25%, #dce5ee)
+    !important;
+  border-radius: 17px !important;
+  transition:
+    transform .25s ease,
+    box-shadow .25s ease,
+    border-color .25s ease !important;
+}
+
+/* Primary + accent gradient line at bottom */
+html body .app-shell[data-practice-branded="true"]
+.client-kpis .client-kpi::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 16px;
+  right: 16px;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--practice-primary),
+    var(--practice-accent)
+  );
+  border-radius: 8px 8px 0 0;
+  opacity: .65;
+  pointer-events: none;
+}
+
+/* Card hover */
+html body .app-shell[data-practice-branded="true"]
+.client-kpis .client-kpi:hover {
+  transform: translateY(-6px) !important;
+  border-color: var(--practice-accent) !important;
+  box-shadow:
+    0 14px 30px
+    color-mix(in srgb, var(--practice-primary) 14%, transparent),
+    0 5px 15px
+    color-mix(in srgb, var(--practice-accent) 12%, transparent)
+    !important;
+}
+
+/* Stronger gradient line on hover */
+html body .app-shell[data-practice-branded="true"]
+.client-kpis .client-kpi:hover::after {
+  opacity: 1;
+}
+
+/* Gradient icons */
+html body .app-shell[data-practice-branded="true"]
+.client-kpis .client-kpi-icon {
+  background: linear-gradient(
+    115deg,
+    var(--practice-primary),
+    var(--practice-accent)
+  ) !important;
+  color: white !important;
+  border-radius: 13px !important;
+  transition: transform .25s ease !important;
+}
+
+html body .app-shell[data-practice-branded="true"]
+.client-kpis .client-kpi-icon svg {
+  color: white !important;
+  stroke: white !important;
+}
+
+/* Icon animation */
+html body .app-shell[data-practice-branded="true"]
+.client-kpis .client-kpi:hover .client-kpi-icon {
+  transform: scale(1.08) !important;
+}
+
+/* KPI action buttons */
+html body .app-shell[data-practice-branded="true"]
+.client-kpis .client-kpi-action {
+  color: var(--practice-primary) !important;
+}
+
+html body .app-shell[data-practice-branded="true"]
+.client-kpis .client-kpi-action:hover {
+  color: var(--practice-accent) !important;
+}
+
+/* Dark mode */
+html[data-theme="dark"] body
+.app-shell[data-practice-branded="true"]
+.client-kpis .client-kpi {
+  background: #203449 !important;
+  color: #eff5fc !important;
+  border-color: #425a71 !important;
+}
+
+html[data-theme="dark"] body
+.app-shell[data-practice-branded="true"]
+.client-kpis .client-kpi-value {
+  color: #f3f8fc !important;
+}
+
+html[data-theme="dark"] body
+.app-shell[data-practice-branded="true"]
+.client-kpis .client-kpi-label {
+  color: #b8cadb !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body .app-shell[data-practice-branded="true"]
+  .client-kpis .client-kpi,
+  html body .app-shell[data-practice-branded="true"]
+  .client-kpis .client-kpi-icon {
+    transition: none !important;
+  }
+
+  html body .app-shell[data-practice-branded="true"]
+  .client-kpis .client-kpi:hover,
+  html body .app-shell[data-practice-branded="true"]
+  .client-kpis .client-kpi:hover .client-kpi-icon {
+    transform: none !important;
+  }
+}

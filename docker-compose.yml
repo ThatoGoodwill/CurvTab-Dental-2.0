@@ -24,6 +24,9 @@ services:
         condition: service_healthy
     ports:
       - "8080:8080"
+    volumes:
+      - ./clinical-media:/app/clinical-media
+      - ./practice-media:/app/practice-media
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DentalDatabase: "Host=db;Port=5432;Database=curvtabdb;Username=curvtab;Password=curvtab123"

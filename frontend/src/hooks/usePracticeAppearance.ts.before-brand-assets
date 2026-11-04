@@ -1,0 +1,30 @@
+import { useEffect, useState } from 'react'
+import { apiRequest } from '../services/api'
+
+export type PracticeAppearance = {
+  displayName: string
+  tagline: string
+  primaryColor: string
+  accentColor: string
+  layoutPreset: 'Classic' | 'Compact' | 'Clinical'
+  navigationMode: 'Sidebar' | 'Topbar'
+  enabledModules: string[]
+}
+
+export function usePracticeAppearance(practiceId: string | null | undefined) {
+  const [saved, setSaved] = useState<{ practiceId: string; appearance: PracticeAppearance } | null>(null)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let active = true
+    if (!practiceId) return
+    apiRequest<PracticeAppearance>('/practice/appearance')
+      .then(value => { if (active) { setSaved({ practiceId, appearance: value }); setError('') } })
+      .catch(cause => { if (active) setError(cause instanceof Error ? cause.message : 'Appearance unavailable') })
+    return () => { active = false }
+  }, [practiceId])
+
+  return { appearance: saved?.practiceId === practiceId ? saved.appearance : null,
+    setAppearance: (value: PracticeAppearance) => { if (practiceId) setSaved({ practiceId, appearance: value }) },
+    appearanceError: error }
+}

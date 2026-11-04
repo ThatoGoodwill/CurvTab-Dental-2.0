@@ -1,0 +1,16 @@
+/* Phase 7E.3 – responsive settlement actions */
+.ct-settlement-actions{width:100%;min-width:0;max-width:100%;box-sizing:border-box;padding:20px;background:var(--card-bg,#fff);border:1px solid #dce3eb;border-radius:12px;display:grid;gap:14px}
+.ct-settlement-actions__head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.ct-settlement-actions h3,.ct-settlement-actions h4{margin:0}
+.ct-settlement-actions__scroll{overflow-x:auto;max-width:100%}
+.ct-settlement-actions table{border-collapse:collapse;width:100%;text-align:left}
+.ct-settlement-actions td,.ct-settlement-actions th{padding:10px;white-space:normal;overflow-wrap:anywhere;border-bottom:1px solid #e2e8f0;vertical-align:top}
+.ct-settlement-actions__form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.ct-settlement-actions__form label{min-width:0;display:grid;gap:7px;font-weight:600}
+.ct-settlement-actions__form input,.ct-settlement-actions__form textarea{width:100%;min-width:0;box-sizing:border-box;border-radius:8px;border:1px solid #cbd5e1;padding:10px;font:inherit}
+.ct-settlement-actions__wide{grid-column:1/-1}
+.ct-settlement-actions button{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.ct-settlement-actions__error{color:#991b1b;background:#fef2f2;padding:12px;border-radius:8px}
+.ct-settlement-actions__notice{color:#065f46;background:#ecfdf5;padding:12px;border-radius:8px}
+.ct-settlement-actions__locked{color:#92400e;background:#fffbeb;padding:12px;border-radius:8px}
+@media(max-width:700px){.ct-settlement-actions__form{grid-template-columns:minmax(0,1fr)}.ct-settlement-actions{padding:14px}}

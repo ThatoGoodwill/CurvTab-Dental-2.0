@@ -1,0 +1,79 @@
+/* CT_UX_FIX_20261103 — notification/appointment layout ONLY. */
+/* The SignalR menu is portaled to body to escape sidebar/hero stacking contexts. */
+body > .ct-live-menu {
+  position: fixed !important;
+  z-index: 2147483000 !important;
+  top: 80px !important;
+  right: clamp(12px, 3vw, 35px) !important;
+  left: auto !important;
+  width: min(380px, calc(100vw - 24px)) !important;
+  max-height: min(75vh, 650px);
+  overflow-y: auto;
+  background: #fff !important;
+  color: #203451 !important;
+  box-shadow: 0 24px 68px rgba(21,49,92,.23) !important;
+}
+body > .ct-live-toast {
+  position: fixed !important;
+  z-index: 2147483001 !important;
+  top: 84px !important;
+  right: clamp(12px, 3vw, 35px) !important;
+  left: auto !important;
+}
+/* Keep notification controls visible above page layers and the sticky topbar. */
+.app-shell .topbar, .app-shell .topbar-actions { overflow: visible !important; }
+.app-shell .ct-live-notification-root { z-index: 80; }
+
+/* Scheduling calendar stays inside the content column, never behind the sidebar. */
+.app-shell .workspace,.app-shell .main-content,.app-shell .appointments-page,
+.app-shell .appointment-layout,.app-shell .appointment-right { min-width: 0; }
+.app-shell .appointments-page .appointment-layout > *,
+.app-shell .appointments-page .appointment-calendar { min-width: 0; }
+.app-shell .appointments-page .panel:has(.appointment-calendar) {
+  position: relative; z-index: 10; overflow: visible !important;
+  transform: none !important;
+}
+.app-shell .appointments-page .appointment-calendar { overflow: visible !important; }
+.app-shell .appointments-page .ct-day-hover-wrap { min-width: 0; }
+/* Put the name popup BELOW the hovered date and keep it inside calendar bounds. */
+.app-shell .appointments-page .ct-day-hover-wrap > .ct-hover-popover {
+  top: calc(100% + 7px) !important;
+  bottom: auto !important;
+  left: 50%; right: auto;
+  width: min(260px, 64vw);
+  max-width: min(260px, 64vw);
+  z-index: 500;
+  transform: translate(-50%, -5px);
+}
+.app-shell .appointments-page .ct-day-hover-wrap:is(:hover,:focus-within) > .ct-hover-popover {
+  transform: translate(-50%, 0);
+}
+/* First two calendar columns: anchor popup at left edge rather than over sidebar. */
+.app-shell .appointments-page .ct-day-hover-wrap:nth-child(7n + 1) > .ct-hover-popover,
+.app-shell .appointments-page .ct-day-hover-wrap:nth-child(7n + 2) > .ct-hover-popover {
+  left: 0 !important; right: auto !important; transform: translate(0,-5px) !important;
+}
+.app-shell .appointments-page .ct-day-hover-wrap:nth-child(7n + 1):is(:hover,:focus-within) > .ct-hover-popover,
+.app-shell .appointments-page .ct-day-hover-wrap:nth-child(7n + 2):is(:hover,:focus-within) > .ct-hover-popover {
+  transform: translate(0,0) !important;
+}
+/* Last two columns: anchor popup to right edge instead of overflowing page. */
+.app-shell .appointments-page .ct-day-hover-wrap:nth-child(7n),
+.app-shell .appointments-page .ct-day-hover-wrap:nth-child(7n - 1) { z-index: 501; }
+.app-shell .appointments-page .ct-day-hover-wrap:nth-child(7n) > .ct-hover-popover,
+.app-shell .appointments-page .ct-day-hover-wrap:nth-child(7n - 1) > .ct-hover-popover {
+  right: 0 !important; left: auto !important; transform: translate(0,-5px) !important;
+}
+.app-shell .appointments-page .ct-day-hover-wrap:nth-child(7n):is(:hover,:focus-within) > .ct-hover-popover,
+.app-shell .appointments-page .ct-day-hover-wrap:nth-child(7n - 1):is(:hover,:focus-within) > .ct-hover-popover {
+  transform: translate(0,0) !important;
+}
+.app-shell .appointments-page .ct-day-hover-wrap:is(:hover,:focus-within) { z-index: 505; }
+@media(max-width:700px) {
+  body > .ct-live-menu { top: 70px !important; right: 12px !important; max-height: 75vh; }
+  body > .ct-live-toast { top: 77px !important; right: 12px !important; }
+  .app-shell .appointments-page .ct-day-hover-wrap > .ct-hover-popover { width:min(225px, 72vw); }
+}
+@media(prefers-reduced-motion:reduce) {
+  body > .ct-live-menu,body > .ct-live-toast {animation:none !important;transition:none !important;}
+}

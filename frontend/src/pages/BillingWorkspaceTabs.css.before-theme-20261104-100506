@@ -1,0 +1,197 @@
+.ct-billing-workspace {
+  display: grid;
+  gap: 22px;
+  min-width: 0;
+  width: 100%;
+}
+
+.ct-billing-workspace-heading {
+  display: grid;
+  gap: 9px;
+}
+
+.ct-billing-workspace-heading > span {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #07877d;
+}
+
+.ct-billing-workspace-heading h1 {
+  margin: 0;
+  color: #17375e;
+  font-size: clamp(27px, 3vw, 35px);
+  letter-spacing: -0.8px;
+}
+
+.ct-billing-workspace-heading p {
+  margin: 0;
+  color: #69809d;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.ct-billing-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #dce7f1;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.ct-billing-tab {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 45px;
+  padding: 11px 16px;
+  border: 1px solid #dce7f1;
+  border-radius: 11px;
+  background: #fff;
+  color: #23466e;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background .15s ease,
+    box-shadow .15s ease,
+    border-color .15s ease;
+}
+
+.ct-billing-tab:hover {
+  background: #f1f7ff;
+  border-color: #b9d1ee;
+}
+
+.ct-billing-tab.active {
+  color: #fff;
+  background: #153b70;
+  border-color: #153b70;
+  box-shadow: 0 5px 13px rgba(21, 59, 112, .15);
+}
+
+.ct-billing-tab:focus-visible {
+  outline: 3px solid #64b5f6;
+  outline-offset: 3px;
+}
+
+.ct-billing-tab-content {
+  min-width: 0;
+  animation: ct-finance-enter .18s ease-out;
+}
+
+@keyframes ct-finance-enter {
+  from {
+    opacity: .6;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 720px) {
+  .ct-billing-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ct-billing-tab {
+    justify-content: flex-start;
+    text-align: left;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 430px) {
+  .ct-billing-tabs {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* CurvTab Dental — Colour-coded financial navigation */
+
+.ct-billing-tab {
+  font-weight: 700;
+  border-width: 1px;
+  transition:
+    background-color .2s ease,
+    color .2s ease,
+    transform .2s ease,
+    box-shadow .2s ease;
+}
+
+/* Checkout — Navy */
+.ct-billing-tab:nth-child(1) {
+  --tab-color: #173e78;
+  --tab-soft: #e5edfa;
+}
+
+/* Cash Ledger — Teal */
+.ct-billing-tab:nth-child(2) {
+  --tab-color: #087e76;
+  --tab-soft: #e0f5f0;
+}
+
+/* Patient Balances — Purple */
+.ct-billing-tab:nth-child(3) {
+  --tab-color: #6550b8;
+  --tab-soft: #eeeafa;
+}
+
+/* Invoices — Amber */
+.ct-billing-tab:nth-child(4) {
+  --tab-color: #ad6418;
+  --tab-soft: #fff0db;
+}
+
+/* Expenses — Rose */
+.ct-billing-tab:nth-child(5) {
+  --tab-color: #b34771;
+  --tab-soft: #fce7ef;
+}
+
+/* All unselected tabs show their own colours */
+.ct-billing-tab:not(.active) {
+  background: var(--tab-soft);
+  border-color: var(--tab-color);
+  color: var(--tab-color);
+}
+
+/* Hover effect */
+.ct-billing-tab:not(.active):hover {
+  background: var(--tab-color);
+  border-color: var(--tab-color);
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+/* Selected tab uses its own solid colour */
+.ct-billing-tab.active {
+  background: var(--tab-color);
+  border-color: var(--tab-color);
+  color: #ffffff;
+  box-shadow: 0 5px 14px rgba(20, 45, 80, .14);
+}
+
+/* Keep icons consistent with their tab */
+.ct-billing-tab svg {
+  flex-shrink: 0;
+  stroke: currentColor;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-billing-tab {
+    transition: none;
+  }
+
+  .ct-billing-tab:hover {
+    transform: none;
+  }
+}

@@ -1,0 +1,166 @@
+
+/*
+ * CurvTab Dental — five-surface interactive odontogram
+ * The chart uses existing clinical data and permissions.
+ */
+
+.ct-clinical-arches {
+  min-width: 0;
+  width: 100%;
+  gap: 24px;
+}
+
+.ct-clinical-arches > div {
+  min-width: 0;
+}
+
+/* Preserve FDI arch order; allow scrolling instead of wrapping teeth. */
+.ct-clinical-arches .specialty-tooth-grid {
+  display: flex !important;
+  flex-flow: row nowrap !important;
+  gap: 7px !important;
+  align-items: start;
+  overflow-x: auto;
+  padding: 10px 3px 16px;
+  max-width: 100%;
+  scrollbar-width: thin;
+}
+
+.ct-odonto-tooth {
+  --odonto-border: #93a9c1;
+  position: relative;
+  flex: 0 0 53px;
+  width: 53px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 4px 9px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  box-sizing: border-box;
+  color: inherit;
+}
+
+.ct-odonto-tooth.is-selected {
+  border-color: var(--practice-primary, #138e97);
+  background: color-mix(
+    in srgb,
+    var(--practice-primary, #138e97) 9%,
+    transparent
+  );
+}
+
+.ct-odonto-number {
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Each surface is a separate real button. */
+.ct-odonto-surfaces {
+  display: grid;
+  position: relative;
+  width: 43px;
+  height: 43px;
+  grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+  grid-template-areas:
+    ". top ."
+    "left centre right"
+    ". bottom .";
+  border: 1px solid var(--odonto-border);
+  border-radius: 7px;
+  transform: rotate(45deg);
+  overflow: hidden;
+  background: color-mix(in srgb, currentColor 5%, transparent);
+}
+
+.ct-odonto-surface {
+  appearance: none;
+  display: block;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--odonto-border);
+  border-radius: 0;
+  background-color: transparent;
+  cursor: pointer;
+  transition: filter .12s ease;
+}
+
+.ct-odonto-top {
+  grid-area: top;
+}
+
+.ct-odonto-left {
+  grid-area: left;
+}
+
+.ct-odonto-centre {
+  grid-area: centre;
+}
+
+.ct-odonto-right {
+  grid-area: right;
+}
+
+.ct-odonto-bottom {
+  grid-area: bottom;
+}
+
+.ct-odonto-surface:hover {
+  filter: brightness(.82);
+  outline: 1px solid currentColor;
+  outline-offset: -2px;
+}
+
+.ct-odonto-surface.is-active {
+  outline: 2px solid var(--practice-primary, #138e97);
+  outline-offset: -2px;
+  filter: brightness(.88);
+}
+
+.ct-odonto-surface:focus-visible {
+  outline: 3px solid var(--practice-primary, #138e97);
+  outline-offset: -3px;
+  z-index: 2;
+}
+
+.ct-odonto-record {
+  position: absolute;
+  right: 1px;
+  top: 3px;
+}
+
+.ct-odonto-record-dot {
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+}
+
+/* The same geometry works in dark mode. */
+html[data-theme="dark"] .ct-odonto-tooth {
+  --odonto-border: #6c819b;
+}
+
+html[data-theme="dark"] .ct-odonto-surfaces {
+  background: #23374b;
+}
+
+@media (max-width: 700px) {
+  .ct-odonto-tooth {
+    flex-basis: 52px;
+    width: 52px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-odonto-surface {
+    transition: none;
+  }
+}

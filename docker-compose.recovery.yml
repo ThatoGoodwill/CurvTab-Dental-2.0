@@ -1,0 +1,9 @@
+services:
+  db:
+    volumes:
+      - curvtab_recovered_data:/var/lib/postgresql/data
+
+volumes:
+  curvtab_recovered_data:
+    external: true
+    name: 694f626bcbd03aed20f97e8e0fa4b37660b77cf92b57778f539fe329ba56617a

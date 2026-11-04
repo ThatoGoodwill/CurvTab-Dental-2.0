@@ -1,0 +1,191 @@
+
+.ct-reconcile {
+  display: grid;
+  gap: 20px;
+  padding-top: 12px;
+}
+
+.ct-reconcile-card {
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, #dce3eb);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.ct-reconcile-card h3 {
+  margin: 0 0 14px;
+}
+
+.ct-reconcile-card p {
+  margin-bottom: 0;
+}
+
+.ct-reconcile-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.ct-reconcile-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-weight: 600;
+  min-width: 0;
+}
+
+.ct-reconcile-fields select,
+.ct-reconcile-fields input,
+.ct-reconcile-fields textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 11px 12px;
+  background: #fff;
+  color: #1e293b;
+  font: inherit;
+}
+
+.ct-reconcile-fields :is(select,input,textarea):focus {
+  outline: 2px solid var(--practice-primary, #2563eb);
+}
+
+.ct-reconcile-wide {
+  grid-column: 1 / -1;
+}
+
+.ct-reconcile-balance {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ct-reconcile-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.ct-reconcile-scroll {
+  overflow-x: auto;
+}
+
+.ct-reconcile-scroll table {
+  border-collapse: collapse;
+  width: 100%;
+  text-align: left;
+}
+
+.ct-reconcile-scroll th,
+.ct-reconcile-scroll td {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 12px;
+  white-space: nowrap;
+}
+
+.ct-reconcile-error,
+.ct-reconcile-success {
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.ct-reconcile-error {
+  color: #991b1b;
+  background: #fef2f2;
+}
+
+.ct-reconcile-success {
+  color: #065f46;
+  background: #ecfdf5;
+}
+
+@media (max-width: 680px) {
+  .ct-reconcile-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* CT_PHASE7E3_SETTLEMENT_LAYOUT_FIX */
+
+.ct-reconcile {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.ct-reconcile-card,
+.ct-settlement-preview {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.ct-settlement-preview {
+  overflow: hidden;
+}
+
+.ct-settlement-preview p {
+  overflow-wrap: anywhere;
+  word-break: normal;
+  line-height: 1.6;
+}
+
+.ct-settlement-preview .ct-reconcile-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+}
+
+.ct-settlement-preview .ct-reconcile-balance {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ct-settlement-preview .ct-reconcile-balance span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ct-settlement-preview .ct-reconcile-balance strong {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.ct-settlement-preview button {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1200px) {
+  .ct-settlement-preview .ct-reconcile-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .ct-settlement-preview {
+    padding: 14px;
+  }
+
+  .ct-settlement-preview .ct-reconcile-balance {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+}

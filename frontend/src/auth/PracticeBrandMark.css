@@ -1,0 +1,246 @@
+/*
+ * Practice logo sizing.
+ * Same dimensions in light and dark mode.
+ * Never allow uploaded images to stretch their parent.
+ */
+
+.auth-screen .auth-logo {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  flex: 0 0 64px !important;
+
+  width: 64px !important;
+  height: 64px !important;
+
+  min-width: 64px !important;
+  min-height: 64px !important;
+
+  max-width: 64px !important;
+  max-height: 64px !important;
+
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  border-radius: 16px;
+}
+
+.auth-screen .auth-logo .ct-practice-brand-image {
+  display: block !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  max-width: 100% !important;
+  max-height: 100% !important;
+
+  min-width: 0 !important;
+  min-height: 0 !important;
+
+  object-fit: contain !important;
+  object-position: center !important;
+
+  box-sizing: border-box !important;
+}
+
+/* Original icon when no uploaded image is available */
+.auth-screen .ct-brand-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* Sidebar and topbar logo */
+.app-shell .brand-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  flex: 0 0 44px !important;
+
+  width: 44px !important;
+  height: 44px !important;
+
+  min-width: 44px !important;
+  min-height: 44px !important;
+
+  max-width: 44px !important;
+  max-height: 44px !important;
+
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+
+  border-radius: 12px;
+}
+
+.app-shell .brand-icon img {
+  display: block !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  max-width: 100% !important;
+  max-height: 100% !important;
+
+  object-fit: contain !important;
+  object-position: center !important;
+}
+
+/* Keep practice name beside logo */
+.app-shell .brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.app-shell .brand > div:last-child {
+  min-width: 0;
+}
+
+.app-shell .brand strong {
+  overflow-wrap: anywhere;
+}
+
+/* ===== Bigger login logo + better branded login background ===== */
+
+.auth-screen {
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255,255,255,0.78), transparent 28%),
+    radial-gradient(circle at 88% 82%, rgba(255,255,255,0.58), transparent 26%),
+    var(
+      --auth-gradient,
+      linear-gradient(135deg, #eef4ff 0%, #f7fbff 45%, #eef8f5 100%)
+    ) !important;
+}
+
+.auth-card {
+  background: rgba(255,255,255,0.94) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(17, 24, 39, 0.08) !important;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.10) !important;
+}
+
+.auth-screen .auth-logo {
+  width: 90px !important;
+  height: 90px !important;
+  min-width: 90px !important;
+  min-height: 90px !important;
+  max-width: 90px !important;
+  max-height: 90px !important;
+  border-radius: 24px !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-bottom: 22px !important;
+  background: rgba(255,255,255,0.92) !important;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12) !important;
+}
+
+.auth-screen .auth-logo .ct-practice-brand-image {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  display: block !important;
+}
+
+.auth-screen .ct-brand-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-brand {
+  margin-top: 2px;
+  margin-bottom: 12px;
+}
+
+/* =========================================
+   PRACTICE CUSTOM LOGIN BACKGROUND
+   ========================================= */
+
+html body .auth-screen.ct-auth-login,
+html body .auth-screen.ct-auth-password {
+  background-color: #142b40 !important;
+  background-image:
+    linear-gradient(
+      115deg,
+      rgba(8, 25, 43, .72),
+      rgba(14, 40, 61, .45)
+    ),
+    var(
+      --ct-login-bg-image,
+      linear-gradient(135deg, #102338, #254961)
+    ) !important;
+
+  background-size: cover, cover !important;
+  background-position: center, center !important;
+  background-repeat: no-repeat, no-repeat !important;
+  background-attachment: fixed, fixed !important;
+
+  min-height: 100vh;
+}
+
+/* Professional login card */
+html body .auth-screen.ct-auth-login .auth-card,
+html body .auth-screen.ct-auth-password .auth-card {
+  background: rgba(255, 255, 255, .97) !important;
+  color: #203550 !important;
+  border: 1px solid rgba(255, 255, 255, .35) !important;
+  border-radius: 24px !important;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .24) !important;
+}
+
+/* Slightly larger logo without stretching the card */
+html body .auth-screen .auth-logo {
+  width: 104px !important;
+  height: 104px !important;
+  min-width: 104px !important;
+  min-height: 104px !important;
+  max-width: 104px !important;
+  max-height: 104px !important;
+  flex: 0 0 104px !important;
+  overflow: hidden !important;
+  padding: 4px !important;
+  box-sizing: border-box !important;
+}
+
+html body .auth-screen .auth-logo img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+}
+
+/* Background image preview in the settings page */
+.ct-brand-assets .ct-brand-asset:last-child
+.ct-brand-asset-preview {
+  height: 210px;
+}
+
+@media (max-width: 600px) {
+  html body .auth-screen.ct-auth-login,
+  html body .auth-screen.ct-auth-password {
+    background-attachment: scroll, scroll !important;
+  }
+
+  html body .auth-screen .auth-logo {
+    width: 88px !important;
+    height: 88px !important;
+    min-width: 88px !important;
+    min-height: 88px !important;
+    max-width: 88px !important;
+    max-height: 88px !important;
+    flex-basis: 88px !important;
+  }
+}

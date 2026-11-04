@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import { useEffect, useState } from 'react'
 import {
   HubConnectionBuilder,
@@ -246,7 +247,7 @@ export default function LiveClinicNotifications({ role, onOpen }: Props) {
         {rows.length + recentAlerts.length > 0 && <span className="ct-live-badge">{rows.length + recentAlerts.length > 99 ? '99+' : rows.length + recentAlerts.length}</span>}
       </button>
 
-      {open && (
+      {open && createPortal((
         <div className="ct-live-menu" role="region" aria-label="Clinic notifications">
           <div className="ct-live-menu-heading">
             <div><strong>Notifications</strong><small>{isDentist ? 'Live patient queue' : 'Awaiting checkout'}</small></div>
@@ -278,15 +279,15 @@ export default function LiveClinicNotifications({ role, onOpen }: Props) {
             {isDentist ? 'Open Patient Queue' : 'Open Checkout & Payments'}
           </button>
         </div>
-      )}
+      ), document.body)}
 
-      {toast && (
+      {toast && createPortal((
         <div className="ct-live-toast" role="status" aria-live="polite">
           <span className="ct-live-toast-icon"><Bell size={19}/></span>
           <div><strong>CurvTab Dental · New update</strong><p>{toast}</p></div>
           <button type="button" aria-label="Dismiss notification" onClick={() => setToast(null)}><X size={16}/></button>
         </div>
-      )}
+      ), document.body)}
     </div>
   )
 }

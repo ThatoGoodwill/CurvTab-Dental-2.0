@@ -4,7 +4,11 @@ import { ClipboardList, Plus, RefreshCw, Save } from 'lucide-react'
 import { apiRequest } from '../services/api'
 import { loadClinicalPatients } from '../utils/clinicalPatients'
 import type { ClinicalPatient } from '../utils/clinicalPatients'
+import ClinicalImagingPanel from './ClinicalImagingPanel'
+import OrthodonticFinancials from './OrthodonticFinancials'
 import './DentistSpecialties.css'
+import './ClinicalPhase4.css'
+import OrthodonticCareTimeline from './OrthodonticCareTimeline'
 
 type OrthoStatus = 'Planning' | 'Active' | 'Paused' | 'Completed'
 type OrthoCase = {
@@ -44,6 +48,9 @@ function nextStatuses(status: OrthoStatus): OrthoStatus[] {
 }
 
 export default function OrthodonticsPage() {
+  // CT_ORTHO_FINANCIALS_TAB
+  const [workspaceTab, setWorkspaceTab] =
+    useState<'Clinical' | 'Financials'>('Clinical')
   const [patients, setPatients] = useState<ClinicalPatient[]>([])
   const [patientId, setPatientId] = useState('')
   const [cases, setCases] = useState<OrthoCase[]>([])
@@ -179,6 +186,20 @@ export default function OrthodonticsPage() {
     } finally { setBusy(false) }
   }
 
+  // CT_ORTHO_PHASE4
+  const activeCases = cases.filter(item => item.status === 'Active').length
+  const planningCases = cases.filter(item => item.status === 'Planning').length
+  const completedCases = cases.filter(item => item.status === 'Completed').length
+  const upcomingReviews = cases
+    .filter(item =>
+      item.nextReviewDate !== null &&
+      item.nextReviewDate >= localDate() &&
+      item.status !== 'Completed'
+    )
+    .sort((a, b) =>
+      (a.nextReviewDate ?? '').localeCompare(b.nextReviewDate ?? '')
+    )
+
   const current = details?.orthodonticCase.id === caseId ? details : null
   const selectedCase = cases.find((item) => item.id === caseId)
   const currentStatus = selectedCase?.status
@@ -205,7 +226,110 @@ export default function OrthodonticsPage() {
         <p className="specialty-hint">Private clinical case details are only accessible to authorised Dentist accounts.</p>
       </section>
 
-      {patientId && <div className="specialty-columns">
+      {patientId && (
+        <section className="ct-ortho-overview" aria-label="Orthodontic case overview">
+          <div className="ct-ortho-kpi">
+            <span>Total cases</span>
+            <strong>{cases.length}</strong>
+            <small>For selected patient</small>
+          </div>
+          <div className="ct-ortho-kpi">
+            <span>Planning</span>
+            <strong>{planningCases}</strong>
+            <small>Awaiting treatment</small>
+          </div>
+          <div className="ct-ortho-kpi">
+            <span>Active</span>
+            <strong>{activeCases}</strong>
+            <small>In treatment</small>
+          </div>
+          <div className="ct-ortho-kpi">
+            <span>Completed</span>
+            <strong>{completedCases}</strong>
+            <small>Finished cases</small>
+          </div>
+          <div className="ct-ortho-reviews">
+            <div className="ct-ortho-reviews-title">
+              <strong>Upcoming clinical reviews</strong>
+              <span>{upcomingReviews.length} scheduled in case records</span>
+            </div>
+            {upcomingReviews.length === 0 ? (
+              <p>No future review dates recorded for this patient.</p>
+            ) : (
+              <div className="ct-ortho-review-list">
+                {upcomingReviews.slice(0, 4).map(item => (
+                  <button
+                    type="button"
+                    key={item.id}
+                    onClick={() => {
+                      setCaseId(item.id)
+                      setDetails(null)
+                    }}
+                  >
+                    <span>{item.title}</span>
+                    <strong>{item.nextReviewDate}</strong>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      
+      {patientId && (
+        <ClinicalImagingPanel
+          key={`${patientId}:${caseId}`}
+          patientId={patientId}
+          orthodonticCaseId={caseId || null}
+        />
+      )}
+
+      {patientId && (
+        <div className="ct-ortho-workspace-tabs" role="group"
+          aria-label="Orthodontics workspace">
+          <button
+            type="button"
+            className={workspaceTab === 'Clinical' ? 'is-active' : ''}
+            aria-pressed={workspaceTab === 'Clinical'}
+            onClick={() => setWorkspaceTab('Clinical')}
+          >
+            Clinical Care
+          </button>
+          <button
+            type="button"
+            className={workspaceTab === 'Financials' ? 'is-active' : ''}
+            aria-pressed={workspaceTab === 'Financials'}
+            onClick={() => setWorkspaceTab('Financials')}
+          >
+            Financials
+          </button>
+        </div>
+      )}
+
+      {workspaceTab === 'Financials' && patientId && (
+        selectedCase ? (
+          <OrthodonticFinancials
+            key={selectedCase.id}
+            caseId={selectedCase.id}
+            caseTitle={selectedCase.title}
+          />
+        ) : (
+          <section className="panel">
+            <h2>Case Financials</h2>
+            <p>
+              Select or create an orthodontic case in Clinical Care
+              before opening its financial agreement.
+            </p>
+            <button type="button" className="secondary-button"
+              onClick={() => setWorkspaceTab('Clinical')}>
+              Open Clinical Care
+            </button>
+          </section>
+        )
+      )}
+
+      {workspaceTab === 'Clinical' && patientId && <div className="specialty-columns">
         <section className="panel specialty-form-panel">
           <div className="panel-header"><div><h2>Orthodontic Cases</h2><p>{cases.length} saved</p></div><ClipboardList size={21}/></div>
           {cases.length === 0 ? <p className="specialty-hint">No cases registered for this patient.</p> :
@@ -236,6 +360,14 @@ export default function OrthodonticsPage() {
         <section className="panel specialty-chart-panel">
           <div className="panel-header"><div><h2>Case Progress</h2><p>Permanent clinical progress history</p></div><ClipboardList size={21}/></div>
           {!caseId || !selectedCase ? <p className="specialty-hint">Select or create a case to manage its progress.</p> : <>
+            <OrthodonticCareTimeline
+              caseTitle={selectedCase.title}
+              status={selectedCase.status}
+              createdAtUtc={selectedCase.createdAtUtc}
+              nextReviewDate={selectedCase.nextReviewDate}
+              progressNotes={current?.progressNotes ?? []}
+              loading={current === null}
+            />
             <div className="specialty-overview">
               <strong>{selectedCase.title}</strong>
               <span className="specialty-status">{currentStatus}</span>

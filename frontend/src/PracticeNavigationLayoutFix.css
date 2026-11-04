@@ -1,0 +1,502 @@
+/*
+ * CurvTab Dental
+ * Practice navigation layout repair
+ *
+ * Topbar: brand + horizontal navigation
+ * Sidebar: preserve vertical navigation
+ * Works with light and dark themes
+ */
+
+/* Shared layout safety */
+html body .app-shell[data-practice-branded="true"] {
+  min-width: 0;
+  width: 100%;
+}
+
+html body .app-shell[data-practice-branded="true"] .workspace,
+html body .app-shell[data-practice-branded="true"] .main-content {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* ==========================================
+   TOPBAR MODE
+   ========================================== */
+
+@media (min-width: 900px) {
+
+  html body .app-shell.ct-nav-top[data-practice-branded="true"] {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+    align-items: stretch !important;
+    min-height: 100vh;
+    height: auto !important;
+    overflow-x: clip;
+  }
+
+  /* Remove fixed sidebar positioning */
+  html body .app-shell.ct-nav-top[data-practice-branded="true"]
+  .sidebar {
+    position: relative !important;
+    inset: auto !important;
+    transform: none !important;
+
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    align-content: center !important;
+
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 76px !important;
+    max-height: none !important;
+
+    margin: 0 !important;
+    padding: 14px 24px !important;
+    box-sizing: border-box !important;
+
+    overflow: visible !important;
+
+    border-right: 0 !important;
+    border-bottom: 1px solid var(--pc-border, #e1e8f0) !important;
+
+    gap: 14px 24px !important;
+    z-index: 60;
+  }
+
+  /* Practice identity on the left */
+  html body .app-shell.ct-nav-top[data-practice-branded="true"]
+  .sidebar .brand {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+
+    flex: 0 0 auto !important;
+    width: auto !important;
+    max-width: min(260px, 100%) !important;
+    min-width: 0 !important;
+    height: auto !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    text-align: left !important;
+    gap: 10px !important;
+  }
+
+  /* All navigation items become horizontal */
+  html body .app-shell.ct-nav-top[data-practice-branded="true"]
+  .sidebar .side-nav {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    align-content: center !important;
+
+    flex: 1 1 650px !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: auto !important;
+
+    overflow: visible !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 6px !important;
+  }
+
+  html body .app-shell.ct-nav-top[data-practice-branded="true"]
+  .sidebar .side-nav .nav-item {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 40px !important;
+
+    flex: 0 0 auto !important;
+
+    padding: 9px 12px !important;
+    margin: 0 !important;
+
+    border-radius: 10px !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+    gap: 8px !important;
+  }
+
+  /* Keep appointment submenu attached to its parent */
+  html body .app-shell.ct-nav-top[data-practice-branded="true"]
+  .sidebar .side-nav > div {
+    position: relative;
+    flex: 0 0 auto !important;
+    min-width: 0;
+  }
+
+  html body .app-shell.ct-nav-top[data-practice-branded="true"]
+  .sidebar .side-nav > div > div {
+    position: absolute !important;
+    top: calc(100% + 6px) !important;
+    left: 0 !important;
+    z-index: 100 !important;
+
+    width: max-content !important;
+    min-width: 180px !important;
+
+    margin: 0 !important;
+    padding: 9px !important;
+
+    border-radius: 12px;
+    border: 1px solid var(--pc-border, #e1e8f0);
+    background: var(--pc-surface, #fff);
+    color: var(--pc-text, #203550);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, .14);
+  }
+
+  /* Hide sidebar-only elements */
+  html body .app-shell.ct-nav-top[data-practice-branded="true"]
+  .sidebar :is(
+    .nav-heading,
+    .practice-chip,
+    .sidebar-bottom
+  ) {
+    display: none !important;
+  }
+
+  /* Workspace starts BELOW top navigation */
+  html body .app-shell.ct-nav-top[data-practice-branded="true"]
+  .workspace {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  html body .app-shell.ct-nav-top[data-practice-branded="true"]
+  .workspace .topbar {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  html body .app-shell.ct-nav-top[data-practice-branded="true"]
+  .workspace .main-content {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+}
+
+/* ==========================================
+   LIGHT MODE TOPBAR
+   ========================================== */
+
+html:not([data-theme="dark"]) body
+.app-shell.ct-nav-top[data-practice-branded="true"]
+.sidebar {
+  background: #ffffff !important;
+  color: #203550 !important;
+  border-bottom-color: #e2e9f1 !important;
+}
+
+html:not([data-theme="dark"]) body
+.app-shell.ct-nav-top[data-practice-branded="true"]
+.sidebar .nav-item:not(.nav-active):not([aria-current="page"]) {
+  background: transparent !important;
+  color: #334b69 !important;
+}
+
+html:not([data-theme="dark"]) body
+.app-shell.ct-nav-top[data-practice-branded="true"]
+.sidebar .nav-item:hover:not(.nav-active) {
+  background: color-mix(
+    in srgb,
+    var(--practice-primary) 10%,
+    white
+  ) !important;
+}
+
+/* ==========================================
+   DARK MODE TOPBAR
+   ========================================== */
+
+html[data-theme="dark"] body
+.app-shell.ct-nav-top[data-practice-branded="true"]
+.sidebar {
+  background: #192d41 !important;
+  color: #f0f6fc !important;
+  border-bottom-color: #3a5166 !important;
+}
+
+html[data-theme="dark"] body
+.app-shell.ct-nav-top[data-practice-branded="true"]
+.sidebar .nav-item:not(.nav-active):not([aria-current="page"]) {
+  background: transparent !important;
+  color: #dce8f3 !important;
+}
+
+html[data-theme="dark"] body
+.app-shell.ct-nav-top[data-practice-branded="true"]
+.sidebar .nav-item:hover:not(.nav-active) {
+  background: #294158 !important;
+  color: #fff !important;
+}
+
+/* Brand active item consistently */
+html body
+.app-shell.ct-nav-top[data-practice-branded="true"]
+.sidebar .side-nav
+:is(.nav-active, [aria-current="page"]) {
+  background: linear-gradient(
+    115deg,
+    var(--practice-primary),
+    var(--practice-accent)
+  ) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+
+/* ==========================================
+   SIDEBAR MODE
+   ========================================== */
+
+@media (min-width: 900px) {
+  html body .app-shell.ct-nav-sidebar[data-practice-branded="true"]
+  .sidebar .side-nav {
+    overflow-x: hidden !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+}
+
+/* ==========================================
+   MOBILE
+   Preserve hamburger-driven sidebar
+   ========================================== */
+
+@media (max-width: 899px) {
+  html body .app-shell[data-practice-branded="true"] {
+    overflow-x: clip;
+  }
+
+  html body .app-shell[data-practice-branded="true"]
+  .workspace {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  html body .app-shell[data-practice-branded="true"]
+  .sidebar .side-nav {
+    max-width: 100% !important;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  html body .app-shell[data-practice-branded="true"]
+  .sidebar .nav-item {
+    transition: none !important;
+  }
+}
+
+/* =============================================
+   FINAL LIGHT-MODE TOPBAR CORRECTION
+   Override older light-theme navigation rules.
+   ============================================= */
+
+@media (min-width: 900px) {
+
+  :root:not([data-theme="dark"]) body
+  .app-shell.ct-nav-top[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark) {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+  }
+
+  :root:not([data-theme="dark"]) body
+  .app-shell.ct-nav-top[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+  .sidebar {
+    position: relative !important;
+    inset: auto !important;
+    transform: none !important;
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    align-content: center !important;
+    justify-content: flex-start !important;
+
+    width: 100% !important;
+    height: auto !important;
+    min-height: 76px !important;
+    max-height: none !important;
+    max-width: 100% !important;
+    padding: 12px 24px !important;
+    margin: 0 !important;
+
+    gap: 12px 24px !important;
+
+    background: #ffffff !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid #e0e8f2 !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+  }
+
+  /* Practice logo/name */
+  :root:not([data-theme="dark"]) body
+  .app-shell.ct-nav-top[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+  .sidebar .brand {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+
+    flex: 0 0 auto !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-width: 220px !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+    text-align: left !important;
+  }
+
+  /* THE IMPORTANT FIX: force horizontal navigation */
+  :root:not([data-theme="dark"]) body
+  .app-shell.ct-nav-top[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+  .sidebar .side-nav {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    align-content: center !important;
+    justify-content: flex-start !important;
+
+    flex: 1 1 600px !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    max-width: 100% !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 6px !important;
+
+    overflow: visible !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Menu buttons */
+  :root:not([data-theme="dark"]) body
+  .app-shell.ct-nav-top[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+  .sidebar .side-nav .nav-item {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    flex: 0 0 auto !important;
+    width: auto !important;
+    height: 42px !important;
+    min-width: 0 !important;
+    max-width: none !important;
+
+    padding: 9px 12px !important;
+    margin: 0 !important;
+
+    text-align: center !important;
+    white-space: nowrap !important;
+    gap: 8px !important;
+    border-radius: 10px !important;
+  }
+
+  /* Non-active navigation stays subtle */
+  :root:not([data-theme="dark"]) body
+  .app-shell.ct-nav-top[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+  .sidebar .side-nav .nav-item:not(.nav-active):not([aria-current="page"]) {
+    background: transparent !important;
+    color: #29415f !important;
+  }
+
+  /* Active item uses BOTH practice colours */
+  :root:not([data-theme="dark"]) body
+  .app-shell.ct-nav-top[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+  .sidebar .side-nav .nav-item.nav-active {
+    background: linear-gradient(
+      115deg,
+      var(--practice-primary),
+      var(--practice-accent)
+    ) !important;
+    background-image: linear-gradient(
+      115deg,
+      var(--practice-primary),
+      var(--practice-accent)
+    ) !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+  }
+
+  /* Position appointment submenu correctly */
+  :root:not([data-theme="dark"]) body
+  .app-shell.ct-nav-top[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+  .sidebar .side-nav > div {
+    flex: 0 0 auto !important;
+    position: relative !important;
+  }
+
+  /* Hide sidebar-specific labels */
+  :root:not([data-theme="dark"]) body
+  .app-shell.ct-nav-top[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+  .sidebar .nav-heading,
+  :root:not([data-theme="dark"]) body
+  .app-shell.ct-nav-top[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+  .sidebar .sidebar-bottom {
+    display: none !important;
+  }
+
+  /* Workspace always starts beneath the navigation */
+  :root:not([data-theme="dark"]) body
+  .app-shell.ct-nav-top[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+  .workspace {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+}

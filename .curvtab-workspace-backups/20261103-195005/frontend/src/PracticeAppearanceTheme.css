@@ -1,0 +1,22 @@
+/* Scoped appearance customisation. Does not change authorization or module routes. */
+:root:not([data-theme="dark"]) .app-shell[data-practice-branded="true"] .sidebar .nav-item.nav-active,
+:root:not([data-theme="dark"]) .app-shell[data-practice-branded="true"] .sidebar .nav-item[aria-current="page"] {
+  background:var(--practice-primary,#126CE5) !important;
+  border-color:var(--practice-primary,#126CE5) !important;
+  color:#fff !important;
+}
+:root:not([data-theme="dark"]) .app-shell[data-practice-branded="true"] .primary-button {
+  background:var(--practice-primary,#126CE5) !important;
+  border-color:var(--practice-primary,#126CE5) !important;
+  color:#fff !important;
+}
+.app-shell[data-practice-branded="true"] .brand-icon {
+  background:color-mix(in srgb,var(--practice-primary) 10%,white) !important;
+  color:var(--practice-primary) !important;
+}
+.app-shell.ct-layout-compact .stats-grid {gap:10px}
+.app-shell.ct-layout-compact .stat-card {padding:14px}
+.app-shell.ct-layout-clinical .stats-grid {grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+@media (prefers-reduced-motion: reduce) {
+ .app-shell[data-practice-branded="true"] .nav-item {transition:none!important;transform:none!important}
+}

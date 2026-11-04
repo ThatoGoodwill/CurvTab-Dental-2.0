@@ -1,0 +1,85 @@
+import { useState } from 'react'
+import type { CSSProperties, FormEvent } from 'react'
+import { Palette, Save, CheckCircle2, LayoutDashboard } from 'lucide-react'
+import { apiRequest } from '../services/api'
+import type { PracticeAppearance } from '../hooks/usePracticeAppearance'
+import './AppearanceSettingsPage.css'
+
+type Props = { appearance: PracticeAppearance | null; onSaved: (value: PracticeAppearance) => void }
+const DEFAULT: PracticeAppearance = {
+  displayName: '', tagline: '', primaryColor: '#126CE5', accentColor: '#14B8A6', layoutPreset: 'Classic',
+}
+
+export default function AppearanceSettingsPage({ appearance, onSaved }: Props) {
+  const initial = appearance ?? DEFAULT
+  const [form, setForm] = useState<PracticeAppearance>(initial)
+  const [dirty, setDirty] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [saved, setSaved] = useState(false)
+  const update = (partial: Partial<PracticeAppearance>) => {
+    setForm(previous => ({ ...previous, ...partial }))
+    setDirty(true)
+    setSaved(false)
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (saving) return
+    setSaving(true); setError(''); setSaved(false)
+    try {
+      const value = await apiRequest<PracticeAppearance>('/practice/appearance', 'PUT', form)
+      onSaved(value); setDirty(false); setSaved(true)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not save appearance')
+    } finally { setSaving(false) }
+  }
+
+  const previewStyle = {
+    '--practice-primary': form.primaryColor,
+    '--practice-accent': form.accentColor,
+  } as CSSProperties
+
+  return <div className="appearance-settings">
+    <header className="page-heading"><div>
+      <div className="eyebrow">PRACTICE PERSONALIZATION</div>
+      <h1>Appearance & Workspace</h1>
+      <p>Customize the identity your team sees when they log in. These settings apply only to your practice.</p>
+    </div></header>
+    <form onSubmit={event => void submit(event)} className="appearance-settings-grid">
+      <section className="panel appearance-editor">
+        <h2><Palette size={20} /> Practice branding</h2>
+        <label>Display name<input required minLength={2} maxLength={100} value={form.displayName}
+          onChange={e => update({ displayName: e.target.value })}/></label>
+        <label>Welcome tagline<input maxLength={160} value={form.tagline}
+          onChange={e => update({ tagline: e.target.value })} placeholder="A brighter, healthier smile" /></label>
+        <div className="appearance-colors">
+          <label>Primary colour<input aria-label="Primary colour" type="color" value={form.primaryColor}
+            onChange={e => update({ primaryColor: e.target.value })}/></label>
+          <label>Accent colour<input aria-label="Accent colour" type="color" value={form.accentColor}
+            onChange={e => update({ accentColor: e.target.value })}/></label>
+        </div>
+        <label>Dashboard layout
+          <select value={form.layoutPreset} onChange={e => update({layoutPreset: e.target.value as PracticeAppearance['layoutPreset']})}>
+            <option value="Classic">Classic — spacious cards and charts</option>
+            <option value="Compact">Compact — denser dashboard cards</option>
+            <option value="Clinical">Clinical — focused clinical workspace</option>
+          </select>
+        </label>
+        <p className="appearance-note">This first release covers branding and layout presets. Secure image uploads and drag-and-drop modules are coming next.</p>
+        {error && <p role="alert" className="appearance-error">{error}</p>}
+        {saved && <p role="status" className="appearance-success"><CheckCircle2 size={17}/> Saved for this practice.</p>}
+        <button type="submit" className="primary-button" disabled={saving || !dirty}><Save size={17}/>{saving ? 'Saving…' : 'Save appearance'}</button>
+      </section>
+      <section className="panel appearance-preview" style={previewStyle}>
+        <h2><LayoutDashboard size={20}/> Live preview</h2>
+        <div className="appearance-preview-hero"><span>YOUR DENTAL PRACTICE</span>
+          <strong>{form.displayName || 'Practice Name'}</strong>
+          <p>{form.tagline || 'Welcome to your practice workspace'}</p></div>
+        <div className="appearance-preview-cards"><div>Patients</div><div>Appointments</div><div>Consultations</div></div>
+        <p>Layout: {form.layoutPreset}</p>
+        <p className="appearance-note">Your staff will receive the saved colours and display name after they open or refresh their workspace.</p>
+      </section>
+    </form>
+  </div>
+}

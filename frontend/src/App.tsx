@@ -1,8 +1,15 @@
+import WhatsAppPanel from './pages/WhatsAppPanel'
 import LiveClinicNotifications from './components/LiveClinicNotifications'
 import ClinicDashboardEnhancements from './components/ClinicDashboardEnhancements'
 import './CurvTabVisualUpgrade.css'
 import DentalChartingPage from './pages/DentalChartingPage'
 import OrthodonticsPage from './pages/OrthodonticsPage'
+import BillingLedgerPanel from './pages/BillingLedgerPanel'
+import BillingWorkspaceTabs from './pages/BillingWorkspaceTabs'
+import MedicalAidPanel from './pages/MedicalAidPanel'
+import PatientBalancesPanel from './pages/PatientBalancesPanel'
+import InvoicesPanel from './pages/InvoicesPanel'
+import FinanceOperationsPanel from './pages/FinanceOperationsPanel'
 import ReceptionCheckoutPage from './pages/ReceptionCheckoutPage'
 import { Receipt as CheckoutIcon } from 'lucide-react'
 import DentistDashboardPage from './pages/DentistDashboardPage'
@@ -15,10 +22,14 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 
 import { useAuth } from './auth/AuthContext'
+import type { CSSProperties } from 'react'
+import { usePracticeAppearance } from './hooks/usePracticeAppearance'
+import AppearanceSettingsPage from './pages/AppearanceSettingsPage'
 import { apiRequest } from './services/api'
 
-import PatientsPage from './pages/PatientsPage'
+import PatientExperiencePage from './pages/PatientExperiencePage'
 import StaffPage from './pages/StaffPage'
+import PracticeSettingsPage from './pages/PracticeSettingsPage'
 import AppointmentsPage from './pages/AppointmentsPage'
 import type { AppointmentTab } from './pages/AppointmentsPage'
 
@@ -45,12 +56,27 @@ import {
 
 import './App.css'
 
+import './ClientSoftWhiteTheme.css'
+import './ClientDashboardRecovery.css'
+import './ClientUXRepairs.css'
+import './PracticeWorkspaceV2.css'
+import './PracticeThemeFinal.css'
+import './PracticeUnifiedTheme.css'
+import './PracticeComponentTheme.css'
+import './PracticeCardsV4.css'
+import './PracticeNavigationLayoutFix.css'
+import './PracticeSlideshowSizeFix.css'
+import './PracticeLogoFit.css'
+import './PracticeBrandAlignment.css'
+import PracticeBrandMark from './auth/PracticeBrandMark'
 type Section =
   | 'Dashboard' | 'Daily Patients' | 'Consultations' | 'Patient Medical Records' | 'Checkout & Payments' | 'Dental Charting' | 'Orthodontics'
   | 'Patients'
   | 'Appointments'
+  | 'Practice Settings'
   | 'Management'
   | 'Dental Practices'
+  | 'Appearance & Workspace'
   | 'My Profile'
 
 // =========================================
@@ -240,65 +266,109 @@ type Practice = {
   isActive: boolean
 }
 
+// SuperAdmin only: the parent App controls access to this page.
+// The ASP.NET Core API also enforces SuperAdmin authorization.
 function DentalPracticesPage() {
   const [practices, setPractices] = useState<Practice[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [reloadKey, setReloadKey] = useState(0)
+  const [showForm, setShowForm] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [formError, setFormError] = useState('')
+  const [notice, setNotice] = useState('')
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    phoneNumber: '',
+    address: '',
+    adminFullName: '',
+    adminEmail: '',
+    adminTemporaryPassword: '',
+    confirmPassword: '',
+  })
+
+  function update(field: keyof typeof form, value: string) {
+    setForm((previous) => ({ ...previous, [field]: value }))
+  }
 
   useEffect(() => {
     let cancelled = false
-
     apiRequest<unknown>('/platform/practices')
-      .then((result) => {
-        if (!Array.isArray(result)) {
-          throw new Error('Unexpected practices response.')
-        }
-
-        const parsed = result.map((row: unknown) => {
-          if (!row || typeof row !== 'object') {
-            throw new Error('Invalid practice record.')
-          }
-
-          const item = row as Record<string, unknown>
-
-          if (
-            typeof item.id !== 'string' ||
-            typeof item.name !== 'string' ||
-            typeof item.isActive !== 'boolean'
-          ) {
+      .then((response) => {
+        if (!Array.isArray(response)) throw new Error('Unexpected practices response.')
+        const result: Practice[] = response.map((value: unknown) => {
+          if (!value || typeof value !== 'object') throw new Error('Invalid practice record.')
+          const row = value as Record<string, unknown>
+          if (typeof row.id !== 'string' ||
+              typeof row.name !== 'string' ||
+              typeof row.isActive !== 'boolean') {
             throw new Error('Incomplete practice record.')
           }
-
-          return {
-            id: item.id,
-            name: item.name,
-            isActive: item.isActive,
-          }
+          return { id: row.id, name: row.name, isActive: row.isActive }
         })
-
-        if (!cancelled) {
-          setPractices(parsed)
-          setError('')
-        }
+        if (!cancelled) { setPractices(result); setError('') }
       })
       .catch((cause: unknown) => {
-        if (!cancelled) {
-          setError(
-            cause instanceof Error
-              ? cause.message
-              : 'Unable to load practices.'
-          )
-        }
+        if (!cancelled) setError(cause instanceof Error ? cause.message : 'Unable to load practices.')
       })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-
-    return () => {
-      cancelled = true
-    }
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
   }, [reloadKey])
+
+  async function registerPractice(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (saving) return
+    setFormError('')
+    setNotice('')
+    const trimmedName = form.name.trim()
+    const fullName = form.adminFullName.trim()
+    const email = form.adminEmail.trim().toLowerCase()
+    if (!trimmedName || !fullName || !email) {
+      setFormError('Practice name, administrator name and administrator email are required.')
+      return
+    }
+    if (form.adminTemporaryPassword.length < 10 ||
+        !/[A-Z]/.test(form.adminTemporaryPassword) ||
+        !/[a-z]/.test(form.adminTemporaryPassword) ||
+        !/[0-9]/.test(form.adminTemporaryPassword)) {
+      setFormError('Temporary password needs at least 10 characters, upper/lowercase letters and a digit.')
+      return
+    }
+    if (form.adminTemporaryPassword !== form.confirmPassword) {
+      setFormError('Temporary passwords do not match.')
+      return
+    }
+    setSaving(true)
+    try {
+      await apiRequest<unknown>('/platform/practices', 'POST', {
+        name: trimmedName,
+        email: form.email.trim() || null,
+        phoneNumber: form.phoneNumber.trim() || null,
+        address: form.address.trim() || null,
+        adminFullName: fullName,
+        adminEmail: email,
+        adminTemporaryPassword: form.adminTemporaryPassword,
+      })
+      setNotice(`${trimmedName} created. The new administrator must change their temporary password at first sign-in.`)
+      setForm({ name: '', email: '', phoneNumber: '', address: '', adminFullName: '', adminEmail: '', adminTemporaryPassword: '', confirmPassword: '' })
+      setShowForm(false)
+      setLoading(true)
+      setReloadKey((value) => value + 1)
+    } catch (cause) {
+      setFormError(cause instanceof Error ? cause.message : 'Unable to register the practice.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const fieldStyle: React.CSSProperties = {
+    width: '100%', padding: '12px 13px', border: '1px solid #cfdded',
+    borderRadius: 11, background: '#fff', color: '#213653', boxSizing: 'border-box',
+  }
+  const labelStyle: React.CSSProperties = {
+    display: 'flex', flexDirection: 'column', gap: 7, fontWeight: 600, fontSize: 13,
+  }
 
   return (
     <>
@@ -306,41 +376,102 @@ function DentalPracticesPage() {
         <div>
           <div className="eyebrow">SAAS PLATFORM</div>
           <h1>Dental Practices</h1>
-          <p>Registered practices on CurvTab Dental.</p>
+          <p>Register and manage dental practices on CurvTab Dental.</p>
         </div>
-
-        <button
-          type="button"
-          className="secondary-button"
-          onClick={() => {
-            setLoading(true)
-            setReloadKey((value) => value + 1)
-          }}
-        >
-          <RefreshCw size={17} />
-          Refresh
-        </button>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button type="button" className="secondary-button" onClick={() => {
+            setLoading(true); setReloadKey((value) => value + 1)
+          }}>
+            <RefreshCw size={17} /> Refresh
+          </button>
+          <button type="button" className="primary-button" aria-expanded={showForm}
+            onClick={() => { setShowForm((value) => !value); setFormError('') }}>
+            {showForm ? 'Close registration' : '+ Register Practice'}
+          </button>
+        </div>
       </div>
+
+      {notice && <section className="panel" role="status" style={{ borderColor: '#a5dfc2', marginBottom: 18 }}>
+        <p style={{ color: '#176b42', margin: 0 }}>{notice}</p>
+      </section>}
+
+      {showForm && (
+        <section className="panel" style={{ marginBottom: 20 }}>
+          <div className="panel-header">
+            <div><h2>Register a practice</h2><p>Create a practice and its first PracticeAdmin account.</p></div>
+            <Building2 size={21} />
+          </div>
+          <form onSubmit={(event) => void registerPractice(event)} style={{ display: 'grid', gap: 18 }}>
+            <h3 style={{ margin: 0 }}>Practice details</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 15 }}>
+              <label style={labelStyle}>Practice name *
+                <input style={fieldStyle} required maxLength={200} value={form.name}
+                  onChange={(event) => update('name', event.target.value)} placeholder="Sunrise Dental Clinic" />
+              </label>
+              <label style={labelStyle}>Practice contact email
+                <input style={fieldStyle} type="email" maxLength={256} value={form.email}
+                  onChange={(event) => update('email', event.target.value)} placeholder="contact@example.com" />
+              </label>
+              <label style={labelStyle}>Contact number
+                <input style={fieldStyle} type="tel" maxLength={40} value={form.phoneNumber}
+                  onChange={(event) => update('phoneNumber', event.target.value)} placeholder="011 000 1234" />
+              </label>
+              <label style={labelStyle}>Address
+                <input style={fieldStyle} maxLength={500} value={form.address}
+                  onChange={(event) => update('address', event.target.value)} placeholder="City and street address" />
+              </label>
+            </div>
+            <h3 style={{ margin: '2px 0 0' }}>First Practice Administrator</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 15 }}>
+              <label style={labelStyle}>Administrator full name *
+                <input style={fieldStyle} required maxLength={200} value={form.adminFullName}
+                  onChange={(event) => update('adminFullName', event.target.value)} placeholder="Dr Test Admin" />
+              </label>
+              <label style={labelStyle}>Administrator login email *
+                <input style={fieldStyle} required type="email" maxLength={256} value={form.adminEmail}
+                  onChange={(event) => update('adminEmail', event.target.value)} placeholder="admin@example.com" />
+              </label>
+              <label style={labelStyle}>Temporary password *
+                <input style={fieldStyle} required type="password" minLength={10} autoComplete="new-password"
+                  value={form.adminTemporaryPassword}
+                  onChange={(event) => update('adminTemporaryPassword', event.target.value)} />
+              </label>
+              <label style={labelStyle}>Confirm temporary password *
+                <input style={fieldStyle} required type="password" minLength={10} autoComplete="new-password"
+                  value={form.confirmPassword}
+                  onChange={(event) => update('confirmPassword', event.target.value)} />
+              </label>
+            </div>
+            <p style={{ margin: 0, fontSize: 13, color: '#60748e' }}>
+              The administrator will be required to change their temporary password on first login.
+              Secure email invitations can replace temporary passwords in a later release.
+            </p>
+            {formError && <p role="alert" style={{ color: '#ad2431', margin: 0 }}>{formError}</p>}
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <button className="primary-button" type="submit" disabled={saving}>
+                {saving ? 'Registering...' : 'Create Practice'}
+              </button>
+              <button className="secondary-button" type="button" disabled={saving} onClick={() => setShowForm(false)}>
+                Cancel
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
 
       <section className="panel">
         <div className="panel-header">
           <h2>Practice Directory</h2>
           <Building2 size={21} />
         </div>
-
         {loading && <p>Loading practices...</p>}
         {error && <p role="alert">{error}</p>}
-
-        {!loading && !error && practices.length === 0 && (
-          <p>No practices registered yet.</p>
-        )}
-
+        {!loading && !error && practices.length === 0 && <p>No practices registered yet.</p>}
         {!loading && !error && (
           <div className="check-list">
             {practices.map((practice) => (
               <div key={practice.id}>
-                <strong>{practice.name}</strong>
-                {' — '}
+                <strong>{practice.name}</strong>{' — '}
                 {practice.isActive ? 'Active' : 'Inactive'}
               </div>
             ))}
@@ -357,10 +488,41 @@ function DentalPracticesPage() {
 
 export default function App() {
   const { user, logout } = useAuth()
+  const { appearance, setAppearance } = usePracticeAppearance(user?.practiceId)
+  const isModuleVisible = (name: string) => !appearance || ![
+    'Patients','Appointments','Daily Patients','Consultations',
+    'Checkout & Payments','Dental Charting','Orthodontics'
+  ].includes(name) || appearance.enabledModules.includes(name)
+
+  // Share the authenticated practice theme with notification portals.
+  useEffect(() => {
+    const root = document.documentElement
+
+    if (!appearance || !user?.practiceId) {
+      root.removeAttribute('data-practice-theme')
+      return
+    }
+
+    root.dataset.practiceTheme = 'active'
+    root.style.setProperty('--ct-tenant-primary', appearance.primaryColor)
+    root.style.setProperty('--ct-tenant-accent', appearance.accentColor)
+
+    return () => {
+      root.removeAttribute('data-practice-theme')
+      root.style.removeProperty('--ct-tenant-primary')
+      root.style.removeProperty('--ct-tenant-accent')
+    }
+  }, [appearance, user?.practiceId])
+
+  const practiceThemeStyle = appearance ? ({
+    '--practice-primary': appearance.primaryColor,
+    '--practice-accent': appearance.accentColor,
+  } as CSSProperties) : undefined
 
   const [section, setSection] = useState<Section>('Dashboard')
   const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null)
   const [medicalRecordPatientId, setMedicalRecordPatientId] = useState<string | null>(null)
+  const [chartPatientId, setChartPatientId] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
 
   // Sidebar Appointments submenu.
@@ -412,8 +574,10 @@ export default function App() {
         ...(canManageStaff
           ? [
               { name: 'Management' as Section, icon: Settings },
+              { name: 'Practice Settings' as Section, icon: Settings },
             ]
           : []),
+        ...(canManageStaff ? [{ name: 'Appearance & Workspace' as Section, icon: Settings }] : []),
         { name: 'My Profile' as Section, icon: UserCircle },
       ]
 
@@ -451,7 +615,9 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${appearance ? `ct-layout-${appearance.layoutPreset.toLowerCase()} ${appearance.navigationMode === 'Topbar' ? 'ct-nav-top' : 'ct-nav-sidebar'}` : ''}`}
+      data-practice-branded={appearance ? 'true' : undefined}
+      style={practiceThemeStyle}>
 
       {/* MOBILE OVERLAY */}
       {menuOpen && (
@@ -471,12 +637,17 @@ export default function App() {
       >
         <div className="brand">
           <div className="brand-icon">
-            <Activity size={25} />
+            {/* WORKSPACE LOGO FIX */}
+            <PracticeBrandMark
+              src={appearance?.logoUrl || appearance?.badgeUrl}
+              alt={appearance?.displayName || user?.practiceName || 'Dental practice'}
+              fallback={<Activity size={25} />}
+            />
           </div>
 
           <div>
-            <strong>CurvTab Dental</strong>
-            <span>Practice Management</span>
+            <strong>{appearance?.displayName || (user?.practiceName ?? 'CurvTab Dental')}</strong>
+            <span></span>
           </div>
         </div>
 
@@ -497,7 +668,7 @@ export default function App() {
           className="side-nav"
           aria-label="Main navigation"
          style={{ display: 'flex', flexDirection: 'column' }}>
-          {navigation.map((item) => {
+          {navigation.filter(item => isModuleVisible(item.name)).map((item) => {
             const Icon = item.icon
 
             if (item.name === 'Appointments') {
@@ -596,7 +767,7 @@ export default function App() {
               </button>
             )
           })}
-          {role === 'Dentist' && (
+          {role === 'Dentist' && isModuleVisible('Daily Patients') && (
             <button
               type="button"
               className={section === 'Daily Patients' ? 'nav-item nav-active' : 'nav-item'}
@@ -606,21 +777,23 @@ export default function App() {
               <span>Daily Patients</span>
             </button>
           )}
-          {role === 'Dentist' && (
-            <>
-              <button type="button"
-                className={section === 'Consultations' ? 'nav-item nav-active' : 'nav-item'}
-                onClick={() => navigate('Consultations')}>
-                <Stethoscope size={19} /> <span>Consultations</span>
-              </button>
-              <button type="button"
-                className={section === 'Patient Medical Records' ? 'nav-item nav-active' : 'nav-item'}
-                onClick={() => navigate('Patient Medical Records')}>
-                <DailyPatientsIcon size={19} /> <span>Patient Medical Records</span>
-              </button>
-            </>
-          )}
-          {(role === 'Receptionist' || role === 'PracticeAdmin') && (
+          
+{role === 'Dentist' && isModuleVisible('Consultations') && (
+  <button
+    type="button"
+    className={
+      section === 'Consultations'
+        ? 'nav-item nav-active'
+        : 'nav-item'
+    }
+    onClick={() => navigate('Consultations')}
+  >
+    <Stethoscope size={19} />
+    <span>Consultations</span>
+  </button>
+)}
+
+          {(role === 'Receptionist' || role === 'PracticeAdmin') && isModuleVisible('Checkout & Payments') && (
             <button type="button"
               className={section === 'Checkout & Payments' ? 'nav-item nav-active' : 'nav-item'}
               onClick={() => navigate('Checkout & Payments')}>
@@ -629,16 +802,16 @@ export default function App() {
           )}
           {role === 'Dentist' && (
             <>
-              <button type="button"
+              {isModuleVisible('Dental Charting') && <button type="button"
                 className={section === 'Dental Charting' ? 'nav-item nav-active' : 'nav-item'}
                 onClick={() => navigate('Dental Charting')}>
                 <Activity size={19} /><span>Dental Charting</span>
-              </button>
-              <button type="button"
+              </button>}
+              {isModuleVisible('Orthodontics') && <button type="button"
                 className={section === 'Orthodontics' ? 'nav-item nav-active' : 'nav-item'}
                 onClick={() => navigate('Orthodontics')}>
                 <Stethoscope size={19} /><span>Orthodontics</span>
-              </button>
+              </button>}
             </>
           )}
         </nav>
@@ -647,12 +820,12 @@ export default function App() {
           <div className="security-note">
             <ShieldCheck size={20} />
             <div>
-              <strong>Secure foundation</strong>
-              <span>Authenticated practice access</span>
+              {/* <strong>Secure foundation</strong>
+              <span>Authenticated practice access</span> */}
             </div>
           </div>
 
-          <p>CurvTab Dental 2.0</p>
+          {/* <p>CurvTab Dental 2.0</p> */}
         </div>
       </aside>
 
@@ -907,7 +1080,10 @@ export default function App() {
 
           {/* PATIENTS */}
           {section === 'Patients' && canViewPatients && (
-            <PatientsPage />
+            <PatientExperiencePage role={role} onOpenAppointments={() => openAppointmentTab('Scheduling')} onOpenChart={(patientId) => {
+              setChartPatientId(patientId)
+              navigate('Dental Charting')
+            }} />
           )}
 
           {/* APPOINTMENTS + EXPANDABLE WORKSPACE */}
@@ -916,6 +1092,10 @@ export default function App() {
               tab={appointmentTab}
               onTabChange={setAppointmentTab}
               onOpenPatients={() => navigate('Patients')}
+              onOpenConsultation={(appointmentId) => {
+                setSelectedConsultationId(appointmentId)
+                navigate('Consultations')
+              }}
               role={role}
             />
           )}
@@ -933,12 +1113,45 @@ export default function App() {
           {/* PHASE 3: RECEPTIONIST CHECKOUT */}
           {section === 'Checkout & Payments' &&
             (role === 'Receptionist' || role === 'PracticeAdmin') && (
-              <ReceptionCheckoutPage />
+              <>
+                <BillingWorkspaceTabs
+                  checkout={<ReceptionCheckoutPage />}
+                  medicalAid={<MedicalAidPanel
+                    canManage={role === 'PracticeAdmin'}
+                  />}
+                  ledger={<BillingLedgerPanel />}
+                  balances={<PatientBalancesPanel />}
+                  invoices={
+                    <InvoicesPanel
+                      canIssue={role === 'PracticeAdmin'}
+                    />
+                  }
+                  expenses={
+                    <FinanceOperationsPanel
+                      canManage={role === 'PracticeAdmin'}
+                    />
+                  }
+                />
+              </>
           )}
 
           {/* PHASE 4/5: DENTIST SPECIALTIES */}
-          {section === 'Dental Charting' && role === 'Dentist' && <DentalChartingPage />}
+          {section === 'Dental Charting' && role === 'Dentist' && <DentalChartingPage initialPatientId={chartPatientId} />}
           {section === 'Orthodontics' && role === 'Dentist' && <OrthodonticsPage />}
+
+          {/* PRACTICE SETTINGS — ONLY PracticeAdmin */}
+          {section === 'Practice Settings' && canManageStaff && (
+            <>
+              <PracticeSettingsPage onOpenStaff={() => navigate('Management')} />
+              <WhatsAppPanel />
+            </>
+          )}
+
+          {/* PRACTICE ADMIN: WHITE-LABEL APPEARANCE */}
+          {section === 'Appearance & Workspace' && isPracticeAdmin && appearance && (
+            <AppearanceSettingsPage key={user?.practiceId ?? 'practice'}
+              appearance={appearance} onSaved={setAppearance} />
+          )}
 
           {/* PROFILE FOR ALL ROLES */}
           {section === 'My Profile' && (
@@ -956,6 +1169,8 @@ export default function App() {
             (section === 'Patients' && !canViewPatients) ||
             (section === 'Appointments' && !canViewPatients) ||
             (section === 'Management' && !canManageStaff) ||
+            (section === 'Practice Settings' && !canManageStaff) ||
+            (section === 'Appearance & Workspace' && !isPracticeAdmin) ||
             (section === 'Dental Practices' && !isSuperAdmin)
           ) && (
             <section className="panel empty-panel">
