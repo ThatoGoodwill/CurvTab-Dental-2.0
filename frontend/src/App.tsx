@@ -19,6 +19,7 @@ import FinanceOperationsPanel from './pages/FinanceOperationsPanel'
 import ReceptionCheckoutPage from './pages/ReceptionCheckoutPage'
 import { Receipt as CheckoutIcon } from 'lucide-react'
 import DentistDashboardPage from './pages/DentistDashboardPage'
+import OverviewDashboardPage from './pages/OverviewDashboardPage'
 import DentistConsultationsPage from './pages/DentistConsultationsPage'
 import DentistMedicalRecordsPage from './pages/DentistMedicalRecordsPage'
 import DailyPatientsPage from './pages/DailyPatientsPage'
@@ -678,6 +679,10 @@ export default function App() {
 
   const canManageStaff = isPracticeAdmin
 
+  // The new overview dashboard is for front-desk and practice-admin users.
+  const showOverview =
+    canViewPatients && (isPracticeAdmin || role === 'Receptionist')
+
   // Receptionist has exactly four top-level sections.
   const navigation = isSuperAdmin
     ? [
@@ -1012,6 +1017,11 @@ export default function App() {
 
             <div className="avatar">{initials}</div>
 
+            <div className="topbar-user">
+              <strong>{user?.fullName}</strong>
+              <span>{user?.role}</span>
+            </div>
+
             <button
               type="button"
               className="secondary-button"
@@ -1044,7 +1054,17 @@ export default function App() {
               onOpenDailyPatients={() => navigate('Daily Patients')}
             />
           )}
-          {section === 'Dashboard' && role !== 'Dentist' && (
+          {section === 'Dashboard' && showOverview && (
+            <OverviewDashboardPage
+              fullName={user?.fullName ?? ''}
+              practiceName={user?.practiceName ?? null}
+              onNewAppointment={() => openAppointmentTab('Scheduling')}
+              onOpenQueue={() => openAppointmentTab('In Queue')}
+              onOpenCheckout={() => navigate('Checkout & Payments')}
+              onOpenPatients={() => navigate('Patients')}
+            />
+          )}
+          {section === 'Dashboard' && role !== 'Dentist' && !showOverview && (
             <>
               <div className="page-heading">
                 <div>
