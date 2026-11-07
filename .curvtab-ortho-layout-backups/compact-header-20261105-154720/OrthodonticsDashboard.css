@@ -1,0 +1,915 @@
+
+/* CurvTab Dental — Orthodontics Dashboard V1 */
+
+.ct-ortho-hub {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+
+.ct-ortho-hub-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 7px;
+  border-radius: 12px;
+  background: #f0f5fa;
+}
+
+.ct-ortho-hub-tabs button {
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #52657f;
+  padding: 10px 18px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ct-ortho-hub-tabs button.is-active {
+  background: linear-gradient(110deg, #0ea5e9, #1876ed);
+  color: #fff;
+  box-shadow: 0 4px 14px #0787e544;
+}
+
+.ct-ortho-hub-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ct-ortho-hub-kpis article,
+.ct-ortho-hub-card {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #d7e2ef;
+  background: #fff;
+  border-radius: 13px;
+}
+
+.ct-ortho-hub-kpis article {
+  display: grid;
+  gap: 10px;
+}
+
+.ct-ortho-hub-kpis span,
+.ct-ortho-hub-kpis small {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.ct-ortho-hub-kpis strong {
+  font-size: clamp(24px, 3vw, 32px);
+  line-height: 1.1;
+  color: #0f2748;
+}
+
+.ct-ortho-hub-panels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.ct-ortho-hub-card {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+
+.ct-ortho-hub-panels .ct-ortho-hub-card {
+  min-height: 215px;
+}
+
+.ct-ortho-hub-card h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.ct-ortho-hub-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.ct-ortho-hub-card-head span {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.ct-ortho-hub-empty {
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 28px 12px;
+  border: 1px dashed #b9c9d9;
+  border-radius: 10px;
+  color: #64748b;
+  font-size: 13px;
+  text-align: center;
+}
+
+.ct-ortho-hub-items {
+  display: grid;
+  gap: 10px;
+}
+
+.ct-ortho-hub-items button,
+.ct-ortho-hub-items article {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d7e2ef;
+  border-radius: 9px;
+  background: transparent;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+
+.ct-ortho-hub-items button {
+  cursor: pointer;
+}
+
+.ct-ortho-hub-items span,
+.ct-ortho-hub-items p {
+  margin: 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.ct-ortho-hub-card label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ct-ortho-hub-card select {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #94a3b8;
+  border-radius: 9px;
+  background: transparent;
+  color: inherit;
+}
+
+html[data-theme="dark"] .ct-ortho-hub-tabs {
+  background: #0f1929;
+}
+
+html[data-theme="dark"] .ct-ortho-hub-tabs button {
+  color: #b6c6da;
+}
+
+html[data-theme="dark"] .ct-ortho-hub-tabs button.is-active {
+  color: #fff;
+}
+
+html[data-theme="dark"] .ct-ortho-hub-kpis article,
+html[data-theme="dark"] .ct-ortho-hub-card {
+  background: #151f31;
+  border-color: #293950;
+  color: #f1f5f9;
+}
+
+html[data-theme="dark"] .ct-ortho-hub-kpis strong {
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] .ct-ortho-hub-kpis span,
+html[data-theme="dark"] .ct-ortho-hub-kpis small,
+html[data-theme="dark"] .ct-ortho-hub-card-head span,
+html[data-theme="dark"] .ct-ortho-hub-empty {
+  color: #aebed2;
+}
+
+html[data-theme="dark"] .ct-ortho-hub-empty {
+  border-color: #34445a;
+}
+
+html[data-theme="dark"] .ct-ortho-hub-items button,
+html[data-theme="dark"] .ct-ortho-hub-items article {
+  border-color: #34445a;
+}
+
+html[data-theme="dark"] .ct-ortho-hub-card select {
+  background: #111c2d;
+  border-color: #405571;
+  color: #f8fafc;
+}
+
+@media (max-width: 900px) {
+  .ct-ortho-hub-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ct-ortho-hub-panels {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .ct-ortho-hub-kpis {
+    grid-template-columns: 1fr;
+  }
+  .ct-ortho-hub-tabs button {
+    padding: 9px 11px;
+  }
+}
+
+
+/* CurvTab Orthodontics Dashboard V2 */
+.ct-ortho-primary-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ct-ortho-primary-actions .primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border: 0;
+  border-radius: 9px;
+  background: linear-gradient(110deg, #0ea5e9, #1876ed);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ct-ortho-active-top {
+  width: 100%;
+}
+
+.ct-ortho-hub-items button:hover {
+  border-color: #0ea5e9;
+  background: rgba(14,165,233,.07);
+}
+
+@media (max-width: 640px) {
+  .ct-ortho-primary-actions .primary-button {
+    width: 100%;
+  }
+}
+
+
+/* CT_ORTHO_THEME_BUTTONS_V3 */
+
+/* Three remaining KPI cards */
+.ct-ortho-hub-kpis {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* Selected navigation tab follows practice branding */
+.ct-ortho-hub-tabs button.is-active {
+  background: linear-gradient(
+    110deg,
+    var(--practice-primary, #c79500),
+    var(--practice-accent, #e5a900)
+  ) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px
+    color-mix(
+      in srgb,
+      var(--practice-primary, #c79500) 25%,
+      transparent
+    ) !important;
+}
+
+/* New Case button follows the same practice branding */
+.ct-ortho-primary-actions .primary-button {
+  background: linear-gradient(
+    110deg,
+    var(--practice-primary, #c79500),
+    var(--practice-accent, #e5a900)
+  ) !important;
+  color: #ffffff !important;
+}
+
+/* Consistent interactive states */
+.ct-ortho-hub-tabs button:hover:not(.is-active) {
+  background: color-mix(
+    in srgb,
+    var(--practice-primary, #c79500) 12%,
+    transparent
+  );
+}
+
+.ct-ortho-hub-tabs button:focus-visible,
+.ct-ortho-primary-actions .primary-button:focus-visible {
+  outline: 3px solid var(--practice-accent, #e5a900);
+  outline-offset: 3px;
+}
+
+/* Theme-coloured case interactions */
+.ct-ortho-hub-items button:hover {
+  border-color: var(--practice-primary, #c79500);
+  background: color-mix(
+    in srgb,
+    var(--practice-primary, #c79500) 8%,
+    transparent
+  );
+}
+
+/* Responsive layout */
+@media (max-width: 800px) {
+  .ct-ortho-hub-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .ct-ortho-hub-kpis {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* CT_ORTHO_COMMAND_CENTRE_V1 */
+
+.ct-command {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+
+.ct-command-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.ct-command-eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .09em;
+  color: var(--practice-primary, #137ebc);
+}
+
+.ct-command-intro h2 {
+  margin: 6px 0;
+  font-size: clamp(21px, 2.5vw, 28px);
+}
+
+.ct-command-intro p,
+.ct-command-description {
+  color: #74869a;
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.ct-command-patient {
+  display: grid;
+  grid-template-columns: auto minmax(160px, 1fr);
+  align-items: center;
+  gap: 9px 16px;
+  padding: 15px 18px;
+  border: 1px solid #d5e1ee;
+  background: #fff;
+  border-radius: 13px;
+}
+
+.ct-command-patient label {
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.ct-command-patient select {
+  width: 100%;
+  border: 1px solid #c5d6e8;
+  background: transparent;
+  color: inherit;
+  border-radius: 9px;
+  padding: 10px 12px;
+}
+
+.ct-command-patient > span {
+  grid-column: 2;
+  font-size: 11px;
+  color: #74869a;
+}
+
+.ct-command-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.ct-command-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px;
+  border: 1px solid #d5e1ee;
+  border-radius: 15px;
+  background: #fff;
+}
+
+.ct-command-card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ct-command-card-title > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ct-command-card-title h3 {
+  font-size: 16px;
+  margin: 0;
+}
+
+.ct-command-symbol {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: color-mix(
+    in srgb,
+    var(--practice-primary, #137ebc) 12%,
+    transparent
+  );
+  color: var(--practice-primary, #137ebc);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ct-command-count {
+  color: #74869a;
+  font-size: 12px;
+}
+
+.ct-command-empty {
+  display: grid;
+  place-items: center;
+  flex: 1;
+  min-height: 130px;
+  padding: 18px;
+  border: 1px dashed #c4d5e5;
+  border-radius: 10px;
+  color: #74869a;
+  font-size: 13px;
+  text-align: center;
+}
+
+.ct-command-list {
+  display: grid;
+  gap: 9px;
+}
+
+.ct-command-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 12px;
+  border: 1px solid #d5e1ee;
+  background: transparent;
+  color: inherit;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.ct-command-list-item > div {
+  display: grid;
+  gap: 5px;
+}
+
+.ct-command-list-item span,
+.ct-command-list-item time {
+  color: #74869a;
+  font-size: 12px;
+}
+
+.ct-command-link {
+  align-self: flex-start;
+  border: 0;
+  padding: 6px 0;
+  background: transparent;
+  color: var(--practice-primary, #137ebc);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.ct-command-attention {
+  display: grid;
+  gap: 10px;
+}
+
+.ct-command-attention-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px;
+  border: 1px solid #d5e1ee;
+  border-radius: 10px;
+}
+
+.ct-command-attention-row > div {
+  display: grid;
+  gap: 5px;
+}
+
+.ct-command-attention-row strong {
+  font-size: 13px;
+}
+
+.ct-command-attention-row small {
+  font-size: 11px;
+  color: #74869a;
+}
+
+.ct-command-attention-row > span {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-weight: 800;
+  background: color-mix(
+    in srgb,
+    var(--practice-primary, #137ebc) 10%,
+    transparent
+  );
+}
+
+.ct-command-activity-list {
+  display: grid;
+  gap: 12px;
+}
+
+.ct-command-activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 15px;
+  border: 1px solid #d5e1ee;
+  border-radius: 11px;
+}
+
+.ct-command-activity-dot {
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--practice-primary, #137ebc);
+}
+
+.ct-command-activity-item > div:last-child {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.ct-command-activity-item p {
+  margin: 0;
+  font-size: 13px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ct-command-activity-item small {
+  color: #74869a;
+}
+
+html[data-theme="dark"] .ct-command-card,
+html[data-theme="dark"] .ct-command-patient {
+  background: #172236;
+  border-color: #32445e;
+  color: #f1f5f9;
+}
+
+html[data-theme="dark"] .ct-command-list-item,
+html[data-theme="dark"] .ct-command-attention-row,
+html[data-theme="dark"] .ct-command-activity-item {
+  border-color: #32445e;
+}
+
+html[data-theme="dark"] .ct-command-patient select {
+  border-color: #405875;
+  background: #111b2d;
+  color: #f1f5f9;
+}
+
+html[data-theme="dark"] .ct-command-empty {
+  border-color: #405875;
+}
+
+html[data-theme="dark"] .ct-command-description,
+html[data-theme="dark"] .ct-command-empty,
+html[data-theme="dark"] .ct-command-count,
+html[data-theme="dark"] .ct-command-attention-row small,
+html[data-theme="dark"] .ct-command-activity-item small,
+html[data-theme="dark"] .ct-command-patient > span,
+html[data-theme="dark"] .ct-command-list-item span,
+html[data-theme="dark"] .ct-command-list-item time {
+  color: #b1c2d7;
+}
+
+@media (max-width: 850px) {
+  .ct-command-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 540px) {
+  .ct-command-patient {
+    grid-template-columns: 1fr;
+  }
+
+  .ct-command-patient > span {
+    grid-column: 1;
+  }
+
+  .ct-command-card {
+    padding: 16px;
+  }
+}
+
+
+/* CT_ORTHO_CASE_CARDS_V1 */
+
+.ct-case-dashboard {
+  display: grid;
+  gap: 22px;
+  min-width: 0;
+}
+
+.ct-case-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.ct-case-toolbar h2 {
+  font-size: 22px;
+  margin: 0 0 6px;
+}
+
+.ct-case-toolbar p {
+  margin: 0;
+  font-size: 13px;
+  opacity: .75;
+}
+
+.ct-case-total {
+  border: 1px solid #b7c9dc;
+  border-radius: 30px;
+  padding: 8px 13px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.ct-case-patient-filter {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.ct-case-patient-filter label {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.ct-case-patient-filter select {
+  flex: 1;
+  min-width: 180px;
+  padding: 12px;
+  border: 1px solid #c5d4e5;
+  border-radius: 9px;
+  background: transparent;
+  color: inherit;
+}
+
+.ct-case-open-patient,
+.ct-case-financials {
+  padding: 11px 16px;
+  border: 1px solid #b5c7da;
+  background: transparent;
+  color: inherit;
+  border-radius: 9px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ct-case-open-patient:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.ct-case-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    3, minmax(0, 1fr)
+  );
+  gap: 18px;
+}
+
+.ct-case-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 22px;
+  border: 1px solid #d4e0ed;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.ct-case-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ct-case-card-header h3 {
+  font-size: 16px;
+  margin: 0 0 7px;
+  overflow-wrap: anywhere;
+}
+
+.ct-case-card-header p {
+  font-size: 12px;
+  opacity: .7;
+  margin: 0;
+}
+
+.ct-case-status {
+  padding: 6px 9px;
+  border-radius: 20px;
+  background: #e8edf5;
+  color: #42536a;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.ct-case-status-active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.ct-case-status-planning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.ct-case-status-paused {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.ct-case-status-completed {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.ct-case-card-title {
+  display: grid;
+  gap: 7px;
+}
+
+.ct-case-card-title strong {
+  font-size: 14px;
+}
+
+.ct-case-card-title p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  opacity: .7;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ct-case-card-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  padding: 17px;
+  background: #f3f7fb;
+  border-radius: 11px;
+}
+
+.ct-case-card-details > div {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ct-case-card-details small {
+  color: #74869a;
+  font-size: 10px;
+  letter-spacing: .05em;
+}
+
+.ct-case-card-details strong {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.ct-case-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+
+.ct-case-open {
+  padding: 11px 17px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--practice-primary, #147dd1);
+  color: #ffffff;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.ct-case-empty {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 48px 20px;
+  border: 1px dashed #c5d5e5;
+  border-radius: 14px;
+  text-align: center;
+}
+
+.ct-case-empty h3,
+.ct-case-empty p {
+  margin: 0;
+}
+
+html[data-theme="dark"] .ct-case-card {
+  background: #172236;
+  border-color: #33445e;
+  color: #f1f5f9;
+}
+
+html[data-theme="dark"] .ct-case-card-details {
+  background: #101a2b;
+}
+
+html[data-theme="dark"] .ct-case-card-details small {
+  color: #aebed2;
+}
+
+html[data-theme="dark"] .ct-case-patient-filter select {
+  background: #172236;
+  border-color: #33445e;
+}
+
+html[data-theme="dark"] .ct-case-total,
+html[data-theme="dark"] .ct-case-empty,
+html[data-theme="dark"] .ct-case-financials,
+html[data-theme="dark"] .ct-case-open-patient {
+  border-color: #33445e;
+}
+
+@media (max-width: 1200px) {
+  .ct-case-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .ct-case-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .ct-case-card {
+    padding: 16px;
+  }
+
+  .ct-case-card-header {
+    flex-wrap: wrap;
+  }
+}

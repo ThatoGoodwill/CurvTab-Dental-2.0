@@ -1,0 +1,33 @@
+/* Patient-specific medical record cards. Existing patient colours retained. */
+.ct-medical-shell { color:#203653; min-width:0; }
+.ct-medical-heading { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:15px; margin:0 0 17px; }
+.ct-medical-heading h2 { margin:5px 0; font-size:23px; letter-spacing:-.025em; }
+.ct-medical-heading p { color:#687f9c; font-size:13px; margin:0; }
+.ct-medical-heading .primary-button,.ct-medical-heading .secondary-button,.ct-medical-actions button { display:flex; align-items:center; gap:8px; }
+.ct-medical-label { display:flex; gap:7px; align-items:center; color:#1269c7; font-size:11px; letter-spacing:.12em; font-weight:800; }
+.ct-medical-privacy { display:flex; align-items:center; gap:9px; padding:12px 14px; border:1px solid #dceafb; background:#f4f9ff; border-radius:12px; color:#315b87; font-size:12px; margin-bottom:20px; }
+.ct-medical-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.ct-medical-card { display:flex; flex-direction:column; gap:14px; min-width:0; padding:21px; border-radius:17px; border:1px solid #e0eaf6; background:#fff; box-shadow:0 6px 20px rgba(24,55,99,.045); transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease; }
+.ct-medical-card:hover { transform:translateY(-4px); border-color:#a6ccef; box-shadow:0 15px 32px rgba(34,78,137,.11); }
+.ct-medical-card-head { display:flex; align-items:center; gap:12px; }
+.ct-medical-card-head strong { color:#24405e; font-size:15px; }
+.ct-medical-icon { display:grid; place-items:center; width:43px; height:43px; flex-shrink:0; border:1px solid #d7eafa; color:#096dcb; background:#eff7ff; border-radius:13px; }
+.ct-medical-card:nth-child(2) .ct-medical-icon { color:#6c55cf; background:#f3f0ff; border-color:#e4ddff; }
+.ct-medical-card:nth-child(3) .ct-medical-icon { color:#068d7a; background:#e8faf5; border-color:#cef1e7; }
+.ct-medical-card:nth-child(4) .ct-medical-icon { color:#bd780c; background:#fff7e7; border-color:#f8e8c5; }
+.ct-medical-card:nth-child(5) .ct-medical-icon { color:#b95570; background:#fff0f4; border-color:#f6dce5; }
+.ct-medical-value { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; font-size:14px; line-height:1.65; font-weight:600; color:#29425f; }
+.ct-medical-empty { margin:0; color:#7b8fa8; font-size:13px; font-style:italic; }
+.ct-medical-card small { display:block; margin-top:auto; color:#7b8ca3; font-size:11px; line-height:1.5; }
+.ct-medical-edit { margin-top:12px; }
+.ct-medical-edit-card { cursor:default; }
+.ct-medical-edit-card small { margin-top:0; }
+.ct-medical-edit-card textarea { width:100%; box-sizing:border-box; resize:vertical; font:inherit; font-size:13px; min-height:105px; padding:12px; border:1px solid #ccdbea; border-radius:11px; color:#203451; background:#fff; }
+.ct-medical-edit-card textarea:focus { outline:3px solid #d8eaff; border-color:#2d85d7; }
+.ct-medical-actions { display:flex; justify-content:flex-end; margin-top:18px; }
+.ct-medical-error { padding:10px; color:#9c2943; border:1px solid #f4cad3; background:#fff4f7; border-radius:10px; }
+.ct-medical-success { padding:10px 13px; color:#057052; border:1px solid #c1ecd9; background:#effbf5; border-radius:10px; font-size:13px; }
+/* Hide only the pulse logo. Keep CurvTab Dental brand name and subtitle. */
+.app-shell .sidebar .brand .brand-icon { display:none !important; }
+@media(max-width:840px){ .ct-medical-grid { grid-template-columns:1fr; } }
+@media(prefers-reduced-motion:reduce){ .ct-medical-card { transition:none; } .ct-medical-card:hover { transform:none; } }

@@ -1,0 +1,181 @@
+/* CurvTab Dental — practice-wide card design */
+
+.app-shell[data-practice-branded="true"] {
+  --pc-gradient: linear-gradient(
+    115deg,
+    var(--practice-primary),
+    var(--practice-accent)
+  );
+  --pc-surface: #ffffff;
+  --pc-text: #203550;
+  --pc-muted: #64748b;
+  --pc-border: #e1e8f0;
+  --pc-shadow: 0 6px 22px rgba(20, 42, 70, .055);
+}
+
+/* Shared cards: keep content readable */
+html body .app-shell[data-practice-branded="true"]
+:is(
+  .client-kpi,
+  .stat-card,
+  .ct-chart-card,
+  .ct-patient-card,
+  .ct-patient-panel,
+  .ct-patient-detail-header,
+  .ct-live-calendar,
+  .panel
+) {
+  background-color: var(--pc-surface) !important;
+  color: var(--pc-text) !important;
+  border-color: var(--pc-border) !important;
+  box-shadow: var(--pc-shadow);
+}
+
+/* Brand border — decorative, not a replacement for status */
+html body .app-shell[data-practice-branded="true"]
+:is(
+  .client-kpi,
+  .stat-card,
+  .ct-chart-card,
+  .ct-patient-card,
+  .ct-patient-panel
+) {
+  border-top: 3px solid var(--practice-accent) !important;
+  transition:
+    transform .22s ease,
+    border-color .22s ease,
+    box-shadow .22s ease !important;
+}
+
+/* Hover only on interactive/relevant cards */
+html body .app-shell[data-practice-branded="true"]
+:is(.client-kpi, .stat-card, .ct-chart-card, .ct-patient-card):hover {
+  transform: translateY(-4px) !important;
+  border-top-color: var(--practice-primary) !important;
+  border-left-color: var(--practice-accent) !important;
+  box-shadow:
+    0 14px 30px
+    color-mix(in srgb, var(--practice-primary) 14%, transparent),
+    0 5px 15px
+    color-mix(in srgb, var(--practice-accent) 10%, transparent) !important;
+}
+
+/* Dashboard icons */
+html body .app-shell[data-practice-branded="true"]
+:is(.client-kpi-icon, .stat-icon, .empty-icon) {
+  background: var(--pc-gradient) !important;
+  color: #ffffff !important;
+}
+
+html body .app-shell[data-practice-branded="true"]
+:is(.client-kpi-icon, .stat-icon, .empty-icon) svg {
+  stroke: #ffffff !important;
+}
+
+/* Patient avatars keep readable text */
+html body .app-shell[data-practice-branded="true"]
+.ct-patient-avatar {
+  background: color-mix(
+    in srgb,
+    var(--practice-primary) 12%,
+    var(--pc-surface)
+  ) !important;
+  border-color: var(--practice-accent) !important;
+  color: var(--pc-text) !important;
+}
+
+/* Actual patient tabs */
+html body .app-shell[data-practice-branded="true"]
+.ct-patient-tab.selected {
+  background: var(--pc-gradient) !important;
+  border-color: transparent !important;
+  color: white !important;
+}
+
+/* Calendar / dashboard selected controls */
+html body .app-shell[data-practice-branded="true"]
+:is(
+  .ct-live-day.ct-live-selected,
+  .appointment-day.selected,
+  .ct-period button.ct-period-active
+) {
+  background: var(--pc-gradient) !important;
+  background-image: var(--pc-gradient) !important;
+  border-color: transparent !important;
+  color: white !important;
+}
+
+/* Use clear text for general card content */
+html body .app-shell[data-practice-branded="true"]
+:is(.client-kpi-value, .stat-value, .ct-patient-field strong) {
+  color: var(--pc-text) !important;
+}
+
+html body .app-shell[data-practice-branded="true"]
+:is(.client-kpi-label, .ct-patient-subtext) {
+  color: var(--pc-muted) !important;
+}
+
+/* DARK MODE: shared surface and text tokens */
+:root[data-theme="dark"]
+.app-shell[data-practice-branded="true"] {
+  --pc-surface: #21364a;
+  --pc-text: #f0f6fc;
+  --pc-muted: #b8cadc;
+  --pc-border: #40586f;
+  --pc-shadow: 0 6px 22px rgba(0, 0, 0, .16);
+}
+
+/* Dark-mode heading and card text */
+html[data-theme="dark"] body
+.app-shell[data-practice-branded="true"]
+:is(
+  .client-kpi,
+  .stat-card,
+  .ct-chart-card,
+  .ct-patient-card,
+  .ct-patient-panel,
+  .ct-patient-detail-header,
+  .ct-live-calendar,
+  .panel
+)
+:is(h1, h2, h3, strong, .client-kpi-value) {
+  color: var(--pc-text) !important;
+}
+
+/* Muted labels remain visible */
+html[data-theme="dark"] body
+.app-shell[data-practice-branded="true"]
+:is(
+  .client-kpi,
+  .stat-card,
+  .ct-chart-card,
+  .ct-patient-card,
+  .ct-patient-panel
+)
+:is(.client-kpi-label, small, .ct-patient-field span) {
+  color: var(--pc-muted) !important;
+}
+
+/* Dark card hover */
+html[data-theme="dark"] body
+.app-shell[data-practice-branded="true"]
+:is(.client-kpi, .stat-card, .ct-chart-card, .ct-patient-card):hover {
+  background-color: #2a4056 !important;
+}
+
+/* Preserve essential appointment/payment status colours.
+   Do not recolour success, warning or error indicators globally. */
+
+/* Avoid unwanted movement for reduced-motion users */
+@media (prefers-reduced-motion: reduce) {
+  .app-shell[data-practice-branded="true"]
+  :is(.client-kpi, .stat-card, .ct-chart-card, .ct-patient-card) {
+    transition: none !important;
+  }
+
+  .app-shell[data-practice-branded="true"]
+  :is(.client-kpi, .stat-card, .ct-chart-card, .ct-patient-card):hover {
+    transform: none !important;
+  }
+}

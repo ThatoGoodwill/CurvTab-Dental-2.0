@@ -1,0 +1,268 @@
+/* Appearance Workspace — uses the selected practice theme */
+
+.ct-appearance-tabs {
+  --appearance-accent:
+    var(--practice-primary, var(--practice-primary-color, #087f8c));
+
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px;
+  background: var(--ct-clinical-surface, #ffffff);
+  border: 1px solid color-mix(
+    in srgb,
+    var(--appearance-accent) 22%,
+    transparent
+  );
+  border-radius: 16px;
+}
+
+.ct-appearance-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 45px;
+  padding: 11px 16px;
+
+  border: 1px solid var(--appearance-accent);
+  border-radius: 11px;
+
+  background: color-mix(
+    in srgb,
+    var(--appearance-accent) 10%,
+    white
+  );
+
+  color: var(--appearance-accent);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease;
+}
+
+.ct-appearance-tab:hover,
+.ct-appearance-tab.active {
+  background: var(--appearance-accent);
+  color: #ffffff;
+}
+
+.ct-appearance-tab.active {
+  box-shadow: 0 5px 14px color-mix(
+    in srgb,
+    var(--appearance-accent) 20%,
+    transparent
+  );
+}
+
+.ct-appearance-tab svg {
+  stroke: currentColor;
+  flex-shrink: 0;
+}
+
+.ct-appearance-tab:focus-visible {
+  outline: 3px solid var(--appearance-accent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 720px) {
+  .ct-appearance-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ct-appearance-tab {
+    justify-content: flex-start;
+    text-align: left;
+  }
+}
+
+@media (max-width: 430px) {
+  .ct-appearance-tabs {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Phase Appearance Workspace — functional tab layout */
+
+.ct-appearance-workspace {
+  display: grid;
+  gap: 22px;
+  min-width: 0;
+}
+
+.ct-appearance-workspace .ct-appearance-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #dce7f1;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.ct-appearance-workspace .ct-appearance-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 45px;
+  padding: 11px 16px;
+
+  border: 1px solid var(--appearance-accent);
+  border-radius: 11px;
+
+  background: color-mix(
+    in srgb,
+    var(--appearance-accent) 12%,
+    #ffffff
+  );
+
+  color: var(--appearance-accent);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ct-appearance-workspace .ct-appearance-tab.active,
+.ct-appearance-workspace .ct-appearance-tab:hover {
+  background: var(--appearance-accent);
+  border-color: var(--appearance-accent);
+  color: #ffffff;
+}
+
+.ct-appearance-workspace .ct-appearance-tab svg {
+  stroke: currentColor;
+  flex-shrink: 0;
+}
+
+.ct-appearance-workspace .ct-appearance-tab-panel {
+  min-width: 0;
+}
+
+.ct-appearance-workspace .ct-appearance-unsaved {
+  margin: 0;
+  padding: 12px 16px;
+  background: #fff7e7;
+  border: 1px solid #e7c78b;
+  border-radius: 10px;
+  color: #805312;
+  font-size: 13px;
+}
+
+.ct-appearance-workspace .ct-appearance-tab:focus-visible {
+  outline: 3px solid var(--appearance-accent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 720px) {
+  .ct-appearance-workspace .ct-appearance-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ct-appearance-workspace .ct-appearance-tab {
+    justify-content: flex-start;
+    text-align: left;
+  }
+}
+
+@media (max-width: 430px) {
+  .ct-appearance-workspace .ct-appearance-tabs {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* CurvTab Dental — Theme gradient Appearance navigation */
+
+.ct-appearance-workspace {
+  --appearance-primary: var(--practice-primary, #126CE5);
+  --appearance-secondary: var(--practice-accent, #14B8A6);
+}
+
+/* Base button styling */
+.ct-appearance-workspace .ct-appearance-tab {
+  border: 1px solid var(--appearance-primary);
+  color: var(--appearance-primary);
+  background: color-mix(
+    in srgb,
+    var(--appearance-primary) 9%,
+    white
+  );
+
+  transition:
+    background .2s ease,
+    color .2s ease,
+    transform .2s ease,
+    box-shadow .2s ease;
+}
+
+/* Selected tab — full practice gradient */
+.ct-appearance-workspace .ct-appearance-tab.active {
+  background: linear-gradient(
+    115deg,
+    var(--appearance-primary),
+    var(--appearance-secondary)
+  );
+
+  border-color: var(--appearance-primary);
+  color: #ffffff;
+
+  box-shadow: 0 5px 15px color-mix(
+    in srgb,
+    var(--appearance-primary) 22%,
+    transparent
+  );
+}
+
+/* Unselected buttons */
+.ct-appearance-workspace .ct-appearance-tab:not(.active) {
+  background: color-mix(
+    in srgb,
+    var(--appearance-primary) 9%,
+    white
+  );
+
+  border-color: color-mix(
+    in srgb,
+    var(--appearance-primary) 55%,
+    white
+  );
+
+  color: var(--appearance-primary);
+}
+
+/* Hover */
+.ct-appearance-workspace .ct-appearance-tab:not(.active):hover {
+  background: linear-gradient(
+    115deg,
+    var(--appearance-primary),
+    var(--appearance-secondary)
+  );
+
+  border-color: var(--appearance-primary);
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+/* Keep icons consistent */
+.ct-appearance-workspace .ct-appearance-tab svg {
+  stroke: currentColor;
+}
+
+/* Keyboard accessibility */
+.ct-appearance-workspace .ct-appearance-tab:focus-visible {
+  outline: 3px solid var(--appearance-secondary);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-appearance-workspace .ct-appearance-tab {
+    transition: none;
+  }
+
+  .ct-appearance-workspace .ct-appearance-tab:hover {
+    transform: none;
+  }
+}

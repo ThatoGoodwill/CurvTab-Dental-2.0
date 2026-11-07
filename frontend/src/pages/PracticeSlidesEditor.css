@@ -1,0 +1,94 @@
+.practice-slides-editor {
+  margin: 20px 0;
+  padding: 24px;
+}
+
+.slides-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.slides-editor-card {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  padding: 17px;
+  border-radius: 16px;
+  border: 1px solid var(--pc-border, #dce4ee);
+  background: var(--pc-surface, #fff);
+  color: var(--pc-text, #203550);
+  min-width: 0;
+}
+
+.slides-editor-heading,
+.slides-editor-controls,
+.slides-editor-actions {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.slides-editor-controls button {
+  cursor: pointer;
+  border: 1px solid var(--pc-border, #dce4ee);
+  border-radius: 8px;
+  padding: 7px 10px;
+  background: transparent;
+  color: inherit;
+}
+
+.slides-editor-controls button:disabled {
+  cursor: not-allowed;
+  opacity: .4;
+}
+
+.slides-editor-image {
+  width: 100%;
+  height: 145px;
+  object-fit: cover;
+  border-radius: 12px;
+  background: #e4eff5;
+}
+
+.slides-editor-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.slides-editor-card :is(input, textarea, select) {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--pc-border, #dce4ee);
+  border-radius: 9px;
+  padding: 11px;
+  background: var(--pc-surface, #fff);
+  color: var(--pc-text, #203550);
+  font: inherit;
+}
+
+.slides-editor-actions {
+  justify-content: flex-start;
+  margin-top: 20px;
+}
+
+.slides-error { color: #dc3545; }
+.slides-success { color: #168568; }
+
+html[data-theme="dark"] .slides-editor-card {
+  background: #243b50;
+  color: #f1f7fc;
+  border-color: #476077;
+}
+
+html[data-theme="dark"] .slides-editor-card :is(input, textarea, select) {
+  background: #192f43;
+  color: #f1f7fc;
+  border-color: #526b80;
+}

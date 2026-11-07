@@ -1,0 +1,172 @@
+.ct-ortho-financials {
+  display: grid;
+  gap: 20px;
+  padding: 22px;
+  min-width: 0;
+  margin: 18px 0;
+}
+
+.ct-ortho-financials-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ct-ortho-financials-heading h2,
+.ct-ortho-financials-heading p {
+  margin: 0;
+}
+
+.ct-ortho-financials-heading p {
+  margin-top: 6px;
+  opacity: .72;
+}
+
+.ct-ortho-finance-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 13px;
+}
+
+.ct-ortho-finance-cards article {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  border: 1px solid var(--ct-clinical-border, #dce6ef);
+  border-radius: 14px;
+  padding: 17px;
+  background: var(--ct-clinical-surface, transparent);
+}
+
+.ct-ortho-finance-cards span {
+  font-size: 12px;
+  opacity: .75;
+}
+
+.ct-ortho-finance-cards strong {
+  font-size: clamp(16px, 2vw, 23px);
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+.ct-ortho-finance-note {
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid var(--ct-clinical-border, #dce6ef);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.ct-ortho-finance-details {
+  display: grid;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+
+.ct-ortho-finance-details p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.ct-ortho-finance-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: end;
+}
+
+.ct-ortho-finance-form label {
+  display: grid;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 0;
+}
+
+.ct-ortho-finance-form input,
+.ct-ortho-finance-form textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--ct-clinical-border, #dce6ef);
+  border-radius: 10px;
+  padding: 11px;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+}
+
+.ct-ortho-finance-full {
+  grid-column: 1 / -1;
+}
+
+.ct-ortho-finance-table-wrap {
+  overflow-x: auto;
+}
+
+.ct-ortho-finance-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+
+.ct-ortho-finance-table th,
+.ct-ortho-finance-table td {
+  padding: 13px 10px;
+  border-bottom: 1px solid var(--ct-clinical-border, #dce6ef);
+}
+
+.ct-ortho-finance-error {
+  color: #c73c50;
+}
+
+.ct-ortho-finance-success {
+  color: #168568;
+}
+
+.ct-ortho-workspace-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin: 18px 0;
+}
+
+.ct-ortho-workspace-tabs button {
+  padding: 11px 17px;
+  border-radius: 10px;
+  border: 1px solid var(--ct-clinical-border, #dce6ef);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ct-ortho-workspace-tabs button.is-active {
+  border-color: var(--practice-primary, #126ce5);
+  background: color-mix(
+    in srgb,
+    var(--practice-primary, #126ce5) 13%,
+    transparent
+  );
+}
+
+.ct-ortho-workspace-tabs button:focus-visible {
+  outline: 3px solid var(--practice-primary, #126ce5);
+  outline-offset: 3px;
+}
+
+@media (max-width: 750px) {
+  .ct-ortho-finance-cards,
+  .ct-ortho-finance-form {
+    grid-template-columns: 1fr;
+  }
+
+  .ct-ortho-financials {
+    padding: 15px;
+  }
+}

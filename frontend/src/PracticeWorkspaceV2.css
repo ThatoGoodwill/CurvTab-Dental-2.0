@@ -1,0 +1,315 @@
+/* White label v2: loaded LAST, after the client recovery styles. Tenant theme only. */
+html:not([data-theme="dark"]) .app-shell[data-practice-branded="true"] .sidebar .nav-item.nav-active,
+html:not([data-theme="dark"]) .app-shell[data-practice-branded="true"] .sidebar .nav-item[aria-current="page"] {
+  background:var(--practice-primary,#126ce5)!important;
+  border-color:var(--practice-primary,#126ce5)!important;
+  color:white!important;
+}
+html:not([data-theme="dark"]) .app-shell[data-practice-branded="true"] .sidebar .nav-item:hover:not(.nav-active) {
+  background:color-mix(in srgb,var(--practice-primary,#126ce5) 9%,white)!important;
+  color:var(--practice-primary,#126ce5)!important;
+}
+html:not([data-theme="dark"]) .app-shell[data-practice-branded="true"] .primary-button {
+  background:var(--practice-primary,#126ce5)!important;
+  border-color:var(--practice-primary,#126ce5)!important;
+  color:white!important;
+}
+html:not([data-theme="dark"]) .app-shell[data-practice-branded="true"] .sidebar .brand-icon {
+  background:color-mix(in srgb,var(--practice-primary,#126ce5) 10%,white)!important;
+  border-color:color-mix(in srgb,var(--practice-primary,#126ce5) 20%,white)!important;
+  color:var(--practice-primary,#126ce5)!important;
+}
+/* Top navigation: use existing sidebar markup as a horizontal site navigation. */
+@media(min-width:900px) {
+  .app-shell.ct-nav-top { display:flex!important;flex-direction:column!important;height:100dvh!important;overflow:hidden!important; }
+  .app-shell.ct-nav-top .sidebar {
+    position:relative!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;
+    transform:none!important;z-index:20!important;display:flex!important;align-items:center!important;
+    width:100%!important;max-width:none!important;min-height:0!important;height:auto!important;
+    flex:0 0 auto!important;gap:18px!important;padding:12px 24px!important;
+    overflow:visible!important;border-right:0!important;border-bottom:1px solid #e2eaf3!important;
+  }
+  .app-shell.ct-nav-top .sidebar .brand {flex:0 0 auto!important;margin:0!important;min-width:0!important;}
+  .app-shell.ct-nav-top .sidebar :is(.practice-chip,.nav-heading,.sidebar-bottom){display:none!important;}
+  html:not([data-theme="dark"]) .app-shell.ct-nav-top .sidebar .side-nav,
+  .app-shell.ct-nav-top .sidebar .side-nav {
+    display:flex!important;flex-direction:row!important;align-items:center!important;
+    justify-content:flex-start!important;flex:1 1 auto!important;
+    width:auto!important;min-width:0!important;max-width:100%!important;gap:5px!important;
+    overflow-x:auto!important;overflow-y:visible!important;scrollbar-width:thin!important;
+    white-space:nowrap!important;
+  }
+  .app-shell.ct-nav-top .sidebar .side-nav .nav-item {flex:0 0 auto!important;white-space:nowrap!important;}
+  .app-shell.ct-nav-top .sidebar .side-nav [data-profile-nav="true"]{order:999!important;}
+  .app-shell.ct-nav-top .workspace {
+    margin:0!important;margin-left:0!important;padding:0!important;width:100%!important;
+    max-width:none!important;min-width:0!important;min-height:0!important;flex:1 1 auto!important;overflow-y:auto!important;
+  }
+  .app-shell.ct-nav-top .topbar{position:relative!important;top:auto!important;}
+  .app-shell.ct-nav-top .mobile-menu{display:none!important;}
+  .app-shell.ct-nav-top .sidebar .side-nav .appointments-submenu{position:absolute!important;z-index:40!important;background:white!important;}
+}
+/* On phones, retain the existing accessible collapsible sidebar. */
+.ct-v2-fieldset {border:1px solid #e2eaf3;border-radius:12px;padding:14px;min-width:0;display:grid;gap:12px;}
+.ct-v2-fieldset legend {padding:0 6px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.ct-v2-choice-row {display:flex;gap:14px;flex-wrap:wrap;}
+.appearance-editor .ct-v2-choice,.appearance-editor .ct-v2-module {display:flex!important;align-items:center!important;gap:9px!important;font-size:13px!important;font-weight:500!important;cursor:pointer;}
+.appearance-editor .ct-v2-choice input,.appearance-editor .ct-v2-module input {width:16px;height:16px;accent-color:var(--practice-primary,#126ce5);flex:0 0 auto;}
+.ct-v2-module-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;}
+.ct-v2-preview-nav {display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.ct-v2-preview-nav > strong {flex:0 0 100%;font-size:12px;}
+.ct-v2-preview-nav > span {font-size:11px;border:1px solid #d9e5f3;border-radius:8px;padding:7px 9px;}
+@media(max-width:560px){.ct-v2-module-grid{grid-template-columns:1fr;}}
+
+/* Practice branding: override previous fixed-blue navigation styles. */
+.app-shell[data-practice-branded="true"] .sidebar .nav-item.nav-active,
+.app-shell[data-practice-branded="true"] .sidebar .nav-item[aria-current="page"],
+.app-shell[data-practice-branded="true"] .side-nav .nav-item.nav-active {
+  background: var(--practice-primary, #126ce5) !important;
+  background-color: var(--practice-primary, #126ce5) !important;
+  border-color: var(--practice-primary, #126ce5) !important;
+  color: #ffffff !important;
+}
+
+.app-shell[data-practice-branded="true"] .primary-button {
+  background: var(--practice-primary, #126ce5) !important;
+  background-color: var(--practice-primary, #126ce5) !important;
+  border-color: var(--practice-primary, #126ce5) !important;
+}
+
+.app-shell[data-practice-branded="true"] .sidebar .brand-icon {
+  background: color-mix(in srgb, var(--practice-primary) 12%, white) !important;
+  color: var(--practice-primary) !important;
+}
+
+/* Practice-specific branding */
+
+html body .app-shell[data-practice-branded="true"]
+.sidebar .side-nav .nav-item.nav-active,
+
+html body .app-shell[data-practice-branded="true"]
+.sidebar .side-nav .nav-item[aria-current="page"] {
+  background: var(--practice-primary) !important;
+  background-color: var(--practice-primary) !important;
+  background-image: none !important;
+  border-color: var(--practice-primary) !important;
+  color: #ffffff !important;
+}
+
+/* Primary action buttons */
+
+html body .app-shell[data-practice-branded="true"]
+.primary-button {
+  background: var(--practice-primary) !important;
+  background-color: var(--practice-primary) !important;
+  background-image: none !important;
+  border-color: var(--practice-primary) !important;
+}
+
+/* Brand accents */
+
+html body .app-shell[data-practice-branded="true"]
+.sidebar .brand-icon {
+  background: color-mix(
+    in srgb,
+    var(--practice-primary) 12%,
+    white
+  ) !important;
+
+  color: var(--practice-primary) !important;
+}
+
+/* Keyboard focus */
+
+html body .app-shell[data-practice-branded="true"]
+:is(button, input, select, textarea):focus-visible {
+  outline-color: var(--practice-accent) !important;
+}
+/* WHITE LABEL: practice theme wins over legacy fixed-blue navigation. */
+html:not([data-theme="dark"])
+body .app-shell[data-practice-branded="true"]:not(.dark-mode):not(.theme-dark)
+.sidebar .side-nav .nav-item.nav-active,
+
+html:not([data-theme="dark"])
+body .app-shell[data-practice-branded="true"]:not(.dark-mode):not(.theme-dark)
+.sidebar .side-nav .nav-item[aria-current="page"] {
+  background: var(--practice-primary, #126ce5) !important;
+  background-color: var(--practice-primary, #126ce5) !important;
+  background-image: none !important;
+  border-color: var(--practice-primary, #126ce5) !important;
+  color: #ffffff !important;
+}
+
+
+/* Practice-specific dashboard branding.
+   Overrides the legacy fixed-blue dashboard theme. */
+html:not([data-theme="dark"]) body
+.app-shell[data-practice-branded="true"]:not(.dark-mode):not(.theme-dark)
+.ct-hero-action {
+  background: var(--practice-primary) !important;
+  border-color: var(--practice-primary) !important;
+  background-image: none !important;
+}
+
+html:not([data-theme="dark"]) body
+.app-shell[data-practice-branded="true"]:not(.dark-mode):not(.theme-dark)
+.ct-hero-action:hover {
+  background: var(--practice-primary) !important;
+  filter: brightness(.9);
+}
+
+html:not([data-theme="dark"]) body
+.app-shell[data-practice-branded="true"]:not(.dark-mode):not(.theme-dark)
+.ct-hero-eyebrow,
+html:not([data-theme="dark"]) body
+.app-shell[data-practice-branded="true"]:not(.dark-mode):not(.theme-dark)
+.ct-analytics-kicker {
+  color: var(--practice-accent) !important;
+}
+
+/* Slideshow selected indicator */
+html:not([data-theme="dark"]) body
+.app-shell[data-practice-branded="true"]:not(.dark-mode):not(.theme-dark)
+.ct-slide-dots .ct-dot-active {
+  background: var(--practice-accent) !important;
+  background-color: var(--practice-accent) !important;
+}
+
+/* Slideshow arrows */
+html:not([data-theme="dark"]) body
+.app-shell[data-practice-branded="true"]:not(.dark-mode):not(.theme-dark)
+.ct-hero-controls > button {
+  color: var(--practice-primary) !important;
+}
+
+/* Dashboard chart bars */
+html:not([data-theme="dark"]) body
+.app-shell[data-practice-branded="true"]:not(.dark-mode):not(.theme-dark)
+.ct-bar-fill {
+  background: linear-gradient(
+    0deg,
+    var(--practice-primary),
+    var(--practice-accent)
+  ) !important;
+}
+
+/* Secondary actions */
+html:not([data-theme="dark"]) body
+.app-shell[data-practice-branded="true"]:not(.dark-mode):not(.theme-dark)
+.secondary-button:hover {
+  color: var(--practice-primary) !important;
+  border-color: var(--practice-accent) !important;
+}
+
+
+/* Practice primary + accent gradient */
+.app-shell[data-practice-branded="true"] {
+  --brand-gradient: linear-gradient(
+    115deg,
+    var(--practice-primary),
+    var(--practice-accent)
+  );
+}
+
+/* Real buttons and active navigation */
+html:not([data-theme="dark"]) body
+.app-shell[data-practice-branded="true"]:not(.dark-mode):not(.theme-dark)
+:is(.primary-button, .ct-hero-action) {
+  background: var(--brand-gradient) !important;
+  background-image: var(--brand-gradient) !important;
+  border-color: var(--practice-primary) !important;
+  color: white !important;
+}
+
+html:not([data-theme="dark"]) body
+.app-shell[data-practice-branded="true"]:not(.dark-mode):not(.theme-dark)
+.sidebar .side-nav :is(.nav-item.nav-active, .nav-item[aria-current="page"]) {
+  background: var(--brand-gradient) !important;
+  background-image: var(--brand-gradient) !important;
+  color: white !important;
+}
+
+/* Dashboard slideshow and charts */
+html:not([data-theme="dark"]) body
+.app-shell[data-practice-branded="true"]:not(.dark-mode):not(.theme-dark)
+:is(.ct-bar-fill, .ct-slide-dots .ct-dot-active) {
+  background: var(--brand-gradient) !important;
+}
+
+/* Dashboard icon cards */
+html:not([data-theme="dark"]) body
+.app-shell[data-practice-branded="true"]:not(.dark-mode):not(.theme-dark)
+.stats-grid .stat-icon {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--practice-primary) 16%, white),
+    color-mix(in srgb, var(--practice-accent) 16%, white)
+  ) !important;
+}
+
+
+/* ===== Brand/logo alignment inside the app ===== */
+
+.app-shell .brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-width: 0 !important;
+}
+
+.app-shell .brand-icon {
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  min-height: 48px !important;
+  max-width: 48px !important;
+  max-height: 48px !important;
+  flex: 0 0 48px !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(255,255,255,0.9) !important;
+}
+
+.app-shell .brand-icon img,
+.app-shell .brand-icon .ct-practice-brand-image {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  display: block !important;
+}
+
+.app-shell .brand > div:last-child {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  min-width: 0 !important;
+}
+
+.app-shell .brand strong {
+  display: block !important;
+  margin: 0 !important;
+  line-height: 1.15 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-shell .brand span {
+  display: block !important;
+  margin-top: 2px !important;
+  line-height: 1.1 !important;
+}
+
+/* top-nav mode also keeps logo and name inline */
+.app-shell.ct-nav-top .sidebar .brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-width: 0 !important;
+}

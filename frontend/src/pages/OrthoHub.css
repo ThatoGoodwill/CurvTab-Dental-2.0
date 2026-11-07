@@ -1,0 +1,91 @@
+/* ORTHOHUB_V1 — responsive, theme-aware specialist dashboard */
+.oc-hub {
+  --oc-accent: var(--practice-primary, var(--practice-primary-color, #c79400));
+  --oc-border: #d5e1ed;
+  --oc-muted: #64748b;
+  --oc-panel: #fff;
+  --oc-soft: #f2f6fb;
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+  color: inherit;
+}
+.oc-hub * { box-sizing: border-box; }
+.oc-header { display:flex; align-items:center; justify-content:space-between; gap:18px; flex-wrap:wrap; }
+.oc-eyebrow { font-size:10px; font-weight:800; color:var(--oc-accent); letter-spacing: .13em; }
+.oc-header h2 { margin:5px 0; font-size:clamp(21px,2.8vw,28px); }
+.oc-header p { margin:0; color:var(--oc-muted); font-size:13px; line-height:1.6; }
+.oc-actions { display:flex; gap:9px; flex-wrap:wrap; }
+.oc-button { display:inline-flex; align-items:center; justify-content:center; gap:7px; border-radius:9px; font:inherit; font-size:12px; font-weight:750; cursor:pointer; padding:10px 14px; transition:transform .12s, box-shadow .12s; }
+.oc-button:hover { transform:translateY(-1px); }
+.oc-button-solid { color:#fff; background:var(--oc-accent); border:1px solid transparent; }
+.oc-button-outline { color:inherit; background:transparent; border:1px solid var(--oc-border); }
+.oc-button:focus-visible, .oc-row:focus-visible, .oc-quiet-link:focus-visible, .oc-shortcuts button:focus-visible { outline:3px solid var(--oc-accent); outline-offset:3px; }
+.oc-overview-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.oc-panel, .oc-case-card { min-width:0; background:var(--oc-panel); border:1px solid var(--oc-border); border-radius:15px; padding:20px; }
+.oc-panel { display:grid; gap:16px; align-content:start; }
+.oc-section-title { display:flex; align-items:center; gap:11px; }
+.oc-section-title h3 { margin:0; font-size:16px; }
+.oc-section-title p { margin:4px 0 0; font-size:11px; color:var(--oc-muted); }
+.oc-icon { display:grid; place-items:center; flex-shrink:0; width:40px; height:40px; border-radius:12px; background:color-mix(in srgb,var(--oc-accent) 12%,transparent); color:var(--oc-accent); }
+.oc-icon.oc-warning { color:#b77905; background:rgba(238,170,30,.14); }
+.oc-empty { border:1px dashed var(--oc-border); border-radius:10px; color:var(--oc-muted); display:grid; place-items:center; padding:28px 16px; font-size:13px; min-height:120px; text-align:center; }
+.oc-rows, .oc-activity-list { display:grid; gap:9px; }
+.oc-row { display:flex; align-items:center; gap:12px; width:100%; border:1px solid var(--oc-border); background:transparent; color:inherit; padding:11px; border-radius:10px; cursor:pointer; text-align:left; font:inherit; }
+.oc-row:hover { border-color:var(--oc-accent); }
+.oc-date { flex-shrink:0; border-radius:7px; background:var(--oc-soft); padding:8px; color:inherit; font-size:11px; font-weight:700; }
+.oc-row-main { flex:1; min-width:0; display:grid; gap:4px; }
+.oc-row-main strong { font-size:12px; }
+.oc-row-main small { color:var(--oc-muted); font-size:11px; overflow-wrap:anywhere; }
+.oc-panel-footer { display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; font-size:11px; color:var(--oc-muted); }
+.oc-panel-footer button,.oc-quiet-link { border:0; background:transparent; color:var(--oc-accent); font:inherit; font-weight:800; cursor:pointer; padding:5px; }
+.oc-attention-row { display:flex; align-items:center; justify-content:space-between; gap:14px; border:1px solid var(--oc-border); border-radius:10px; padding:13px; }
+.oc-attention-row > div { display:grid; gap:4px; }
+.oc-attention-row strong { font-size:12px; }
+.oc-attention-row small { font-size:11px; color:var(--oc-muted); }
+.oc-attention-row b { display:grid; place-items:center; width:31px; height:31px; flex-shrink:0; border-radius:99px; background:var(--oc-soft); font-size:15px; }
+.oc-first-alert { display:flex; align-items:center; gap:8px; border:0; background:transparent; color:var(--oc-accent); font:inherit; font-size:12px; font-weight:800; cursor:pointer; text-align:left; }
+.oc-activity { display:flex; align-items:flex-start; gap:12px; border:1px solid var(--oc-border); border-radius:10px; padding:13px; }
+.oc-activity-mark { color:var(--oc-accent); padding-top:2px; }
+.oc-activity > div { flex:1; min-width:0; display:grid; gap:4px; }
+.oc-activity strong { font-size:12px; }
+.oc-activity small { font-size:11px; color:var(--oc-muted); overflow-wrap:anywhere; }
+.oc-activity p { margin:0; font-size:12px; white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.oc-shortcuts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.oc-shortcuts button { display:flex; gap:10px; align-items:center; padding:16px; background:var(--oc-panel); border:1px solid var(--oc-border); border-radius:12px; text-align:left; color:inherit; font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
+.oc-shortcuts button svg:last-child { margin-left:auto; }
+.oc-cases-toolbar { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+.oc-search { display:flex; gap:8px; align-items:center; flex:1; min-width:220px; padding:10px 12px; background:var(--oc-panel); border:1px solid var(--oc-border); border-radius:9px; }
+.oc-search input { border:0 !important; background:transparent !important; color:inherit; outline:none; min-width:0; width:100%; font:inherit; font-size:13px; }
+.oc-cases-toolbar > select { background:var(--oc-panel); border:1px solid var(--oc-border); color:inherit; border-radius:9px; font:inherit; padding:11px; min-width:130px; }
+.oc-result-count { font-size:12px; color:var(--oc-muted); }
+.oc-card-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+.oc-case-card { display:flex; flex-direction:column; gap:17px; padding:18px; }
+.oc-card-head { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+.oc-card-head h3 { margin:0 0 5px; font-size:15px; overflow-wrap:anywhere; }
+.oc-card-head p { margin:0; color:var(--oc-muted); font-size:12px; }
+.oc-status { font-size:10px; font-weight:800; text-transform:uppercase; border:1px solid var(--oc-border); border-radius:50px; padding:6px 9px; }
+.oc-status-active { color:#0c8b68; border-color:#0c8b6880; background:#0c8b6812; }
+.oc-status-planning { color:#ae8005; border-color:#ae800580; background:#ae800512; }
+.oc-status-paused { color:#b35b0e; border-color:#b35b0e80; background:#b35b0e12; }
+.oc-status-completed { color:#246fb6; border-color:#246fb680; background:#246fb612; }
+.oc-card-title { font-size:13px; font-weight:700; }
+.oc-case-facts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:15px; background:var(--oc-soft); padding:14px; border-radius:10px; }
+.oc-case-facts > div { min-width:0; display:grid; gap:5px; }
+.oc-case-facts small { color:var(--oc-muted); font-size:10px; letter-spacing:.05em; }
+.oc-case-facts strong { font-size:12px; overflow-wrap:anywhere; }
+.oc-finance-note { color:var(--oc-muted); font-size:11px; line-height:1.5; }
+.oc-card-actions { margin-top:auto; display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; }
+.oc-case-empty { min-height:200px; }
+.oc-error, .oc-notice, .oc-loading { padding:14px 16px; border:1px solid var(--oc-border); border-radius:10px; font-size:13px; }
+.oc-error { color:#bc3554; }
+.oc-notice { color:var(--oc-muted); }
+.oc-error button { color:inherit; background:transparent; border:0; text-decoration:underline; cursor:pointer; }
+/* Support common application theme mechanisms, without changing the rest of CurvTab. */
+:where(html[data-theme='dark'], html.dark, body.dark, body.dark-mode, [data-theme='dark']) .oc-hub {
+  --oc-border:#33445e; --oc-muted:#a9bbd1; --oc-panel:#172235; --oc-soft:#0f192a;
+}
+@media(max-width:1090px) { .oc-card-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:830px) { .oc-overview-grid { grid-template-columns:1fr; } }
+@media(max-width:680px) { .oc-card-grid,.oc-shortcuts { grid-template-columns:1fr; } .oc-panel,.oc-case-card { padding:16px; } .oc-header { align-items:stretch; } }
+@media(prefers-reduced-motion:reduce){ .oc-button { transition:none; } }

@@ -1,0 +1,163 @@
+/*
+ * CurvTab Dental — Slideshow size protection
+ * Uploaded images cannot expand the dashboard hero.
+ */
+
+/* Desktop slideshow */
+@media (min-width: 900px) {
+  .app-shell .ct-hero {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: 58% 42% !important;
+    grid-template-rows: minmax(0, 1fr) !important;
+
+    height: 318px !important;
+    min-height: 318px !important;
+    max-height: 318px !important;
+
+    width: 100% !important;
+    max-width: 100% !important;
+
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  .app-shell .ct-hero-copy {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding: 26px 40px 45px !important;
+    box-sizing: border-box !important;
+  }
+
+  .app-shell .ct-hero-art {
+    position: relative !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .app-shell .ct-hero-art img {
+    display: block !important;
+    position: absolute !important;
+    inset: 0 !important;
+
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+
+    object-fit: cover !important;
+    object-position: center center !important;
+  }
+
+  .app-shell .ct-hero-controls {
+    position: absolute !important;
+    left: 35px !important;
+    bottom: 15px !important;
+    z-index: 5 !important;
+  }
+}
+
+/* Tablet */
+@media (min-width: 600px) and (max-width: 899px) {
+  .app-shell .ct-hero {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: 55% 45% !important;
+
+    height: 310px !important;
+    min-height: 310px !important;
+    max-height: 310px !important;
+    overflow: hidden !important;
+  }
+
+  .app-shell .ct-hero-copy {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    padding: 25px 25px 45px !important;
+  }
+
+  .app-shell .ct-hero-art {
+    position: relative !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .app-shell .ct-hero-art img {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+  }
+}
+
+/* Mobile */
+@media (max-width: 599px) {
+  .app-shell .ct-hero {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+
+    height: 470px !important;
+    min-height: 470px !important;
+    max-height: 470px !important;
+
+    overflow: hidden !important;
+  }
+
+  .app-shell .ct-hero-copy {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    padding: 24px 22px 54px !important;
+  }
+
+  .app-shell .ct-hero-art {
+    flex: 0 0 155px !important;
+    position: relative !important;
+    height: 155px !important;
+    min-height: 155px !important;
+    overflow: hidden !important;
+  }
+
+  .app-shell .ct-hero-art img {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+  }
+
+  .app-shell .ct-hero-controls {
+    position: absolute !important;
+    left: 20px !important;
+    bottom: 165px !important;
+    z-index: 5 !important;
+  }
+}
+
+/* Prevent images from enlarging their parent in all themes */
+.app-shell .ct-hero-art,
+.app-shell .ct-hero-art img {
+  box-sizing: border-box !important;
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .app-shell .ct-hero-art img {
+    transition: none !important;
+  }
+}

@@ -2,6 +2,9 @@ services:
   db:
     image: postgres:16
     container_name: curvtab-db
+    restart: unless-stopped
+    volumes:
+      - curvtab-recovered-data:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: curvtab
       POSTGRES_PASSWORD: curvtab123
@@ -18,14 +21,24 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: curvtab-api-repaired:latest
     container_name: curvtab-api
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     ports:
-      - "8080:8080"
+      - "3001:8080"
+    volumes:
+      - ./clinical-media:/app/clinical-media
+      - ./practice-media:/app/practice-media
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DentalDatabase: "Host=db;Port=5432;Database=curvtabdb;Username=curvtab;Password=curvtab123"
       Bootstrap__SuperAdminEmail: "admin@curvtab.local"
       Bootstrap__SuperAdminPassword: "CurvTabAdmin123!"
+
+volumes:
+  curvtab-recovered-data:
+    external: true
+    name: 694f626bcbd03aed20f97e8e0fa4b37660b77cf92b57778f539fe329ba56617a

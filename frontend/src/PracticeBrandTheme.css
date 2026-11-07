@@ -1,0 +1,104 @@
+html:not([data-theme="dark"]) body .app-shell[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+:is(.primary-button, .ct-hero-action, .ct-primary-action, .ct-action-primary, button.ct-primary-button):not(:disabled):hover {
+  background: var(--ct-brand-gradient-hover) !important;
+  background-image: var(--ct-brand-gradient-hover) !important;
+  box-shadow: 0 8px 18px rgb(0 0 0 / 13%) !important;
+}
+
+/* Active navigation items in sidebar and upper-navbar mode. */
+html:not([data-theme="dark"]) body .app-shell[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+.sidebar .side-nav :is(.nav-item.nav-active, .nav-item[aria-current="page"], .nav-subitem.nav-active, .nav-subitem[aria-current="page"]) {
+  background: var(--ct-brand-gradient) !important;
+  background-image: var(--ct-brand-gradient) !important;
+  background-color: var(--practice-primary, #126ce5) !important;
+  border-color: var(--practice-primary, #126ce5) !important;
+  color: #fff !important;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 45%) !important;
+}
+html:not([data-theme="dark"]) body .app-shell[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+.sidebar .side-nav .nav-item:hover:not(.nav-active):not([aria-current="page"]) {
+  background: var(--ct-brand-soft) !important;
+  color: var(--practice-primary, #126ce5) !important;
+}
+
+/* Logo artwork remains intact; the background gradient brands its container. */
+html:not([data-theme="dark"]) body .app-shell[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+.sidebar .brand-icon {
+  background: var(--ct-brand-gradient) !important;
+  background-image: var(--ct-brand-gradient) !important;
+  border-color: var(--ct-brand-border) !important;
+  color: #fff !important;
+}
+
+/* Hero: preserves existing photo/slideshow; brand gradients color the content
+   background ONLY (never replace the photo artwork on .ct-hero-art). */
+html:not([data-theme="dark"]) body .app-shell[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+.ct-hero-copy {
+  background: linear-gradient(112deg,
+    color-mix(in srgb, var(--practice-primary, #126ce5) 18%, white),
+    color-mix(in srgb, var(--practice-accent, #14b8a6) 18%, white)) !important;
+}
+html:not([data-theme="dark"]) body .app-shell[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+:is(.ct-hero-eyebrow, .ct-analytics-kicker) {
+  color: var(--practice-accent, #14b8a6) !important;
+}
+
+/* Slideshow and chart accents. */
+html:not([data-theme="dark"]) body .app-shell[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+.ct-slide-dots .ct-dot-active {
+  background: var(--ct-brand-gradient) !important;
+  background-image: var(--ct-brand-gradient) !important;
+  border-color: var(--practice-accent, #14b8a6) !important;
+}
+html:not([data-theme="dark"]) body .app-shell[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+.ct-hero-controls > button {
+  color: var(--practice-primary, #126ce5) !important;
+  border-color: var(--ct-brand-border) !important;
+}
+html:not([data-theme="dark"]) body .app-shell[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+:is(.ct-bar-fill, .ct-period button.ct-period-active) {
+  background: var(--ct-brand-gradient) !important;
+  background-image: var(--ct-brand-gradient) !important;
+  color: #fff !important;
+}
+
+/* Theme the cards subtly while maintaining high readability. */
+html:not([data-theme="dark"]) body .app-shell[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+:is(.stat-card, .ct-chart-card, .ct-kpi-card, .dashboard-card) {
+  border-color: color-mix(in srgb, var(--practice-primary, #126ce5) 12%, #e5ebf3) !important;
+}
+html:not([data-theme="dark"]) body .app-shell[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+:is(.stat-card, .ct-chart-card, .ct-kpi-card, .dashboard-card):hover {
+  border-color: var(--ct-brand-border) !important;
+}
+html:not([data-theme="dark"]) body .app-shell[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+:is(.stat-icon, .ct-kpi-icon, .dashboard-card-icon) {
+  background: linear-gradient(125deg, var(--ct-brand-soft), var(--ct-brand-accent-soft)) !important;
+  color: var(--practice-primary, #126ce5) !important;
+}
+html:not([data-theme="dark"]) body .app-shell[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+:is(.stat-icon, .ct-kpi-icon, .dashboard-card-icon) svg {
+  color: var(--practice-primary, #126ce5) !important;
+}
+
+/* Secondary actions get both brand colors in a subtle gradient outline via
+   border-image isn't used because it breaks existing rounded corners. */
+html:not([data-theme="dark"]) body .app-shell[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+.secondary-button:not(:disabled):hover {
+  background: linear-gradient(110deg, var(--ct-brand-soft), var(--ct-brand-accent-soft)) !important;
+  color: var(--practice-primary, #126ce5) !important;
+  border-color: var(--ct-brand-border) !important;
+}
+
+/* Form focus accent, no recoloring error/destructive controls. */
+html:not([data-theme="dark"]) body .app-shell[data-practice-branded="true"]:not(.dark):not(.dark-mode):not(.theme-dark)
+:is(button, input, select, textarea):focus-visible {
+  outline-color: var(--practice-accent, #14b8a6) !important;
+}
+
+/* Keep buttons usable when disabled; never turn error/success states into branding. */
+@media (prefers-reduced-motion: reduce) {
+  .app-shell[data-practice-branded="true"] :is(.nav-item, .primary-button, .ct-hero-action) {
+    transition: none !important;
+  }
+}

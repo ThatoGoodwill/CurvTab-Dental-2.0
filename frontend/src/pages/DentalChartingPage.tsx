@@ -4,7 +4,12 @@ import { Activity, Plus, RefreshCw, Save } from 'lucide-react'
 import { apiRequest } from '../services/api'
 import { loadClinicalPatients } from '../utils/clinicalPatients'
 import type { ClinicalPatient } from '../utils/clinicalPatients'
+import ClinicalImagingPanel from './ClinicalImagingPanel'
 import './DentistSpecialties.css'
+import './ClinicalPhase4.css'
+import './InteractiveOdontogram.css'
+import './OdontogramShapeV2.css'
+import './DentalChartingNavigation.css'
 
 type ChartEntry = {
   id: string
@@ -36,9 +41,34 @@ function formatDate(value: string): string {
   })
 }
 
-export default function DentalChartingPage() {
+
+// CT_INTERACTIVE_ODONTOGRAM
+// Colours represent recorded observations, not automated diagnoses.
+function findingColour(value?: string): string {
+  switch (value) {
+    case 'Caries suspected': return '#e34d59'
+    case 'Restoration present': return '#eab308'
+    case 'Crown present': return '#8b5cf6'
+    case 'Root canal treated': return '#db2777'
+    case 'Fracture': return '#f97316'
+    case 'Missing': return '#64748b'
+    case 'Extraction planned': return '#ef4444'
+    case 'Sealant present': return '#0ea5e9'
+    case 'Monitor': return '#f59e0b'
+    case 'Healthy': return '#2aa879'
+    case 'Other': return '#a78bfa'
+    default: return 'transparent'
+  }
+}
+
+export default function DentalChartingPage({
+  initialPatientId,
+}: {
+  initialPatientId?: string | null
+}) {
   const [patients, setPatients] = useState<ClinicalPatient[]>([])
-  const [patientId, setPatientId] = useState('')
+  const [patientSearch, setPatientSearch] = useState('')
+  const [patientId, setPatientId] = useState(initialPatientId ?? '')
   const [dentition, setDentition] = useState<'permanent' | 'primary'>('permanent')
   const [toothCode, setToothCode] = useState('11')
   const [surface, setSurface] = useState('Whole Tooth')
@@ -57,7 +87,7 @@ export default function DentalChartingPage() {
       .then((rows) => {
         if (cancelled) return
         setPatients(rows)
-        if (rows.length > 0) setPatientId(rows[0].id)
+        setPatientId(initialPatientId && rows.some(row => row.id === initialPatientId) ? initialPatientId : '')
       })
       .catch((cause: unknown) => {
         if (!cancelled) setError(cause instanceof Error ? cause.message : 'Could not load patients.')
@@ -91,7 +121,7 @@ export default function DentalChartingPage() {
   function selectPatient(id: string) {
     setPatientId(id)
     setEntries([])
-    setLoading(true)
+    setLoading(Boolean(id))
     setError('')
     setSuccess('')
   }
@@ -102,18 +132,100 @@ export default function DentalChartingPage() {
     setSurface('Whole Tooth')
   }
 
+
   function toothButtons(codes: number[]) {
     return codes.map((code) => {
       const key = String(code)
       const last = latestByTooth.get(key)
-      const abnormal = last && last.finding !== 'Healthy'
+      const selected = toothCode === key
+
+      // FDI positions 1-3 are anterior teeth.
+      const anterior = Number(key[1]) <= 3
+      const centreSurface = anterior ? 'Incisal' : 'Occlusal'
+
+      // FDI quadrants: mesial faces the midline.
+      // These positions describe the displayed chart, not a radiograph.
+      const mesialOnRight = ['1', '4', '5', '8'].includes(key[0])
+      const upperArch = ['1', '2', '5', '6'].includes(key[0])
+
+      const surfacesForTooth = [
+        { name: 'Buccal', position: upperArch ? 'top' : 'bottom' },
+        { name: 'Mesial', position: mesialOnRight ? 'right' : 'left' },
+        { name: centreSurface, position: 'centre' },
+        { name: 'Distal', position: mesialOnRight ? 'left' : 'right' },
+        { name: 'Lingual', position: upperArch ? 'bottom' : 'top' },
+      ]
+
+      // The API returns newest entries first.
+      // Find the most recent recorded observation for each surface.
+      const toothEntries = entries.filter(entry =>
+        entry.toothCode === key
+      )
+
+      function selectToothSurface(surfaceName: string) {
+        setToothCode(key)
+        setSurface(surfaceName)
+        setSuccess('')
+      }
+
       return (
-        <button key={key} type="button" title={last ? `${last.finding} — ${last.surface}` : 'No observations recorded'}
-          className={`specialty-tooth ${toothCode === key ? 'is-selected' : ''} ${abnormal ? 'has-finding' : ''}`}
-          aria-pressed={toothCode === key} onClick={() => setToothCode(key)}>
-          <span>{key}</span>
-          <small>{last ? last.finding : '—'}</small>
-        </button>
+        <div
+          key={key}
+          className={`ct-odonto-tooth ${selected ? 'is-selected' : ''}`}
+          role="group"
+          aria-label={`Tooth ${key}`}
+        >
+          <span className="ct-odonto-number">{key}</span>
+
+          <div className="ct-odonto-surfaces">
+            {surfacesForTooth.map(item => {
+              const recorded = toothEntries.find(entry =>
+                entry.surface === item.name
+              )
+              const wholeTooth = toothEntries.find(entry =>
+                entry.surface === 'Whole Tooth'
+              )
+              const displayed = recorded ?? wholeTooth
+              const active =
+                selected && surface === item.name
+
+              return (
+                <button
+                  key={item.position}
+                  type="button"
+                  className={`ct-odonto-surface ct-odonto-${item.position}
+                    ${active ? 'is-active' : ''}`}
+                  style={{
+                    backgroundColor: findingColour(displayed?.finding),
+                  }}
+                  aria-label={
+                    `Tooth ${key}, ${item.name}` +
+                    (displayed
+                      ? `, recorded finding: ${displayed.finding}`
+                      : ', no recorded finding')
+                  }
+                  aria-pressed={active}
+                  title={
+                    `Tooth ${key} — ${item.name}` +
+                    (displayed ? ` — ${displayed.finding}` : '')
+                  }
+                  onClick={() => selectToothSurface(item.name)}
+                />
+              )
+            })}
+          </div>
+
+          {last && (
+            <span
+              className="ct-odonto-record"
+              title={`${last.finding} — ${last.surface}`}
+            >
+              <span className="ct-odonto-record-dot"
+                style={{ backgroundColor: findingColour(last.finding) }}
+              />
+            </span>
+          )}
+        </div>
       )
     })
   }
@@ -144,23 +256,131 @@ export default function DentalChartingPage() {
       <div className="page-heading">
         <div><div className="eyebrow">DENTIST · CLINICAL RECORDS</div><h1>Dental Charting</h1>
           <p>Select a tooth, record a finding, and preserve previous observations.</p></div>
-        <button type="button" className="secondary-button" disabled={!patientId || loading}
-          onClick={() => { setLoading(true); setReload((value) => value + 1) }}>
-          <RefreshCw size={17} /> Refresh
-        </button>
+        {patientId && (
+          <button
+            type="button"
+            className="secondary-button"
+            disabled={loading}
+            onClick={() => {
+              setLoading(true)
+              setReload(value => value + 1)
+            }}
+          >
+            <RefreshCw size={17} /> Refresh
+          </button>
+        )}
       </div>
 
       {error && <div className="specialty-alert specialty-error" role="alert">{error}</div>}
       {success && <div className="specialty-alert specialty-success" role="status">{success}</div>}
 
-      <section className="panel specialty-patient">
-        <label htmlFor="chart-patient">Patient</label>
-        <select id="chart-patient" value={patientId} onChange={(event) => selectPatient(event.target.value)}>
-          <option value="">Select a patient</option>
-          {patients.map((patient) => <option key={patient.id} value={patient.id}>{patient.name}</option>)}
-        </select>
-        <p className="specialty-hint">Only clinical staff can access this chart. Choose a fictional patient for testing.</p>
-      </section>
+      
+      {/* CT_CHARTING_PATIENT_NAV_V1 */}
+      {!patientId ? (
+        <section className="ct-chart-select">
+          <div className="ct-chart-select-heading">
+            <div className="ct-chart-select-icon">
+              <Activity size={28} />
+            </div>
+            <h2>Select a Patient to Chart</h2>
+            <p>
+              Search for a registered patient to open
+              their dental chart and clinical history.
+            </p>
+          </div>
+
+          <input
+            type="search"
+            className="ct-chart-patient-search"
+            value={patientSearch}
+            onChange={event => setPatientSearch(event.target.value)}
+            placeholder="Search patients..."
+            aria-label="Search patients for dental charting"
+          />
+
+          <div className="ct-chart-patient-results">
+            {patients
+              .filter(patient =>
+                patient.name.toLowerCase().includes(
+                  patientSearch.trim().toLowerCase()
+                )
+              )
+              .map(patient => (
+                <button
+                  type="button"
+                  key={patient.id}
+                  className="ct-chart-patient-option"
+                  onClick={() => selectPatient(patient.id)}
+                >
+                  <span className="ct-chart-patient-avatar">
+                    {patient.name.trim().split(/\s+/)
+                      .slice(0, 2)
+                      .map(part => part.charAt(0).toUpperCase())
+                      .join('')}
+                  </span>
+                  <span className="ct-chart-patient-name">
+                    <strong>{patient.name}</strong>
+                    <small>Registered patient</small>
+                  </span>
+                  <span aria-hidden="true">→</span>
+                </button>
+              ))}
+
+            {patients.length === 0 && (
+              <p className="ct-chart-select-empty">
+                No patients available in the directory.
+              </p>
+            )}
+
+            {patients.length > 0 &&
+              !patients.some(patient =>
+                patient.name.toLowerCase().includes(
+                  patientSearch.trim().toLowerCase()
+                )
+              ) && (
+                <p className="ct-chart-select-empty">
+                  No patients match your search.
+                </p>
+              )}
+          </div>
+        </section>
+      ) : (
+        <section className="ct-chart-workspace-heading">
+          <button
+            type="button"
+            className="ct-chart-change-patient"
+            onClick={() => selectPatient('')}
+          >
+            ← Change Patient
+          </button>
+
+          <div className="ct-chart-workspace-identity">
+            <div className="ct-chart-workspace-avatar">
+              {patients.find(p => p.id === patientId)
+                ?.name.charAt(0).toUpperCase() || 'P'}
+            </div>
+
+            <div>
+              <h2>
+                {patients.find(p => p.id === patientId)
+                  ?.name || 'Patient Dental Chart'}
+              </h2>
+              <p>
+                Dental Chart · Clinical Imaging · Observations
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
+
+
+      
+      {patientId && (
+        <ClinicalImagingPanel
+          key={patientId}
+          patientId={patientId}
+        />
+      )}
 
       {patientId && <div className="specialty-columns">
         <section className="panel specialty-chart-panel">
@@ -172,12 +392,30 @@ export default function DentalChartingPage() {
               onClick={() => selectDentition('primary')}>Primary (20)</button>
           </div>
           <p className="specialty-hint">Select the tooth number. A dot marks a recorded finding. This is a clinical charting aid, not an automated diagnosis.</p>
-          <div className="specialty-jaws">
+          {/* CT_CLINICAL_PHASE4 */}
+          <div className="ct-chart-guide" aria-label="Chart finding legend">
+            <strong>Clinical chart guide</strong>
+            <div className="ct-chart-legend">
+              <span><i className="ct-legend-blue" /> Healthy / observed</span>
+              <span><i className="ct-legend-red" /> Possible caries</span>
+              <span><i className="ct-legend-amber" /> Requires review</span>
+              <span><i className="ct-legend-purple" /> Restored / treated</span>
+            </div>
+            <p>
+              These colours explain possible finding categories.
+              Recorded findings remain in the patient's history.
+              Colours are not automatic diagnoses.
+            </p>
+          </div>
+          <div className="specialty-jaws ct-clinical-arches">
             <div><strong>Upper arch</strong><div className="specialty-tooth-grid">{toothButtons(dentition === 'permanent' ? permanentUpper : primaryUpper)}</div></div>
             <div><strong>Lower arch</strong><div className="specialty-tooth-grid">{toothButtons(dentition === 'permanent' ? permanentLower : primaryLower)}</div></div>
           </div>
           <div className="specialty-history">
-            <h3>Tooth {toothCode} · History</h3>
+            <h3>Tooth {toothCode} · Clinical history</h3>
+            <p className="ct-chart-history-help">
+              Previous observations are retained for clinical review.
+            </p>
             {loading ? <p>Loading observations...</p> : toothHistory.length === 0 ?
               <p>No findings recorded for this tooth yet.</p> :
               toothHistory.slice(0, 30).map((item) => <article key={item.id} className="specialty-history-entry">

@@ -1,0 +1,162 @@
+.ct-claims-processing {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+
+.ct-claims-notice,
+.ct-claims-details,
+.ct-claims-form,
+.ct-claims-event {
+  border: 1px solid var(--ct-clinical-border,#dce6ef);
+  border-radius: 13px;
+  padding: 17px;
+}
+
+.ct-claims-notice p {
+  margin: 7px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.ct-claims-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.ct-claims-toolbar h3,
+.ct-claims-details h3,
+.ct-claims-form h4,
+.ct-claims-history h4 {
+  margin: 0;
+}
+
+.ct-claims-register {
+  display: grid;
+  gap: 10px;
+}
+
+.ct-claims-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 13px;
+  width: 100%;
+  padding: 15px;
+  border: 1px solid var(--ct-clinical-border,#dce6ef);
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ct-claims-row.selected {
+  border-color: var(--practice-primary,#126ce5);
+  background: color-mix(
+    in srgb,
+    var(--practice-primary,#126ce5) 8%,
+    transparent
+  );
+}
+
+.ct-claims-row:focus-visible {
+  outline: 3px solid var(--practice-primary,#126ce5);
+}
+
+.ct-claims-identity {
+  display: grid;
+  gap: 5px;
+}
+
+.ct-claims-identity small,
+.ct-claims-summary small,
+.ct-claims-event small {
+  font-size: 12px;
+  opacity: .75;
+}
+
+.ct-claims-status {
+  padding: 7px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--ct-clinical-border,#dce6ef);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ct-claims-details,
+.ct-claims-history {
+  display: grid;
+  gap: 15px;
+}
+
+.ct-claims-summary {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 12px;
+}
+
+.ct-claims-summary span {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid var(--ct-clinical-border,#dce6ef);
+  border-radius: 10px;
+  overflow-wrap: anywhere;
+}
+
+.ct-claims-form {
+  display: grid;
+  gap: 13px;
+  max-width: 700px;
+}
+
+.ct-claims-form label {
+  display: grid;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ct-claims-form :is(input,select,textarea) {
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid var(--ct-clinical-border,#dce6ef);
+  border-radius: 9px;
+  font: inherit;
+  color: inherit;
+  background: var(--ct-clinical-surface,transparent);
+}
+
+.ct-claims-form button {
+  justify-self: start;
+}
+
+.ct-claims-event {
+  display: grid;
+  gap: 7px;
+  overflow-wrap: anywhere;
+}
+
+.ct-claims-event p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.ct-claims-info {
+  font-size: 13px;
+}
+
+@media(max-width:700px) {
+  .ct-claims-summary {
+    grid-template-columns: 1fr;
+  }
+}

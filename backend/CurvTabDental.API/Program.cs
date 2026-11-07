@@ -23,6 +23,12 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 
+// CT_PHASE8B_WORKER_REGISTRATION
+// Disabled by default; only creates mock reminder records.
+builder.Services.AddHostedService<
+    CurvTabDental.API.Services.WhatsAppReminderWorker>();
+
+
 // ---------- Database ----------
 // ConnectionStrings:DentalDatabase lives in dotnet user-secrets (never in Git).
 builder.Services.AddDbContext<DentalDbContext>(options =>

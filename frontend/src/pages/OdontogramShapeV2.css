@@ -1,0 +1,129 @@
+/* Dental surface chart — crown-style drawing */
+
+.ct-clinical-arches .specialty-tooth-grid {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 5px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  padding: 12px 4px 18px !important;
+  scrollbar-width: thin;
+}
+
+.ct-odonto-tooth {
+  flex: 0 0 59px !important;
+  width: 59px !important;
+  min-width: 59px;
+  padding: 8px 4px 12px !important;
+  gap: 8px !important;
+}
+
+.ct-odonto-number {
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.ct-odonto-surfaces {
+  position: relative !important;
+  display: block !important;
+  transform: none !important;
+
+  width: 46px !important;
+  height: 49px !important;
+
+  overflow: hidden !important;
+  border: 2px solid #8ca4bb !important;
+  border-radius: 42% 42% 34% 34% !important;
+  box-sizing: border-box !important;
+
+  background: #f0f6fa !important;
+  box-shadow: inset 0 2px 4px rgba(21, 48, 70, .08);
+}
+
+/* Each coloured area represents a selectable surface. */
+.ct-odonto-surface {
+  position: absolute !important;
+  display: block !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  cursor: pointer;
+}
+
+.ct-odonto-top {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 36%;
+  clip-path: polygon(0 0, 100% 0, 69% 100%, 31% 100%);
+}
+
+.ct-odonto-bottom {
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 36%;
+  clip-path: polygon(31% 0, 69% 0, 100% 100%, 0 100%);
+}
+
+.ct-odonto-left {
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 36%;
+  clip-path: polygon(0 0, 100% 31%, 100% 69%, 0 100%);
+}
+
+.ct-odonto-right {
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 36%;
+  clip-path: polygon(100% 0, 0 31%, 0 69%, 100% 100%);
+}
+
+.ct-odonto-centre {
+  top: 31%;
+  left: 31%;
+  width: 38%;
+  height: 38%;
+  border: 1px solid #8497ad !important;
+  border-radius: 28% !important;
+  z-index: 1;
+}
+
+.ct-odonto-surface:hover {
+  filter: brightness(.8);
+}
+
+.ct-odonto-surface.is-active {
+  outline: 2px solid var(--practice-primary, #126ce5) !important;
+  outline-offset: -2px !important;
+  z-index: 2;
+}
+
+.ct-odonto-surface:focus-visible {
+  outline: 3px solid #2563eb !important;
+  outline-offset: -3px !important;
+  z-index: 3;
+}
+
+.ct-odonto-tooth.is-selected {
+  border-color: var(--practice-primary, #126ce5);
+}
+
+html[data-theme="dark"] .ct-odonto-surfaces {
+  background: #23374b !important;
+  border-color: #8198b0 !important;
+}
+
+/* Long arches scroll, rather than shrinking teeth until unreadable. */
+@media (max-width: 700px) {
+  .ct-odonto-tooth {
+    flex-basis: 54px !important;
+    width: 54px !important;
+    min-width: 54px !important;
+  }
+}

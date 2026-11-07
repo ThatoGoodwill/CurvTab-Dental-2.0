@@ -1,0 +1,153 @@
+.ct-remittances {
+  display: grid;
+  gap: 20px;
+  padding-top: 12px;
+}
+
+.ct-remittances-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.ct-remittances-heading h3 {
+  margin: 5px 0 8px;
+  color: #163452;
+  font-size: 22px;
+}
+
+.ct-remittances-heading p {
+  margin: 0;
+  color: #64748b;
+}
+
+.ct-remittances-notice {
+  border: 1px solid #d5e0ee;
+  border-radius: 12px;
+  padding: 15px;
+  color: #475569;
+  background: #f8fafc;
+  line-height: 1.6;
+}
+
+.ct-remittances-form,
+.ct-remittances-register {
+  border: 1px solid #d5e0ee;
+  border-radius: 15px;
+  background: white;
+  padding: 20px;
+}
+
+.ct-remittances-form {
+  display: grid;
+  gap: 16px;
+  max-width: 720px;
+}
+
+.ct-remittances-form h4,
+.ct-remittances-register h4 {
+  margin: 0 0 5px;
+  color: #163452;
+}
+
+.ct-remittances-form label {
+  display: grid;
+  gap: 8px;
+  font-weight: 600;
+  color: #233a53;
+}
+
+.ct-remittances-form input,
+.ct-remittances-form select,
+.ct-remittances-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd8e8;
+  border-radius: 10px;
+  padding: 12px;
+  font: inherit;
+  background: white;
+  color: #183450;
+}
+
+.ct-remittances-form input:focus,
+.ct-remittances-form select:focus,
+.ct-remittances-form textarea:focus {
+  outline: 2px solid var(--practice-primary, #16a34a);
+  outline-offset: 1px;
+}
+
+.ct-remittances-form .primary-button {
+  justify-self: start;
+}
+
+.ct-remittances-amounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ct-remittances-amounts span {
+  display: grid;
+  gap: 5px;
+  flex: 1;
+  min-width: 150px;
+  border: 1px solid #dce6f0;
+  border-radius: 10px;
+  padding: 12px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.ct-remittances-amounts strong {
+  font-size: 17px;
+  color: #183450;
+}
+
+.ct-remittances-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.ct-remittances-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  border: 1px solid #dce6f0;
+  border-radius: 11px;
+  padding: 15px;
+}
+
+.ct-remittances-item > div {
+  display: grid;
+  gap: 7px;
+}
+
+.ct-remittances-item p {
+  margin: 0;
+}
+
+.ct-remittances-item small {
+  color: #64748b;
+}
+
+.ct-remittances-status {
+  border-radius: 20px;
+  padding: 6px 11px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .ct-remittances-form,
+  .ct-remittances-register {
+    padding: 14px;
+  }
+}

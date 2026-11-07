@@ -1,0 +1,334 @@
+
+/* CT_CHARTING_PATIENT_NAV_V1 */
+
+.ct-chart-select {
+  width: 100%;
+  max-width: 640px;
+  margin: 12px auto 32px;
+  padding: clamp(20px, 3vw, 32px);
+  border: 1px solid var(--ct-border, #344963);
+  border-radius: 20px;
+  background: var(--ct-panel, #203247);
+  color: inherit;
+  display: grid;
+  gap: 20px;
+  box-sizing: border-box;
+}
+
+.ct-chart-select-heading {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 11px;
+}
+
+.ct-chart-select-icon {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(
+    in srgb,
+    var(--practice-primary, #b99008) 14%,
+    transparent
+  );
+  color: var(--practice-primary, #b99008);
+}
+
+.ct-chart-select-heading h2 {
+  margin: 0;
+  font-size: clamp(20px, 3vw, 25px);
+}
+
+.ct-chart-select-heading p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  opacity: .75;
+}
+
+.ct-chart-patient-search {
+  width: 100%;
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid #8fa4ba;
+  border-radius: 11px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.ct-chart-patient-results {
+  display: grid;
+  gap: 9px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.ct-chart-patient-option {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  padding: 13px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: rgba(125, 145, 170, .09);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ct-chart-patient-option:hover {
+  border-color: var(--practice-primary, #b99008);
+  background: color-mix(
+    in srgb,
+    var(--practice-primary, #b99008) 9%,
+    transparent
+  );
+}
+
+.ct-chart-patient-avatar,
+.ct-chart-workspace-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--practice-primary, #b99008);
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.ct-chart-patient-name {
+  display: grid;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ct-chart-patient-name strong {
+  font-size: 14px;
+}
+
+.ct-chart-patient-name small {
+  opacity: .65;
+  font-size: 11px;
+}
+
+.ct-chart-select-empty {
+  text-align: center;
+  padding: 22px;
+  opacity: .75;
+}
+
+.ct-chart-workspace-heading {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 18px 20px;
+  border: 1px solid #9aabbc55;
+  border-radius: 14px;
+  background: rgba(125, 145, 170, .07);
+}
+
+.ct-chart-change-patient {
+  justify-self: start;
+  padding: 9px 13px;
+  border: 1px solid #9aabbc88;
+  border-radius: 9px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ct-chart-workspace-identity {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.ct-chart-workspace-identity h2 {
+  margin: 0 0 5px;
+  font-size: 21px;
+}
+
+.ct-chart-workspace-identity p {
+  margin: 0;
+  opacity: .7;
+  font-size: 12px;
+}
+
+.ct-chart-patient-option:focus-visible,
+.ct-chart-change-patient:focus-visible,
+.ct-chart-patient-search:focus-visible {
+  outline: 3px solid var(--practice-primary, #b99008);
+  outline-offset: 2px;
+}
+
+@media(max-width: 600px) {
+  .ct-chart-select {
+    padding: 18px;
+  }
+
+  .ct-chart-workspace-heading {
+    padding: 15px;
+  }
+}
+
+
+/* CT_CHARTING_ADAPTIVE_THEME_V2 */
+
+/* Light mode — default */
+.ct-chart-select {
+  background: #ffffff !important;
+  color: #142b49 !important;
+  border: 1px solid #d8e3ef !important;
+  box-shadow: 0 10px 35px rgba(19, 43, 73, 0.06);
+}
+
+.ct-chart-select-heading h2 {
+  color: #142b49 !important;
+}
+
+.ct-chart-select-heading p {
+  color: #64748b !important;
+  opacity: 1;
+}
+
+.ct-chart-patient-search {
+  background: #f8fafc !important;
+  color: #142b49 !important;
+  border-color: #cbd5e1 !important;
+}
+
+.ct-chart-patient-search::placeholder {
+  color: #64748b !important;
+}
+
+.ct-chart-patient-option {
+  background: #f5f8fc !important;
+  color: #142b49 !important;
+  border-color: #e0e8f1 !important;
+}
+
+.ct-chart-patient-name strong {
+  color: #142b49 !important;
+}
+
+.ct-chart-patient-name small,
+.ct-chart-patient-option > span:last-child {
+  color: #64748b !important;
+  opacity: 1;
+}
+
+.ct-chart-patient-avatar {
+  color: #142b49 !important;
+}
+
+.ct-chart-patient-option:hover {
+  border-color: var(--practice-primary, #b99008) !important;
+  background: color-mix(
+    in srgb,
+    var(--practice-primary, #b99008) 10%,
+    #ffffff
+  ) !important;
+}
+
+.ct-chart-select-empty {
+  color: #64748b;
+}
+
+/* Dark mode — supports either common theme attribute location */
+html[data-theme="dark"] .ct-chart-select,
+body[data-theme="dark"] .ct-chart-select,
+[data-theme="dark"] .ct-chart-select {
+  background: #203247 !important;
+  color: #f1f5f9 !important;
+  border-color: #3c5069 !important;
+  box-shadow: none;
+}
+
+html[data-theme="dark"] .ct-chart-select-heading h2,
+body[data-theme="dark"] .ct-chart-select-heading h2,
+[data-theme="dark"] .ct-chart-select-heading h2 {
+  color: #f1f5f9 !important;
+}
+
+html[data-theme="dark"] .ct-chart-select-heading p,
+body[data-theme="dark"] .ct-chart-select-heading p,
+[data-theme="dark"] .ct-chart-select-heading p {
+  color: #b8c8db !important;
+}
+
+html[data-theme="dark"] .ct-chart-patient-search,
+body[data-theme="dark"] .ct-chart-patient-search,
+[data-theme="dark"] .ct-chart-patient-search {
+  background: #142235 !important;
+  color: #f1f5f9 !important;
+  border-color: #45617e !important;
+}
+
+html[data-theme="dark"] .ct-chart-patient-search::placeholder,
+body[data-theme="dark"] .ct-chart-patient-search::placeholder,
+[data-theme="dark"] .ct-chart-patient-search::placeholder {
+  color: #a7b9ce !important;
+}
+
+html[data-theme="dark"] .ct-chart-patient-option,
+body[data-theme="dark"] .ct-chart-patient-option,
+[data-theme="dark"] .ct-chart-patient-option {
+  background: #172638 !important;
+  color: #f1f5f9 !important;
+  border-color: #354b65 !important;
+}
+
+html[data-theme="dark"] .ct-chart-patient-name strong,
+body[data-theme="dark"] .ct-chart-patient-name strong,
+[data-theme="dark"] .ct-chart-patient-name strong {
+  color: #f1f5f9 !important;
+}
+
+html[data-theme="dark"] .ct-chart-patient-name small,
+html[data-theme="dark"] .ct-chart-patient-option > span:last-child,
+body[data-theme="dark"] .ct-chart-patient-name small,
+body[data-theme="dark"] .ct-chart-patient-option > span:last-child,
+[data-theme="dark"] .ct-chart-patient-name small,
+[data-theme="dark"] .ct-chart-patient-option > span:last-child {
+  color: #b3c5da !important;
+}
+
+html[data-theme="dark"] .ct-chart-patient-avatar,
+body[data-theme="dark"] .ct-chart-patient-avatar,
+[data-theme="dark"] .ct-chart-patient-avatar {
+  color: #f1f5f9 !important;
+}
+
+html[data-theme="dark"] .ct-chart-patient-option:hover,
+body[data-theme="dark"] .ct-chart-patient-option:hover,
+[data-theme="dark"] .ct-chart-patient-option:hover {
+  background: #29415a !important;
+  border-color: var(--practice-primary, #b99008) !important;
+}
+
+/* Selected patient workspace */
+.ct-chart-workspace-heading {
+  background: #ffffff;
+  color: #142b49;
+  border-color: #d8e3ef;
+}
+
+html[data-theme="dark"] .ct-chart-workspace-heading,
+body[data-theme="dark"] .ct-chart-workspace-heading,
+[data-theme="dark"] .ct-chart-workspace-heading {
+  background: #203247;
+  color: #f1f5f9;
+  border-color: #3c5069;
+}

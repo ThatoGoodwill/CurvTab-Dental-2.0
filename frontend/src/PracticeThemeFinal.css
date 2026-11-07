@@ -1,0 +1,205 @@
+/*
+  CurvTab Dental — Practice Theme Refinement
+  Frontend only. Uses the saved practice colours.
+*/
+
+.app-shell[data-practice-branded="true"] {
+  --brand-gradient: linear-gradient(
+    115deg,
+    var(--practice-primary),
+    var(--practice-accent)
+  );
+  --brand-soft: color-mix(
+    in srgb,
+    var(--practice-primary) 10%,
+    transparent
+  );
+}
+
+/* MAIN BUTTONS AND ACTIVE NAVIGATION */
+html body .app-shell[data-practice-branded="true"]
+:is(.primary-button, .ct-hero-action),
+html body .app-shell[data-practice-branded="true"]
+.sidebar .side-nav
+:is(.nav-item.nav-active, .nav-item[aria-current="page"]) {
+  background: var(--brand-gradient) !important;
+  background-image: var(--brand-gradient) !important;
+  border-color: var(--practice-primary) !important;
+  color: #fff !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,.45);
+}
+
+/* SELECTED TABS AND CONTROLS */
+html body .app-shell[data-practice-branded="true"]
+:is(
+  [role="tab"][aria-selected="true"],
+  .tab-active,
+  .active-tab,
+  .tab-button.active,
+  .patient-tab.active,
+  .patient-tabs button.active,
+  .patient-detail-tabs button.active,
+  .patient-profile-tabs button.active,
+  .tabs button.active
+) {
+  background: var(--brand-gradient) !important;
+  background-image: var(--brand-gradient) !important;
+  border-color: var(--practice-primary) !important;
+  color: white !important;
+}
+
+/* LOGO ICON AND PRACTICE IDENTITY */
+html body .app-shell[data-practice-branded="true"]
+.sidebar .brand-icon {
+  background: var(--brand-gradient) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+
+html body .app-shell[data-practice-branded="true"]
+.sidebar .brand-icon svg {
+  color: #fff !important;
+  stroke: #fff !important;
+}
+
+html body .app-shell[data-practice-branded="true"]
+.practice-chip > svg {
+  color: var(--practice-primary) !important;
+  stroke: currentColor !important;
+}
+
+/* DASHBOARD DETAILS */
+html body .app-shell[data-practice-branded="true"]
+.ct-bar-fill {
+  background: var(--brand-gradient) !important;
+}
+
+html body .app-shell[data-practice-branded="true"]
+.ct-slide-dots .ct-dot-active {
+  background: var(--brand-gradient) !important;
+}
+
+html body .app-shell[data-practice-branded="true"]
+:is(.ct-hero-eyebrow, .ct-analytics-kicker) {
+  color: var(--practice-accent) !important;
+}
+
+/* LIGHT MODE: KEEP THE APPROVED SOFT-WHITE LAYOUT */
+:root:not([data-theme="dark"]) body
+.app-shell[data-practice-branded="true"]
+:is(.stat-icon, .empty-icon) {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--practice-primary) 13%, white),
+    color-mix(in srgb, var(--practice-accent) 13%, white)
+  ) !important;
+}
+
+/* DARK MODE: CONSISTENT WORKSPACE SURFACES */
+:root[data-theme="dark"] body
+.app-shell[data-practice-branded="true"] {
+  --ct-text: #ecf3fa;
+  --ct-muted: #b6c7d8;
+  --ct-surface: #203449;
+  --ct-subtle: #1a2e42;
+  --ct-line: #38516a;
+  color: #ecf3fa !important;
+  background: #101e2d !important;
+}
+
+:root[data-theme="dark"] body
+.app-shell[data-practice-branded="true"]
+:is(.workspace, .main-content) {
+  background: #142638 !important;
+  color: #ecf3fa !important;
+}
+
+:root[data-theme="dark"] body
+.app-shell[data-practice-branded="true"]
+:is(.sidebar, .topbar) {
+  background: #172b40 !important;
+  border-color: #344b62 !important;
+  color: #ecf3fa !important;
+}
+
+:root[data-theme="dark"] body
+.app-shell[data-practice-branded="true"]
+:is(
+  .panel,
+  .stat-card,
+  .ct-chart-card,
+  .ct-live-calendar,
+  .patient-card,
+  .patient-detail-card,
+  .patient-info-card
+) {
+  background: #203449 !important;
+  border-color: #39526a !important;
+  color: #ecf3fa !important;
+}
+
+:root[data-theme="dark"] body
+.app-shell[data-practice-branded="true"]
+.main-content :is(h1, h2, h3):not(
+  .panel *,
+  .stat-card *,
+  .ct-chart-card *,
+  .patient-card *,
+  .patient-detail-card *,
+  .patient-info-card *
+) {
+  color: #f3f7fc !important;
+}
+
+:root[data-theme="dark"] body
+.app-shell[data-practice-branded="true"]
+:is(
+  .page-heading p,
+  .appearance-note,
+  .nav-heading,
+  .breadcrumb,
+  .main-content > p
+) {
+  color: #b8c9da !important;
+}
+
+/* DARK MODE: WHITE TEXT ON DARK CARDS */
+:root[data-theme="dark"] body
+.app-shell[data-practice-branded="true"]
+:is(.panel, .stat-card, .ct-chart-card)
+:is(h1, h2, h3, strong) {
+  color: #f3f7fc !important;
+}
+
+/* DARK MODE: SECONDARY BUTTONS */
+:root[data-theme="dark"] body
+.app-shell[data-practice-branded="true"]
+:is(.secondary-button, .icon-button) {
+  background: #263d53 !important;
+  border-color: #405a73 !important;
+  color: #f1f6fb !important;
+}
+
+/* DARK MODE: UNSELECTED NAVIGATION */
+:root[data-theme="dark"] body
+.app-shell[data-practice-branded="true"]
+.sidebar .nav-item:not(.nav-active):not([aria-current="page"]) {
+  background: transparent !important;
+  color: #d6e3ef !important;
+}
+
+/* DARK MODE: INPUTS */
+:root[data-theme="dark"] body
+.app-shell[data-practice-branded="true"]
+:is(input:not([type="color"]), select, textarea) {
+  background-color: #263d53 !important;
+  border-color: #49617a !important;
+  color: #f3f7fc !important;
+}
+
+/* KEEP KEYBOARD FOCUS VISIBLE */
+.app-shell[data-practice-branded="true"]
+:is(button, input, select, textarea):focus-visible {
+  outline: 2px solid var(--practice-accent) !important;
+  outline-offset: 2px;
+}

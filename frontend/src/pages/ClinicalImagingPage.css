@@ -1,0 +1,265 @@
+
+/* CurvTab Clinical Imaging — standalone workspace */
+
+.ct-imaging-page {
+  --im-surface: #ffffff;
+  --im-text: #142b49;
+  --im-muted: #60758c;
+  --im-border: #d5e1ee;
+  --im-hover: #f1f6fc;
+  color: var(--im-text);
+  display: grid;
+  gap: 22px;
+  min-width: 0;
+  padding-bottom: 30px;
+}
+
+html[data-theme="dark"] .ct-imaging-page,
+body[data-theme="dark"] .ct-imaging-page,
+[data-theme="dark"] .ct-imaging-page,
+.app-shell[data-theme="dark"] .ct-imaging-page {
+  --im-surface: #203247;
+  --im-text: #f1f5f9;
+  --im-muted: #b4c5d8;
+  --im-border: #3e536c;
+  --im-hover: #2b4159;
+}
+
+.ct-imaging-heading,
+.ct-imaging-workspace-title {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.ct-imaging-heading h1,
+.ct-imaging-workspace-title h1 {
+  font-size: clamp(23px, 3vw, 30px);
+  margin: 0 0 5px;
+}
+
+.ct-imaging-heading p,
+.ct-imaging-workspace-title p,
+.ct-imaging-directory-title p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--im-muted);
+}
+
+.ct-imaging-heading-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: color-mix(
+    in srgb,
+    var(--practice-primary, #c49406) 12%,
+    transparent
+  );
+  color: var(--practice-primary, #c49406);
+}
+
+.ct-imaging-directory {
+  display: grid;
+  gap: 19px;
+  padding: clamp(17px, 2.5vw, 25px);
+  background: var(--im-surface);
+  border: 1px solid var(--im-border);
+  border-radius: 16px;
+}
+
+.ct-imaging-directory-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.ct-imaging-directory-title h2 {
+  margin: 0 0 5px;
+  font-size: 19px;
+}
+
+.ct-imaging-directory-title > span {
+  font-size: 12px;
+  color: var(--im-muted);
+}
+
+.ct-imaging-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  color: var(--im-muted);
+  border: 1px solid var(--im-border);
+  border-radius: 11px;
+}
+
+.ct-imaging-search input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  padding: 14px 0;
+  background: transparent;
+  color: var(--im-text);
+  border: 0;
+  outline: none;
+  font: inherit;
+}
+
+.ct-imaging-search:focus-within {
+  outline: 2px solid var(--practice-primary, #c49406);
+}
+
+.ct-imaging-patient-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.ct-imaging-patient-card {
+  display: flex;
+  flex-direction: column;
+  gap: 17px;
+  min-width: 0;
+  min-height: 175px;
+  padding: 17px;
+  border: 1px solid var(--im-border);
+  border-top: 2px solid var(--practice-primary, #c49406);
+  border-radius: 12px;
+  background: var(--im-surface);
+  color: var(--im-text);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: transform .15s, background .15s;
+}
+
+.ct-imaging-patient-card:hover {
+  transform: translateY(-2px);
+  background: var(--im-hover);
+}
+
+.ct-imaging-card-top,
+.ct-imaging-identity {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.ct-imaging-status {
+  border-radius: 20px;
+  padding: 5px 9px;
+  background: color-mix(
+    in srgb,
+    var(--practice-primary, #c49406) 14%,
+    transparent
+  );
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ct-imaging-avatar {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--practice-primary, #c49406);
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.ct-imaging-name {
+  display: grid;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ct-imaging-name strong {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.ct-imaging-name small {
+  color: var(--im-muted);
+  font-size: 11px;
+}
+
+.ct-imaging-card-action {
+  margin-top: auto;
+  padding-top: 13px;
+  border-top: 1px solid var(--im-border);
+  font-size: 12px;
+  font-weight: 750;
+  color: var(--practice-primary, #c49406);
+}
+
+.ct-imaging-empty {
+  padding: 35px;
+  text-align: center;
+  color: var(--im-muted);
+}
+
+.ct-imaging-error {
+  border: 1px solid #d98d8d;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.ct-imaging-error button {
+  cursor: pointer;
+}
+
+.ct-imaging-workspace-header {
+  display: grid;
+  gap: 16px;
+}
+
+.ct-imaging-back {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  justify-self: start;
+  padding: 10px 14px;
+  background: var(--im-surface);
+  color: var(--im-text);
+  border: 1px solid var(--im-border);
+  border-radius: 9px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ct-imaging-back:hover {
+  background: var(--im-hover);
+}
+
+.ct-imaging-back:focus-visible,
+.ct-imaging-patient-card:focus-visible {
+  outline: 3px solid var(--practice-primary, #c49406);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1000px) {
+  .ct-imaging-patient-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .ct-imaging-patient-grid {
+    grid-template-columns: 1fr;
+  }
+  .ct-imaging-heading,
+  .ct-imaging-workspace-title {
+    align-items: flex-start;
+  }
+}

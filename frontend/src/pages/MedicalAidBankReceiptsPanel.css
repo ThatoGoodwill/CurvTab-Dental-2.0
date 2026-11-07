@@ -1,0 +1,110 @@
+.ct-bank-receipts {
+  display: grid;
+  gap: 20px;
+  padding-top: 12px;
+}
+
+.ct-bank-card {
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, #dce3eb);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.ct-bank-card h3 {
+  margin: 0 0 14px;
+}
+
+.ct-bank-card p {
+  margin-bottom: 0;
+}
+
+.ct-bank-form {
+  display: grid;
+  gap: 16px;
+}
+
+.ct-bank-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.ct-bank-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-weight: 600;
+  min-width: 0;
+}
+
+.ct-bank-grid input,
+.ct-bank-grid textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 11px 12px;
+  background: #fff;
+  color: #1e293b;
+  font: inherit;
+}
+
+.ct-bank-grid input:focus,
+.ct-bank-grid textarea:focus {
+  outline: 2px solid var(--practice-primary, #2563eb);
+}
+
+.ct-bank-wide {
+  grid-column: 1 / -1;
+}
+
+.ct-bank-form > button {
+  justify-self: start;
+}
+
+.ct-bank-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.ct-bank-scroll {
+  overflow-x: auto;
+}
+
+.ct-bank-scroll table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.ct-bank-scroll th,
+.ct-bank-scroll td {
+  padding: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.ct-bank-error,
+.ct-bank-success {
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.ct-bank-error {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.ct-bank-success {
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+@media (max-width: 680px) {
+  .ct-bank-grid {
+    grid-template-columns: 1fr;
+  }
+}

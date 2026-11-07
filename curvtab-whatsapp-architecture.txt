@@ -1,0 +1,840 @@
+===== PROGRAM STARTUP =====
+using CurvTabDental.API.Notifications;
+using System.Threading.RateLimiting;
+using CurvTabDental.API.Middleware;
+using CurvTabDental.API.Security;
+using CurvTabDental.API.Seeding;
+using CurvTabDental.Application.Abstractions;
+using CurvTabDental.Infrastructure.Identity;
+using CurvTabDental.Infrastructure.Persistence;
+using CurvTabDental.Infrastructure.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// ---------- Core services ----------
+builder.Services.AddControllers();
+builder.Services.AddSignalR();
+builder.Services.AddOpenApi();
+builder.Services.AddProblemDetails();
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
+builder.Services.AddScoped<IAuditService, AuditService>();
+
+// ---------- Database ----------
+// ConnectionStrings:DentalDatabase lives in dotnet user-secrets (never in Git).
+builder.Services.AddDbContext<DentalDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DentalDatabase")));
+
+// ---------- Identity + cookie authentication ----------
+builder.Services
+    .AddIdentity<ApplicationUser, ApplicationRole>(options =>
+    {
+        options.User.RequireUniqueEmail = true;
+
+        options.Password.RequiredLength = 10;
+        options.Password.RequireDigit = true;
+        options.Password.RequireLowercase = true;
+        options.Password.RequireUppercase = true;
+        options.Password.RequireNonAlphanumeric = false;
+
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+        options.Lockout.AllowedForNewUsers = true;
+    })
+    .AddEntityFrameworkStores<DentalDbContext>()
+    .AddClaimsPrincipalFactory<PracticeClaimsPrincipalFactory>()
+    .AddDefaultTokenProviders();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.Name = "ctd.auth";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+        ? CookieSecurePolicy.SameAsRequest
+        : CookieSecurePolicy.Always;
+    options.ExpireTimeSpan = TimeSpan.FromHours(8);
+    options.SlidingExpiration = true;
+
+    // This is an API: answer 401/403 instead of redirecting to a login page.
+    options.Events.OnRedirectToLogin = context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        return Task.CompletedTask;
+    };
+});
+
+// Deny by default (FR-009): any endpoint without [AllowAnonymous] requires a signed-in user.
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
+
+// ---------- CORS for the React front-end ----------
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+                     ?? new[] { "http://localhost:5173" };
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy => policy
+        .WithOrigins(allowedOrigins)
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials());
+});
+
+// ---------- Rate limiting (login brute-force; lockout is the second layer) ----------
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("login", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 20,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+});
+
+var app = builder.Build();
+
+// ---------- Seed roles / bootstrap admin / demo data ----------
+try
+{
+    await IdentitySeeder.SeedAsync(app.Services, app.Configuration, app.Environment);
+}
+catch (Exception ex)
+{
+    app.Logger.LogError(ex,
+        "Seeding failed. Have you applied the migrations? (dotnet ef database update ...)");
+}
+
+// ---------- HTTP pipeline (order matters) ----------
+app.UseExceptionHandler();
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+}
+else
+{
+    app.UseHsts();
+    app.UseHttpsRedirection();
+}
+
+app.UseCors("Frontend");
+app.UseRateLimiter();
+app.UseMiddleware<CsrfHeaderMiddleware>();
+app.UseAuthentication();
+app.UseMiddleware<ActiveUserMiddleware>();
+app.UseAuthorization();
+
+app.MapHub<ClinicNotificationsHub>("/api/hubs/clinic");
+app.MapControllers();
+
+app.Run();
+
+// Makes the entry point visible to future WebApplicationFactory integration tests.
+public partial class Program { }
+===== DATABASE CONTEXT =====
+using CurvTabDental.Application.Abstractions;
+using CurvTabDental.Domain.Entities;
+using CurvTabDental.Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+
+namespace CurvTabDental.Infrastructure.Persistence;
+
+/// <summary>
+/// One database for Identity + all practice data.
+/// Tenant isolation: every IPracticeOwned entity gets a global query filter comparing its
+/// DentalPracticeId with the practice of the signed-in user (from ICurrentUser).
+/// A platform user (no practice) therefore sees ZERO practice-owned rows.
+/// </summary>
+public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>
+{
+    private readonly ICurrentUser? _currentUser;
+
+    public DentalDbContext(DbContextOptions<DentalDbContext> options, ICurrentUser? currentUser = null)
+        : base(options)
+    {
+        _currentUser = currentUser;
+    }
+
+    public DbSet<DentalPractice> DentalPractices => Set<DentalPractice>();
+    // Appointment records stored in PostgreSQL.
+    public DbSet<Appointment> Appointments => Set<Appointment>();
+    public DbSet<Patient> Patients => Set<Patient>();
+    public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
+    public DbSet<PracticeAppearance> PracticeAppearances => Set<PracticeAppearance>();
+    public DbSet<Consultation> Consultations => Set<Consultation>();
+    public DbSet<PatientMedicalHistory> PatientMedicalHistories => Set<PatientMedicalHistory>();
+    public DbSet<ConsultationCharge> ConsultationCharges => Set<ConsultationCharge>();
+    public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<OrthodonticFinancialAgreement> OrthodonticFinancialAgreements => Set<OrthodonticFinancialAgreement>();
+    public DbSet<OrthodonticInstallment> OrthodonticInstallments => Set<OrthodonticInstallment>();
+    public DbSet<DentalChartEntry> DentalChartEntries => Set<DentalChartEntry>();
+    public DbSet<ClinicalImage> ClinicalImages => Set<ClinicalImage>();
+    public DbSet<OrthodonticCase> OrthodonticCases => Set<OrthodonticCase>();
+    public DbSet<OrthodonticProgressNote> OrthodonticProgressNotes => Set<OrthodonticProgressNote>();
+
+    // EF evaluates this per query (it is a member of the context), not once at model build time.
+    private Guid? CurrentPracticeId => _currentUser?.PracticeId;
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<DentalPractice>(entity =>
+        {
+            entity.HasKey(p => p.Id);
+            entity.Property(p => p.Name).IsRequired().HasMaxLength(200);
+            entity.Property(p => p.Email).HasMaxLength(256);
+            entity.Property(p => p.PhoneNumber).HasMaxLength(30);
+            entity.Property(p => p.Address).HasMaxLength(500);
+        });
+
+        modelBuilder.Entity<ApplicationUser>(entity =>
+        {
+            entity.Property(u => u.FullName).IsRequired().HasMaxLength(200);
+            entity.HasIndex(u => u.DentalPracticeId);
+            entity.HasOne<DentalPractice>()
+                .WithMany()
+                .HasForeignKey(u => u.DentalPracticeId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // SaaS isolation: users only query their own practice's appointments.
+modelBuilder.Entity<Appointment>(entity =>
+{
+    entity.HasKey(a => a.Id);
+
+    entity.HasQueryFilter(
+        a => a.DentalPracticeId == CurrentPracticeId);
+
+    entity.Property(a => a.Status)
+        .HasMaxLength(40);
+
+    entity.Property(a => a.Reason)
+        .HasMaxLength(500);
+
+    entity.HasIndex(a =>
+        new { a.DentalPracticeId, a.StartUtc });
+
+    entity.HasIndex(a =>
+        new { a.DentalPracticeId, a.Status });
+});
+
+        // Phase 2: confidential clinical encounter, one per appointment.
+        modelBuilder.Entity<Consultation>(entity =>
+        {
+            entity.HasKey(c => c.Id);
+            entity.HasQueryFilter(c => c.DentalPracticeId == CurrentPracticeId);
+            entity.HasIndex(c => new { c.DentalPracticeId, c.AppointmentId }).IsUnique();
+            entity.HasIndex(c => new { c.DentalPracticeId, c.PatientId });
+            entity.HasOne<Appointment>().WithMany().HasForeignKey(c => c.AppointmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Patient>().WithMany().HasForeignKey(c => c.PatientId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.Property(c => c.ChiefComplaint).HasMaxLength(6000);
+            entity.Property(c => c.Symptoms).HasMaxLength(6000);
+            entity.Property(c => c.ExaminationFindings).HasMaxLength(6000);
+            entity.Property(c => c.Diagnosis).HasMaxLength(6000);
+            entity.Property(c => c.TreatmentPerformed).HasMaxLength(6000);
+            entity.Property(c => c.TreatmentPlan).HasMaxLength(6000);
+            entity.Property(c => c.PrescriptionNotes).HasMaxLength(6000);
+            entity.Property(c => c.FollowUpAdvice).HasMaxLength(6000);
+        });
+
+        modelBuilder.Entity<PatientMedicalHistory>(entity =>
+        {
+            entity.HasKey(h => h.Id);
+            entity.HasQueryFilter(h => h.DentalPracticeId == CurrentPracticeId);
+            entity.HasIndex(h => new { h.DentalPracticeId, h.PatientId }).IsUnique();
+            entity.HasOne<Patient>().WithMany().HasForeignKey(h => h.PatientId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.Property(h => h.Allergies).HasMaxLength(4000);
+            entity.Property(h => h.CurrentMedications).HasMaxLength(4000);
+            entity.Property(h => h.MedicalConditions).HasMaxLength(4000);
+            entity.Property(h => h.DentalHistory).HasMaxLength(4000);
+            entity.Property(h => h.AdditionalNotes).HasMaxLength(4000);
+        });
+
+        // Charges are what the Dentist asks reception to collect, not payments.
+        modelBuilder.Entity<ConsultationCharge>(entity =>
+        {
+            entity.HasKey(c => c.Id);
+            entity.HasQueryFilter(c => c.DentalPracticeId == CurrentPracticeId);
+            entity.HasIndex(c => new { c.DentalPracticeId, c.ConsultationId });
+            entity.HasOne<Consultation>().WithMany().HasForeignKey(c => c.ConsultationId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.Property(c => c.Description).IsRequired().HasMaxLength(200);
+            entity.Property(c => c.Amount).HasPrecision(12, 2);
+        });
+
+        // Phase 3: payments are recorded separately from clinical charges.
+        // Phase 4: append-only tooth findings and chart history.
+
+        // Private practice-owned clinical imaging metadata.
+        modelBuilder.Entity<ClinicalImage>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasQueryFilter(
+                x => x.DentalPracticeId == CurrentPracticeId);
+
+            entity.Property(x => x.ImageType)
+                .IsRequired().HasMaxLength(30);
+            entity.Property(x => x.OriginalFileName)
+                .IsRequired().HasMaxLength(255);
+            entity.Property(x => x.StoredFileName)
+                .IsRequired().HasMaxLength(100);
+            entity.Property(x => x.ContentType)
+                .IsRequired().HasMaxLength(50);
+
+            entity.HasIndex(x => new {
+                x.DentalPracticeId,
+                x.PatientId,
+                x.UploadedAtUtc
+            });
+
+            entity.HasOne<Patient>().WithMany()
+                .HasForeignKey(x => x.PatientId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne<OrthodonticCase>().WithMany()
+                .HasForeignKey(x => x.OrthodonticCaseId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<DentalChartEntry>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasQueryFilter(e => e.DentalPracticeId == CurrentPracticeId);
+            entity.Property(e => e.ToothCode).IsRequired().HasMaxLength(2);
+            entity.Property(e => e.Surface).IsRequired().HasMaxLength(40);
+            entity.Property(e => e.Finding).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Notes).HasMaxLength(2000);
+            entity.HasIndex(e => new { e.DentalPracticeId, e.PatientId, e.RecordedAtUtc });
+            entity.HasOne<Patient>().WithMany().HasForeignKey(e => e.PatientId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Consultation>().WithMany().HasForeignKey(e => e.ConsultationId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Phase 5: an orthodontic treatment case belongs to an existing patient.
+        modelBuilder.Entity<OrthodonticCase>(entity =>
+        {
+            entity.HasKey(c => c.Id);
+            entity.HasQueryFilter(c => c.DentalPracticeId == CurrentPracticeId);
+            entity.Property(c => c.Title).IsRequired().HasMaxLength(150);
+            entity.Property(c => c.ApplianceType).IsRequired().HasMaxLength(100);
+            entity.Property(c => c.Goals).IsRequired().HasMaxLength(4000);
+            entity.Property(c => c.Status).IsRequired().HasMaxLength(30);
+            entity.HasIndex(c => new { c.DentalPracticeId, c.PatientId });
+            entity.HasOne<Patient>().WithMany().HasForeignKey(c => c.PatientId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<OrthodonticProgressNote>(entity =>
+        {
+            entity.HasKey(n => n.Id);
+            entity.HasQueryFilter(n => n.DentalPracticeId == CurrentPracticeId);
+            entity.Property(n => n.ProgressNotes).IsRequired().HasMaxLength(4000);
+            entity.Property(n => n.Adjustments).HasMaxLength(2000);
+            entity.Property(n => n.NextSteps).HasMaxLength(2000);
+            entity.HasIndex(n => new { n.DentalPracticeId, n.OrthodonticCaseId, n.VisitDate });
+            entity.HasOne<OrthodonticCase>().WithMany()
+                .HasForeignKey(n => n.OrthodonticCaseId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+
+        // CT_FINANCE_CASH_PHASE6C
+        modelBuilder.Entity<PracticeExpense>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasQueryFilter(
+                x => x.DentalPracticeId == CurrentPracticeId);
+
+            entity.Property(x => x.Category)
+                .IsRequired().HasMaxLength(60);
+            entity.Property(x => x.Description)
+                .IsRequired().HasMaxLength(250);
+            entity.Property(x => x.Method)
+                .IsRequired().HasMaxLength(16);
+            entity.Property(x => x.Reference).HasMaxLength(100);
+            entity.Property(x => x.Amount).HasPrecision(12, 2);
+
+            entity.HasIndex(x => new {
+                x.DentalPracticeId,
+                x.RequestId
+            }).IsUnique();
+
+            entity.HasIndex(x => new {
+                x.DentalPracticeId,
+                x.ExpenseDate
+            });
+        });
+
+        modelBuilder.Entity<CashDaySignoff>(entity =>
+===== DATABASE MAPPING TAIL =====
+            {
+                x.DentalPracticeId,
+                x.InvoiceId
+            });
+
+            entity.HasOne<MedicalAidRemittanceMatch>()
+                .WithMany()
+                .HasForeignKey(x => x.RemittanceMatchId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne<Invoice>()
+                .WithMany()
+                .HasForeignKey(x => x.InvoiceId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // CT_PHASE7E2_REMITTANCE_MATCHING
+        modelBuilder.Entity<MedicalAidRemittanceMatch>(entity =>
+        {
+            entity.ToTable("MedicalAidRemittanceMatches");
+
+            entity.HasKey(x => x.Id);
+
+            entity.HasQueryFilter(
+                x => x.DentalPracticeId == CurrentPracticeId);
+
+            entity.Property(x => x.MatchedAmount)
+                .HasPrecision(12, 2);
+
+            entity.Property(x => x.EvidenceReference)
+                .IsRequired().HasMaxLength(300);
+
+            entity.Property(x => x.Notes)
+                .IsRequired().HasMaxLength(1000);
+
+            entity.HasIndex(x => new
+            {
+                x.DentalPracticeId,
+                x.RequestId
+            }).IsUnique();
+
+            entity.HasIndex(x => new
+            {
+                x.DentalPracticeId,
+                x.BankReceiptId,
+                x.RemittanceAdviceId
+            }).IsUnique();
+
+            entity.HasIndex(x => new
+            {
+                x.DentalPracticeId,
+                x.RemittanceAdviceId
+            });
+
+            entity.HasOne<MedicalAidBankReceipt>()
+                .WithMany()
+                .HasForeignKey(x => x.BankReceiptId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne<MedicalAidRemittanceAdvice>()
+                .WithMany()
+                .HasForeignKey(x => x.RemittanceAdviceId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // CT_PHASE7E1_SCHEME_BANK_RECEIPTS
+        modelBuilder.Entity<MedicalAidBankReceipt>(entity =>
+        {
+            entity.ToTable("MedicalAidBankReceipts");
+
+            entity.HasKey(x => x.Id);
+
+            entity.HasQueryFilter(
+                x => x.DentalPracticeId == CurrentPracticeId);
+
+            entity.Property(x => x.SchemeName)
+                .IsRequired().HasMaxLength(160);
+
+            entity.Property(x => x.SchemeKey)
+                .IsRequired().HasMaxLength(160);
+
+            entity.Property(x => x.BankReference)
+                .IsRequired().HasMaxLength(120);
+
+            entity.Property(x => x.BankReferenceKey)
+                .IsRequired().HasMaxLength(120);
+
+            entity.Property(x => x.Currency)
+                .IsRequired().HasMaxLength(3);
+
+            entity.Property(x => x.EvidenceReference)
+                .IsRequired().HasMaxLength(300);
+
+            entity.Property(x => x.Notes)
+                .IsRequired().HasMaxLength(1000);
+
+            entity.Property(x => x.Amount)
+                .HasPrecision(12, 2);
+
+            entity.HasIndex(x => new
+            {
+                x.DentalPracticeId,
+                x.RequestId
+            }).IsUnique();
+
+            entity.HasIndex(x => new
+            {
+                x.DentalPracticeId,
+                x.SchemeKey,
+                x.BankReferenceKey
+            }).IsUnique();
+
+            entity.HasOne<DentalPractice>()
+                .WithMany()
+                .HasForeignKey(x => x.DentalPracticeId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<MedicalAidRemittanceAdvice>(entity =>
+        {
+            entity.ToTable("MedicalAidRemittanceAdvices");
+            entity.HasKey(x => x.Id);
+
+            entity.HasQueryFilter(
+                x => x.DentalPracticeId == CurrentPracticeId);
+
+            entity.Property(x => x.RemittanceReference)
+                .IsRequired().HasMaxLength(120);
+
+            entity.Property(x => x.EvidenceReference)
+                .IsRequired().HasMaxLength(300);
+
+            entity.Property(x => x.Notes)
+                .IsRequired().HasMaxLength(1000);
+
+            entity.Property(x => x.AdvisedAmount)
+                .HasPrecision(12, 2);
+
+            entity.HasIndex(x => new
+            {
+                x.DentalPracticeId,
+                x.RequestId
+            }).IsUnique();
+
+            entity.HasIndex(x => new
+            {
+                x.DentalPracticeId,
+                x.ClaimId,
+                x.RemittanceReference
+            }).IsUnique();
+
+            entity.HasOne<MedicalAidClaim>()
+                .WithMany()
+                .HasForeignKey(x => x.ClaimId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Payment>(entity =>
+        {
+            entity.HasKey(p => p.Id);
+            entity.HasQueryFilter(p => p.DentalPracticeId == CurrentPracticeId);
+            entity.Property(p => p.ReceiptNumber).IsRequired().HasMaxLength(64);
+            entity.Property(p => p.Method).IsRequired().HasMaxLength(16);
+            entity.Property(p => p.Reference).HasMaxLength(100);
+            entity.Property(p => p.Amount).HasPrecision(12, 2);
+            entity.HasIndex(p => new { p.DentalPracticeId, p.AppointmentId });
+            entity.HasIndex(p => new { p.DentalPracticeId, p.RequestId }).IsUnique();
+            entity.HasIndex(p => new { p.DentalPracticeId, p.ReceiptNumber }).IsUnique();
+            entity.HasOne<Appointment>().WithMany()
+                .HasForeignKey(p => p.AppointmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Patient>(entity =>
+        {
+            entity.HasKey(p => p.Id);
+            entity.Property(p => p.Title).HasMaxLength(20);
+            entity.Property(p => p.FirstName).IsRequired().HasMaxLength(100);
+            entity.Property(p => p.LastName).IsRequired().HasMaxLength(100);
+            entity.Property(p => p.Gender).HasMaxLength(20);
+            entity.Property(p => p.IdNumber).HasMaxLength(40);
+            entity.Property(p => p.PhoneNumber).HasMaxLength(30);
+            entity.Property(p => p.Email).HasMaxLength(256);
+            entity.Property(p => p.Address).HasMaxLength(500);
+            entity.Property(p => p.EmergencyContactName).HasMaxLength(200);
+            entity.Property(p => p.EmergencyContactPhone).HasMaxLength(30);
+            entity.Property(p => p.PaymentMethod).IsRequired().HasMaxLength(20);
+            entity.Property(p => p.MedicalAidScheme).HasMaxLength(100);
+            entity.Property(p => p.MedicalAidOption).HasMaxLength(100);
+            entity.Property(p => p.MedicalAidMemberNumber).HasMaxLength(50);
+
+            entity.HasIndex(p => new { p.DentalPracticeId, p.LastName, p.FirstName });
+            entity.HasIndex(p => new { p.DentalPracticeId, p.IdNumber });
+
+            entity.HasOne<DentalPractice>()
+                .WithMany()
+                .HasForeignKey(p => p.DentalPracticeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // TENANT ISOLATION: a query can only ever see its own practice's patients.
+            entity.HasQueryFilter(p => p.DentalPracticeId == CurrentPracticeId);
+        });
+
+        modelBuilder.Entity<PracticeAppearance>(entity =>
+        {
+            entity.HasKey(x => x.DentalPracticeId);
+            entity.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            entity.Property(x => x.DisplayName).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.Tagline).IsRequired().HasMaxLength(160);
+            entity.Property(x => x.PrimaryColor).IsRequired().HasMaxLength(7);
+            entity.Property(x => x.AccentColor).IsRequired().HasMaxLength(7);
+            entity.Property(x => x.LayoutPreset).IsRequired().HasMaxLength(20);
+            entity.Property(x => x.NavigationMode).IsRequired().HasMaxLength(12);
+            entity.Property(x => x.EnabledModulesJson).IsRequired().HasColumnType("text");
+            entity.HasOne<DentalPractice>().WithOne().HasForeignKey<PracticeAppearance>(x => x.DentalPracticeId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<AuditEvent>(entity =>
+        {
+            entity.HasKey(a => a.Id);
+            entity.Property(a => a.Action).IsRequired().HasMaxLength(100);
+            entity.Property(a => a.EntityType).HasMaxLength(100);
+            entity.Property(a => a.EntityId).HasMaxLength(100);
+            entity.Property(a => a.Detail).HasMaxLength(500);
+            entity.Property(a => a.IpAddress).HasMaxLength(64);
+            entity.HasIndex(a => new { a.DentalPracticeId, a.OccurredAtUtc });
+        });
+    }
+}
+===== EXISTING ENTITY PATTERNS =====
+
+using CurvTabDental.Domain.Common;
+
+namespace CurvTabDental.Domain.Entities;
+
+// Each appointment belongs to one dental practice.
+// The same record moves from scheduling through the queue.
+public class Appointment : IPracticeOwned
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+
+    public Guid DentalPracticeId { get; set; }
+    public Guid PatientId { get; set; }
+
+    public DateTime StartUtc { get; set; }
+    public DateTime EndUtc { get; set; }
+
+    // Scheduled, Waiting, Called, InConsultation,
+    // AwaitingCheckout, CheckedOut or Cancelled.
+    public string Status { get; set; } = "Scheduled";
+
+    public string? Reason { get; set; }
+
+    public DateTime? CheckedInAtUtc { get; set; }
+    public DateTime? CalledAtUtc { get; set; }
+    public DateTime? ConsultationStartedAtUtc { get; set; }
+    public DateTime? ConsultationEndedAtUtc { get; set; }
+    public DateTime? CheckedOutAtUtc { get; set; }
+
+    public Guid? CreatedByUserId { get; set; }
+    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+}
+===== PRACTICE ENTITY =====
+namespace CurvTabDental.Domain.Entities;
+
+public class DentalPractice
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public string Name { get; set; } = string.Empty;
+    public string? Email { get; set; }
+    public string? PhoneNumber { get; set; }
+    public string? Address { get; set; }
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+}===== PATIENT API =====
+using CurvTabDental.API.Contracts;
+using CurvTabDental.Application.Abstractions;
+using CurvTabDental.Domain.Entities;
+using CurvTabDental.Infrastructure.Identity;
+using CurvTabDental.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+namespace CurvTabDental.API.Controllers;
+
+/// <summary>
+/// Patients of the caller's practice (FR-010, FR-011).
+/// Tenant isolation comes from the DbContext query filter: another practice's patient id simply returns 404.
+/// </summary>
+[ApiController]
+[Route("api/patients")]
+[Authorize(Roles = StaffRoles.PatientRead)]
+public class PatientsController : ControllerBase
+{
+    private readonly DentalDbContext _db;
+    private readonly ICurrentUser _current;
+    private readonly IAuditService _audit;
+
+    public PatientsController(DentalDbContext db, ICurrentUser current, IAuditService audit)
+    {
+        _db = db;
+        _current = current;
+        _audit = audit;
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<PagedResult<PatientDto>>> Search(
+        [FromQuery] string? q,
+        [FromQuery] bool includeArchived = false,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 25,
+        CancellationToken ct = default)
+    {
+        page = Math.Max(page, 1);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
+        IQueryable<Patient> query = _db.Patients.AsNoTracking();
+        if (!includeArchived) query = query.Where(p => !p.IsArchived);
+
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var pattern = "%" + EscapeLike(q.Trim()) + "%";
+            query = query.Where(p =>
+                EF.Functions.ILike(p.FirstName, pattern) ||
+                EF.Functions.ILike(p.LastName, pattern) ||
+                (p.PhoneNumber != null && EF.Functions.ILike(p.PhoneNumber, pattern)) ||
+                (p.IdNumber != null && EF.Functions.ILike(p.IdNumber, pattern)));
+        }
+
+        var total = await query.CountAsync(ct);
+        var rows = await query
+            .OrderBy(p => p.LastName).ThenBy(p => p.FirstName)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
+
+        var items = rows.Select(p => ToDto(p, _current.Role)).ToList();
+        return Ok(new PagedResult<PatientDto>(items, total, page, pageSize));
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<PatientDto>> Get(Guid id, CancellationToken ct)
+    {
+        var patient = await _db.Patients.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id, ct);
+        if (patient is null) return NotFound();
+
+        await _audit.WriteAsync("PATIENT_VIEWED", "Patient", id.ToString(), ct: ct);
+        return Ok(ToDto(patient, _current.Role));
+    }
+
+    [HttpPost]
+    [Authorize(Roles = StaffRoles.PatientWrite)]
+    public async Task<IActionResult> Create(
+        [FromBody] PatientRequest request,
+        [FromQuery] bool allowDuplicate = false,
+        CancellationToken ct = default)
+    {
+        if (_current.PracticeId is not Guid practiceId) return Forbid();
+
+        if (!allowDuplicate)
+        {
+            var duplicates = await FindDuplicatesAsync(request, excludeId: null, ct);
+            if (duplicates.Count > 0) return DuplicateConflict(duplicates);
+        }
+
+        var now = DateTime.UtcNow;
+        var patient = new Patient
+        {
+            DentalPracticeId = practiceId, // from the signed-in user, never from the request
+            CreatedByUserId = _current.UserId,
+            CreatedAtUtc = now,
+            UpdatedAtUtc = now
+        };
+        Apply(patient, request, now);
+
+        _db.Patients.Add(patient);
+        await _db.SaveChangesAsync(ct);
+
+        await _audit.WriteAsync("PATIENT_CREATED", "Patient", patient.Id.ToString(), ct: ct);
+        return CreatedAtAction(nameof(Get), new { id = patient.Id }, ToDto(patient, _current.Role));
+    }
+
+    [HttpPut("{id:guid}")]
+    [Authorize(Roles = StaffRoles.PatientWrite)]
+    public async Task<IActionResult> Update(
+        Guid id,
+        [FromBody] PatientRequest request,
+        [FromQuery] bool allowDuplicate = false,
+        CancellationToken ct = default)
+    {
+        var patient = await _db.Patients.FirstOrDefaultAsync(p => p.Id == id, ct);
+        if (patient is null) return NotFound();
+
+        if (!allowDuplicate)
+        {
+            var duplicates = await FindDuplicatesAsync(request, excludeId: id, ct);
+            if (duplicates.Count > 0) return DuplicateConflict(duplicates);
+        }
+
+        Apply(patient, request, DateTime.UtcNow);
+        await _db.SaveChangesAsync(ct);
+
+        await _audit.WriteAsync("PATIENT_UPDATED", "Patient", id.ToString(), ct: ct);
+        return Ok(ToDto(patient, _current.Role));
+    }
+
+    [HttpPost("{id:guid}/archive")]
+    [Authorize(Roles = StaffRoles.PatientWrite)]
+    public async Task<IActionResult> Archive(Guid id, CancellationToken ct)
+    {
+        var patient = await _db.Patients.FirstOrDefaultAsync(p => p.Id == id, ct);
+        if (patient is null) return NotFound();
+
+        patient.IsArchived = true;
+        patient.UpdatedAtUtc = DateTime.UtcNow;
+        await _db.SaveChangesAsync(ct);
+
+        await _audit.WriteAsync("PATIENT_ARCHIVED", "Patient", id.ToString(), ct: ct);
+        return NoContent();
+    }
+
+    // ---------- helpers ----------
+
+    private async Task<List<Guid>> FindDuplicatesAsync(PatientRequest r, Guid? excludeId, CancellationToken ct)
+    {
+        var first = r.FirstName.Trim().ToLower();
+        var last = r.LastName.Trim().ToLower();
+        var idNumber = string.IsNullOrWhiteSpace(r.IdNumber) ? null : r.IdNumber.Trim();
+        var dob = r.DateOfBirth;
+===== FRONTEND API CLIENTS =====
+frontend/src/services/api.ts
+===== NAVIGATION COMPONENTS =====
+frontend/src/pages/AppointmentsPage.tsx:16:import './AppointmentsPage.css'
+frontend/src/pages/AppointmentsPage.tsx:98:export default function AppointmentsPage({
+frontend/src/pages/MedicalAidPanel.tsx:13:import './MedicalAidPanel.css'
+frontend/src/pages/MedicalAidPanel.tsx:100:export default function MedicalAidPanel({
+frontend/src/pages/PracticeSettingsPage.tsx:4:import './PracticeSettingsPage.css'
+frontend/src/pages/PracticeSettingsPage.tsx:25:export default function PracticeSettingsPage({ onOpenStaff }: { onOpenStaff: () => void }) {
+frontend/src/App.tsx:8:import MedicalAidPanel from './pages/MedicalAidPanel'
+frontend/src/App.tsx:31:import PracticeSettingsPage from './pages/PracticeSettingsPage'
+frontend/src/App.tsx:32:import AppointmentsPage from './pages/AppointmentsPage'
+frontend/src/App.tsx:33:import type { AppointmentTab } from './pages/AppointmentsPage'
+frontend/src/App.tsx:1090:            <AppointmentsPage
+frontend/src/App.tsx:1118:                  medicalAid={<MedicalAidPanel
+frontend/src/App.tsx:1143:            <PracticeSettingsPage onOpenStaff={() => navigate('Management')} />
+===== MIGRATION LOCATIONS =====

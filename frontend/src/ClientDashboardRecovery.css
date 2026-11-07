@@ -1,0 +1,94 @@
+/* CurvTab Dental 2.0 — client layout recovery. Loaded LAST by App.tsx.
+   Scoped to the existing app; no backend or role permission changes. */
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark){
+  background:#f6f9fd!important;color:#1d3353;
+}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .workspace{
+  background:#f6f9fd!important;min-width:0;
+}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar{
+  background:#fff!important;background-image:none!important;color:#233a59!important;
+  border-right:1px solid #e8eef5!important;box-shadow:none!important;
+  overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none!important;
+  overscroll-behavior:contain;
+}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar::-webkit-scrollbar{width:0!important;display:none!important}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar :is(.side-nav,nav){
+  display:flex!important;flex-direction:column!important;flex:0 0 auto!important;
+  min-height:0!important;max-height:none!important;height:auto!important;
+  overflow:visible!important;scrollbar-width:none!important;gap:2px!important;
+}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar .sidebar-bottom{display:none!important}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar .brand{color:#203655!important}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar :is(.brand strong,.brand-name){color:#203655!important}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar .brand-icon{
+  background:#eaf5ff!important;background-image:none!important;color:#0873d7!important;border:1px solid #d7eaf9!important;box-shadow:none!important;
+}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar .practice-chip{
+  background:#f7faff!important;color:#254064!important;border:1px solid #e1eaf6!important;
+  box-shadow:none!important;
+}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar .practice-chip :is(strong,span){color:#294464!important}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar :is(.nav-heading,.brand span){color:#6c819d!important}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar .nav-item{
+  min-height:38px!important;padding:7px 11px!important;margin:0!important;flex-shrink:0!important;
+  color:#405673!important;background:transparent!important;border-color:transparent!important;
+  border-radius:10px!important;box-shadow:none!important;font-size:12.5px!important;
+  transition:background .2s ease,transform .2s ease,color .2s ease,box-shadow .2s ease;
+}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar .nav-item:hover:not(.nav-active){
+  background:#eff6ff!important;color:#075cbf!important;transform:translateX(3px)!important;
+}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar .nav-item.nav-active,
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar .nav-item[aria-current="page"]{
+  background:#086de3!important;background-image:none!important;color:#fff!important;
+  box-shadow:0 5px 12px rgba(8,109,227,.13)!important;border-color:#086de3!important;transform:none!important;
+}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar .nav-item.nav-active :is(svg,span),
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar .nav-item[aria-current="page"] :is(svg,span){color:#fff!important}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar .side-nav :is(.nav-profile-last,[data-profile-nav="true"]){order:999!important}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .topbar{
+  background:#fff!important;border-bottom:1px solid #e7eef7!important;box-shadow:none!important;
+}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .main-content{
+  padding:clamp(18px,2.2vw,30px)!important;max-width:1600px!important;min-width:0;
+}
+/* One dashboard: the enhanced component is a single self-contained stack.
+   This reverses the previous display:contents + order mistake. */
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .main-content:has(> .ct-dashboard-enhancements){
+  display:flex!important;flex-direction:column!important;gap:0!important;
+}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .main-content > .ct-dashboard-enhancements{
+  display:flex!important;flex-direction:column!important;gap:18px!important;order:0!important;
+  width:100%!important;margin:0!important;min-width:0!important;
+}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-dashboard-enhancements > .ct-hero{order:0!important;min-height:250px!important;margin:0!important}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-dashboard-enhancements > .client-kpis{order:1!important}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-dashboard-enhancements > .ct-analytics{order:2!important;margin:0!important}
+/* Remove the old dashboard blocks, not the clinical modules or their pages. */
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .main-content:has(> .ct-dashboard-enhancements) > :is(.page-heading,.stats-grid,.panel){display:none!important}
+/* Chart titles remain; remove the redundant 'Appointment overview' title above them. */
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-dashboard-enhancements .ct-analytics-heading > div:first-child{display:none!important}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-dashboard-enhancements .ct-analytics-heading{justify-content:flex-end!important;margin-bottom:11px!important}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-dashboard-enhancements .ct-chart-grid{
+  display:grid!important;grid-template-columns:minmax(0,1.42fr) minmax(0,1fr)!important;gap:18px!important;
+}
+html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) :is(.ct-chart-card,.client-kpi,.panel,.stat-card){
+  background:#fff!important;border:1px solid #e6ecf4!important;border-radius:16px!important;
+  box-shadow:0 5px 18px rgba(25,58,106,.045)!important;
+}
+@media(hover:hover) and (prefers-reduced-motion:no-preference){
+  html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) :is(.ct-chart-card,.client-kpi,.panel,.stat-card):hover{
+    transform:translateY(-4px)!important;border-color:#bad7f6!important;
+    box-shadow:0 16px 30px rgba(25,83,153,.10)!important;
+  }
+}
+@media(max-width:1100px){
+  html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .ct-dashboard-enhancements .ct-chart-grid{grid-template-columns:1fr!important}
+}
+@media(max-width:760px){
+  html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .main-content{padding:14px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  html:not([data-theme="dark"]) .app-shell:not(.dark):not(.dark-mode):not(.theme-dark) .sidebar .nav-item{transition:none!important;transform:none!important}
+}

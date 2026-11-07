@@ -1,0 +1,321 @@
+import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
+import { apiRequest } from '../services/api'
+import './PracticeSlidesEditor.css'
+
+type Slide = {
+  id: string
+  eyebrow: string
+  title: string
+  description: string
+  image: string
+  imageAlt: string
+}
+
+const IMAGES = [
+  { url: '/dental-ui/smile-hero.webp', label: 'Healthy smile' },
+  { url: '/dental-ui/tooth-fresh.svg', label: 'Smiling tooth' },
+  { url: '/dental-ui/tooth-care.svg', label: 'Dental care' },
+]
+
+export default function PracticeSlidesEditor() {
+  const [slides, setSlides] = useState<Slide[]>([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState<string | null>(null)
+  const [dirty, setDirty] = useState(false)
+  const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
+
+  useEffect(() => {
+    let active = true
+
+    apiRequest<Slide[]>('/practice/slides')
+      .then(value => {
+        if (active) {
+          setSlides(value)
+          setError('')
+        }
+      })
+      .catch(cause => {
+        if (active) {
+          setError(
+            cause instanceof Error
+              ? cause.message
+              : 'Could not load slideshow.'
+          )
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+
+    return () => { active = false }
+  }, [])
+
+  function update(index: number, change: Partial<Slide>) {
+    setSlides(previous => previous.map((slide, i) =>
+      i === index ? { ...slide, ...change } : slide
+    ))
+    setDirty(true)
+    setMessage('')
+  }
+
+
+  async function uploadImage(index: number, file?: File) {
+    if (!file) return
+
+    if (file.size > 2_500_000) {
+      setError('Choose an image smaller than 2.5 MB.')
+      return
+    }
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setError('Choose a PNG, JPEG or WebP image.')
+      return
+    }
+
+    const id = slides[index]?.id
+    if (!id) return
+
+    setUploading(id)
+    setError('')
+    setMessage('')
+
+    try {
+      const data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onerror = () => reject(new Error('Cannot read image.'))
+        reader.onload = () => {
+          const result = String(reader.result)
+          resolve(result.substring(result.indexOf(',') + 1))
+        }
+        reader.readAsDataURL(file)
+      })
+
+      const uploaded = await apiRequest<{ url: string }>(
+        '/practice/media',
+        'POST',
+        { kind: 'slide', data }
+      )
+
+      setSlides(previous => previous.map(slide =>
+        slide.id === id
+          ? { ...slide, image: uploaded.url, imageAlt: file.name }
+          : slide
+      ))
+      setDirty(true)
+      setMessage('Image uploaded. Click Save slideshow to publish it.')
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : 'Upload failed.'
+      )
+    } finally {
+      setUploading(null)
+    }
+  }
+
+  function addSlide() {
+    if (slides.length >= 8) return
+
+    setSlides(previous => [
+      ...previous,
+      {
+        id: crypto.randomUUID(),
+        eyebrow: 'WELCOME TO OUR PRACTICE',
+        title: 'Your new slide',
+        description: 'Describe your dental practice here.',
+        image: IMAGES[0].url,
+        imageAlt: 'Dental practice illustration',
+      },
+    ])
+
+    setDirty(true)
+    setMessage('')
+  }
+
+  function removeSlide(index: number) {
+    if (slides.length <= 1) return
+
+    setSlides(previous =>
+      previous.filter((_, i) => i !== index)
+    )
+    setDirty(true)
+    setMessage('')
+  }
+
+  function moveSlide(index: number, direction: number) {
+    const target = index + direction
+    if (target < 0 || target >= slides.length) return
+
+    setSlides(previous => {
+      const next = [...previous]
+      ;[next[index], next[target]] =
+        [next[target], next[index]]
+      return next
+    })
+
+    setDirty(true)
+    setMessage('')
+  }
+
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (saving || !dirty) return
+
+    setSaving(true)
+    setError('')
+    setMessage('')
+
+    try {
+      const result = await apiRequest<Slide[]>(
+        '/practice/slides',
+        'PUT',
+        slides
+      )
+      setSlides(result)
+      setDirty(false)
+      setMessage('Slideshow saved for your practice.')
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : 'Could not save slideshow.'
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <section className="panel practice-slides-editor">
+      <h2>Dashboard slideshow</h2>
+      <p>
+        Edit the slides displayed on your practice dashboard.
+        Changes will be visible to your practice staff.
+      </p>
+
+      {loading && <p>Loading slideshow…</p>}
+      {error && <p role="alert" className="slides-error">{error}</p>}
+      {message && <p role="status" className="slides-success">{message}</p>}
+
+      {!loading && slides.length > 0 && (
+        <form onSubmit={event => void save(event)}>
+          <div className="slides-editor-grid">
+            {slides.map((slide, index) => (
+              <div className="slides-editor-card" key={slide.id}>
+                <div className="slides-editor-heading">
+                  <strong>Slide {index + 1}</strong>
+                  <div className="slides-editor-controls">
+                    <button type="button" disabled={index === 0}
+                      onClick={() => moveSlide(index, -1)}
+                      aria-label={`Move slide ${index + 1} up`}>
+                      ↑
+                    </button>
+                    <button type="button"
+                      disabled={index === slides.length - 1}
+                      onClick={() => moveSlide(index, 1)}
+                      aria-label={`Move slide ${index + 1} down`}>
+                      ↓
+                    </button>
+                    <button type="button" disabled={slides.length <= 1}
+                      onClick={() => removeSlide(index)}>
+                      Remove
+                    </button>
+                  </div>
+                </div>
+
+                <img
+                  src={slide.image}
+                  alt={slide.imageAlt || 'Slide preview'}
+                  className="slides-editor-image"
+                />
+
+                <label>
+                  Upload your image (PNG, JPEG or WebP)
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    disabled={uploading !== null}
+                    onChange={event => {
+                      const file = event.currentTarget.files?.[0]
+                      void uploadImage(index, file)
+                      event.currentTarget.value = ''
+                    }}
+                  />
+                </label>
+                {uploading === slide.id && <p>Uploading image…</p>}
+
+                <label>
+                  Image
+                  <select value={slide.image}
+                    onChange={e => update(index, {
+                      image: e.target.value,
+                      imageAlt: IMAGES.find(
+                        item => item.url === e.target.value
+                      )?.label || 'Dental image',
+                    })}>
+                    {!IMAGES.some(item => item.url === slide.image) && (
+                      <option value={slide.image}>Your uploaded image</option>
+                    )}
+                    {IMAGES.map(item => (
+                      <option value={item.url} key={item.url}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  Small heading
+                  <input value={slide.eyebrow} maxLength={80}
+                    onChange={e => update(index, {
+                      eyebrow: e.target.value
+                    })}/>
+                </label>
+
+                <label>
+                  Main title
+                  <input value={slide.title} maxLength={100}
+                    required
+                    onChange={e => update(index, {
+                      title: e.target.value
+                    })}/>
+                </label>
+
+                <label>
+                  Description
+                  <textarea value={slide.description}
+                    maxLength={240} rows={3}
+                    onChange={e => update(index, {
+                      description: e.target.value
+                    })}/>
+                </label>
+
+                <label>
+                  Image description
+                  <input value={slide.imageAlt} maxLength={140}
+                    onChange={e => update(index, {
+                      imageAlt: e.target.value
+                    })}/>
+                </label>
+              </div>
+            ))}
+          </div>
+
+          <div className="slides-editor-actions">
+            <button type="button" className="secondary-button"
+              onClick={addSlide} disabled={slides.length >= 8}>
+              + Add slide
+            </button>
+
+            <button type="submit" className="primary-button"
+              disabled={saving || !dirty}>
+              {saving ? 'Saving…' : 'Save slideshow'}
+            </button>
+          </div>
+        </form>
+      )}
+    </section>
+  )
+}

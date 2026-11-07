@@ -1,0 +1,204 @@
+/* CURVTAB DENTAL — PHASE 4 CLINICAL UI */
+
+.ct-chart-guide {
+  margin: 18px 0;
+  padding: 16px;
+  border: 1px solid var(--ct-clinical-border, #dce6ef);
+  border-radius: 14px;
+  background: var(--ct-clinical-surface, #f4f8fc);
+  color: var(--ct-clinical-text, #203550);
+}
+
+.ct-chart-guide > strong {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.ct-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  font-size: 12px;
+}
+
+.ct-chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.ct-chart-legend i {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+}
+
+.ct-legend-blue { background: #3b82f6; }
+.ct-legend-red { background: #ef4444; }
+.ct-legend-amber { background: #f59e0b; }
+.ct-legend-purple { background: #8b5cf6; }
+
+.ct-chart-guide p,
+.ct-chart-history-help {
+  margin: 10px 0 0;
+  font-size: 12px;
+  opacity: .8;
+}
+
+/* TOOTH SELECTION */
+.ct-clinical-arches {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.ct-clinical-arches > div {
+  min-width: 0;
+}
+
+.ct-clinical-arches .specialty-tooth-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(42px, 1fr)
+  );
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.ct-clinical-arches .specialty-tooth-grid button {
+  min-width: 0;
+  min-height: 50px;
+  border-radius: 12px;
+  transition:
+    transform .16s ease,
+    box-shadow .16s ease;
+}
+
+.ct-clinical-arches .specialty-tooth-grid button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 14px rgba(10, 37, 65, .14);
+}
+
+.ct-clinical-arches .specialty-tooth-grid button:focus-visible {
+  outline: 3px solid var(--practice-primary, #126ce5);
+  outline-offset: 3px;
+}
+
+/* ORTHODONTICS OVERVIEW */
+.ct-ortho-overview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0 24px;
+}
+
+.ct-ortho-kpi,
+.ct-ortho-reviews {
+  background: var(--ct-clinical-surface, #ffffff);
+  border: 1px solid var(--ct-clinical-border, #dce6ef);
+  border-radius: 16px;
+  padding: 18px;
+  color: var(--ct-clinical-text, #203550);
+  min-width: 0;
+}
+
+.ct-ortho-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ct-ortho-kpi span {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ct-ortho-kpi strong {
+  font-size: 32px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.ct-ortho-kpi small {
+  opacity: .7;
+}
+
+.ct-ortho-reviews {
+  grid-column: 1 / -1;
+}
+
+.ct-ortho-reviews-title {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ct-ortho-reviews-title span {
+  font-size: 12px;
+  opacity: .7;
+}
+
+.ct-ortho-review-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.ct-ortho-review-list button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px;
+  border: 1px solid var(--ct-clinical-border, #dce6ef);
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ct-ortho-review-list button:hover {
+  border-color: var(--practice-primary, #126ce5);
+}
+
+.ct-ortho-review-list button:focus-visible {
+  outline: 3px solid var(--practice-primary, #126ce5);
+  outline-offset: 2px;
+}
+
+/* DARK MODE */
+html[data-theme="dark"] {
+  --ct-clinical-surface: #203448;
+  --ct-clinical-border: #435b70;
+  --ct-clinical-text: #f2f7fc;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .ct-ortho-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 550px) {
+  .ct-ortho-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .ct-clinical-arches .specialty-tooth-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-clinical-arches .specialty-tooth-grid button {
+    transition: none;
+  }
+}

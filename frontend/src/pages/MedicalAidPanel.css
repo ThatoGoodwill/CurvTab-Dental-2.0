@@ -1,0 +1,103 @@
+.ct-medical-aid {
+  --medical-primary: var(--practice-primary, #126ce5);
+  --medical-accent: var(--practice-accent, #14b8a6);
+  display: grid;
+  gap: 22px;
+  padding: 24px;
+  min-width: 0;
+}
+
+.ct-medical-aid h2,
+.ct-medical-aid p,
+.ct-medical-aid h3 {
+  margin: 0;
+}
+
+.ct-medical-aid-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ct-medical-aid-tabs button {
+  border-radius: 10px;
+  border: 1px solid var(--medical-primary);
+  padding: 11px 15px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--medical-primary);
+  background: color-mix(in srgb,var(--medical-primary) 10%,white);
+}
+
+.ct-medical-aid-tabs button.active,
+.ct-medical-aid-tabs button:hover {
+  background: linear-gradient(
+    115deg,var(--medical-primary),var(--medical-accent)
+  );
+  color: white;
+}
+
+.ct-medical-aid-form {
+  display: grid;
+  gap: 13px;
+  max-width: 620px;
+  padding: 20px;
+  border: 1px solid var(--ct-clinical-border,#dce6ef);
+  border-radius: 14px;
+}
+
+.ct-medical-aid-form label {
+  display: grid;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ct-medical-aid-form :is(input,select,textarea) {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid var(--ct-clinical-border,#dce6ef);
+  border-radius: 9px;
+  background: var(--ct-clinical-surface,transparent);
+  color: inherit;
+  font: inherit;
+}
+
+.ct-medical-aid-form button {
+  justify-self: start;
+}
+
+.ct-medical-aid-table {
+  overflow-x: auto;
+}
+
+.ct-medical-aid-table table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.ct-medical-aid-table th,
+.ct-medical-aid-table td {
+  padding: 13px;
+  border-bottom: 1px solid var(--ct-clinical-border,#dce6ef);
+}
+
+.ct-medical-aid-info {
+  padding: 13px;
+  border-radius: 10px;
+  border: 1px solid var(--ct-clinical-border,#dce6ef);
+  font-size: 13px;
+}
+
+.ct-medical-aid-error { color: #bd3352; }
+.ct-medical-aid-success { color: #168568; }
+
+@media(max-width:700px) {
+  .ct-medical-aid { padding: 14px; }
+}

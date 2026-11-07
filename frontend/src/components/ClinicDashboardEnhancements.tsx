@@ -1,3 +1,4 @@
+import ClientDashboardKpis from './ClientDashboardKpis'
 import { useEffect, useState } from 'react'
 import {
   CalendarDays,
@@ -8,7 +9,6 @@ import {
   TrendingUp,
 } from 'lucide-react'
 import { apiRequest } from '../services/api'
-import LiveAppointmentCalendar from './LiveAppointmentCalendar'
 import '../CurvTabCalendarHover.css'
 import './ClinicDashboardEnhancements.css'
 
@@ -97,24 +97,60 @@ function parsePractices(input: unknown): PracticeSnapshot[] {
   )
 }
 
+
+type EditablePracticeSlide = {
+  id: string
+  eyebrow: string
+  title: string
+  description: string
+  image: string
+  imageAlt: string
+}
+
 function DentalSlideshow({ role, onPrimaryAction }: Pick<Props, 'role' | 'onPrimaryAction'>) {
   const [current, setCurrent] = useState(0)
   const [paused, setPaused] = useState(false)
-  const slide = slides[current]
+  const [practiceSlides, setPracticeSlides] =
+    useState<EditablePracticeSlide[] | null>(null)
+
+  useEffect(() => {
+    if (role === 'SuperAdmin') return
+
+    let active = true
+
+    apiRequest<EditablePracticeSlide[]>('/practice/slides')
+      .then(value => {
+        if (active && Array.isArray(value) && value.length > 0) {
+          setPracticeSlides(value)
+        }
+      })
+      .catch(() => {
+        // Show built-in slides if the configuration is unavailable.
+      })
+
+    return () => { active = false }
+  }, [role])
+
+  const activeSlides =
+    role === 'SuperAdmin' ? slides : practiceSlides ?? slides
+
+  const slideIndex = current % activeSlides.length
+  const slide = activeSlides[slideIndex]
+  const variant = 'variant' in slide ? slide.variant : 'smile'
 
   useEffect(() => {
     if (paused || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const interval = window.setInterval(() => {
-      setCurrent((index) => (index + 1) % slides.length)
+      setCurrent((index) => (index + 1) % activeSlides.length)
     }, 6500)
     return () => window.clearInterval(interval)
-  }, [paused])
+  }, [paused, activeSlides.length])
 
   return (
     <section
-      className={`ct-hero ct-hero-${slide.variant}`}
+      className={`ct-hero ct-hero-${variant}`}
       aria-roledescription="carousel"
-      aria-label="CurvTab Dental highlights"
+      aria-label="Practice dashboard highlights"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
@@ -136,20 +172,20 @@ function DentalSlideshow({ role, onPrimaryAction }: Pick<Props, 'role' | 'onPrim
       </div>
       <div className="ct-hero-controls" aria-label="Slideshow navigation">
         <button type="button" aria-label="Previous slide"
-          onClick={() => setCurrent((current + slides.length - 1) % slides.length)}>
+          onClick={() => setCurrent((current + activeSlides.length - 1) % activeSlides.length)}>
           <ChevronLeft size={18} />
         </button>
         <div className="ct-slide-dots">
-          {slides.map((item, index) => (
-            <button key={item.variant} type="button"
-              className={index === current ? 'ct-dot-active' : ''}
+          {activeSlides.map((item, index) => (
+            <button key={'id' in item ? item.id : item.variant} type="button"
+              className={index === slideIndex ? 'ct-dot-active' : ''}
               aria-label={`Show slide ${index + 1}`}
-              aria-current={index === current ? 'true' : undefined}
+              aria-current={index === slideIndex ? 'true' : undefined}
               onClick={() => setCurrent(index)} />
           ))}
         </div>
         <button type="button" aria-label="Next slide"
-          onClick={() => setCurrent((current + 1) % slides.length)}>
+          onClick={() => setCurrent((current + 1) % activeSlides.length)}>
           <ChevronRight size={18} />
         </button>
       </div>
@@ -321,10 +357,7 @@ export default function ClinicDashboardEnhancements({ role, onPrimaryAction }: P
   return (
     <div className="ct-dashboard-enhancements">
       <DentalSlideshow role={role} onPrimaryAction={onPrimaryAction} />
-      {/* CT_HOVER_CALENDAR_V1: Practice-scoped, real appointment names. */}
-      {['PracticeAdmin', 'Receptionist', 'Dentist'].includes(role) && (
-        <LiveAppointmentCalendar onOpenAppointments={onPrimaryAction} />
-      )}
+      <ClientDashboardKpis role={role} onPrimaryAction={onPrimaryAction} />
       <PracticeActivityCharts role={role} />
     </div>
   )

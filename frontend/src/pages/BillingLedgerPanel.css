@@ -1,0 +1,131 @@
+.ct-billing-ledger {
+  display: grid;
+  gap: 22px;
+  margin: 24px 0;
+  padding: 24px;
+  min-width: 0;
+}
+
+.ct-billing-header,
+.ct-billing-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.ct-billing-header :is(h2,p),
+.ct-billing-section-heading h3 {
+  margin: 0;
+}
+
+.ct-billing-header p {
+  margin-top: 6px;
+  opacity: .75;
+}
+
+.ct-billing-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.ct-billing-filters label {
+  display: grid;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ct-billing-filters input {
+  min-width: 170px;
+  padding: 11px;
+  border-radius: 10px;
+  border: 1px solid var(--ct-clinical-border, #dce6ef);
+  background: var(--ct-clinical-surface, transparent);
+  color: var(--ct-clinical-text, inherit);
+  font: inherit;
+}
+
+.ct-billing-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 14px;
+}
+
+.ct-billing-kpis article {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--ct-clinical-border, #dce6ef);
+  border-radius: 14px;
+}
+
+.ct-billing-kpis span {
+  font-size: 12px;
+  opacity: .75;
+}
+
+.ct-billing-kpis strong {
+  font-size: clamp(17px,2vw,25px);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.ct-billing-transactions {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.ct-billing-section-heading span,
+.ct-billing-note {
+  font-size: 12px;
+  opacity: .75;
+}
+
+.ct-billing-table-wrap {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.ct-billing-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ct-billing-table-wrap th,
+.ct-billing-table-wrap td {
+  padding: 13px 11px;
+  border-bottom: 1px solid var(--ct-clinical-border, #dce6ef);
+  white-space: nowrap;
+}
+
+.ct-billing-amount {
+  font-weight: 700;
+  text-align: right;
+}
+
+.ct-billing-error {
+  color: #ca4359;
+}
+
+@media(max-width:950px) {
+  .ct-billing-kpis {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:550px) {
+  .ct-billing-ledger {
+    padding: 15px;
+  }
+  .ct-billing-kpis {
+    grid-template-columns: 1fr;
+  }
+}

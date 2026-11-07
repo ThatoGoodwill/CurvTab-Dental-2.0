@@ -83,6 +83,13 @@ public class PatientsController : ControllerBase
     {
         if (_current.PracticeId is not Guid practiceId) return Forbid();
 
+        if (request.DateOfBirth is null)
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Date of birth is required for patient registration.",
+                Status = 400
+            });
+
         if (!allowDuplicate)
         {
             var duplicates = await FindDuplicatesAsync(request, excludeId: null, ct);

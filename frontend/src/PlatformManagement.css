@@ -1,0 +1,96 @@
+
+
+/* CT_SUPERADMIN_ACCESS_V1 */
+
+.ct-platform-management {
+  display: grid;
+  gap: 20px;
+}
+
+.ct-platform-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ct-platform-summary > div {
+  display: grid;
+  gap: 8px;
+  padding: 17px;
+  border: 1px solid #94a3b855;
+  border-radius: 12px;
+  background: rgba(125, 145, 170, .06);
+}
+
+.ct-platform-summary span {
+  font-size: 12px;
+  opacity: .75;
+}
+
+.ct-platform-summary strong {
+  font-size: 27px;
+}
+
+.ct-platform-practice-list {
+  display: grid;
+  gap: 11px;
+}
+
+.ct-platform-practice-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 15px;
+  padding: 17px;
+  border: 1px solid #94a3b855;
+  border-radius: 12px;
+}
+
+.ct-platform-practice-details {
+  display: grid;
+  gap: 5px;
+  flex: 1;
+  min-width: 180px;
+}
+
+.ct-platform-practice-details strong {
+  font-size: 15px;
+}
+
+.ct-platform-practice-details small {
+  opacity: .65;
+  font-size: 12px;
+}
+
+.ct-platform-status {
+  display: inline-flex;
+  border-radius: 20px;
+  padding: 6px 11px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ct-platform-status.is-active {
+  background: #d9f8ea;
+  color: #086c44;
+}
+
+.ct-platform-status.is-suspended {
+  background: #ffe5e5;
+  color: #9b2020;
+}
+
+.ct-platform-practice-card button {
+  min-width: 155px;
+}
+
+@media(max-width: 700px) {
+  .ct-platform-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .ct-platform-practice-card {
+    align-items: flex-start;
+  }
+}

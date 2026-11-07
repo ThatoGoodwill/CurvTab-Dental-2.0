@@ -1,0 +1,379 @@
+using CurvTabDental.Application.Abstractions;
+using CurvTabDental.Domain.Entities;
+using CurvTabDental.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+namespace CurvTabDental.API.Controllers;
+
+[ApiController]
+[Route("api/finance/medical-aid")]
+[Authorize(Roles = "Receptionist,PracticeAdmin")]
+public sealed class MedicalAidController : ControllerBase
+{
+    private readonly DentalDbContext _db;
+    private readonly ICurrentUser _current;
+    private readonly IAuditService _audit;
+
+    public MedicalAidController(
+        DentalDbContext db,
+        ICurrentUser current,
+        IAuditService audit)
+    {
+        _db = db;
+        _current = current;
+        _audit = audit;
+    }
+
+    public sealed record CreateMembershipRequest(
+        Guid PatientId,
+        string SchemeName,
+        string PlanName,
+        string MemberNumberLast4);
+
+    public sealed record CreateClaimRequest(
+        Guid RequestId,
+        Guid InvoiceId,
+        Guid MembershipId,
+        decimal ClaimedAmount,
+        string? Notes);
+
+    private static bool ValidMoney(decimal amount) =>
+        amount > 0m &&
+        amount <= 10_000_000m &&
+        decimal.Round(amount, 2) == amount;
+
+    [HttpGet("memberships")]
+    public async Task<IActionResult> Memberships(
+        CancellationToken ct)
+    {
+        if (_current.PracticeId is not Guid practiceId)
+            return Forbid();
+
+        var rows = await (
+            from m in _db.Set<MedicalAidMembership>()
+                .AsNoTracking()
+            join p in _db.Patients.AsNoTracking()
+                on m.PatientId equals p.Id
+            where m.DentalPracticeId == practiceId &&
+                  p.DentalPracticeId == practiceId
+            orderby p.LastName, p.FirstName
+            select new
+            {
+                m.Id,
+                m.PatientId,
+                patientName = p.FirstName + " " + p.LastName,
+                m.SchemeName,
+                m.PlanName,
+                m.MemberNumberLast4
+            }
+        ).Take(200).ToListAsync(ct);
+
+        Response.Headers.CacheControl = "private, no-store";
+        return Ok(rows);
+    }
+
+    [HttpPost("memberships")]
+    public async Task<IActionResult> CreateMembership(
+        [FromBody] CreateMembershipRequest request,
+        CancellationToken ct)
+    {
+        if (_current.PracticeId is not Guid practiceId)
+            return Forbid();
+
+        if (_current.UserId is not Guid actorId)
+            return Unauthorized();
+
+        var scheme = request.SchemeName?.Trim() ?? "";
+        var plan = request.PlanName?.Trim() ?? "";
+        var last4 = request.MemberNumberLast4?.Trim() ?? "";
+
+        if (request.PatientId == Guid.Empty ||
+            scheme.Length is < 2 or > 120 ||
+            plan.Length is < 2 or > 120 ||
+            last4.Length != 4 ||
+            !last4.All(char.IsDigit))
+        {
+            return BadRequest(new
+            {
+                message = "Provide a patient, scheme, plan and " +
+                          "the last four membership digits."
+            });
+        }
+
+        var patientExists = await _db.Patients.AsNoTracking()
+            .AnyAsync(p =>
+                p.Id == request.PatientId &&
+                p.DentalPracticeId == practiceId, ct);
+
+        if (!patientExists)
+            return NotFound(new { message = "Patient not found." });
+
+        var existing = await _db.Set<MedicalAidMembership>()
+            .AsNoTracking()
+            .AnyAsync(m =>
+                m.DentalPracticeId == practiceId &&
+                m.PatientId == request.PatientId, ct);
+
+        if (existing)
+            return Conflict(new
+            {
+                message = "This patient already has a registered " +
+                          "medical aid membership."
+            });
+
+        var membership = new MedicalAidMembership
+        {
+            DentalPracticeId = practiceId,
+            PatientId = request.PatientId,
+            SchemeName = scheme,
+            PlanName = plan,
+            MemberNumberLast4 = last4,
+            RecordedByUserId = actorId
+        };
+
+        await using var tx =
+            await _db.Database.BeginTransactionAsync(ct);
+
+        _db.Set<MedicalAidMembership>().Add(membership);
+        await _db.SaveChangesAsync(ct);
+
+        await _audit.WriteAsync(
+            "MEDICAL_AID_MEMBERSHIP_REGISTERED",
+            "MedicalAidMembership",
+            membership.Id.ToString(),
+            ct: ct);
+
+        await tx.CommitAsync(ct);
+
+        return Created(
+            "/api/finance/medical-aid/memberships",
+            new { membership.Id, membership.PatientId });
+    }
+
+    [HttpGet("eligible-invoices")]
+    public async Task<IActionResult> EligibleInvoices(
+        CancellationToken ct)
+    {
+        if (_current.PracticeId is not Guid practiceId)
+            return Forbid();
+
+        var claimedInvoiceIds = _db.Set<MedicalAidClaim>()
+            .AsNoTracking()
+            .Where(x => x.DentalPracticeId == practiceId)
+            .Select(x => x.InvoiceId);
+
+        var rows = await (
+            from invoice in _db.Set<Invoice>().AsNoTracking()
+            join patient in _db.Patients.AsNoTracking()
+                on invoice.PatientId equals patient.Id
+            join membership in _db.Set<MedicalAidMembership>()
+                .AsNoTracking()
+                on patient.Id equals membership.PatientId
+            where invoice.DentalPracticeId == practiceId &&
+                  patient.DentalPracticeId == practiceId &&
+                  membership.DentalPracticeId == practiceId &&
+                  !claimedInvoiceIds.Contains(invoice.Id)
+            orderby invoice.IssuedAtUtc descending
+            select new
+            {
+                invoice.Id,
+                invoice.PatientId,
+                membershipId = membership.Id,
+                patientName =
+                    patient.FirstName + " " + patient.LastName,
+                invoice.InvoiceNumber,
+                invoice.TotalAmount,
+                invoice.Currency
+            }
+        ).Take(100).ToListAsync(ct);
+
+        Response.Headers.CacheControl = "private, no-store";
+        return Ok(rows);
+    }
+
+    [HttpGet("claims")]
+    public async Task<IActionResult> Claims(
+        CancellationToken ct)
+    {
+        if (_current.PracticeId is not Guid practiceId)
+            return Forbid();
+
+        var rows = await (
+            from claim in _db.Set<MedicalAidClaim>()
+                .AsNoTracking()
+            join patient in _db.Patients.AsNoTracking()
+                on claim.PatientId equals patient.Id
+            join membership in _db.Set<MedicalAidMembership>()
+                .AsNoTracking()
+                on claim.MembershipId equals membership.Id
+            where claim.DentalPracticeId == practiceId &&
+                  patient.DentalPracticeId == practiceId &&
+                  membership.DentalPracticeId == practiceId
+            orderby claim.CreatedAtUtc descending
+            select new
+            {
+                claim.Id,
+                claim.PatientId,
+                claim.InvoiceId,
+                claim.ClaimNumber,
+                claim.ClaimedAmount,
+                claim.Currency,
+                claim.Status,
+                claim.Notes,
+                claim.CreatedAtUtc,
+                patientName =
+                    patient.FirstName + " " + patient.LastName,
+                membership.SchemeName,
+                membership.PlanName
+            }
+        ).Take(200).ToListAsync(ct);
+
+        Response.Headers.CacheControl = "private, no-store";
+        return Ok(rows);
+    }
+
+    [HttpPost("claims")]
+    public async Task<IActionResult> CreateClaim(
+        [FromBody] CreateClaimRequest request,
+        CancellationToken ct)
+    {
+        if (_current.PracticeId is not Guid practiceId)
+            return Forbid();
+
+        if (_current.UserId is not Guid actorId)
+            return Unauthorized();
+
+        if (request.RequestId == Guid.Empty ||
+            request.InvoiceId == Guid.Empty ||
+            request.MembershipId == Guid.Empty ||
+            !ValidMoney(request.ClaimedAmount) ||
+            request.Notes?.Length > 500)
+        {
+            return BadRequest(new
+            {
+                message = "Provide a valid invoice, membership, " +
+                          "claim amount and request ID."
+            });
+        }
+
+        await using var tx =
+            await _db.Database.BeginTransactionAsync(ct);
+
+        // Lock the invoice while validating the claim.
+        var invoice = await _db.Set<Invoice>()
+            .FromSqlInterpolated(
+                $"SELECT * FROM \"Invoice\" WHERE \"Id\" = {request.InvoiceId} AND \"DentalPracticeId\" = {practiceId} FOR UPDATE")
+            .SingleOrDefaultAsync(ct);
+
+        if (invoice is null)
+            return NotFound(new { message = "Invoice not found." });
+
+        var membership = await _db.Set<MedicalAidMembership>()
+            .AsNoTracking()
+            .SingleOrDefaultAsync(x =>
+                x.Id == request.MembershipId &&
+                x.DentalPracticeId == practiceId &&
+                x.PatientId == invoice.PatientId, ct);
+
+        if (membership is null)
+            return Conflict(new
+            {
+                message = "Medical aid membership does not belong " +
+                          "to the invoice patient."
+            });
+
+        var previousRequest = await _db.Set<MedicalAidClaim>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x =>
+                x.RequestId == request.RequestId &&
+                x.DentalPracticeId == practiceId, ct);
+
+        if (previousRequest is not null)
+            return Conflict(new
+            {
+                message = "This claim request ID has already been used.",
+                claimId = previousRequest.Id
+            });
+
+        var existingClaim = await _db.Set<MedicalAidClaim>()
+            .AsNoTracking()
+            .AnyAsync(x =>
+                x.InvoiceId == invoice.Id &&
+                x.DentalPracticeId == practiceId, ct);
+
+        if (existingClaim)
+            return Conflict(new
+            {
+                message = "A medical aid claim already exists " +
+                          "for this invoice."
+            });
+
+        var creditTotal = await _db.Set<InvoiceCreditNote>()
+            .Where(x =>
+                x.DentalPracticeId == practiceId &&
+                x.InvoiceId == invoice.Id)
+            .SumAsync(x => (decimal?)x.Amount, ct) ?? 0m;
+
+        var activeAllocations = await _db.Set<PaymentAllocation>()
+            .Where(x =>
+                x.DentalPracticeId == practiceId &&
+                x.InvoiceId == invoice.Id &&
+                !_db.Set<PaymentAllocationReversal>().Any(r =>
+                    r.DentalPracticeId == practiceId &&
+                    r.AllocationId == x.Id))
+            .SumAsync(x => (decimal?)x.Amount, ct) ?? 0m;
+
+        var unallocatedBalance =
+            invoice.TotalAmount - creditTotal - activeAllocations;
+
+        if (request.ClaimedAmount > unallocatedBalance)
+            return Conflict(new
+            {
+                message = "Claimed amount exceeds the current " +
+                          "unallocated invoice balance.",
+                unallocatedBalance
+            });
+
+        var claim = new MedicalAidClaim
+        {
+            DentalPracticeId = practiceId,
+            RequestId = request.RequestId,
+            PatientId = invoice.PatientId,
+            InvoiceId = invoice.Id,
+            MembershipId = membership.Id,
+            ClaimedAmount = request.ClaimedAmount,
+            Currency = invoice.Currency,
+            Status = "Draft",
+            ClaimNumber =
+                $"MAC-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}",
+            Notes = request.Notes?.Trim(),
+            CreatedByUserId = actorId
+        };
+
+        _db.Set<MedicalAidClaim>().Add(claim);
+        await _db.SaveChangesAsync(ct);
+
+        await _audit.WriteAsync(
+            "MEDICAL_AID_CLAIM_DRAFT_CREATED",
+            "MedicalAidClaim",
+            claim.Id.ToString(),
+            ct: ct);
+
+        await tx.CommitAsync(ct);
+
+        return Created(
+            "/api/finance/medical-aid/claims",
+            new
+            {
+                claim.Id,
+                claim.ClaimNumber,
+                claim.InvoiceId,
+                claim.ClaimedAmount,
+                claim.Status,
+                message = "Draft claim registered. " +
+                          "Not submitted to a medical aid scheme."
+            });
+    }
+}

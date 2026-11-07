@@ -37,6 +37,7 @@ type Props = {
   tab: AppointmentTab
   onTabChange: (tab: AppointmentTab) => void
   onOpenPatients: () => void
+  onOpenConsultation: (appointmentId: string) => void
   role: string
 }
 
@@ -98,6 +99,7 @@ export default function AppointmentsPage({
   tab,
   onTabChange,
   onOpenPatients,
+  onOpenConsultation,
   role,
 }: Props) {
   const [selectedDate, setSelectedDate] = useState(
@@ -306,12 +308,17 @@ export default function AppointmentsPage({
 
       await apiRequest(url, 'POST')
 
+      if (action === 'start-consultation') {
+        onOpenConsultation(id)
+        return
+      }
+
       setSuccess(
         action === 'check-in'
           ? 'Patient checked in and added to the queue.'
           : action === 'call'
             ? 'Patient called successfully.'
-            : 'Consultation started. Patient moved to Daily Patients.'
+            : 'Consultation started successfully.'
       )
 
       refresh()

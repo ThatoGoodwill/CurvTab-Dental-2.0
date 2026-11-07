@@ -1,0 +1,220 @@
+/*
+ * CurvTab Dental — Practice Unified Theme
+ * Applies only to authenticated practice-branded workspaces.
+ */
+
+.app-shell[data-practice-branded="true"] {
+  --brand-gradient: linear-gradient(
+    115deg,
+    var(--practice-primary, #126ce5),
+    var(--practice-accent, #14b8a6)
+  );
+  --brand-soft: color-mix(
+    in srgb,
+    var(--practice-primary, #126ce5) 12%,
+    transparent
+  );
+}
+
+/* ONE PRACTICE IDENTITY AT THE TOP */
+.app-shell[data-practice-branded="true"] .sidebar .practice-chip {
+  display: none !important;
+}
+
+.app-shell[data-practice-branded="true"] .sidebar .brand {
+  min-width: 0;
+  align-items: center;
+}
+
+.app-shell[data-practice-branded="true"] .sidebar .brand strong {
+  overflow-wrap: anywhere;
+}
+
+.app-shell[data-practice-branded="true"] .sidebar .brand-icon {
+  background: var(--brand-gradient) !important;
+  border-color: transparent !important;
+  color: white !important;
+}
+
+.app-shell[data-practice-branded="true"] .sidebar .brand-icon svg {
+  stroke: white !important;
+}
+
+/* SIDEBAR: NO HORIZONTAL SCROLLBAR */
+.app-shell.ct-nav-sidebar .sidebar {
+  overflow-x: hidden !important;
+}
+
+.app-shell.ct-nav-sidebar .sidebar .side-nav {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden !important;
+}
+
+.app-shell.ct-nav-sidebar .sidebar .nav-item {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* COMBINED GRADIENT BUTTONS */
+html body .app-shell[data-practice-branded="true"]
+:is(.primary-button, .ct-hero-action, .ct-btn-primary) {
+  background: var(--brand-gradient) !important;
+  background-image: var(--brand-gradient) !important;
+  border-color: var(--practice-primary) !important;
+  color: white !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,.5);
+}
+
+/* SELECTED NAVIGATION AND TABS */
+html body .app-shell[data-practice-branded="true"]
+.sidebar .side-nav
+:is(.nav-active, [aria-current="page"]) {
+  background: var(--brand-gradient) !important;
+  background-image: var(--brand-gradient) !important;
+  border-color: transparent !important;
+  color: white !important;
+}
+
+html body .app-shell[data-practice-branded="true"]
+:is(
+  [role="tab"][aria-selected="true"],
+  .tab-active,
+  .active-tab,
+  .tabs button.active,
+  .patient-tabs button.active,
+  .patient-detail-tabs button.active
+) {
+  background: var(--brand-gradient) !important;
+  background-image: var(--brand-gradient) !important;
+  color: white !important;
+}
+
+/* CALENDAR SELECTED DATE */
+html body .app-shell[data-practice-branded="true"]
+.appointment-day.selected {
+  background: var(--brand-gradient) !important;
+  background-image: var(--brand-gradient) !important;
+  color: white !important;
+}
+
+/* CALENDAR / SECONDARY BUTTON HOVER */
+html body .app-shell[data-practice-branded="true"]
+:is(.secondary-button, .appointment-day):hover:not(:disabled) {
+  border-color: var(--practice-accent) !important;
+}
+
+/* DASHBOARD CARDS: BRAND ACCENTS */
+.app-shell[data-practice-branded="true"]
+:is(.stat-card, .ct-chart-card, .panel) {
+  border-top: 2px solid
+    color-mix(in srgb, var(--practice-accent) 48%, transparent);
+}
+
+html body .app-shell[data-practice-branded="true"]
+:is(.stat-icon, .empty-icon) {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--practice-primary) 16%, transparent),
+    color-mix(in srgb, var(--practice-accent) 16%, transparent)
+  ) !important;
+}
+
+/* DASHBOARD SLIDESHOW AND CHARTS */
+html body .app-shell[data-practice-branded="true"]
+:is(.ct-bar-fill, .ct-slide-dots .ct-dot-active) {
+  background: var(--brand-gradient) !important;
+}
+
+html body .app-shell[data-practice-branded="true"]
+:is(.ct-hero-eyebrow, .ct-analytics-kicker) {
+  color: var(--practice-accent) !important;
+}
+
+/* THEME-AWARE FOCUS */
+.app-shell[data-practice-branded="true"]
+:is(button, input, select, textarea):focus-visible {
+  outline: 2px solid var(--practice-accent) !important;
+  outline-offset: 2px;
+}
+
+/* DARK MODE */
+:root[data-theme="dark"]
+.app-shell[data-practice-branded="true"] {
+  --ct-text: #eef4fb;
+  --ct-muted: #b8c9d9;
+  --ct-surface: #20364a;
+  --ct-subtle: #1a3044;
+  --ct-line: #3b536b;
+  color: #eef4fb !important;
+}
+
+:root[data-theme="dark"]
+.app-shell[data-practice-branded="true"] .workspace,
+:root[data-theme="dark"]
+.app-shell[data-practice-branded="true"] .main-content {
+  background: #142638 !important;
+  color: #eef4fb !important;
+}
+
+:root[data-theme="dark"]
+.app-shell[data-practice-branded="true"]
+:is(.sidebar, .topbar) {
+  background: #192e42 !important;
+  color: #eef4fb !important;
+  border-color: #395168 !important;
+}
+
+:root[data-theme="dark"]
+.app-shell[data-practice-branded="true"]
+:is(.panel, .stat-card, .ct-chart-card, .ct-live-calendar) {
+  background: #20364a !important;
+  border-color: #40576d !important;
+  color: #eef4fb !important;
+}
+
+:root[data-theme="dark"]
+.app-shell[data-practice-branded="true"]
+.main-content :is(h1, h2, h3) {
+  color: #f4f8fc !important;
+}
+
+:root[data-theme="dark"]
+.app-shell[data-practice-branded="true"]
+:is(.panel, .stat-card, .ct-chart-card)
+:is(h2, h3, strong) {
+  color: #f4f8fc !important;
+}
+
+:root[data-theme="dark"]
+.app-shell[data-practice-branded="true"]
+:is(.secondary-button, .icon-button) {
+  background: #283f55 !important;
+  color: #eef4fb !important;
+  border-color: #496078 !important;
+}
+
+:root[data-theme="dark"]
+.app-shell[data-practice-branded="true"]
+.sidebar .nav-item:not(.nav-active):not([aria-current="page"]) {
+  background: transparent !important;
+  color: #dce8f3 !important;
+}
+
+:root[data-theme="dark"]
+.app-shell[data-practice-branded="true"]
+:is(input:not([type="color"]), select, textarea) {
+  background-color: #293f55 !important;
+  color: #f4f8fc !important;
+  border-color: #4b637a !important;
+}
+
+/* PRESERVE MOBILE NAVIGATION */
+@media (max-width: 899px) {
+  .app-shell[data-practice-branded="true"] .sidebar {
+    max-width: min(300px, 85vw);
+  }
+}

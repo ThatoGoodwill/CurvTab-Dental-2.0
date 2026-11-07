@@ -13,7 +13,7 @@ export default defineConfig({
       // Forward API requests and SignalR WebSockets
       // to the ASP.NET Core API container.
       '/api': {
-        target: 'http://127.0.0.1:8080',
+        target: 'http://127.0.0.1:3001',
         changeOrigin: true,
         secure: false,
 
