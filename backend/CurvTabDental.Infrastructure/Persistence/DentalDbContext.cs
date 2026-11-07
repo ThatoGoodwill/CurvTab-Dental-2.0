@@ -23,6 +23,14 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
     }
 
     public DbSet<DentalPractice> DentalPractices => Set<DentalPractice>();
+
+    // CT_PHASE9B_PLATFORM_SUBSCRIPTIONS
+    public DbSet<PracticeSubscription> PracticeSubscriptions
+        => Set<PracticeSubscription>();
+
+    public DbSet<SubscriptionPayment> SubscriptionPayments
+        => Set<SubscriptionPayment>();
+
     // Appointment records stored in PostgreSQL.
     public DbSet<Appointment> Appointments => Set<Appointment>();
     public DbSet<Patient> Patients => Set<Patient>();
@@ -47,6 +55,70 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // CT_PHASE9B_PLATFORM_SUBSCRIPTIONS
+        // Platform billing data. API access must be SuperAdmin-only.
+        modelBuilder.Entity<PracticeSubscription>(entity =>
+        {
+            // CT_PHASE9C_ENFORCEMENT_V1
+            entity.Property(x => x.EnforcementEnabled)
+                .HasDefaultValue(false);
+
+            entity.ToTable("PracticeSubscriptions");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.PlanName)
+                .HasMaxLength(100).IsRequired();
+
+            entity.Property(x => x.BillingCycle)
+                .HasMaxLength(20).IsRequired();
+
+            entity.Property(x => x.Amount)
+                .HasPrecision(12, 2);
+
+            entity.Property(x => x.Currency)
+                .HasMaxLength(3).IsRequired();
+
+            entity.Property(x => x.Status)
+                .HasMaxLength(30).IsRequired();
+
+            entity.HasIndex(x => x.DentalPracticeId);
+
+            entity.HasOne<DentalPractice>()
+                .WithMany()
+                .HasForeignKey(x => x.DentalPracticeId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<SubscriptionPayment>(entity =>
+        {
+            entity.ToTable("SubscriptionPayments");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Amount)
+                .HasPrecision(12, 2);
+
+            entity.Property(x => x.Currency)
+                .HasMaxLength(3).IsRequired();
+
+            entity.Property(x => x.Status)
+                .HasMaxLength(30).IsRequired();
+
+            entity.Property(x => x.PaymentReference)
+                .HasMaxLength(200);
+
+            entity.Property(x => x.PaymentMethod)
+                .HasMaxLength(60);
+
+            entity.HasIndex(x => x.PracticeSubscriptionId);
+
+            entity.HasOne<PracticeSubscription>()
+                .WithMany()
+                .HasForeignKey(x => x.PracticeSubscriptionId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+
 
         // CT_PHASE8A_WHATSAPP_MOCK_ONLY
         modelBuilder.Entity<WhatsAppConsent>(entity =>

@@ -12,7 +12,7 @@ public sealed class PracticeAppearance : IPracticeOwned
     public string AccentColor { get; set; } = "#14B8A6";
     public string LayoutPreset { get; set; } = "Classic";
     public string NavigationMode { get; set; } = "Sidebar";
-    public string EnabledModulesJson { get; set; } = "[\"Patients\",\"Appointments\",\"Daily Patients\",\"Consultations\",\"Checkout & Payments\",\"Dental Charting\",\"Orthodontics\"]";
+    public string EnabledModulesJson { get; set; } = "[\"Patients\",\"Appointments\",\"Daily Patients\",\"Consultations\",\"Checkout & Payments\",\"Dental Charting\",\"Clinical Imaging\",\"Orthodontics\"]";
     public string? SlidesJson { get; set; }
     public string? LogoUrl { get; set; }
     public string? BadgeUrl { get; set; }

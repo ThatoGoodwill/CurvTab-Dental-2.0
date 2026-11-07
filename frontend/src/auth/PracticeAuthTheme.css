@@ -214,3 +214,197 @@ html[data-theme="dark"] .auth-screen.ct-auth-password .auth-form input {
     transform: none;
   }
 }
+
+/* CurvTab Dental 2.0 — refined dark authentication */
+
+html[data-theme="dark"] .auth-screen.ct-auth-login,
+html[data-theme="dark"] .auth-screen.ct-auth-password {
+  color-scheme: dark;
+  background:
+    radial-gradient(
+      circle at 12% 10%,
+      color-mix(in srgb, var(--auth-primary) 20%, transparent),
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 90% 90%,
+      color-mix(in srgb, var(--auth-accent) 12%, transparent),
+      transparent 45%
+    ),
+    #0b1525;
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-card,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-card {
+  background: #17263b;
+  border: 1px solid #34465e;
+  color: #f4f8ff;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .35);
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-card h1,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-card h1 {
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-form input,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-form input {
+  background: #101e31;
+  border-color: #43566e;
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-form input::placeholder,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-form input::placeholder {
+  color: #a6b5c9;
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-form input:focus,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-form input:focus {
+  border-color: var(--auth-accent);
+  outline: 3px solid color-mix(
+    in srgb,
+    var(--auth-accent) 25%,
+    transparent
+  );
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-security {
+  color: #c0cede;
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-brand,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-brand,
+html[data-theme="dark"] .auth-screen.ct-auth-password .ct-auth-practice-name {
+  color: #69ddcb;
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-error,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-error {
+  background: #48252f;
+  border: 1px solid #a75a69;
+  color: #ffe1e5;
+}
+
+@media (max-width: 520px) {
+  .auth-screen.ct-auth-login,
+  .auth-screen.ct-auth-password {
+    padding: 20px 12px;
+  }
+}
+
+
+/* CURVTAB FINAL AUTH VISIBILITY FIX */
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-card,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-card {
+    background: #17263b !important;
+    background-color: #17263b !important;
+    color: #f8fafc !important;
+    border: 1px solid #3c526b !important;
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-card h1,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-card h1 {
+    color: #ffffff !important;
+    opacity: 1 !important;
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-card > p,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-card > p {
+    color: #cbd5e1 !important;
+    opacity: 1 !important;
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-form label,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-form label {
+    color: #f1f5f9 !important;
+    opacity: 1 !important;
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-form input,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-form input {
+    background: #0f1d30 !important;
+    color: #ffffff !important;
+    border: 1px solid #536780 !important;
+    opacity: 1 !important;
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-form input::placeholder,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-form input::placeholder {
+    color: #b8c6d8 !important;
+    opacity: 1 !important;
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-brand,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-brand {
+    color: #70ead7 !important;
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-security,
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-security span {
+    color: #cbd5e1 !important;
+    opacity: 1 !important;
+}
+
+
+/* CURVTAB ANIMATED LOGIN LOGO */
+
+.auth-screen.ct-auth-login .auth-logo {
+    position: relative;
+    isolation: isolate;
+    overflow: visible;
+    width: 74px;
+    height: 74px;
+    padding: 4px;
+    box-sizing: border-box;
+    border-radius: 21px;
+    background: transparent !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+}
+
+/* Animated green-to-blue border */
+.auth-screen.ct-auth-login .auth-logo::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: conic-gradient(
+        from 0deg,
+        #14d84a,
+        #12b981,
+        #087dff,
+        #243cff,
+        #14d84a
+    );
+    animation: ct-login-logo-spin 4s linear infinite;
+    z-index: -1;
+}
+
+/* White interior */
+.auth-screen.ct-auth-login .auth-logo::after {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    border-radius: 18px;
+    background: #ffffff;
+    z-index: -1;
+}
+
+/* Keep the tooth/logo stationary */
+.auth-screen.ct-auth-login .auth-logo > * {
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes ct-login-logo-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .auth-screen.ct-auth-login .auth-logo::before {
+        animation: none;
+    }
+}

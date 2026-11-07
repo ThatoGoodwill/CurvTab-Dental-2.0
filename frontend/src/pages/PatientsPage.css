@@ -109,3 +109,567 @@
     width: 100%;
   }
 }
+
+/* CurvTab Dental registration enhancements */
+.ct-registration-extra {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.ct-registration-extra h3,
+.ct-registration-extra p {
+  grid-column: 1 / -1;
+}
+
+.ct-registration-extra h3 {
+  margin: 14px 0 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.ct-registration-extra label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  font-size: 0.85rem;
+}
+
+.ct-registration-extra input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+.ct-registration-extra label:has(input[type="checkbox"]) {
+  grid-column: 1 / -1;
+  display: block;
+}
+
+/* CurvTab Dental six-step registration wizard */
+
+.ct-registration-progress {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.ct-registration-progress-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  opacity: 0.55;
+}
+
+.ct-registration-progress-item span {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ct-registration-progress-item small {
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.ct-registration-progress-item.active,
+.ct-registration-progress-item.completed {
+  opacity: 1;
+}
+
+.ct-registration-progress-item.active span {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.ct-registration-step-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.ct-registration-review {
+  padding: 20px;
+  border: 1px solid currentColor;
+  border-radius: 12px;
+}
+
+.ct-registration-review h3 {
+  margin-top: 0;
+}
+
+.ct-registration-review p {
+  margin: 8px 0;
+}
+
+.ct-registration-review-note {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+@media (max-width: 700px) {
+  .ct-registration-progress {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: 16px;
+  }
+}
+
+/* CurvTab Dental six-step registration wizard */
+
+.ct-registration-progress {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.ct-registration-progress-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  opacity: 0.55;
+}
+
+.ct-registration-progress-item span {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ct-registration-progress-item small {
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.ct-registration-progress-item.active,
+.ct-registration-progress-item.completed {
+  opacity: 1;
+}
+
+.ct-registration-progress-item.active span {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.ct-registration-step-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.ct-registration-review {
+  padding: 20px;
+  border: 1px solid currentColor;
+  border-radius: 12px;
+}
+
+.ct-registration-review h3 {
+  margin-top: 0;
+}
+
+.ct-registration-review p {
+  margin: 8px 0;
+}
+
+.ct-registration-review-note {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+@media (max-width: 700px) {
+  .ct-registration-progress {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: 16px;
+  }
+}
+
+/* CT_REGISTRATION_WIZARD_V3 */
+
+.ct-wizard-progress {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  margin: 22px 0;
+}
+
+.ct-wizard-progress-item {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  align-items: center;
+  text-align: center;
+  opacity: 0.5;
+}
+
+.ct-wizard-progress-item.active,
+.ct-wizard-progress-item.completed {
+  opacity: 1;
+}
+
+.ct-wizard-number {
+  width: 34px;
+  height: 34px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+
+.ct-wizard-progress-item.active .ct-wizard-number {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.ct-wizard-progress-item small {
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.ct-wizard-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.ct-wizard-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ct-wizard-section h3 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.ct-wizard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.ct-wizard-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ct-wizard-grid input,
+.ct-wizard-grid select,
+.ct-wizard-grid textarea {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+}
+
+.ct-wizard-age,
+.ct-wizard-notice,
+.ct-wizard-review {
+  padding: 16px;
+  border: 1px solid currentColor;
+  border-radius: 12px;
+}
+
+.ct-wizard-age p {
+  margin: 6px 0 0;
+}
+
+.ct-wizard-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ct-wizard-checkbox input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.ct-wizard-review p {
+  margin: 8px 0;
+  overflow-wrap: anywhere;
+}
+
+.ct-wizard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.ct-wizard-error {
+  color: #c44343;
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .ct-wizard-progress {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: 18px;
+  }
+
+  .ct-wizard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* CURVTAB REGISTRATION UI V4 */
+
+.ct-wizard-progress {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  margin: 22px 0 28px;
+  width: 100%;
+}
+
+.ct-wizard-progress-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 9px;
+  min-height: 94px;
+  min-width: 0;
+  padding: 12px 7px;
+  box-sizing: border-box;
+  border: 1px solid rgba(128, 145, 165, 0.28);
+  border-radius: 12px;
+  background: rgba(128, 145, 165, 0.045);
+  color: inherit;
+  opacity: 0.85;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.ct-wizard-progress-item.active {
+  border: 2px solid #0d9488;
+  background: rgba(13, 148, 136, 0.08);
+  opacity: 1;
+}
+
+.ct-wizard-progress-item.completed {
+  border-color: #0d9488;
+  background: rgba(13, 148, 136, 0.045);
+  opacity: 1;
+}
+
+.ct-wizard-number {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(128, 145, 165, 0.5);
+  font-size: 13px;
+  font-weight: 750;
+  background: rgba(128, 145, 165, 0.12);
+  color: inherit;
+}
+
+.ct-wizard-progress-item.active .ct-wizard-number {
+  background: #0d9488;
+  color: white;
+  border-color: #0d9488;
+  outline: none;
+}
+
+.ct-wizard-progress-item.completed .ct-wizard-number {
+  background: #0d9488;
+  color: white;
+  border-color: #0d9488;
+}
+
+.ct-wizard-progress-item small {
+  font-size: 11px;
+  line-height: 1.35;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.ct-wizard-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.ct-wizard-section {
+  display: flex;
+  flex-direction: column;
+  gap: 17px;
+}
+
+.ct-wizard-section > h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 750;
+}
+
+.ct-wizard-section > p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.ct-wizard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 18px 20px;
+}
+
+.ct-wizard-grid > label,
+.ct-wizard-dob-row > label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ct-wizard-grid input,
+.ct-wizard-grid select,
+.ct-wizard-grid textarea,
+.ct-wizard-dob-row input {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-height: 42px;
+  border-radius: 9px;
+  font-size: 14px;
+}
+
+.ct-wizard-dob-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 175px;
+  align-items: end;
+  gap: 12px;
+  grid-column: 1 / -1;
+}
+
+.ct-wizard-age-badge {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  min-height: 76px;
+  padding: 10px 14px;
+  border: 1px solid rgba(13, 148, 136, 0.35);
+  border-radius: 12px;
+  background: rgba(13, 148, 136, 0.08);
+  color: inherit;
+}
+
+.ct-wizard-age-label {
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  font-weight: 750;
+  opacity: 0.75;
+}
+
+.ct-wizard-age-number {
+  font-size: 29px;
+  line-height: 1.05;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #0d9488;
+}
+
+.ct-wizard-age-number small {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.ct-wizard-age-category {
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.ct-wizard-age-placeholder {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.ct-wizard-age-badge.is-minor {
+  border-color: #d97706;
+  background: rgba(217, 119, 6, 0.09);
+}
+
+.ct-wizard-age-badge.is-minor .ct-wizard-age-number {
+  color: #d97706;
+}
+
+.ct-wizard-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(128, 145, 165, 0.2);
+}
+
+.ct-wizard-actions button {
+  min-height: 38px;
+  padding: 8px 16px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+@media (max-width: 900px) {
+  .ct-wizard-progress {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .ct-wizard-progress {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .ct-wizard-progress-item {
+    min-height: 72px;
+    padding: 10px 6px;
+  }
+
+  .ct-wizard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ct-wizard-dob-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ct-wizard-age-badge {
+    min-height: 68px;
+  }
+
+  .ct-wizard-actions {
+    justify-content: stretch;
+  }
+}
+

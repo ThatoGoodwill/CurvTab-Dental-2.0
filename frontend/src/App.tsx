@@ -1,3 +1,9 @@
+import PlatformSubscriptionsPage from './pages/PlatformSubscriptionsPage'
+import { useConfirmDialog } from './components/useConfirmDialog'
+import './PlatformManagement.css'
+import { Images as ClinicalImagingIcon } from 'lucide-react'
+import ClinicalImagingPage from './pages/ClinicalImagingPage'
+import { BriefcaseBusiness as CtManagementIcon, Building2 as CtPracticeIcon, Palette as CtAppearanceIcon } from 'lucide-react'
 import WhatsAppPanel from './pages/WhatsAppPanel'
 import LiveClinicNotifications from './components/LiveClinicNotifications'
 import ClinicDashboardEnhancements from './components/ClinicDashboardEnhancements'
@@ -70,12 +76,13 @@ import './PracticeLogoFit.css'
 import './PracticeBrandAlignment.css'
 import PracticeBrandMark from './auth/PracticeBrandMark'
 type Section =
-  | 'Dashboard' | 'Daily Patients' | 'Consultations' | 'Patient Medical Records' | 'Checkout & Payments' | 'Dental Charting' | 'Orthodontics'
+  | 'Dashboard' | 'Daily Patients' | 'Consultations' | 'Patient Medical Records' | 'Checkout & Payments' | 'Dental Charting' | 'Clinical Imaging' | 'Orthodontics'
   | 'Patients'
   | 'Appointments'
   | 'Practice Settings'
   | 'Management'
   | 'Dental Practices'
+  | 'Subscriptions'
   | 'Appearance & Workspace'
   | 'My Profile'
 
@@ -270,6 +277,10 @@ type Practice = {
 // The ASP.NET Core API also enforces SuperAdmin authorization.
 function DentalPracticesPage() {
   const [practices, setPractices] = useState<Practice[]>([])
+
+  // CT_SUPERADMIN_DIALOG_V1
+  const { confirm, confirmationDialog } = useConfirmDialog()
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [reloadKey, setReloadKey] = useState(0)
@@ -277,6 +288,10 @@ function DentalPracticesPage() {
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
   const [notice, setNotice] = useState('')
+  // CT_SUPERADMIN_ACCESS_V1
+  const [accessBusyId, setAccessBusyId] = useState<string | null>(null)
+  const [accessError, setAccessError] = useState('')
+
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -315,6 +330,56 @@ function DentalPracticesPage() {
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [reloadKey])
+
+
+  async function changePracticeAccess(
+    practice: Practice,
+    activate: boolean
+  ) {
+    if (accessBusyId) return
+
+    const confirmed = await confirm({
+      title: activate
+        ? 'Reactivate Dental Practice?'
+        : 'Suspend Dental Practice?',
+      message: activate
+        ? `Reactivate "${practice.name}"? Its staff will be able to access CurvTab Dental again.`
+        : `Are you sure you want to suspend "${practice.name}"? Its staff will lose normal system access. Patient records will remain stored securely.`,
+      confirmLabel: activate
+        ? 'Reactivate Practice'
+        : 'Suspend Practice',
+      variant: activate ? 'default' : 'danger',
+    })
+
+    if (!confirmed) return
+
+    setAccessBusyId(practice.id)
+    setAccessError('')
+    setNotice('')
+
+    try {
+      await apiRequest<void>(
+        `/platform/practices/${encodeURIComponent(practice.id)}/active`,
+        'PATCH',
+        { isActive: activate }
+      )
+
+      setNotice(
+        `${practice.name} has been ${activate ? 'reactivated' : 'suspended'}.`
+      )
+
+      setLoading(true)
+      setReloadKey(value => value + 1)
+    } catch (cause: unknown) {
+      setAccessError(
+        cause instanceof Error
+          ? cause.message
+          : 'Unable to update practice access.'
+      )
+    } finally {
+      setAccessBusyId(null)
+    }
+  }
 
   async function registerPractice(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -372,6 +437,7 @@ function DentalPracticesPage() {
 
   return (
     <>
+      {confirmationDialog}
       <div className="page-heading">
         <div>
           <div className="eyebrow">SAAS PLATFORM</div>
@@ -468,13 +534,69 @@ function DentalPracticesPage() {
         {error && <p role="alert">{error}</p>}
         {!loading && !error && practices.length === 0 && <p>No practices registered yet.</p>}
         {!loading && !error && (
-          <div className="check-list">
-            {practices.map((practice) => (
-              <div key={practice.id}>
-                <strong>{practice.name}</strong>{' — '}
-                {practice.isActive ? 'Active' : 'Inactive'}
+          <div className="ct-platform-management">
+            <div className="ct-platform-summary">
+              <div>
+                <span>Registered Practices</span>
+                <strong>{practices.length}</strong>
               </div>
-            ))}
+              <div>
+                <span>Active Practices</span>
+                <strong>
+                  {practices.filter(p => p.isActive).length}
+                </strong>
+              </div>
+              <div>
+                <span>Suspended Practices</span>
+                <strong>
+                  {practices.filter(p => !p.isActive).length}
+                </strong>
+              </div>
+            </div>
+
+            {accessError && (
+              <p role="alert" style={{ color: '#dc3545' }}>
+                {accessError}
+              </p>
+            )}
+
+            <div className="ct-platform-practice-list">
+              {practices.map(practice => (
+                <article
+                  key={practice.id}
+                  className="ct-platform-practice-card"
+                >
+                  <div className="ct-platform-practice-details">
+                    <strong>{practice.name}</strong>
+                    <small>Dental practice</small>
+                  </div>
+
+                  <span className={
+                    practice.isActive
+                      ? 'ct-platform-status is-active'
+                      : 'ct-platform-status is-suspended'
+                  }>
+                    {practice.isActive ? 'Active' : 'Suspended'}
+                  </span>
+
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    disabled={accessBusyId !== null || loading}
+                    onClick={() => void changePracticeAccess(
+                      practice,
+                      !practice.isActive
+                    )}
+                  >
+                    {accessBusyId === practice.id
+                      ? 'Updating...'
+                      : practice.isActive
+                        ? 'Suspend Practice'
+                        : 'Reactivate Practice'}
+                  </button>
+                </article>
+              ))}
+            </div>
           </div>
         )}
       </section>
@@ -491,7 +613,7 @@ export default function App() {
   const { appearance, setAppearance } = usePracticeAppearance(user?.practiceId)
   const isModuleVisible = (name: string) => !appearance || ![
     'Patients','Appointments','Daily Patients','Consultations',
-    'Checkout & Payments','Dental Charting','Orthodontics'
+    'Checkout & Payments','Dental Charting','Clinical Imaging','Orthodontics'
   ].includes(name) || appearance.enabledModules.includes(name)
 
   // Share the authenticated practice theme with notification portals.
@@ -561,6 +683,7 @@ export default function App() {
     ? [
         { name: 'Dashboard' as Section, icon: LayoutDashboard },
         { name: 'Dental Practices' as Section, icon: Building2 },
+        { name: 'Subscriptions' as Section, icon: Building2 },
         { name: 'My Profile' as Section, icon: UserCircle },
       ]
     : [
@@ -573,11 +696,11 @@ export default function App() {
           : []),
         ...(canManageStaff
           ? [
-              { name: 'Management' as Section, icon: Settings },
-              { name: 'Practice Settings' as Section, icon: Settings },
+              { name: 'Management' as Section, icon: CtManagementIcon },
+              { name: 'Practice Settings' as Section, icon: CtPracticeIcon },
             ]
           : []),
-        ...(canManageStaff ? [{ name: 'Appearance & Workspace' as Section, icon: Settings }] : []),
+        ...(canManageStaff ? [{ name: 'Appearance & Workspace' as Section, icon: CtAppearanceIcon }] : []),
         { name: 'My Profile' as Section, icon: UserCircle },
       ]
 
@@ -807,6 +930,20 @@ export default function App() {
                 onClick={() => navigate('Dental Charting')}>
                 <Activity size={19} /><span>Dental Charting</span>
               </button>}
+              {isModuleVisible('Clinical Imaging') && (
+                <button
+                  type="button"
+                  className={
+                    section === 'Clinical Imaging'
+                      ? 'nav-item nav-active'
+                      : 'nav-item'
+                  }
+                  onClick={() => navigate('Clinical Imaging')}
+                >
+                  <ClinicalImagingIcon size={19} />
+                  <span>Clinical Imaging</span>
+                </button>
+              )}
               {isModuleVisible('Orthodontics') && <button type="button"
                 className={section === 'Orthodontics' ? 'nav-item nav-active' : 'nav-item'}
                 onClick={() => navigate('Orthodontics')}>
@@ -1106,6 +1243,9 @@ export default function App() {
           )}
 
           {/* SAAS PLATFORM PRACTICES */}
+          {section === 'Subscriptions' && isSuperAdmin && (
+            <PlatformSubscriptionsPage />
+          )}
           {section === 'Dental Practices' && isSuperAdmin && (
             <DentalPracticesPage />
           )}
@@ -1137,6 +1277,9 @@ export default function App() {
 
           {/* PHASE 4/5: DENTIST SPECIALTIES */}
           {section === 'Dental Charting' && role === 'Dentist' && <DentalChartingPage initialPatientId={chartPatientId} />}
+          {section === 'Clinical Imaging' && role === 'Dentist' && (
+            <ClinicalImagingPage />
+          )}
           {section === 'Orthodontics' && role === 'Dentist' && <OrthodonticsPage />}
 
           {/* PRACTICE SETTINGS — ONLY PracticeAdmin */}
@@ -1163,6 +1306,7 @@ export default function App() {
             (section === 'Consultations' && role !== 'Dentist') ||
             (section === 'Patient Medical Records' && role !== 'Dentist') ||
             (section === 'Dental Charting' && role !== 'Dentist') ||
+            (section === 'Clinical Imaging' && role !== 'Dentist') ||
             (section === 'Orthodontics' && role !== 'Dentist') ||
             (section === 'Checkout & Payments' && role !== 'Receptionist' && role !== 'PracticeAdmin') ||
             (section === 'Daily Patients' && role !== 'Dentist') ||

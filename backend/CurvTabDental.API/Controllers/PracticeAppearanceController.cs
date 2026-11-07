@@ -16,7 +16,7 @@ public sealed class PracticeAppearanceController : ControllerBase
 {
     private static readonly string[] DefaultModules = [
         "Patients", "Appointments", "Daily Patients", "Consultations",
-        "Checkout & Payments", "Dental Charting", "Orthodontics"
+        "Checkout & Payments", "Dental Charting", "Clinical Imaging", "Orthodontics"
     ];
     private static readonly HashSet<string> AllowedModules = new(DefaultModules, StringComparer.Ordinal);
 

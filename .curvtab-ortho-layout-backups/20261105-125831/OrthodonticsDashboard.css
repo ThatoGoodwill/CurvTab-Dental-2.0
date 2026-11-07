@@ -1,0 +1,256 @@
+
+/* CurvTab Dental — Orthodontics Dashboard V1 */
+
+.ct-ortho-hub {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+
+.ct-ortho-hub-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 7px;
+  border-radius: 12px;
+  background: #f0f5fa;
+}
+
+.ct-ortho-hub-tabs button {
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #52657f;
+  padding: 10px 18px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ct-ortho-hub-tabs button.is-active {
+  background: linear-gradient(110deg, #0ea5e9, #1876ed);
+  color: #fff;
+  box-shadow: 0 4px 14px #0787e544;
+}
+
+.ct-ortho-hub-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ct-ortho-hub-kpis article,
+.ct-ortho-hub-card {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #d7e2ef;
+  background: #fff;
+  border-radius: 13px;
+}
+
+.ct-ortho-hub-kpis article {
+  display: grid;
+  gap: 10px;
+}
+
+.ct-ortho-hub-kpis span,
+.ct-ortho-hub-kpis small {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.ct-ortho-hub-kpis strong {
+  font-size: clamp(24px, 3vw, 32px);
+  line-height: 1.1;
+  color: #0f2748;
+}
+
+.ct-ortho-hub-panels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.ct-ortho-hub-card {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+
+.ct-ortho-hub-panels .ct-ortho-hub-card {
+  min-height: 215px;
+}
+
+.ct-ortho-hub-card h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.ct-ortho-hub-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.ct-ortho-hub-card-head span {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.ct-ortho-hub-empty {
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 28px 12px;
+  border: 1px dashed #b9c9d9;
+  border-radius: 10px;
+  color: #64748b;
+  font-size: 13px;
+  text-align: center;
+}
+
+.ct-ortho-hub-items {
+  display: grid;
+  gap: 10px;
+}
+
+.ct-ortho-hub-items button,
+.ct-ortho-hub-items article {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d7e2ef;
+  border-radius: 9px;
+  background: transparent;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+
+.ct-ortho-hub-items button {
+  cursor: pointer;
+}
+
+.ct-ortho-hub-items span,
+.ct-ortho-hub-items p {
+  margin: 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.ct-ortho-hub-card label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ct-ortho-hub-card select {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #94a3b8;
+  border-radius: 9px;
+  background: transparent;
+  color: inherit;
+}
+
+html[data-theme="dark"] .ct-ortho-hub-tabs {
+  background: #0f1929;
+}
+
+html[data-theme="dark"] .ct-ortho-hub-tabs button {
+  color: #b6c6da;
+}
+
+html[data-theme="dark"] .ct-ortho-hub-tabs button.is-active {
+  color: #fff;
+}
+
+html[data-theme="dark"] .ct-ortho-hub-kpis article,
+html[data-theme="dark"] .ct-ortho-hub-card {
+  background: #151f31;
+  border-color: #293950;
+  color: #f1f5f9;
+}
+
+html[data-theme="dark"] .ct-ortho-hub-kpis strong {
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] .ct-ortho-hub-kpis span,
+html[data-theme="dark"] .ct-ortho-hub-kpis small,
+html[data-theme="dark"] .ct-ortho-hub-card-head span,
+html[data-theme="dark"] .ct-ortho-hub-empty {
+  color: #aebed2;
+}
+
+html[data-theme="dark"] .ct-ortho-hub-empty {
+  border-color: #34445a;
+}
+
+html[data-theme="dark"] .ct-ortho-hub-items button,
+html[data-theme="dark"] .ct-ortho-hub-items article {
+  border-color: #34445a;
+}
+
+html[data-theme="dark"] .ct-ortho-hub-card select {
+  background: #111c2d;
+  border-color: #405571;
+  color: #f8fafc;
+}
+
+@media (max-width: 900px) {
+  .ct-ortho-hub-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ct-ortho-hub-panels {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .ct-ortho-hub-kpis {
+    grid-template-columns: 1fr;
+  }
+  .ct-ortho-hub-tabs button {
+    padding: 9px 11px;
+  }
+}
+
+
+/* CurvTab Orthodontics Dashboard V2 */
+.ct-ortho-primary-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ct-ortho-primary-actions .primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border: 0;
+  border-radius: 9px;
+  background: linear-gradient(110deg, #0ea5e9, #1876ed);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ct-ortho-active-top {
+  width: 100%;
+}
+
+.ct-ortho-hub-items button:hover {
+  border-color: #0ea5e9;
+  background: rgba(14,165,233,.07);
+}
+
+@media (max-width: 640px) {
+  .ct-ortho-primary-actions .primary-button {
+    width: 100%;
+  }
+}

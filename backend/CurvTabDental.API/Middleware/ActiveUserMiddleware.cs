@@ -53,6 +53,59 @@ public class ActiveUserMiddleware
                 return;
             }
 
+
+            // CT_PHASE9C_ENFORCEMENT_V1
+            // Enrolled practices remain able to read authorised records.
+            // The payment restriction applies to ordinary API writes only.
+            if (state.DentalPracticeId is Guid billingPracticeId &&
+                context.Request.Path.StartsWithSegments("/api") &&
+                !context.Request.Path.StartsWithSegments("/api/auth") &&
+                !HttpMethods.IsGet(context.Request.Method) &&
+                !HttpMethods.IsHead(context.Request.Method) &&
+                !HttpMethods.IsOptions(context.Request.Method))
+            {
+                var subscription = await db.PracticeSubscriptions
+                    .AsNoTracking()
+                    .Where(s => s.DentalPracticeId == billingPracticeId
+                                && s.EnforcementEnabled)
+                    .OrderByDescending(s => s.CreatedAtUtc)
+                    .FirstOrDefaultAsync(ct);
+
+                if (subscription is not null)
+                {
+                    var now = DateTime.UtcNow;
+                    var hasVerifiedPayment = await db.SubscriptionPayments
+                        .AsNoTracking()
+                        .AnyAsync(p =>
+                            p.PracticeSubscriptionId == subscription.Id &&
+                            p.Status == "Verified", ct);
+
+                    var validPaidPeriod =
+                        subscription.Status == "Active" &&
+                        hasVerifiedPayment &&
+                        now >= subscription.PeriodStartUtc &&
+                        now < subscription.PeriodEndUtc.AddDays(
+                            Math.Clamp(subscription.GraceDays, 0, 60));
+
+                    if (!validPaidPeriod)
+                    {
+                        context.Response.StatusCode =
+                            StatusCodes.Status402PaymentRequired;
+
+                        await context.Response.WriteAsJsonAsync(new
+                        {
+                            title = "Subscription requires renewal.",
+                            status = 402,
+                            code = "SUBSCRIPTION_READ_ONLY",
+                            detail = "Your practice is in read-only mode. " +
+                                     "Contact your practice administrator."
+                        }, ct);
+
+                        return;
+                    }
+                }
+            }
+
             // Temporary-password users may access authentication endpoints
             // and the public, read-only practice-branding endpoint only.
             var isAuthEndpoint =

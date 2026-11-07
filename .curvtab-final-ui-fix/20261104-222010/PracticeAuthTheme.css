@@ -1,0 +1,294 @@
+/* Practice-branded authentication — login and password setup */
+
+.auth-screen.ct-auth-login,
+.auth-screen.ct-auth-password {
+  --auth-primary: #126ce5;
+  --auth-accent: #14b8a6;
+  --auth-gradient: linear-gradient(
+    115deg,
+    var(--auth-primary),
+    var(--auth-accent)
+  );
+
+  min-height: 100dvh;
+  padding: 32px 18px;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 12% 15%,
+      color-mix(in srgb, var(--auth-primary) 12%, transparent),
+      transparent 38%),
+    radial-gradient(circle at 90% 85%,
+      color-mix(in srgb, var(--auth-accent) 12%, transparent),
+      transparent 42%),
+    #f5f8fc;
+}
+
+.auth-screen.ct-auth-login .auth-card,
+.auth-screen.ct-auth-password .auth-card {
+  width: min(100%, 470px);
+  max-width: 470px;
+  box-sizing: border-box;
+  padding: 36px;
+  background: #fff;
+  color: #213450;
+  border: 1px solid #e0e8f1;
+  border-radius: 24px;
+  box-shadow: 0 22px 65px rgba(26, 48, 82, .12);
+  overflow: hidden;
+}
+
+.auth-screen.ct-auth-login .auth-logo,
+.auth-screen.ct-auth-password .auth-logo {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 17px;
+  background: var(--auth-gradient);
+  color: white;
+}
+
+.auth-screen.ct-auth-login .auth-logo svg,
+.auth-screen.ct-auth-password .auth-logo svg {
+  stroke: white;
+}
+
+.auth-screen.ct-auth-login .auth-brand,
+.auth-screen.ct-auth-password .auth-brand {
+  color: var(--auth-primary);
+  font-weight: 800;
+  letter-spacing: .1em;
+  font-size: 12px;
+}
+
+.auth-screen.ct-auth-login .auth-card h1,
+.auth-screen.ct-auth-password .auth-card h1 {
+  color: #1e3150;
+  font-size: clamp(26px, 4vw, 34px);
+  letter-spacing: -.035em;
+  margin: 14px 0 8px;
+}
+
+.auth-screen.ct-auth-login .auth-card > p,
+.auth-screen.ct-auth-password .auth-card > p {
+  color: #63758e;
+  line-height: 1.6;
+}
+
+.auth-screen.ct-auth-login .auth-form,
+.auth-screen.ct-auth-password .auth-form {
+  display: grid;
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.auth-screen.ct-auth-login .auth-form label,
+.auth-screen.ct-auth-password .auth-form label {
+  display: grid;
+  gap: 7px;
+  color: #29405d;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.auth-screen.ct-auth-login .auth-form input,
+.auth-screen.ct-auth-password .auth-form input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 48px;
+  border: 1.5px solid #d6e1ec;
+  border-radius: 11px;
+  padding: 12px 14px;
+  background: white;
+  color: #203550;
+  font: inherit;
+}
+
+.auth-screen.ct-auth-login .auth-form input:focus,
+.auth-screen.ct-auth-password .auth-form input:focus {
+  outline: 3px solid color-mix(
+    in srgb, var(--auth-accent) 25%, transparent
+  );
+  border-color: var(--auth-primary);
+}
+
+.auth-screen.ct-auth-login .auth-submit,
+.auth-screen.ct-auth-password .auth-submit {
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  border-radius: 11px;
+  background: var(--auth-gradient) !important;
+  color: white !important;
+  font-weight: 750;
+  cursor: pointer;
+  text-shadow: 0 1px 2px rgba(0,0,0,.4);
+  transition: filter .2s, transform .2s;
+}
+
+.auth-screen.ct-auth-login .auth-submit:hover:not(:disabled),
+.auth-screen.ct-auth-password .auth-submit:hover:not(:disabled) {
+  filter: brightness(.94);
+  transform: translateY(-2px);
+}
+
+.auth-screen.ct-auth-login .auth-submit:disabled,
+.auth-screen.ct-auth-password .auth-submit:disabled {
+  opacity: .65;
+  cursor: wait;
+}
+
+.auth-screen.ct-auth-login .auth-security {
+  margin-top: 25px;
+  color: #677a94;
+}
+
+.auth-screen.ct-auth-password .ct-auth-practice-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--auth-primary);
+  overflow-wrap: anywhere;
+}
+
+.auth-screen.ct-auth-password .ct-auth-tagline {
+  color: #63758e;
+  font-size: 13px;
+}
+
+/* Dark-mode login and password screens */
+html[data-theme="dark"] .auth-screen.ct-auth-login,
+html[data-theme="dark"] .auth-screen.ct-auth-password {
+  background:
+    radial-gradient(circle at 12% 15%,
+      color-mix(in srgb, var(--auth-primary) 15%, transparent),
+      transparent 40%),
+    #112233;
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-card,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-card {
+  background: #203449;
+  color: #f1f6fb;
+  border-color: #40576f;
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-card h1,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-card h1,
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-form label,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-form label {
+  color: #f1f6fb;
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-card > p,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-card > p,
+html[data-theme="dark"] .auth-screen.ct-auth-password .ct-auth-tagline {
+  color: #bbcada;
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-form input,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-form input {
+  background: #293f55;
+  color: #f4f8fc;
+  border-color: #4b637b;
+}
+
+@media (max-width: 520px) {
+  .auth-screen.ct-auth-login .auth-card,
+  .auth-screen.ct-auth-password .auth-card {
+    padding: 25px 20px;
+    border-radius: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-screen.ct-auth-login .auth-submit,
+  .auth-screen.ct-auth-password .auth-submit {
+    transition: none;
+  }
+
+  .auth-screen.ct-auth-login .auth-submit:hover,
+  .auth-screen.ct-auth-password .auth-submit:hover {
+    transform: none;
+  }
+}
+
+/* CurvTab Dental 2.0 — refined dark authentication */
+
+html[data-theme="dark"] .auth-screen.ct-auth-login,
+html[data-theme="dark"] .auth-screen.ct-auth-password {
+  color-scheme: dark;
+  background:
+    radial-gradient(
+      circle at 12% 10%,
+      color-mix(in srgb, var(--auth-primary) 20%, transparent),
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 90% 90%,
+      color-mix(in srgb, var(--auth-accent) 12%, transparent),
+      transparent 45%
+    ),
+    #0b1525;
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-card,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-card {
+  background: #17263b;
+  border: 1px solid #34465e;
+  color: #f4f8ff;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .35);
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-card h1,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-card h1 {
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-form input,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-form input {
+  background: #101e31;
+  border-color: #43566e;
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-form input::placeholder,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-form input::placeholder {
+  color: #a6b5c9;
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-form input:focus,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-form input:focus {
+  border-color: var(--auth-accent);
+  outline: 3px solid color-mix(
+    in srgb,
+    var(--auth-accent) 25%,
+    transparent
+  );
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-security {
+  color: #c0cede;
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-brand,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-brand,
+html[data-theme="dark"] .auth-screen.ct-auth-password .ct-auth-practice-name {
+  color: #69ddcb;
+}
+
+html[data-theme="dark"] .auth-screen.ct-auth-login .auth-error,
+html[data-theme="dark"] .auth-screen.ct-auth-password .auth-error {
+  background: #48252f;
+  border: 1px solid #a75a69;
+  color: #ffe1e5;
+}
+
+@media (max-width: 520px) {
+  .auth-screen.ct-auth-login,
+  .auth-screen.ct-auth-password {
+    padding: 20px 12px;
+  }
+}

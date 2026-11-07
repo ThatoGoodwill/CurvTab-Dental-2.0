@@ -36,6 +36,7 @@ const OPTIONAL_MODULES = [
   'Consultations',
   'Checkout & Payments',
   'Dental Charting',
+  'Clinical Imaging',
   'Orthodontics',
 ] as const
 
@@ -53,6 +54,7 @@ const DEFAULT: PracticeAppearance = {
     'Consultations',
     'Checkout & Payments',
     'Dental Charting',
+    'Clinical Imaging',
     'Orthodontics',
   ],
 }

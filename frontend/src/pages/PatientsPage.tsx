@@ -1,3 +1,4 @@
+import './PatientsPage.css'
 
 import { useEffect, useState } from 'react'
 import type {
@@ -49,6 +50,14 @@ interface PatientForm {
   firstName: string
   lastName: string
   dateOfBirth: string
+  gender: string
+  emergencyContactName: string
+  emergencyContactPhone: string
+  paymentMethod: 'Cash' | 'MedicalAid'
+  medicalAidScheme: string
+  medicalAidOption: string
+  medicalAidMemberNumber: string
+  consentGiven: boolean
   phoneNumber: string
   email: string
   address: string
@@ -58,6 +67,14 @@ const emptyForm: PatientForm = {
   firstName: '',
   lastName: '',
   dateOfBirth: '',
+  gender: '',
+  emergencyContactName: '',
+  emergencyContactPhone: '',
+  paymentMethod: 'Cash',
+  medicalAidScheme: '',
+  medicalAidOption: '',
+  medicalAidMemberNumber: '',
+  consentGiven: false,
   phoneNumber: '',
   email: '',
   address: '',
@@ -159,6 +176,34 @@ function parsePatients(response: unknown): Patient[] {
 // PATIENTS PAGE
 // =============================================
 
+
+
+
+// CT_REGISTRATION_WIZARD_V3
+function calculateRegistrationAge(dob: string): number | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) return null
+
+  const [year, month, day] = dob.split('-').map(Number)
+  const birth = new Date(year, month - 1, day)
+  const today = new Date()
+
+  if (
+    birth.getFullYear() !== year ||
+    birth.getMonth() !== month - 1 ||
+    birth.getDate() !== day ||
+    birth > today
+  ) return null
+
+  let age = today.getFullYear() - year
+
+  if (
+    today.getMonth() + 1 < month ||
+    (today.getMonth() + 1 === month && today.getDate() < day)
+  ) age--
+
+  return age
+}
+
 export default function PatientsPage() {
   const { user } = useAuth()
 
@@ -172,6 +217,7 @@ export default function PatientsPage() {
     useState<Patient | null>(null)
 
   const [form, setForm] = useState<PatientForm>(emptyForm)
+  const [registrationStep, setRegistrationStep] = useState(0)
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -266,6 +312,72 @@ export default function PatientsPage() {
   // ASP.NET Core validates and saves the record.
   // =========================================
 
+
+  const registrationSteps = [
+    'Personal details',
+    'Contact details',
+    'Next of kin',
+    'Payment & medical aid',
+    'Declaration',
+    'Review & save',
+  ]
+
+  const patientAge = calculateRegistrationAge(form.dateOfBirth)
+  const isMinor = patientAge !== null && patientAge < 18
+
+  function nextRegistrationStep() {
+    setError('')
+
+    if (registrationStep === 0) {
+      if (!form.firstName.trim() || !form.lastName.trim()) {
+        setError('First name and surname are required.')
+        return
+      }
+
+      if (patientAge === null) {
+        setError('Enter a valid date of birth.')
+        return
+      }
+    }
+
+    if (registrationStep === 1) {
+      if (
+        form.email.trim() &&
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())
+      ) {
+        setError('Enter a valid email address.')
+        return
+      }
+    }
+
+    if (registrationStep === 2 && isMinor) {
+      if (
+        !form.emergencyContactName.trim() ||
+        !form.emergencyContactPhone.trim()
+      ) {
+        setError('A parent or guardian contact is required for a minor.')
+        return
+      }
+    }
+
+    if (registrationStep === 3 && form.paymentMethod === 'MedicalAid') {
+      if (
+        !form.medicalAidScheme.trim() ||
+        !form.medicalAidMemberNumber.trim()
+      ) {
+        setError('Medical aid scheme and membership number are required.')
+        return
+      }
+    }
+
+    setRegistrationStep(current => Math.min(current + 1, 5))
+  }
+
+  function previousRegistrationStep() {
+    setError('')
+    setRegistrationStep(current => Math.max(current - 1, 0))
+  }
+
   async function savePatient(
     allowDuplicate = false
   ) {
@@ -296,6 +408,17 @@ export default function PatientsPage() {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         dateOfBirth: form.dateOfBirth,
+        gender: form.gender || null,
+        emergencyContactName: form.emergencyContactName.trim() || null,
+        emergencyContactPhone: form.emergencyContactPhone.trim() || null,
+        paymentMethod: form.paymentMethod,
+        medicalAidScheme: form.paymentMethod === 'MedicalAid'
+          ? form.medicalAidScheme.trim() : null,
+        medicalAidOption: form.paymentMethod === 'MedicalAid'
+          ? form.medicalAidOption.trim() || null : null,
+        medicalAidMemberNumber: form.paymentMethod === 'MedicalAid'
+          ? form.medicalAidMemberNumber.trim() : null,
+        consentGiven: form.consentGiven,
         phoneNumber: form.phoneNumber.trim() || null,
         email: form.email.trim() || null,
         address: form.address.trim() || null,
@@ -314,6 +437,7 @@ export default function PatientsPage() {
       // Save succeeded.
       setSuccess('Patient registered successfully.')
       setForm(emptyForm)
+      setRegistrationStep(0)
       setDuplicateWarning(false)
       setShowRegistration(false)
       setSelectedPatient(null)
@@ -419,6 +543,7 @@ export default function PatientsPage() {
             type="button"
             className="primary-button"
             onClick={() => {
+              setRegistrationStep(0)
               setShowRegistration(true)
               setSelectedPatient(null)
               setError('')
@@ -485,176 +610,326 @@ export default function PatientsPage() {
             <UserPlus size={22} />
           </div>
 
-          <form
-            onSubmit={handleRegister}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 20,
-              marginTop: 22,
-            }}
-          >
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns:
-                  'repeat(auto-fit, minmax(220px, 1fr))',
-                gap: 16,
-              }}
-            >
-              <label style={labelStyle}>
-                First name *
 
-                <input
-                  style={fieldStyle}
-                  required
-                  value={form.firstName}
-                  onChange={(event) =>
-                    updateField(
-                      'firstName',
-                      event.target.value
-                    )
-                  }
-                  placeholder="Patient first name"
-                />
-              </label>
-
-              <label style={labelStyle}>
-                Surname *
-
-                <input
-                  style={fieldStyle}
-                  required
-                  value={form.lastName}
-                  onChange={(event) =>
-                    updateField(
-                      'lastName',
-                      event.target.value
-                    )
-                  }
-                  placeholder="Patient surname"
-                />
-              </label>
-
-              <label style={labelStyle}>
-                Date of birth *
-
-                <input
-                  style={fieldStyle}
-                  required
-                  type="date"
-                  value={form.dateOfBirth}
-                  max={new Date().toLocaleDateString('en-CA')}
-                  onChange={(event) =>
-                    updateField(
-                      'dateOfBirth',
-                      event.target.value
-                    )
-                  }
-                />
-              </label>
-
-              <label style={labelStyle}>
-                Contact number
-
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                  }}
-                >
-                  <Phone size={17} />
-
-                  <input
-                    style={fieldStyle}
-                    type="tel"
-                    value={form.phoneNumber}
-                    onChange={(event) =>
-                      updateField(
-                        'phoneNumber',
-                        event.target.value
-                      )
-                    }
-                    placeholder="e.g. 0821234567"
-                  />
-                </div>
-              </label>
-
-              <label style={labelStyle}>
-                Email address
-
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                  }}
-                >
-                  <Mail size={17} />
-
-                  <input
-                    style={fieldStyle}
-                    type="email"
-                    value={form.email}
-                    onChange={(event) =>
-                      updateField(
-                        'email',
-                        event.target.value
-                      )
-                    }
-                    placeholder="patient@example.com"
-                  />
-                </div>
-              </label>
-
-              <label style={labelStyle}>
-                Residential address
-
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                  }}
-                >
-                  <MapPin size={17} />
-
-                  <input
-                    style={fieldStyle}
-                    value={form.address}
-                    onChange={(event) =>
-                      updateField(
-                        'address',
-                        event.target.value
-                      )
-                    }
-                    placeholder="Patient address"
-                  />
-                </div>
-              </label>
-            </div>
-
-            <p className="panel-note">
-              Patient records are assigned to your current
-              dental practice by the backend.
-            </p>
-
-            {/* Duplicate warning */}
-            {duplicateWarning && (
+          <div className="ct-wizard-progress" aria-label="Registration progress">
+            {registrationSteps.map((label, index) => (
               <div
-                style={{
-                  padding: 16,
-                  border: '1px solid #d99e54',
-                  borderRadius: 10,
-                }}
+                key={label}
+                className={
+                  'ct-wizard-progress-item' +
+                  (registrationStep === index ? ' active' : '') +
+                  (registrationStep > index ? ' completed' : '')
+                }
+                aria-current={registrationStep === index ? 'step' : undefined}
               >
-                <strong>Possible duplicate record</strong>
+                <span className="ct-wizard-number">{index + 1}</span>
+                <small>{label}</small>
+              </div>
+            ))}
+          </div>
+
+          <form onSubmit={handleRegister} noValidate className="ct-wizard-form">
+            {registrationStep === 0 && (
+              <section className="ct-wizard-section">
+                <h3>Step 1 — Personal details</h3>
+                <p>Enter the patient's information. An ID number is not required.</p>
+
+                <div className="ct-wizard-grid">
+                  <label style={labelStyle}>
+                    First name *
+                    <input
+                      style={fieldStyle}
+                      maxLength={100}
+                      value={form.firstName}
+                      onChange={event => updateField('firstName', event.target.value)}
+                    />
+                  </label>
+
+                  <label style={labelStyle}>
+                    Surname *
+                    <input
+                      style={fieldStyle}
+                      maxLength={100}
+                      value={form.lastName}
+                      onChange={event => updateField('lastName', event.target.value)}
+                    />
+                  </label>
+
+                  <div className="ct-wizard-dob-row">
+                  <label style={labelStyle}>
+                    Date of birth *
+                    <input
+                      style={fieldStyle}
+                      type="date"
+                      value={form.dateOfBirth}
+                      onChange={event => updateField('dateOfBirth', event.target.value)}
+                    />
+                  </label>
+
+                    <div
+                      className={
+                        'ct-wizard-age-badge' +
+                        (isMinor ? ' is-minor' : '')
+                      }
+                      role="status"
+                      aria-live="polite"
+                    >
+                      <span className="ct-wizard-age-label">
+                        CALCULATED AGE
+                      </span>
+
+                      {patientAge === null ? (
+                        <strong className="ct-wizard-age-placeholder">
+                          Select a valid DOB
+                        </strong>
+                      ) : (
+                        <>
+                          <strong className="ct-wizard-age-number">
+                            {patientAge}
+                            <small>
+                              {patientAge === 1 ? ' year' : ' years'}
+                            </small>
+                          </strong>
+                          <span className="ct-wizard-age-category">
+                            {isMinor ? 'Minor patient' : 'Adult patient'}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <label style={labelStyle}>
+                    Gender
+                    <select
+                      style={fieldStyle}
+                      value={form.gender}
+                      onChange={event => updateField('gender', event.target.value)}
+                    >
+                      <option value="">Select gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                      <option value="Prefer not to say">Prefer not to say</option>
+                    </select>
+                  </label>
+                </div>
+
+
+              </section>
+            )}
+
+            {registrationStep === 1 && (
+              <section className="ct-wizard-section">
+                <h3>Step 2 — Contact details</h3>
+                <div className="ct-wizard-grid">
+                  <label style={labelStyle}>
+                    Contact number
+                    <input
+                      style={fieldStyle}
+                      type="tel"
+                      maxLength={30}
+                      value={form.phoneNumber}
+                      onChange={event => updateField('phoneNumber', event.target.value)}
+                    />
+                  </label>
+
+                  <label style={labelStyle}>
+                    Email address
+                    <input
+                      style={fieldStyle}
+                      type="email"
+                      maxLength={256}
+                      value={form.email}
+                      onChange={event => updateField('email', event.target.value)}
+                    />
+                  </label>
+
+                  <label style={labelStyle}>
+                    Residential address
+                    <textarea
+                      style={fieldStyle}
+                      maxLength={500}
+                      rows={3}
+                      value={form.address}
+                      onChange={event => updateField('address', event.target.value)}
+                    />
+                  </label>
+                </div>
+              </section>
+            )}
+
+            {registrationStep === 2 && (
+              <section className="ct-wizard-section">
+                <h3>Step 3 — Next of kin / Emergency contact</h3>
+                {isMinor && (
+                  <p className="ct-wizard-notice">
+                    This patient is {patientAge} years old.
+                    Capture a parent or guardian contact.
+                    Legal authority and treatment consent must be verified separately.
+                  </p>
+                )}
+
+                <div className="ct-wizard-grid">
+                  <label style={labelStyle}>
+                    Contact name {isMinor ? '*' : ''}
+                    <input
+                      style={fieldStyle}
+                      maxLength={200}
+                      value={form.emergencyContactName}
+                      onChange={event => updateField('emergencyContactName', event.target.value)}
+                    />
+                  </label>
+
+                  <label style={labelStyle}>
+                    Contact phone {isMinor ? '*' : ''}
+                    <input
+                      style={fieldStyle}
+                      type="tel"
+                      maxLength={30}
+                      value={form.emergencyContactPhone}
+                      onChange={event => updateField('emergencyContactPhone', event.target.value)}
+                    />
+                  </label>
+                </div>
+              </section>
+            )}
+
+            {registrationStep === 3 && (
+              <section className="ct-wizard-section">
+                <h3>Step 4 — Payment & Medical Aid</h3>
+                <div className="ct-wizard-grid">
+                  <label style={labelStyle}>
+                    Billing category
+                    <select
+                      style={fieldStyle}
+                      value={form.paymentMethod}
+                      onChange={event => updateField('paymentMethod', event.target.value)}
+                    >
+                      <option value="Cash">Private / Cash</option>
+                      <option value="MedicalAid">Medical Aid</option>
+                    </select>
+                  </label>
+
+                  {form.paymentMethod === 'MedicalAid' && (
+                    <>
+                      <label style={labelStyle}>
+                        Medical aid scheme *
+                        <input
+                          style={fieldStyle}
+                          maxLength={100}
+                          value={form.medicalAidScheme}
+                          onChange={event => updateField('medicalAidScheme', event.target.value)}
+                        />
+                      </label>
+
+                      <label style={labelStyle}>
+                        Plan / Option
+                        <input
+                          style={fieldStyle}
+                          maxLength={100}
+                          value={form.medicalAidOption}
+                          onChange={event => updateField('medicalAidOption', event.target.value)}
+                        />
+                      </label>
+
+                      <label style={labelStyle}>
+                        Membership number *
+                        <input
+                          style={fieldStyle}
+                          maxLength={50}
+                          value={form.medicalAidMemberNumber}
+                          onChange={event => updateField('medicalAidMemberNumber', event.target.value)}
+                        />
+                      </label>
+                    </>
+                  )}
+                </div>
 
                 <p>
-                  Check the patient directory before
-                  registering another record with the
-                  same name and date of birth.
+                  Medical-aid registration does not confirm benefits,
+                  authorisation or payment.
+                </p>
+              </section>
+            )}
+
+            {registrationStep === 4 && (
+              <section className="ct-wizard-section">
+                <h3>Step 5 — Patient declaration</h3>
+                <p>
+                  Confirm whether the patient has given consent to the
+                  processing of personal information.
+                </p>
+
+                <label className="ct-wizard-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={form.consentGiven}
+                    onChange={event =>
+                      setForm(current => ({
+                        ...current,
+                        consentGiven: event.target.checked
+                      }))
+                    }
+                  />
+                  Patient confirms information-processing consent.
+                </label>
+
+                <p className="ct-wizard-notice">
+                  This checkbox is not an electronic signature.
+                  Signed declarations and clinical procedure consent
+                  will be captured in a separate documented workflow.
+                </p>
+              </section>
+            )}
+
+            {registrationStep === 5 && (
+              <section className="ct-wizard-section">
+                <h3>Step 6 — Review & Save</h3>
+                <p>Check the patient details before completing registration.</p>
+
+                <div className="ct-wizard-review">
+                  <p><strong>Name:</strong> {form.firstName} {form.lastName}</p>
+                  <p><strong>DOB:</strong> {form.dateOfBirth}</p>
+                  <p><strong>Age:</strong> {patientAge ?? 'Invalid'}</p>
+                  <p><strong>Category:</strong> {isMinor ? 'Minor' : 'Adult'}</p>
+                  <p><strong>Gender:</strong> {form.gender || 'Not specified'}</p>
+                  <p><strong>Phone:</strong> {form.phoneNumber || 'Not supplied'}</p>
+                  <p><strong>Email:</strong> {form.email || 'Not supplied'}</p>
+                  <p><strong>Address:</strong> {form.address || 'Not supplied'}</p>
+                  <p><strong>Next of kin:</strong> {form.emergencyContactName || 'Not supplied'}</p>
+                  <p><strong>Emergency phone:</strong> {form.emergencyContactPhone || 'Not supplied'}</p>
+                  <p><strong>Payment:</strong> {form.paymentMethod}</p>
+
+                  {form.paymentMethod === 'MedicalAid' && (
+                    <>
+                      <p><strong>Scheme:</strong> {form.medicalAidScheme}</p>
+                      <p><strong>Plan:</strong> {form.medicalAidOption || 'Not supplied'}</p>
+                      <p><strong>Member number:</strong> {form.medicalAidMemberNumber}</p>
+                    </>
+                  )}
+
+                  <p>
+                    <strong>Information-processing consent:</strong>{' '}
+                    {form.consentGiven ? 'Recorded' : 'Not recorded'}
+                  </p>
+                </div>
+
+                <p className="ct-wizard-notice">
+                  Patient-supplied medical history, clinical verification
+                  and signed declarations require the next registration
+                  backend enhancement.
+                </p>
+              </section>
+            )}
+
+            {error && <p role="alert" className="ct-wizard-error">{error}</p>}
+
+            {duplicateWarning && registrationStep === 5 && (
+              <div className="ct-wizard-notice" role="alert">
+                <strong>Possible duplicate patient found.</strong>
+                <p>
+                  Check the existing patient directory before proceeding.
+                  Registering anyway creates another patient record.
                 </p>
 
                 <button
@@ -668,23 +943,37 @@ export default function PatientsPage() {
               </div>
             )}
 
-            <div
-              style={{
-                display: 'flex',
-                gap: 12,
-                flexWrap: 'wrap',
-              }}
-            >
-              <button
-                type="submit"
-                className="primary-button"
-                disabled={saving}
-              >
-                <UserPlus size={17} />
-                {saving
-                  ? 'Saving Patient...'
-                  : 'Save Patient'}
-              </button>
+            <div className="ct-wizard-actions">
+              {registrationStep > 0 && (
+                <button
+                  type="button"
+                  className="secondary-button"
+                  disabled={saving}
+                  onClick={previousRegistrationStep}
+                >
+                  Back
+                </button>
+              )}
+
+              {registrationStep < 5 ? (
+                <button
+                  type="button"
+                  className="primary-button"
+                  disabled={saving}
+                  onClick={nextRegistrationStep}
+                >
+                  Next Step
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  className="primary-button"
+                  disabled={saving}
+                >
+                  <UserPlus size={17} />
+                  {saving ? 'Saving patient...' : 'Complete Registration'}
+                </button>
+              )}
 
               <button
                 type="button"
@@ -692,6 +981,7 @@ export default function PatientsPage() {
                 disabled={saving}
                 onClick={() => {
                   setShowRegistration(false)
+                  setRegistrationStep(0)
                   setDuplicateWarning(false)
                   setError('')
                 }}
@@ -700,6 +990,7 @@ export default function PatientsPage() {
               </button>
             </div>
           </form>
+
         </section>
       )}
 

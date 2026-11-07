@@ -1,0 +1,298 @@
+
+.patients-page {
+  width: 100%;
+}
+
+.patients-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.patients-toolbar h2 {
+  margin: 0 0 6px;
+  font-size: 19px;
+}
+
+.patients-toolbar p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.patients-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  color: var(--muted);
+  background: var(--surface);
+}
+
+.patients-search input {
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  min-width: 200px;
+  font: inherit;
+  font-size: 13px;
+}
+
+.patients-table-scroll {
+  overflow-x: auto;
+}
+
+.patients-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.patients-table th {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 15px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.patients-table td {
+  padding: 18px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.patient-id {
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.patients-empty {
+  padding: 55px 20px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.patients-empty svg {
+  color: var(--primary);
+}
+
+.patients-empty h3 {
+  color: var(--text);
+}
+
+.patients-message {
+  color: var(--muted);
+  padding: 20px;
+}
+
+.patients-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px;
+  border-radius: 11px;
+  background: #fff0ef;
+  color: #aa3431;
+}
+
+@media (max-width: 600px) {
+  .patients-search,
+  .patients-search input {
+    width: 100%;
+  }
+}
+
+/* CurvTab Dental registration enhancements */
+.ct-registration-extra {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.ct-registration-extra h3,
+.ct-registration-extra p {
+  grid-column: 1 / -1;
+}
+
+.ct-registration-extra h3 {
+  margin: 14px 0 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.ct-registration-extra label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  font-size: 0.85rem;
+}
+
+.ct-registration-extra input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+.ct-registration-extra label:has(input[type="checkbox"]) {
+  grid-column: 1 / -1;
+  display: block;
+}
+
+/* CurvTab Dental six-step registration wizard */
+
+.ct-registration-progress {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.ct-registration-progress-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  opacity: 0.55;
+}
+
+.ct-registration-progress-item span {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ct-registration-progress-item small {
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.ct-registration-progress-item.active,
+.ct-registration-progress-item.completed {
+  opacity: 1;
+}
+
+.ct-registration-progress-item.active span {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.ct-registration-step-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.ct-registration-review {
+  padding: 20px;
+  border: 1px solid currentColor;
+  border-radius: 12px;
+}
+
+.ct-registration-review h3 {
+  margin-top: 0;
+}
+
+.ct-registration-review p {
+  margin: 8px 0;
+}
+
+.ct-registration-review-note {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+@media (max-width: 700px) {
+  .ct-registration-progress {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: 16px;
+  }
+}
+
+/* CurvTab Dental six-step registration wizard */
+
+.ct-registration-progress {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.ct-registration-progress-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  opacity: 0.55;
+}
+
+.ct-registration-progress-item span {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ct-registration-progress-item small {
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.ct-registration-progress-item.active,
+.ct-registration-progress-item.completed {
+  opacity: 1;
+}
+
+.ct-registration-progress-item.active span {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.ct-registration-step-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.ct-registration-review {
+  padding: 20px;
+  border: 1px solid currentColor;
+  border-radius: 12px;
+}
+
+.ct-registration-review h3 {
+  margin-top: 0;
+}
+
+.ct-registration-review p {
+  margin: 8px 0;
+}
+
+.ct-registration-review-note {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+@media (max-width: 700px) {
+  .ct-registration-progress {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: 16px;
+  }
+}

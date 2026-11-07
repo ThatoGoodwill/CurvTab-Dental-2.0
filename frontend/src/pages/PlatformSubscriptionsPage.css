@@ -1,0 +1,156 @@
+
+/* CT_PHASE9B_COMBINED */
+.ct-subscriptions {
+  display: grid;
+  gap: 22px;
+  color: inherit;
+  padding-bottom: 30px;
+}
+
+.ct-subscriptions-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.ct-subscriptions-heading h1 {
+  margin: 6px 0;
+  font-size: clamp(23px, 3vw, 30px);
+}
+
+.ct-subscriptions-heading p,
+.ct-subscriptions-panel > p {
+  opacity: .72;
+  font-size: 13px;
+}
+
+.ct-subscriptions-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 13px;
+}
+
+.ct-subscriptions-stats article,
+.ct-subscriptions-panel {
+  padding: 21px;
+  border: 1px solid var(--ct-line, #dce7f1);
+  border-radius: 15px;
+  background: var(--surface, #fff);
+  color: inherit;
+}
+
+.ct-subscriptions-stats article {
+  display: grid;
+  gap: 11px;
+}
+
+.ct-subscriptions-stats span {
+  font-size: 12px;
+  opacity: .75;
+}
+
+.ct-subscriptions-stats strong {
+  font-size: 25px;
+  overflow-wrap: anywhere;
+}
+
+.ct-subscriptions-panel {
+  display: grid;
+  gap: 17px;
+}
+
+.ct-subscriptions-panel h2 {
+  font-size: 19px;
+  margin: 0;
+}
+
+.ct-subscriptions-practices {
+  display: grid;
+  gap: 10px;
+}
+
+.ct-subscriptions-practices button {
+  border: 1px solid var(--ct-line, #dce7f1);
+  background: transparent;
+  border-radius: 11px;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ct-subscriptions-practices button.selected {
+  border-color: var(--practice-primary, #176de4);
+  background: color-mix(
+    in srgb,
+    var(--practice-primary, #176de4) 8%,
+    transparent
+  );
+}
+
+.ct-subscriptions-practices button > span:nth-child(2) {
+  flex: 1;
+  display: grid;
+  gap: 5px;
+}
+
+.ct-subscriptions-practices small {
+  opacity: .7;
+}
+
+.ct-subscriptions-status {
+  font-size: 12px !important;
+  font-weight: 700;
+}
+
+.ct-subscriptions-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.ct-subscriptions-form label {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.ct-subscriptions-form input,
+.ct-subscriptions-form select {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--ct-line, #dce7f1);
+  border-radius: 9px;
+  padding: 12px;
+  background: var(--surface, #fff);
+  color: inherit;
+  font: inherit;
+}
+
+.ct-subscriptions-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.ct-subscriptions-error { color: #dc3545; }
+.ct-subscriptions-success { color: #15935e; }
+
+@media (max-width: 720px) {
+  .ct-subscriptions-stats,
+  .ct-subscriptions-form {
+    grid-template-columns: 1fr;
+  }
+  .ct-subscriptions-practices button {
+    flex-wrap: wrap;
+  }
+}
