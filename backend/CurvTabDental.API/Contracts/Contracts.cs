@@ -164,6 +164,10 @@ public class PatientRequest : IValidatableObject
     /// <summary>Tick when the patient has given consent to processing of their information.</summary>
     public bool ConsentGiven { get; set; }
 
+    // Optional for API backward compatibility; the new registration wizard always supplies both.
+    public PatientRegistrationRequest? Registration { get; set; }
+    public PatientRegistrationMedicalRequest? RegistrationMedicalHistory { get; set; }
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (PaymentMethod == "MedicalAid")
@@ -176,6 +180,37 @@ public class PatientRequest : IValidatableObject
         if (DateOfBirth is DateOnly dob && dob > DateOnly.FromDateTime(DateTime.UtcNow))
             yield return new ValidationResult("Date of birth cannot be in the future.", new[] { nameof(DateOfBirth) });
     }
+}
+
+// New comprehensive registration payload: administrative declaration and patient-supplied history.
+public sealed class PatientRegistrationRequest
+{
+    [StringLength(30)] public string? HomePhone { get; set; }
+    [StringLength(30)] public string? WorkPhone { get; set; }
+    [StringLength(150)] public string? Occupation { get; set; }
+    [StringLength(200)] public string? Employer { get; set; }
+    [StringLength(200)] public string? ResponsibleName { get; set; }
+    [StringLength(100)] public string? ResponsibleRelationship { get; set; }
+    [StringLength(30)] public string? ResponsiblePhone { get; set; }
+    [EmailAddress, StringLength(256)] public string? ResponsibleEmail { get; set; }
+    [StringLength(500)] public string? ResponsibleAddress { get; set; }
+    [StringLength(40)] public string? ResponsibleIdNumber { get; set; }
+    public bool DeclarationAccepted { get; set; }
+    public bool InformationConsent { get; set; }
+    [StringLength(200)] public string? SignerName { get; set; }
+    [StringLength(40)] public string? SignerCapacity { get; set; }
+    public string? SignatureDataUrl { get; set; }
+    [StringLength(200)] public string? WitnessName { get; set; }
+    public string? WitnessSignatureDataUrl { get; set; }
+}
+
+public sealed class PatientRegistrationMedicalRequest
+{
+    [StringLength(4000)] public string? Allergies { get; set; }
+    [StringLength(4000)] public string? CurrentMedications { get; set; }
+    [StringLength(4000)] public string? MedicalConditions { get; set; }
+    [StringLength(4000)] public string? DentalHistory { get; set; }
+    [StringLength(4000)] public string? AdditionalNotes { get; set; }
 }
 
 public record PatientDto(

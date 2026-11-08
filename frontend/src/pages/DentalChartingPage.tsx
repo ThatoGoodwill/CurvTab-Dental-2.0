@@ -5,6 +5,7 @@ import { apiRequest } from '../services/api'
 import { loadClinicalPatients } from '../utils/clinicalPatients'
 import type { ClinicalPatient } from '../utils/clinicalPatients'
 import ClinicalImagingPanel from './ClinicalImagingPanel'
+import RecoveredClinicalWorkspace from './RecoveredClinicalWorkspace'
 import './DentistSpecialties.css'
 import './ClinicalPhase4.css'
 import './InteractiveOdontogram.css'
@@ -66,6 +67,7 @@ export default function DentalChartingPage({
 }: {
   initialPatientId?: string | null
 }) {
+  const [clinicalTab, setClinicalTab] = useState<'Dental Chart' | 'Treatment Plan' | 'Clinical Notes & Encounters' | 'Medical Records' | 'Clinical Images' | 'Tooth History'>('Dental Chart')
   const [patients, setPatients] = useState<ClinicalPatient[]>([])
   const [patientSearch, setPatientSearch] = useState('')
   const [patientId, setPatientId] = useState(initialPatientId ?? '')
@@ -375,14 +377,32 @@ export default function DentalChartingPage({
 
 
       
-      {patientId && (
+      {patientId && <nav className="ct-recovered-tabs" aria-label="Patient treatment workspace">
+        {(['Dental Chart', 'Treatment Plan', 'Clinical Notes & Encounters', 'Medical Records', 'Clinical Images', 'Tooth History'] as const).map(name =>
+          <button key={name} type="button" aria-pressed={clinicalTab === name}
+            onClick={() => setClinicalTab(name)}>{name}</button>
+        )}
+      </nav>}
+      {patientId && (clinicalTab === 'Treatment Plan' || clinicalTab === 'Clinical Notes & Encounters' || clinicalTab === 'Medical Records') &&
+        <RecoveredClinicalWorkspace key={`${patientId}-${clinicalTab}`} patientId={patientId} panel={clinicalTab} />}
+
+      {patientId && clinicalTab === 'Tooth History' &&
+        <section className="ct-recovered-panel"><h2>Tooth History</h2>
+          <p>Tooth {toothCode} · previous recorded observations</p>
+          {toothHistory.length === 0 ? <p>No observations for this tooth.</p> :
+            toothHistory.map(item => <article className="ct-recovered-card" key={item.id}>
+              <strong>{item.finding} · {item.surface}</strong><p>{item.notes || 'No notes.'}</p><small>{formatDate(item.recordedAtUtc)}</small>
+            </article>)}
+        </section>}
+
+      {patientId && clinicalTab === 'Clinical Images' && (
         <ClinicalImagingPanel
           key={patientId}
           patientId={patientId}
         />
       )}
 
-      {patientId && <div className="specialty-columns">
+      {patientId && clinicalTab === 'Dental Chart' && <div className="specialty-columns">
         <section className="panel specialty-chart-panel">
           <div className="panel-header"><div><h2>FDI Tooth Chart</h2><p>Adult and primary dentition</p></div><Activity size={20}/></div>
           <div className="specialty-switch">

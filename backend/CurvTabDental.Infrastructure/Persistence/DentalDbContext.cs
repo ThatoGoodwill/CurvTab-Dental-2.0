@@ -22,6 +22,10 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
         _currentUser = currentUser;
     }
 
+    // CT_RECOVERED_TREATMENT_PLANS_V1
+    public DbSet<PatientTreatmentPlan> PatientTreatmentPlans => Set<PatientTreatmentPlan>();
+    public DbSet<PatientTreatmentProcedure> PatientTreatmentProcedures => Set<PatientTreatmentProcedure>();
+
     public DbSet<DentalPractice> DentalPractices => Set<DentalPractice>();
 
     // CT_PHASE9B_PLATFORM_SUBSCRIPTIONS
@@ -40,6 +44,8 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
     public DbSet<PracticeAppearance> PracticeAppearances => Set<PracticeAppearance>();
     public DbSet<Consultation> Consultations => Set<Consultation>();
     public DbSet<PatientMedicalHistory> PatientMedicalHistories => Set<PatientMedicalHistory>();
+    // CT_REGISTRATION_COMPLETE_V2
+    public DbSet<PatientRegistrationDetails> PatientRegistrationDetails => Set<PatientRegistrationDetails>();
     public DbSet<ConsultationCharge> ConsultationCharges => Set<ConsultationCharge>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<OrthodonticFinancialAgreement> OrthodonticFinancialAgreements => Set<OrthodonticFinancialAgreement>();
@@ -55,6 +61,36 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // CT_RECOVERED_TREATMENT_PLANS_V1
+        modelBuilder.Entity<PatientTreatmentPlan>(entity =>
+        {
+            entity.ToTable("PatientTreatmentPlans");
+            entity.HasKey(x => x.Id);
+            entity.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            entity.Property(x => x.Title).IsRequired().HasMaxLength(200);
+            entity.Property(x => x.ClinicalRationale).HasMaxLength(4000);
+            entity.Property(x => x.Status).IsRequired().HasMaxLength(30);
+            entity.Property(x => x.ConsentName).HasMaxLength(200);
+            entity.HasIndex(x => new { x.DentalPracticeId, x.PatientId, x.CreatedAtUtc });
+            entity.HasOne<Patient>().WithMany().HasForeignKey(x => x.PatientId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<PatientTreatmentProcedure>(entity =>
+        {
+            entity.ToTable("PatientTreatmentProcedures");
+            entity.HasKey(x => x.Id);
+            entity.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            entity.Property(x => x.Description).IsRequired().HasMaxLength(1000);
+            entity.Property(x => x.ToothCode).HasMaxLength(2);
+            entity.Property(x => x.Status).IsRequired().HasMaxLength(30);
+            entity.Property(x => x.EstimatedCost).HasPrecision(12, 2);
+            entity.HasIndex(x => new { x.DentalPracticeId, x.PatientId, x.TreatmentPlanId });
+            entity.HasOne<PatientTreatmentPlan>().WithMany().HasForeignKey(x => x.TreatmentPlanId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Patient>().WithMany().HasForeignKey(x => x.PatientId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
 
         // CT_PHASE9B_PLATFORM_SUBSCRIPTIONS
         // Platform billing data. API access must be SuperAdmin-only.
@@ -994,6 +1030,33 @@ modelBuilder.Entity<Appointment>(entity =>
             entity.HasOne<Appointment>().WithMany()
                 .HasForeignKey(p => p.AppointmentId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // CT_REGISTRATION_DETAILS_V2
+        modelBuilder.Entity<PatientRegistrationDetails>(entity =>
+        {
+            entity.ToTable("PatientRegistrationDetails");
+            entity.HasKey(x => x.Id);
+            entity.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            entity.HasIndex(x => new { x.DentalPracticeId, x.PatientId }).IsUnique();
+            entity.HasOne<Patient>().WithMany().HasForeignKey(x => x.PatientId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.Property(x => x.HomePhone).HasMaxLength(30);
+            entity.Property(x => x.WorkPhone).HasMaxLength(30);
+            entity.Property(x => x.Occupation).HasMaxLength(150);
+            entity.Property(x => x.Employer).HasMaxLength(200);
+            entity.Property(x => x.ResponsibleName).HasMaxLength(200);
+            entity.Property(x => x.ResponsibleRelationship).HasMaxLength(100);
+            entity.Property(x => x.ResponsiblePhone).HasMaxLength(30);
+            entity.Property(x => x.ResponsibleEmail).HasMaxLength(256);
+            entity.Property(x => x.ResponsibleAddress).HasMaxLength(500);
+            entity.Property(x => x.ResponsibleIdNumber).HasMaxLength(40);
+            entity.Property(x => x.SignerName).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.SignerCapacity).HasMaxLength(40).IsRequired();
+            entity.Property(x => x.SignatureDataUrl).HasColumnType("text").IsRequired();
+            entity.Property(x => x.WitnessName).HasMaxLength(200);
+            entity.Property(x => x.WitnessSignatureDataUrl).HasColumnType("text");
+            entity.Property(x => x.DeclarationVersion).HasMaxLength(80).IsRequired();
         });
 
         modelBuilder.Entity<Patient>(entity =>

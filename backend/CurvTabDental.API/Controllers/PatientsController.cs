@@ -106,6 +106,62 @@ public class PatientsController : ControllerBase
         };
         Apply(patient, request, now);
 
+        // CT_REGISTRATION_COMPLETE_V2 — all records saved atomically in one SaveChanges.
+        if (request.Registration is { } r)
+        {
+            if (!r.DeclarationAccepted || !r.InformationConsent ||
+                string.IsNullOrWhiteSpace(r.SignerName) ||
+                !ValidSignature(r.SignatureDataUrl))
+                return BadRequest(new { title = "A signed declaration, signer name and privacy acknowledgement are required." });
+
+            if (!new[] { "Patient", "ParentOrGuardian", "Representative" }.Contains(r.SignerCapacity))
+                return BadRequest(new { title = "Invalid signing capacity." });
+
+            if (request.DateOfBirth is DateOnly dob && dob > DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-18)) &&
+                (string.IsNullOrWhiteSpace(r.ResponsibleName) ||
+                 string.IsNullOrWhiteSpace(r.ResponsibleRelationship) ||
+                 string.IsNullOrWhiteSpace(r.ResponsiblePhone) || r.SignerCapacity == "Patient"))
+                return BadRequest(new { title = "A minor requires a recorded responsible person and a guardian/representative signature." });
+
+            if (!string.IsNullOrWhiteSpace(r.WitnessSignatureDataUrl) && !ValidSignature(r.WitnessSignatureDataUrl))
+                return BadRequest(new { title = "Witness signature format is invalid." });
+
+            _db.PatientRegistrationDetails.Add(new PatientRegistrationDetails
+            {
+                DentalPracticeId = practiceId, PatientId = patient.Id,
+                HomePhone = Clean(r.HomePhone), WorkPhone = Clean(r.WorkPhone),
+                Occupation = Clean(r.Occupation), Employer = Clean(r.Employer),
+                ResponsibleName = Clean(r.ResponsibleName),
+                ResponsibleRelationship = Clean(r.ResponsibleRelationship),
+                ResponsiblePhone = Clean(r.ResponsiblePhone),
+                ResponsibleEmail = Clean(r.ResponsibleEmail),
+                ResponsibleAddress = Clean(r.ResponsibleAddress),
+                ResponsibleIdNumber = Clean(r.ResponsibleIdNumber),
+                DeclarationAccepted = true, InformationConsent = true,
+                SignerName = r.SignerName!.Trim(), SignerCapacity = r.SignerCapacity!,
+                SignatureDataUrl = r.SignatureDataUrl!,
+                WitnessName = Clean(r.WitnessName),
+                WitnessSignatureDataUrl = r.WitnessSignatureDataUrl,
+                RecordedByUserId = _current.UserId,
+                SignedAtUtc = now
+            });
+            patient.ConsentRecordedAtUtc = now;
+        }
+
+        if (request.RegistrationMedicalHistory is { } medical)
+        {
+            _db.PatientMedicalHistories.Add(new PatientMedicalHistory
+            {
+                DentalPracticeId = practiceId, PatientId = patient.Id,
+                Allergies = Clean(medical.Allergies),
+                CurrentMedications = Clean(medical.CurrentMedications),
+                MedicalConditions = Clean(medical.MedicalConditions),
+                DentalHistory = Clean(medical.DentalHistory),
+                AdditionalNotes = Clean(medical.AdditionalNotes),
+                UpdatedAtUtc = now, UpdatedByUserId = _current.UserId
+            });
+        }
+
         _db.Patients.Add(patient);
         await _db.SaveChangesAsync(ct);
 
@@ -150,6 +206,24 @@ public class PatientsController : ControllerBase
 
         await _audit.WriteAsync("PATIENT_ARCHIVED", "Patient", id.ToString(), ct: ct);
         return NoContent();
+    }
+
+    // Administrative registration declarations contain sensitive signatures.
+    [HttpGet("{id:guid}/registration-declaration")]
+    [Authorize(Roles = "Dentist,PracticeAdmin")]
+    public async Task<IActionResult> GetRegistrationDeclaration(Guid id, CancellationToken ct)
+    {
+        if (_current.PracticeId is not Guid practiceId) return Forbid();
+        if (!await _db.Patients.AnyAsync(x => x.Id == id && x.DentalPracticeId == practiceId, ct)) return NotFound();
+        var details = await _db.PatientRegistrationDetails.AsNoTracking()
+            .Where(x => x.DentalPracticeId == practiceId && x.PatientId == id)
+            .Select(x => new { x.ResponsibleName, x.ResponsibleRelationship, x.ResponsiblePhone,
+                x.SignerName, x.SignerCapacity, x.SignatureDataUrl, x.WitnessName,
+                x.WitnessSignatureDataUrl, x.DeclarationAccepted, x.InformationConsent,
+                x.DeclarationVersion, x.SignedAtUtc })
+            .FirstOrDefaultAsync(ct);
+        await _audit.WriteAsync("PATIENT_DECLARATION_VIEWED", "Patient", id.ToString(), ct: ct);
+        return details is null ? NotFound() : Ok(details);
     }
 
     // ---------- helpers ----------
@@ -204,6 +278,20 @@ public class PatientsController : ControllerBase
 
         if (r.ConsentGiven && p.ConsentRecordedAtUtc is null) p.ConsentRecordedAtUtc = now;
         p.UpdatedAtUtc = now;
+    }
+
+    // Only accept small browser-drawn PNG signatures; never trust a claimed image URL.
+    private static bool ValidSignature(string? value)
+    {
+        const string prefix = "data:image/png;base64,";
+        if (value is null || !value.StartsWith(prefix, StringComparison.Ordinal) || value.Length > 190000) return false;
+        try
+        {
+            var bytes = Convert.FromBase64String(value[prefix.Length..]);
+            return bytes.Length > 100 && bytes.Length < 140000 &&
+                bytes[0] == 137 && bytes[1] == 80 && bytes[2] == 78 && bytes[3] == 71;
+        }
+        catch (FormatException) { return false; }
     }
 
     private static string? Clean(string? value) =>

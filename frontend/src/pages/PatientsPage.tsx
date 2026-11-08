@@ -1,4 +1,10 @@
 import './PatientsPage.css'
+import {
+  initialRegistrationExtras, RegistrationMedicalScreen,
+  RegistrationResponsibleScreen, RegistrationDeclarationScreen,
+  RegistrationExtrasReview,
+} from './RegistrationExtras'
+import type { RegistrationExtrasState } from './RegistrationExtras'
 
 import { useEffect, useState } from 'react'
 import type {
@@ -218,6 +224,15 @@ export default function PatientsPage() {
 
   const [form, setForm] = useState<PatientForm>(emptyForm)
   const [registrationStep, setRegistrationStep] = useState(0)
+  const [registrationExtras, setRegistrationExtras] = useState<RegistrationExtrasState>(initialRegistrationExtras)
+  const [registrationDeclaration, setRegistrationDeclaration] = useState<{
+    signerName: string; signerCapacity: string; signatureDataUrl: string;
+    witnessName: string|null; witnessSignatureDataUrl: string|null;
+    signedAtUtc: string; responsibleName: string|null;
+    responsibleRelationship: string|null; declarationVersion: string;
+  }|null>(null)
+  const [declarationError, setDeclarationError] = useState('')
+  const [declarationLoading, setDeclarationLoading] = useState(false)
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -316,9 +331,10 @@ export default function PatientsPage() {
   const registrationSteps = [
     'Personal details',
     'Contact details',
-    'Next of kin',
+    'Responsible person',
+    'Medical history',
     'Payment & medical aid',
-    'Declaration',
+    'Declaration & signatures',
     'Review & save',
   ]
 
@@ -360,7 +376,15 @@ export default function PatientsPage() {
       }
     }
 
-    if (registrationStep === 3 && form.paymentMethod === 'MedicalAid') {
+    if (registrationStep === 2 && isMinor &&
+      (!registrationExtras.responsibleName.trim() ||
+       !registrationExtras.responsibleRelationship.trim() ||
+       !registrationExtras.responsiblePhone.trim())) {
+      setError('Enter the parent/guardian name, relationship and phone.')
+      return
+    }
+
+    if (registrationStep === 4 && form.paymentMethod === 'MedicalAid') {
       if (
         !form.medicalAidScheme.trim() ||
         !form.medicalAidMemberNumber.trim()
@@ -370,7 +394,14 @@ export default function PatientsPage() {
       }
     }
 
-    setRegistrationStep(current => Math.min(current + 1, 5))
+    if (registrationStep === 5 &&
+      (!registrationExtras.declarationAccepted || !registrationExtras.informationConsent ||
+       !registrationExtras.signerName.trim() || !registrationExtras.signatureDataUrl ||
+       (isMinor && registrationExtras.signerCapacity === 'Patient'))) {
+      setError('Complete the declaration, privacy acknowledgement and signature. A minor must have a guardian or representative sign.')
+      return
+    }
+    setRegistrationStep(current => Math.min(current + 1, 6))
   }
 
   function previousRegistrationStep() {
@@ -399,6 +430,12 @@ export default function PatientsPage() {
       return
     }
 
+    if (!registrationExtras.declarationAccepted || !registrationExtras.informationConsent ||
+        !registrationExtras.signerName.trim() || !registrationExtras.signatureDataUrl ||
+        (isMinor && registrationExtras.signerCapacity === 'Patient')) {
+      setError('Signed declaration and privacy acknowledgement are required.')
+      return
+    }
     setSaving(true)
 
     try {
@@ -422,6 +459,39 @@ export default function PatientsPage() {
         phoneNumber: form.phoneNumber.trim() || null,
         email: form.email.trim() || null,
         address: form.address.trim() || null,
+        registration: {
+          homePhone: registrationExtras.homePhone.trim() || null,
+          workPhone: registrationExtras.workPhone.trim() || null,
+          occupation: registrationExtras.occupation.trim() || null,
+          employer: registrationExtras.employer.trim() || null,
+          responsibleName: registrationExtras.responsibleName.trim() || null,
+          responsibleRelationship: registrationExtras.responsibleRelationship.trim() || null,
+          responsiblePhone: registrationExtras.responsiblePhone.trim() || null,
+          responsibleEmail: registrationExtras.responsibleEmail.trim() || null,
+          responsibleAddress: registrationExtras.responsibleAddress.trim() || null,
+          responsibleIdNumber: registrationExtras.responsibleIdNumber.trim() || null,
+          declarationAccepted: registrationExtras.declarationAccepted,
+          informationConsent: registrationExtras.informationConsent,
+          signerName: registrationExtras.signerName.trim(),
+          signerCapacity: registrationExtras.signerCapacity,
+          signatureDataUrl: registrationExtras.signatureDataUrl,
+          witnessName: registrationExtras.witnessName.trim() || null,
+          witnessSignatureDataUrl: registrationExtras.witnessSignatureDataUrl || null,
+        },
+        registrationMedicalHistory: {
+          allergies: registrationExtras.allergies.trim() || null,
+          currentMedications: registrationExtras.medications.trim() || null,
+          medicalConditions: [registrationExtras.medicalConditions.trim(),
+            `Diabetes: ${registrationExtras.diabetes}`,
+            `High blood pressure: ${registrationExtras.hypertension}`,
+            `Bleeding disorder: ${registrationExtras.bleedingDisorder}`,
+            `Heart condition: ${registrationExtras.heartCondition}`,
+            `Relevant infectious conditions: ${registrationExtras.infectiousCondition}`,
+            `Pregnancy / other considerations: ${registrationExtras.pregnancy}`,
+          ].filter(Boolean).join('\n').slice(0,4000),
+          dentalHistory: registrationExtras.dentalHistory.trim() || null,
+          additionalNotes: registrationExtras.medicalNotes.trim() || null,
+        },
       }
 
       const path = allowDuplicate
@@ -437,6 +507,7 @@ export default function PatientsPage() {
       // Save succeeded.
       setSuccess('Patient registered successfully.')
       setForm(emptyForm)
+      setRegistrationExtras(initialRegistrationExtras)
       setRegistrationStep(0)
       setDuplicateWarning(false)
       setShowRegistration(false)
@@ -479,9 +550,29 @@ export default function PatientsPage() {
   // GET /api/patients/{id}
   // =========================================
 
+  async function viewDeclaration(id: string) {
+    setDeclarationLoading(true)
+    setDeclarationError('')
+    try {
+      const record = await apiRequest<{
+        signerName:string; signerCapacity:string; signatureDataUrl:string;
+        witnessName:string|null; witnessSignatureDataUrl:string|null;
+        signedAtUtc:string; responsibleName:string|null;
+        responsibleRelationship:string|null; declarationVersion:string;
+      }>(`/patients/${encodeURIComponent(id)}/registration-declaration`)
+      setRegistrationDeclaration(record)
+    } catch (cause) {
+      setDeclarationError(cause instanceof ApiError && cause.status === 404
+        ? 'No signed registration declaration exists for this legacy patient.'
+        : cause instanceof Error ? cause.message : 'Unable to load declaration.')
+    } finally { setDeclarationLoading(false) }
+  }
+
   async function openPatient(patient: Patient) {
     setError('')
     setSelectedPatient(null)
+    setRegistrationDeclaration(null)
+    setDeclarationError('')
 
     try {
       const response = await apiRequest<unknown>(
@@ -544,6 +635,7 @@ export default function PatientsPage() {
             className="primary-button"
             onClick={() => {
               setRegistrationStep(0)
+              setRegistrationExtras(initialRegistrationExtras)
               setShowRegistration(true)
               setSelectedPatient(null)
               setError('')
@@ -604,7 +696,7 @@ export default function PatientsPage() {
           <div className="panel-header">
             <div>
               <h2>Register New Patient</h2>
-              <p>Enter the patient's basic information.</p>
+              <p>Complete all seven sections, review the medical declaration and capture signatures.</p>
             </div>
 
             <UserPlus size={22} />
@@ -794,7 +886,15 @@ export default function PatientsPage() {
               </section>
             )}
 
+            {registrationStep === 2 && (
+              <RegistrationResponsibleScreen value={registrationExtras} onChange={setRegistrationExtras} isMinor={isMinor} />
+            )}
+
             {registrationStep === 3 && (
+              <RegistrationMedicalScreen value={registrationExtras} onChange={setRegistrationExtras} />
+            )}
+
+            {registrationStep === 4 && (
               <section className="ct-wizard-section">
                 <h3>Step 4 — Payment & Medical Aid</h3>
                 <div className="ct-wizard-grid">
@@ -852,39 +952,13 @@ export default function PatientsPage() {
               </section>
             )}
 
-            {registrationStep === 4 && (
-              <section className="ct-wizard-section">
-                <h3>Step 5 — Patient declaration</h3>
-                <p>
-                  Confirm whether the patient has given consent to the
-                  processing of personal information.
-                </p>
-
-                <label className="ct-wizard-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={form.consentGiven}
-                    onChange={event =>
-                      setForm(current => ({
-                        ...current,
-                        consentGiven: event.target.checked
-                      }))
-                    }
-                  />
-                  Patient confirms information-processing consent.
-                </label>
-
-                <p className="ct-wizard-notice">
-                  This checkbox is not an electronic signature.
-                  Signed declarations and clinical procedure consent
-                  will be captured in a separate documented workflow.
-                </p>
-              </section>
+            {registrationStep === 5 && (
+              <RegistrationDeclarationScreen value={registrationExtras} onChange={setRegistrationExtras} isMinor={isMinor} />
             )}
 
-            {registrationStep === 5 && (
+            {registrationStep === 6 && (
               <section className="ct-wizard-section">
-                <h3>Step 6 — Review & Save</h3>
+                <h3>Step 7 — Review & Save</h3>
                 <p>Check the patient details before completing registration.</p>
 
                 <div className="ct-wizard-review">
@@ -914,17 +988,14 @@ export default function PatientsPage() {
                   </p>
                 </div>
 
-                <p className="ct-wizard-notice">
-                  Patient-supplied medical history, clinical verification
-                  and signed declarations require the next registration
-                  backend enhancement.
-                </p>
+                <RegistrationExtrasReview value={registrationExtras} />
+                <p className="ct-wizard-notice">Review the registration carefully. The dentist must separately verify clinical history and obtain procedure-specific consent before treatment.</p>
               </section>
             )}
 
             {error && <p role="alert" className="ct-wizard-error">{error}</p>}
 
-            {duplicateWarning && registrationStep === 5 && (
+            {duplicateWarning && registrationStep === 6 && (
               <div className="ct-wizard-notice" role="alert">
                 <strong>Possible duplicate patient found.</strong>
                 <p>
@@ -955,7 +1026,7 @@ export default function PatientsPage() {
                 </button>
               )}
 
-              {registrationStep < 5 ? (
+              {registrationStep < 6 ? (
                 <button
                   type="button"
                   className="primary-button"
@@ -1054,6 +1125,27 @@ export default function PatientsPage() {
               {selectedPatient.address || 'Not recorded'}
             </div>
           </div>
+        </section>
+      )}
+
+      {/* CT_REGISTRATION_DECLARATION_REVIEW_V2: restrict signatures to Dentist and PracticeAdmin */}
+      {selectedPatient && (user?.role === 'Dentist' || user?.role === 'PracticeAdmin') && (
+        <section className="panel ct-reg-declaration-review">
+          <h3>Signed registration declaration</h3>
+          <button className="secondary-button" type="button" disabled={declarationLoading}
+            onClick={() => void viewDeclaration(selectedPatient.id)}>
+            {declarationLoading ? 'Loading declaration…' : 'View signed declaration'}
+          </button>
+          {declarationError && <p role="status">{declarationError}</p>}
+          {registrationDeclaration && <div className="ct-reg-declaration">
+            <p><strong>Signer:</strong> {registrationDeclaration.signerName} ({registrationDeclaration.signerCapacity})</p>
+            <p><strong>Responsible person:</strong> {registrationDeclaration.responsibleName || 'Not supplied'} — {registrationDeclaration.responsibleRelationship || 'Not supplied'}</p>
+            <p><strong>Recorded:</strong> {new Date(registrationDeclaration.signedAtUtc).toLocaleString()}</p>
+            <p><strong>Declaration version:</strong> {registrationDeclaration.declarationVersion}</p>
+            <img className="ct-reg-sign-preview" src={registrationDeclaration.signatureDataUrl} alt="Captured patient declaration signature" />
+            {registrationDeclaration.witnessName && <p><strong>Witness:</strong> {registrationDeclaration.witnessName}</p>}
+            {registrationDeclaration.witnessSignatureDataUrl && <img className="ct-reg-sign-preview" src={registrationDeclaration.witnessSignatureDataUrl} alt="Captured staff witness signature" />}
+          </div>}
         </section>
       )}
 
