@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 
 import { apiRequest } from '../services/api'
+import LaboratoryAccountsPanel from './LaboratoryAccountsPanel'
 import './StaffPage.css'
 
 // Matches the StaffDto returned by our ASP.NET Core API.
@@ -27,7 +28,7 @@ interface StaffMember {
 
 // Our first UI supports the two main clinic roles.
 // The backend remains responsible for validating allowed roles.
-type StaffRole = 'Receptionist' | 'Dentist'
+type StaffRole = 'Receptionist' | 'Dentist' | 'LabTechnician'
 
 export default function StaffPage() {
   const [staff, setStaff] = useState<StaffMember[]>([])
@@ -293,7 +294,7 @@ export default function StaffPage() {
           </div>
 
           <p className="staff-description">
-            Create a login account for a receptionist or dentist.
+            Create a login for a receptionist, dentist or laboratory technician.
           </p>
 
           <form className="staff-form" onSubmit={createStaff}>
@@ -327,6 +328,7 @@ export default function StaffPage() {
             >
               <option value="Receptionist">Receptionist</option>
               <option value="Dentist">Dentist</option>
+              <option value="LabTechnician">Lab Technician</option>
             </select>
 
             <label htmlFor="staff-password">
@@ -506,6 +508,7 @@ export default function StaffPage() {
           )}
         </section>
       </div>
+      <LaboratoryAccountsPanel />
     </div>
   )
 }

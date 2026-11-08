@@ -601,6 +601,443 @@ namespace CurvTabDental.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.LaboratoryActivity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(65)
+                        .HasColumnType("character varying(65)");
+
+                    b.Property<Guid>("ActorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DentalPracticeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Details")
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)");
+
+                    b.Property<Guid?>("LaboratoryItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("LaboratoryManifestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("LaboratoryOrderId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DentalPracticeId", "LaboratoryOrderId", "AtUtc");
+
+                    b.ToTable("LaboratoryActivities", (string)null);
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.LaboratoryCorrection", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DentalPracticeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DueAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Instructions")
+                        .IsRequired()
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<Guid>("LaboratoryItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Priority")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("RequestedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ResolvedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LaboratoryItemId");
+
+                    b.HasIndex("DentalPracticeId", "LaboratoryItemId");
+
+                    b.ToTable("LaboratoryCorrections", (string)null);
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.LaboratoryEvidence", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<byte[]>("Bytes")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(90)
+                        .HasColumnType("character varying(90)");
+
+                    b.Property<Guid>("DentalPracticeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(180)
+                        .HasColumnType("character varying(180)");
+
+                    b.Property<Guid>("LaboratoryItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("LaboratoryOrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UploadedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UploadedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LaboratoryItemId");
+
+                    b.HasIndex("DentalPracticeId", "LaboratoryItemId");
+
+                    b.ToTable("LaboratoryEvidence", (string)null);
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.LaboratoryItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ActiveManifestId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClinicalStatus")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CorrectionCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CustodyStatus")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("DentalPracticeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ExpectedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("GuaranteeNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<bool>("IsRemovable")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("LaboratoryOrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ManufacturingStatus")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<DateTime?>("PatientHandedOverAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Procedure")
+                        .IsRequired()
+                        .HasMaxLength(240)
+                        .HasColumnType("character varying(240)");
+
+                    b.Property<string>("QaStatus")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)");
+
+                    b.Property<string>("ToothCode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LaboratoryOrderId");
+
+                    b.HasIndex("DentalPracticeId", "LaboratoryOrderId");
+
+                    b.ToTable("LaboratoryItems", (string)null);
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.LaboratoryManifest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Acknowledgement")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("CollectorName")
+                        .HasMaxLength(140)
+                        .HasColumnType("character varying(140)");
+
+                    b.Property<Guid>("DentalPracticeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Direction")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Discrepancy")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime?>("HandedOverAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("LaboratoryPartnerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("PackageCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("PreparedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ReceivedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ReceiverName")
+                        .HasMaxLength(140)
+                        .HasColumnType("character varying(140)");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(70)
+                        .HasColumnType("character varying(70)");
+
+                    b.Property<string>("Status")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)");
+
+                    b.Property<string>("Waybill")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LaboratoryPartnerId");
+
+                    b.HasIndex("DentalPracticeId", "Reference")
+                        .IsUnique();
+
+                    b.HasIndex("DentalPracticeId", "LaboratoryPartnerId", "PreparedAtUtc");
+
+                    b.ToTable("LaboratoryManifests", (string)null);
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.LaboratoryManifestLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DentalPracticeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("LaboratoryItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("LaboratoryManifestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ReceivedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LaboratoryItemId");
+
+                    b.HasIndex("LaboratoryManifestId");
+
+                    b.HasIndex("DentalPracticeId", "LaboratoryManifestId", "LaboratoryItemId")
+                        .IsUnique();
+
+                    b.ToTable("LaboratoryManifestLines", (string)null);
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.LaboratoryMembership", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DentalPracticeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("LaboratoryPartnerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LaboratoryPartnerId");
+
+                    b.HasIndex("DentalPracticeId", "LaboratoryPartnerId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("LaboratoryMemberships", (string)null);
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.LaboratoryOrder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ClosedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DentalPracticeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Instructions")
+                        .IsRequired()
+                        .HasMaxLength(5000)
+                        .HasColumnType("character varying(5000)");
+
+                    b.Property<Guid>("LaboratoryPartnerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PatientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PrescribedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Status")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid?>("TreatmentPlanId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LaboratoryPartnerId");
+
+                    b.HasIndex("PatientId");
+
+                    b.HasIndex("DentalPracticeId", "PatientId");
+
+                    b.HasIndex("DentalPracticeId", "Reference")
+                        .IsUnique();
+
+                    b.ToTable("LaboratoryOrders", (string)null);
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.LaboratoryPartner", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Contact")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<Guid>("DentalPracticeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DentalPracticeId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("LaboratoryPartners", (string)null);
+                });
+
             modelBuilder.Entity("CurvTabDental.Domain.Entities.MedicalAidAuthorisation", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2467,6 +2904,81 @@ namespace CurvTabDental.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("SourceOrthodonticFinancialAgreementId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.LaboratoryCorrection", b =>
+                {
+                    b.HasOne("CurvTabDental.Domain.Entities.LaboratoryItem", null)
+                        .WithMany()
+                        .HasForeignKey("LaboratoryItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.LaboratoryEvidence", b =>
+                {
+                    b.HasOne("CurvTabDental.Domain.Entities.LaboratoryItem", null)
+                        .WithMany()
+                        .HasForeignKey("LaboratoryItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.LaboratoryItem", b =>
+                {
+                    b.HasOne("CurvTabDental.Domain.Entities.LaboratoryOrder", null)
+                        .WithMany()
+                        .HasForeignKey("LaboratoryOrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.LaboratoryManifest", b =>
+                {
+                    b.HasOne("CurvTabDental.Domain.Entities.LaboratoryPartner", null)
+                        .WithMany()
+                        .HasForeignKey("LaboratoryPartnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.LaboratoryManifestLine", b =>
+                {
+                    b.HasOne("CurvTabDental.Domain.Entities.LaboratoryItem", null)
+                        .WithMany()
+                        .HasForeignKey("LaboratoryItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CurvTabDental.Domain.Entities.LaboratoryManifest", null)
+                        .WithMany()
+                        .HasForeignKey("LaboratoryManifestId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.LaboratoryMembership", b =>
+                {
+                    b.HasOne("CurvTabDental.Domain.Entities.LaboratoryPartner", null)
+                        .WithMany()
+                        .HasForeignKey("LaboratoryPartnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.LaboratoryOrder", b =>
+                {
+                    b.HasOne("CurvTabDental.Domain.Entities.LaboratoryPartner", null)
+                        .WithMany()
+                        .HasForeignKey("LaboratoryPartnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CurvTabDental.Domain.Entities.Patient", null)
+                        .WithMany()
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("CurvTabDental.Domain.Entities.MedicalAidAuthorisation", b =>

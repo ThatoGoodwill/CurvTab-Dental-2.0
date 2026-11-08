@@ -673,3 +673,121 @@
   }
 }
 
+
+/* CURVTAB REGISTRATION CIRCULAR STEPPER V5 */
+
+
+/* CURVTAB REGISTRATION CIRCULAR STEPPER V5 */
+
+.ct-wizard-progress {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  align-items: start;
+  gap: 4px;
+  margin: 24px 0 32px;
+  width: 100%;
+}
+
+.ct-wizard-progress-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 9px;
+  min-width: 0;
+  min-height: 83px;
+  padding: 4px 2px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #52647c;
+  opacity: 1;
+  text-align: center;
+  box-shadow: none;
+}
+
+.ct-wizard-progress-item::before {
+  content: "";
+  position: absolute;
+  left: calc(-50% + 21px);
+  right: calc(50% + 21px);
+  top: 24px;
+  height: 2px;
+  background: #dce5ef;
+}
+
+.ct-wizard-progress-item:first-child::before {
+  display: none;
+}
+
+.ct-wizard-number {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  border: 2px solid #cbd6e3;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #536881;
+  font-size: 14px;
+  font-weight: 750;
+  box-shadow: none;
+}
+
+.ct-wizard-progress-item.active,
+.ct-wizard-progress-item.completed {
+  background: transparent;
+  border: none;
+  opacity: 1;
+}
+
+.ct-wizard-progress-item.active .ct-wizard-number {
+  background: #0d9488;
+  border-color: #0d9488;
+  color: #ffffff;
+  box-shadow: 0 0 0 4px #dff5f0;
+}
+
+.ct-wizard-progress-item.completed .ct-wizard-number {
+  background: #0d9488;
+  border-color: #0d9488;
+  color: #ffffff;
+}
+
+.ct-wizard-progress-item.completed::before,
+.ct-wizard-progress-item.active::before {
+  background: #0d9488;
+}
+
+.ct-wizard-progress-item small {
+  display: block;
+  width: 100%;
+  max-width: 120px;
+  font-size: 11px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: #52647c;
+  overflow-wrap: normal;
+}
+
+.ct-wizard-progress-item.active small {
+  color: #0a756d;
+  font-weight: 750;
+}
+
+@media (max-width: 750px) {
+  .ct-wizard-progress {
+    grid-template-columns: repeat(7, 105px);
+    overflow-x: auto;
+    padding: 6px 0 12px;
+    scrollbar-width: thin;
+  }
+
+  .ct-wizard-progress-item small {
+    font-size: 10px;
+  }
+}

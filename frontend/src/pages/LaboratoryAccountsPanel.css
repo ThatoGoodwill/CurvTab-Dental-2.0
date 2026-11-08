@@ -1,0 +1,21 @@
+.lab-accounts-panel{margin-top:24px;padding:22px;border:1px solid #d9e4f0;border-radius:14px;background:#fff;color:#17304e}
+.lab-accounts-panel *{box-sizing:border-box}
+.lab-accounts-heading{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:18px}
+.lab-accounts-heading h2{margin:0 0 4px;font-size:20px;color:#152f4c}
+.lab-accounts-heading p,.lab-accounts-hint,.lab-accounts-footnote{font-size:13px;color:#526780;line-height:1.5}
+.lab-accounts-heading p{margin:0}
+.lab-accounts-refresh{display:flex;align-items:center;gap:6px;border:1px solid #cbd8e8;border-radius:8px;padding:9px 12px;background:white;color:#1c4068;cursor:pointer}
+.lab-accounts-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.lab-accounts-card{border:1px solid #dbe5f1;padding:18px;border-radius:12px;background:#f9fbff;display:flex;flex-direction:column;gap:8px}
+.lab-accounts-card h3{display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:16px;color:#17375c}
+.lab-accounts-card label{font-size:13px;font-weight:650;color:#28415c}
+.lab-accounts-card input,.lab-accounts-card select{height:42px;border:1px solid #b9cce2;border-radius:8px;padding:9px 11px;background:#fff;color:#17304e;width:100%;font:inherit}
+.lab-accounts-card input:focus,.lab-accounts-card select:focus{outline:2px solid #77acdf;outline-offset:1px}
+.lab-accounts-card button[type=submit]{align-self:flex-start;margin-top:8px;border:0;border-radius:8px;background:#175db5;color:#fff;font-weight:650;cursor:pointer;padding:11px 16px}
+.lab-accounts-card button:disabled{opacity:.55;cursor:not-allowed}
+.lab-accounts-hint{margin:5px 0;display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap}
+.lab-accounts-footnote{margin:16px 0 0}
+.lab-accounts-error,.lab-accounts-success{padding:10px 12px;border-radius:8px;font-size:13px}
+.lab-accounts-error{color:#8e1d24;background:#fff1f2;border:1px solid #fecdd3}
+.lab-accounts-success{color:#15533b;background:#ecfdf5;border:1px solid #a7f3d0}
+@media(max-width:850px){.lab-accounts-grid{grid-template-columns:1fr}.lab-accounts-heading{align-items:flex-start;flex-wrap:wrap}}

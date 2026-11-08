@@ -23,7 +23,8 @@ public static class StaffRoles
 
     // Comma separated lists for [Authorize(Roles = ...)]
     public const string PatientRead =
-        PracticeAdmin + "," + Receptionist + "," + Dentist + "," + LabTechnician + "," + Finance;
+        // CT_LAB_PATIENT_READ_REMOVAL
+        PracticeAdmin + "," + Receptionist + "," + Dentist + "," + Finance;
 
     public const string PatientWrite = Receptionist + "," + Dentist;
 }

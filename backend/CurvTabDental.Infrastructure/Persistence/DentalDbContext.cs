@@ -62,6 +62,96 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
     {
         base.OnModelCreating(modelBuilder);
 
+        // CT_LAB_EXCHANGE_V1: Strict tenant filters for every laboratory record.
+        modelBuilder.Entity<LaboratoryPartner>(e => {
+            e.ToTable("LaboratoryPartners"); e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.Property(x => x.Name).HasMaxLength(160).IsRequired();
+            e.Property(x => x.Contact).HasMaxLength(120);
+            e.Property(x => x.Phone).HasMaxLength(50);
+            e.HasIndex(x => new { x.DentalPracticeId, x.Name }).IsUnique();
+        });
+        modelBuilder.Entity<LaboratoryMembership>(e => {
+            e.ToTable("LaboratoryMemberships"); e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.HasIndex(x => new { x.DentalPracticeId, x.LaboratoryPartnerId, x.UserId }).IsUnique();
+            e.HasOne<LaboratoryPartner>().WithMany().HasForeignKey(x => x.LaboratoryPartnerId).OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<LaboratoryOrder>(e => {
+            e.ToTable("LaboratoryOrders"); e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.Property(x => x.Reference).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Instructions).HasMaxLength(5000).IsRequired();
+            e.Property(x => x.Status).HasMaxLength(32).IsRequired().IsConcurrencyToken();
+            e.HasIndex(x => new { x.DentalPracticeId, x.Reference }).IsUnique();
+            e.HasIndex(x => new { x.DentalPracticeId, x.PatientId });
+            e.HasOne<Patient>().WithMany().HasForeignKey(x => x.PatientId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<LaboratoryPartner>().WithMany().HasForeignKey(x => x.LaboratoryPartnerId).OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<LaboratoryItem>(e => {
+            e.ToTable("LaboratoryItems"); e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.Property(x => x.ToothCode).HasMaxLength(10).IsRequired();
+            e.Property(x => x.Procedure).HasMaxLength(240).IsRequired();
+            e.Property(x => x.ManufacturingStatus).HasMaxLength(36).IsRequired().IsConcurrencyToken();
+            e.Property(x => x.CustodyStatus).HasMaxLength(32).IsRequired().IsConcurrencyToken();
+            e.Property(x => x.QaStatus).HasMaxLength(24).IsRequired().IsConcurrencyToken();
+            e.Property(x => x.ClinicalStatus).HasMaxLength(24).IsRequired().IsConcurrencyToken();
+            e.Property(x => x.ActiveManifestId).IsConcurrencyToken();
+            e.Property(x => x.GuaranteeNote).HasMaxLength(1000);
+            e.HasIndex(x => new { x.DentalPracticeId, x.LaboratoryOrderId });
+            e.HasOne<LaboratoryOrder>().WithMany().HasForeignKey(x => x.LaboratoryOrderId).OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<LaboratoryManifest>(e => {
+            e.ToTable("LaboratoryManifests"); e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.Property(x => x.Reference).HasMaxLength(70).IsRequired();
+            e.Property(x => x.Direction).HasMaxLength(20).IsRequired();
+            e.Property(x => x.Status).HasMaxLength(24).IsRequired().IsConcurrencyToken();
+            e.Property(x => x.CollectorName).HasMaxLength(140);
+            e.Property(x => x.ReceiverName).HasMaxLength(140);
+            e.Property(x => x.Waybill).HasMaxLength(120);
+            e.Property(x => x.Acknowledgement).HasMaxLength(300);
+            e.Property(x => x.Discrepancy).HasMaxLength(2000);
+            e.HasIndex(x => new { x.DentalPracticeId, x.Reference }).IsUnique();
+            e.HasIndex(x => new { x.DentalPracticeId, x.LaboratoryPartnerId, x.PreparedAtUtc });
+            e.HasOne<LaboratoryPartner>().WithMany().HasForeignKey(x => x.LaboratoryPartnerId).OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<LaboratoryManifestLine>(e => {
+            e.ToTable("LaboratoryManifestLines"); e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.HasIndex(x => new { x.DentalPracticeId, x.LaboratoryManifestId, x.LaboratoryItemId }).IsUnique();
+            e.HasOne<LaboratoryManifest>().WithMany().HasForeignKey(x => x.LaboratoryManifestId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<LaboratoryItem>().WithMany().HasForeignKey(x => x.LaboratoryItemId).OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<LaboratoryCorrection>(e => {
+            e.ToTable("LaboratoryCorrections"); e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.Property(x => x.Kind).HasMaxLength(30).IsRequired();
+            e.Property(x => x.Status).HasMaxLength(30).IsRequired();
+            e.Property(x => x.Reason).HasMaxLength(2000).IsRequired();
+            e.Property(x => x.Instructions).HasMaxLength(3000).IsRequired();
+            e.Property(x => x.Priority).HasMaxLength(20).IsRequired();
+            e.HasIndex(x => new { x.DentalPracticeId, x.LaboratoryItemId });
+            e.HasOne<LaboratoryItem>().WithMany().HasForeignKey(x => x.LaboratoryItemId).OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<LaboratoryActivity>(e => {
+            e.ToTable("LaboratoryActivities"); e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.Property(x => x.Action).HasMaxLength(65).IsRequired();
+            e.Property(x => x.Details).HasMaxLength(3000);
+            e.HasIndex(x => new { x.DentalPracticeId, x.LaboratoryOrderId, x.AtUtc });
+        });
+        modelBuilder.Entity<LaboratoryEvidence>(e => {
+            e.ToTable("LaboratoryEvidence"); e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.Property(x => x.FileName).HasMaxLength(180).IsRequired();
+            e.Property(x => x.ContentType).HasMaxLength(90).IsRequired();
+            e.HasIndex(x => new { x.DentalPracticeId, x.LaboratoryItemId });
+            e.HasOne<LaboratoryItem>().WithMany().HasForeignKey(x => x.LaboratoryItemId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+
         // CT_RECOVERED_TREATMENT_PLANS_V1
         modelBuilder.Entity<PatientTreatmentPlan>(entity =>
         {

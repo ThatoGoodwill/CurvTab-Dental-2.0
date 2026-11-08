@@ -26,6 +26,22 @@ public class ActiveUserMiddleware
         if (current.IsAuthenticated && current.UserId is Guid userId)
         {
             var ct = context.RequestAborted;
+            // CT_LAB_PARTNER_API_FENCE
+            // Prior implementations included LabTechnician in patient/other role lists.
+            // Restrict partner accounts at the API boundary, not just the React navigation.
+            if (current.Role == "LabTechnician" &&
+                context.Request.Path.StartsWithSegments("/api") &&
+                !context.Request.Path.StartsWithSegments("/api/auth") &&
+                !context.Request.Path.StartsWithSegments("/api/laboratory") &&
+                !context.Request.Path.StartsWithSegments("/api/public/practice-branding"))
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                await context.Response.WriteAsJsonAsync(new {
+                    title = "Laboratory accounts have access only to assigned laboratory orders.", status = 403
+                }, ct);
+                return;
+            }
+
 
             var state = await db.Users
                 .AsNoTracking()

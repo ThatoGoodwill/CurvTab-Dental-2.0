@@ -1,3 +1,5 @@
+import LaboratoryModule from './pages/LaboratoryModule'
+import { FlaskConical } from 'lucide-react'
 import PlatformSubscriptionsPage from './pages/PlatformSubscriptionsPage'
 import { useConfirmDialog } from './components/useConfirmDialog'
 import './PlatformManagement.css'
@@ -77,6 +79,7 @@ import './PracticeLogoFit.css'
 import './PracticeBrandAlignment.css'
 import PracticeBrandMark from './auth/PracticeBrandMark'
 type Section =
+  | 'Laboratory'
   | 'Dashboard' | 'Daily Patients' | 'Consultations' | 'Patient Medical Records' | 'Checkout & Payments' | 'Dental Charting' | 'Clinical Imaging' | 'Orthodontics'
   | 'Patients'
   | 'Appointments'
@@ -675,6 +678,7 @@ export default function App() {
 
   const canViewPatients =
     !isSuperAdmin &&
+    role !== 'LabTechnician' &&
     Boolean(user?.practiceId)
 
   const canManageStaff = isPracticeAdmin
@@ -697,6 +701,7 @@ export default function App() {
           ? [
               { name: 'Patients' as Section, icon: Users },
               { name: 'Appointments' as Section, icon: CalendarDays },
+              { name: 'Laboratory' as Section, icon: FlaskConical },
             ]
           : []),
         ...(canManageStaff
@@ -706,6 +711,8 @@ export default function App() {
             ]
           : []),
         ...(canManageStaff ? [{ name: 'Appearance & Workspace' as Section, icon: CtAppearanceIcon }] : []),
+        // CT_LAB_TECH_NAV
+        ...(role === 'LabTechnician' ? [{ name: 'Laboratory' as Section, icon: FlaskConical }] : []),
         { name: 'My Profile' as Section, icon: UserCircle },
       ]
 
@@ -1296,6 +1303,7 @@ export default function App() {
           )}
 
           {/* PHASE 4/5: DENTIST SPECIALTIES */}
+          {section === 'Laboratory' && role !== 'SuperAdmin' && <LaboratoryModule />}
           {section === 'Dental Charting' && role === 'Dentist' && <DentalChartingPage initialPatientId={chartPatientId} />}
           {section === 'Clinical Imaging' && role === 'Dentist' && (
             <ClinicalImagingPage />
