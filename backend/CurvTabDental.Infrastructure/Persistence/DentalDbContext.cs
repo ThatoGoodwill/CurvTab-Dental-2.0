@@ -46,6 +46,14 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
     public DbSet<PatientMedicalHistory> PatientMedicalHistories => Set<PatientMedicalHistory>();
     // CT_REGISTRATION_COMPLETE_V2
     public DbSet<PatientRegistrationDetails> PatientRegistrationDetails => Set<PatientRegistrationDetails>();
+
+    // CT_PROCEDURE_PRICING_V1
+    public DbSet<ProcedurePrice> ProcedurePrices
+        => Set<ProcedurePrice>();
+
+    public DbSet<ProcedurePriceHistory> ProcedurePriceHistories
+        => Set<ProcedurePriceHistory>();
+
     public DbSet<ConsultationCharge> ConsultationCharges => Set<ConsultationCharge>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<OrthodonticFinancialAgreement> OrthodonticFinancialAgreements => Set<OrthodonticFinancialAgreement>();
@@ -61,6 +69,61 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // CT_PROCEDURE_PRICING_V1
+        modelBuilder.Entity<ProcedurePrice>(e =>
+        {
+            e.ToTable("ProcedurePrices");
+            e.HasKey(x => x.Id);
+            e.HasQueryFilter(x =>
+                x.DentalPracticeId == CurrentPracticeId);
+
+            e.Property(x => x.Code)
+                .HasMaxLength(40).IsRequired();
+
+            e.Property(x => x.Name)
+                .HasMaxLength(160).IsRequired();
+
+            e.Property(x => x.Category)
+                .HasMaxLength(80).IsRequired();
+
+            e.Property(x => x.Price).HasPrecision(12, 2);
+
+            e.HasIndex(x => new {
+                x.DentalPracticeId, x.Code
+            }).IsUnique();
+        });
+
+        modelBuilder.Entity<ProcedurePriceHistory>(e =>
+        {
+            e.ToTable("ProcedurePriceHistories");
+            e.HasKey(x => x.Id);
+            e.HasQueryFilter(x =>
+                x.DentalPracticeId == CurrentPracticeId);
+
+            e.Property(x => x.Action)
+                .HasMaxLength(30).IsRequired();
+
+            e.Property(x => x.Code)
+                .HasMaxLength(40).IsRequired();
+
+            e.Property(x => x.Name)
+                .HasMaxLength(160).IsRequired();
+
+            e.Property(x => x.PreviousPrice)
+                .HasPrecision(12, 2);
+
+            e.Property(x => x.NewPrice)
+                .HasPrecision(12, 2);
+
+            e.HasIndex(x => new {
+                x.DentalPracticeId,
+                x.ProcedurePriceId,
+                x.ChangedAtUtc
+            });
+        });
+
+
 
         // CT_LAB_EXCHANGE_V1: Strict tenant filters for every laboratory record.
         modelBuilder.Entity<LaboratoryPartner>(e => {

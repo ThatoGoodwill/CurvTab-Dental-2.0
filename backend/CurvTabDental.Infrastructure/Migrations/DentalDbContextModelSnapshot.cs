@@ -1954,6 +1954,9 @@ namespace CurvTabDental.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<bool?>("GuardianConsent")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("HomePhone")
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
@@ -1967,6 +1970,9 @@ namespace CurvTabDental.Infrastructure.Migrations
 
                     b.Property<Guid>("PatientId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("ProfileJson")
+                        .HasColumnType("text");
 
                     b.Property<Guid?>("RecordedByUserId")
                         .HasColumnType("uuid");
@@ -2439,6 +2445,102 @@ namespace CurvTabDental.Infrastructure.Migrations
                     b.HasIndex("DentalPracticeId");
 
                     b.ToTable("PracticeSubscriptions", (string)null);
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.ProcedurePrice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DentalPracticeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DentalPracticeId", "Code")
+                        .IsUnique();
+
+                    b.ToTable("ProcedurePrices", (string)null);
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.ProcedurePriceHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime>("ChangedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ChangedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Guid>("DentalPracticeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<decimal>("NewPrice")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<decimal?>("PreviousPrice")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<Guid>("ProcedurePriceId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DentalPracticeId", "ProcedurePriceId", "ChangedAtUtc");
+
+                    b.ToTable("ProcedurePriceHistories", (string)null);
                 });
 
             modelBuilder.Entity("CurvTabDental.Domain.Entities.SubscriptionPayment", b =>

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import AppearanceSettingsPage from './AppearanceSettingsPage'
 import PracticeSettingsPage from './PracticeSettingsPage'
+import ProcedurePricingPage from './ProcedurePricingPage'
 import WhatsAppPanel from './WhatsAppPanel'
 import './ConfigurationCenterPage.css'
 
@@ -189,7 +190,7 @@ export default function ConfigurationCenterPage({
           <section
             className={
               'ct-config-detail-dialog' +
-              (section === 'appearance' || section === 'practice'
+              (section === 'appearance' || section === 'practice' || section === 'pricing'
                 ? ' ct-config-detail-appearance'
                 : '')
             }
@@ -230,6 +231,8 @@ export default function ConfigurationCenterPage({
                     onOpenStaff={onOpenStaff}
                   />
                 </div>
+              ) : section === 'pricing' ? (
+                <ProcedurePricingPage />
               ) : section === 'notifications' ? (
                 <div className="ct-config-existing-notifications">
                   <WhatsAppPanel />
@@ -239,19 +242,10 @@ export default function ConfigurationCenterPage({
                   <h3>{current?.title}</h3>
                   <p>{current?.description}</p>
 
-                  {section === 'pricing' ? (
-                    <p>
-                      Procedure pricing needs an authorised,
-                      practice-specific backend catalogue before
-                      approved fees can be edited or automatically
-                      applied to clinical charges.
-                    </p>
-                  ) : (
-                    <p>
-                      This setting is awaiting integration with
-                      the appropriate backend configuration.
-                    </p>
-                  )}
+                  <p>
+                    This setting is awaiting integration with
+                    the appropriate backend configuration.
+                  </p>
 
                   <p>
                     No settings or financial records have been
