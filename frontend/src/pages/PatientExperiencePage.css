@@ -74,3 +74,5792 @@
 @media(max-width:1070px){.ct-patient-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
 @media(max-width:740px){.ct-patient-grid,.ct-patient-overview-grid,.ct-patient-two-cols{grid-template-columns:1fr;}.ct-patient-detail-header{align-items:flex-start;padding:15px;}.ct-patient-toolbar button{width:100%;}.ct-patient-searchrow{align-items:stretch;}}
 @media(prefers-reduced-motion:reduce){.ct-patient-card,.ct-patient-open svg,.ct-patient-tab{transition:none!important;transform:none!important}}
+
+
+
+/* CT_PATIENT_OVERVIEW_V5 */
+
+.ct-pv5-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: rgba(8, 20, 38, .55);
+  box-sizing: border-box;
+}
+
+.ct-pv5-dialog {
+  width: min(760px, 100%) !important;
+  height: min(510px, calc(100dvh - 24px)) !important;
+  min-width: 0 !important;
+  padding: 12px !important;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 12px;
+  background: var(--surface, var(--card-bg, #fff));
+  color: var(--text-primary, #18314e);
+  border: 1px solid var(--border-color, #dce5ef);
+  box-shadow: 0 18px 45px rgba(0,0,0,.25);
+  scrollbar-width: thin;
+  box-sizing: border-box;
+}
+
+.ct-pv5-dialog .ct-patient-detail-header {
+  padding: 8px 10px !important;
+  margin-bottom: 8px !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+.ct-pv5-dialog .ct-patient-header-identity h1 {
+  font-size: 15px !important;
+  margin: 0 !important;
+}
+
+.ct-pv5-dialog .ct-patient-avatar-large {
+  height: 34px !important;
+  width: 34px !important;
+  font-size: 11px !important;
+}
+
+.ct-pv5-dialog .ct-patient-tabs {
+  margin-bottom: 9px !important;
+  gap: 4px !important;
+}
+
+.ct-pv5-dialog .ct-patient-tab {
+  font-size: 11px !important;
+  padding: 6px 9px !important;
+  border-radius: 6px !important;
+}
+
+.ct-pv5-title {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+
+.ct-pv5-title strong {
+  font-size: 13px;
+}
+
+.ct-pv5-title small {
+  font-size: 10px;
+  opacity: .75;
+}
+
+.ct-pv5-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ct-pv5-section {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--border-color, #dce5ef);
+  border-radius: 8px;
+  background: var(
+    --surface-secondary,
+    rgba(135,160,190,.08)
+  );
+}
+
+.ct-pv5-section h3 {
+  font-size: 12px;
+  margin: 0 0 8px;
+}
+
+.ct-pv5-section p {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 11px;
+  line-height: 1.4;
+  margin: 5px 0;
+}
+
+.ct-pv5-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border-color, #dce5ef);
+  font-size: 11px;
+}
+
+.ct-pv5-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.ct-pv5-actions button,
+.ct-pv5-section .primary-button {
+  min-height: 27px !important;
+  padding: 5px 9px !important;
+  border-radius: 6px;
+  font-size: 10px !important;
+}
+
+.ct-pv5-link {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-decoration: underline;
+  padding: 5px 0;
+  margin-top: 6px;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+@media(max-width: 590px) {
+  .ct-pv5-dialog {
+    height: calc(100dvh - 16px) !important;
+  }
+
+  .ct-pv5-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* CT_PATIENT_OVERVIEW_POLISH_V6 */
+
+/* Keep the patient's existing theme and improve the cards. */
+.ct-pv5-dialog .ct-pv5-grid {
+  gap: 10px;
+  align-items: stretch;
+}
+
+.ct-pv5-dialog .ct-pv5-section {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  border: 1px solid color-mix(
+    in srgb, currentColor 19%, transparent
+  );
+  border-radius: 10px;
+  padding: 12px;
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, #408cf5 7%, transparent),
+      transparent 75%
+    ),
+    var(--surface-secondary, rgba(130, 160, 190, .07));
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .055);
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    border-color .18s ease;
+  animation: ct-pv6-enter .28s ease both;
+}
+
+.ct-pv5-dialog .ct-pv5-section:nth-child(2) {
+  animation-delay: .045s;
+}
+
+.ct-pv5-dialog .ct-pv5-section:nth-child(3) {
+  animation-delay: .09s;
+}
+
+.ct-pv5-dialog .ct-pv5-section:nth-child(4) {
+  animation-delay: .135s;
+}
+
+.ct-pv5-dialog .ct-pv5-section:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(
+    in srgb, #4f91ed 48%, currentColor 14%
+  );
+  box-shadow: 0 7px 18px rgba(0, 0, 0, .11);
+}
+
+.ct-pv5-dialog .ct-pv5-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .1px;
+}
+
+.ct-pv5-dialog .ct-pv5-section h3::before {
+  content: "";
+  display: inline-block;
+  width: 3px;
+  height: 12px;
+  flex: 0 0 3px;
+  border-radius: 4px;
+  background: #4d99f3;
+}
+
+.ct-pv5-dialog .ct-pv5-section p {
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.ct-pv5-dialog .ct-pv5-row {
+  padding: 7px 0;
+  border-bottom-color: color-mix(
+    in srgb, currentColor 13%, transparent
+  );
+}
+
+.ct-pv5-dialog .ct-pv5-row:last-of-type {
+  border-bottom: none;
+}
+
+.ct-pv5-dialog .ct-pv5-link {
+  opacity: .85;
+  transition: opacity .15s ease;
+}
+
+.ct-pv5-dialog .ct-pv5-link:hover {
+  opacity: 1;
+}
+
+.ct-pv5-dialog .ct-pv5-actions button {
+  transition:
+    transform .15s ease,
+    filter .15s ease;
+}
+
+.ct-pv5-dialog .ct-pv5-actions button:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+/* Mini calendar occupies the free right side of Current Visit. */
+.ct-pv5-dialog .ct-pv5-section:first-child {
+  min-height: 185px;
+  padding-right: 174px;
+}
+
+.ct-pv6-calendar {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 154px;
+  box-sizing: border-box;
+  padding: 8px;
+  border-radius: 9px;
+  color: inherit;
+  background: color-mix(
+    in srgb, currentColor 5%, transparent
+  );
+  border: 1px solid color-mix(
+    in srgb, currentColor 12%, transparent
+  );
+  font-variant-numeric: tabular-nums;
+}
+
+.ct-pv6-calendar-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+  padding: 0 1px 7px;
+  font-size: 9px;
+  opacity: .92;
+}
+
+.ct-pv6-calendar-heading strong {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.ct-pv6-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.ct-pv6-weekday,
+.ct-pv6-day,
+.ct-pv6-empty {
+  min-width: 0;
+  height: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  border-radius: 4px;
+  font-size: 9px;
+}
+
+.ct-pv6-weekday {
+  font-size: 8px;
+  font-weight: 700;
+  opacity: .55;
+}
+
+.ct-pv6-day {
+  font-weight: 500;
+}
+
+.ct-pv6-today {
+  background: #287ee8;
+  color: #fff;
+  font-weight: 750;
+}
+
+.ct-pv6-booked:not(.ct-pv6-today) {
+  background: color-mix(
+    in srgb, #3e94f0 20%, transparent
+  );
+}
+
+.ct-pv6-dot {
+  position: absolute;
+  bottom: 0;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #58afff;
+}
+
+.ct-pv6-today .ct-pv6-dot {
+  background: #fff;
+}
+
+.ct-pv6-calendar-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  padding-top: 7px;
+  font-size: 8px;
+  opacity: .75;
+}
+
+.ct-pv6-legend-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #58afff;
+}
+
+@keyframes ct-pv6-enter {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Avoid squeezing the calendar on narrow layouts. */
+@media (max-width: 720px) {
+  .ct-pv5-dialog .ct-pv5-section:first-child {
+    padding-right: 12px;
+  }
+
+  .ct-pv6-calendar {
+    position: static;
+    width: 160px;
+    margin: 7px 0 10px;
+  }
+}
+
+@media (max-width: 440px) {
+  .ct-pv5-dialog .ct-pv5-section {
+    padding: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-pv5-dialog .ct-pv5-section,
+  .ct-pv5-dialog .ct-pv5-actions button {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .ct-pv5-dialog .ct-pv5-section:hover,
+  .ct-pv5-dialog .ct-pv5-actions button:hover {
+    transform: none !important;
+  }
+}
+
+
+/* CT_PATIENT_LAYOUT_FIX_V7_START */
+
+/* Slightly more room without making the modal oversized */
+.ct-pv5-dialog {
+  width: min(790px, calc(100vw - 24px)) !important;
+  height: min(565px, calc(100dvh - 24px)) !important;
+  max-height: calc(100dvh - 24px) !important;
+  padding: 13px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+/* Tidy card grid */
+.ct-pv5-dialog .ct-pv5-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 10px !important;
+}
+
+/* All four cards share the same visual treatment */
+.ct-pv5-dialog .ct-pv5-section {
+  min-width: 0;
+  min-height: 153px;
+  box-sizing: border-box;
+  padding: 12px !important;
+  border-radius: 10px !important;
+  border-width: 1px !important;
+  box-shadow: 0 3px 9px rgba(0,0,0,.06);
+}
+
+/* Give the calendar enough space INSIDE Current Visit */
+.ct-pv5-dialog .ct-pv5-section:first-child {
+  position: relative;
+  min-height: 218px !important;
+  padding: 12px 166px 12px 12px !important;
+  overflow: hidden;
+}
+
+/* Small calendar: positioned inside its card */
+.ct-pv5-dialog .ct-pv6-calendar {
+  position: absolute !important;
+  top: 12px !important;
+  right: 11px !important;
+  bottom: auto !important;
+  left: auto !important;
+  width: 145px !important;
+  max-width: 145px !important;
+  margin: 0 !important;
+  padding: 8px !important;
+  box-sizing: border-box;
+  z-index: 1;
+  border-radius: 8px !important;
+}
+
+/* Compact calendar cells */
+.ct-pv5-dialog .ct-pv6-calendar-grid {
+  gap: 2px !important;
+}
+
+.ct-pv5-dialog .ct-pv6-weekday,
+.ct-pv5-dialog .ct-pv6-day,
+.ct-pv5-dialog .ct-pv6-empty {
+  height: 15px !important;
+  font-size: 8px !important;
+}
+
+.ct-pv5-dialog .ct-pv6-calendar-heading {
+  padding-bottom: 5px;
+}
+
+.ct-pv5-dialog .ct-pv6-calendar-heading strong {
+  font-size: 9px;
+}
+
+.ct-pv5-dialog .ct-pv6-calendar-legend {
+  padding-top: 5px;
+}
+
+/* Clearer headings and rows */
+.ct-pv5-dialog .ct-pv5-section h3 {
+  margin: 0 0 10px !important;
+  font-size: 12px !important;
+}
+
+.ct-pv5-dialog .ct-pv5-row {
+  min-height: 28px;
+  padding: 6px 0 !important;
+  box-sizing: border-box;
+}
+
+.ct-pv5-dialog .ct-pv5-row strong {
+  font-weight: 650;
+}
+
+.ct-pv5-dialog .ct-pv5-section p {
+  margin: 6px 0 !important;
+  line-height: 1.45 !important;
+}
+
+/* Small consistent buttons */
+.ct-pv5-dialog .ct-pv5-link,
+.ct-pv5-dialog .ct-pv5-actions button {
+  font-size: 10px !important;
+  border-radius: 6px;
+}
+
+.ct-pv5-dialog .ct-pv5-actions button {
+  min-height: 29px !important;
+  padding: 6px 10px !important;
+}
+
+/* Keep subtle animation, without moving content out of bounds */
+.ct-pv5-dialog .ct-pv5-section {
+  transition:
+    border-color .18s ease,
+    box-shadow .18s ease,
+    transform .18s ease;
+}
+
+/* Narrow screens: calendar returns to normal document flow */
+@media (max-width: 720px) {
+  .ct-pv5-dialog .ct-pv5-section:first-child {
+    padding: 12px !important;
+    min-height: 0 !important;
+    overflow: visible;
+  }
+
+  .ct-pv5-dialog .ct-pv6-calendar {
+    position: static !important;
+    width: 145px !important;
+    max-width: 145px !important;
+    margin: 8px 0 !important;
+  }
+}
+
+@media (max-width: 590px) {
+  .ct-pv5-dialog {
+    width: calc(100vw - 16px) !important;
+    height: calc(100dvh - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+  }
+
+  .ct-pv5-dialog .ct-pv5-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .ct-pv5-dialog .ct-pv5-section {
+    min-height: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-pv5-dialog .ct-pv5-section {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* CT_PATIENT_LAYOUT_FIX_V7_END */
+
+
+/* CT_PATIENT_HEADER_V8 */
+
+.ct-pv5-dialog .ct-pv8-header {
+  display: grid !important;
+  grid-template-columns: auto 34px minmax(0, 1fr) auto;
+  align-items: center !important;
+  gap: 8px 11px !important;
+  width: 100%;
+  padding: 11px 12px !important;
+  margin-bottom: 9px !important;
+  box-sizing: border-box;
+  border-radius: 10px !important;
+  border: 1px solid color-mix(
+    in srgb, currentColor 17%, transparent
+  );
+  background: var(
+    --surface-secondary,
+    rgba(120, 155, 190, .075)
+  );
+  box-shadow: none !important;
+}
+
+.ct-pv5-dialog .ct-pv8-back {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 5px 8px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.ct-pv5-dialog .ct-pv8-avatar {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px;
+  font-size: 11px !important;
+}
+
+.ct-pv5-dialog .ct-pv8-identity {
+  grid-column: 3;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.ct-pv5-dialog .ct-pv8-name-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.ct-pv5-dialog .ct-pv8-name-row h1 {
+  margin: 0 !important;
+  font-size: 16px !important;
+  font-weight: 750;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.ct-pv5-dialog .ct-pv8-name-row .ct-patient-status {
+  font-size: 9px;
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+
+.ct-pv5-dialog .ct-pv8-meta {
+  grid-column: 3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px 12px;
+  margin-top: 5px;
+  font-size: 10px;
+  opacity: .83;
+}
+
+.ct-pv5-dialog .ct-pv8-meta span {
+  white-space: nowrap;
+}
+
+.ct-pv5-dialog .ct-pv8-meta strong {
+  font-weight: 650;
+}
+
+.ct-pv5-dialog .ct-pv8-contact {
+  grid-column: 3;
+  grid-row: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px 15px;
+  min-width: 0;
+}
+
+.ct-pv5-dialog .ct-pv8-contact span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
+.ct-pv5-dialog .ct-pv8-contact svg {
+  flex: 0 0 auto;
+  opacity: .75;
+}
+
+.ct-pv5-dialog .ct-pv8-payment {
+  grid-column: 3;
+  grid-row: 3;
+  justify-self: start;
+  padding: 4px 8px;
+  border-radius: 5px;
+  background: color-mix(
+    in srgb, #3988ec 15%, transparent
+  );
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.ct-pv5-dialog .ct-pv8-manage {
+  grid-column: 4;
+  grid-row: 1 / 4;
+  align-self: center;
+  min-height: 31px;
+  padding: 6px 10px;
+  border-radius: 7px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+@media (max-width: 680px) {
+  .ct-pv5-dialog .ct-pv8-header {
+    grid-template-columns: auto 32px minmax(0, 1fr);
+    gap: 7px;
+  }
+
+  .ct-pv5-dialog .ct-pv8-back {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .ct-pv5-dialog .ct-pv8-avatar {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .ct-pv5-dialog .ct-pv8-identity {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .ct-pv5-dialog .ct-pv8-meta {
+    gap: 4px 8px;
+  }
+
+  .ct-pv5-dialog .ct-pv8-contact {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .ct-pv5-dialog .ct-pv8-payment {
+    grid-column: 1 / 3;
+    grid-row: 3;
+  }
+
+  .ct-pv5-dialog .ct-pv8-manage {
+    grid-column: 3;
+    grid-row: 3;
+    justify-self: end;
+  }
+}
+
+@media (max-width: 420px) {
+  .ct-pv5-dialog .ct-pv8-name-row h1 {
+    font-size: 14px !important;
+  }
+
+  .ct-pv5-dialog .ct-pv8-meta span {
+    white-space: normal;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ct-pv5-dialog .ct-pv8-header {
+    animation: ct-pv8-header-in .22s ease both;
+  }
+}
+
+@keyframes ct-pv8-header-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* CT_PATIENT_TREATMENT_INTEGRATION_V1 */
+.ct-pv5-dialog:has(.ct-patient-treatment) {
+  width: min(900px, calc(100vw - 24px)) !important;
+  height: min(620px, calc(100dvh - 24px)) !important;
+}
+
+.ct-patient-treatment {
+  min-width: 0;
+  color: inherit;
+  padding: 4px 0 12px;
+}
+
+.ct-pt-heading {
+  margin: 4px 0 12px;
+}
+
+.ct-pt-heading h2 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+
+.ct-pt-heading p {
+  margin: 0;
+  font-size: 11px;
+  opacity: .75;
+}
+
+.ct-pt-menu {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.ct-pt-option {
+  min-width: 0;
+  min-height: 98px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  border-radius: 9px;
+  background: color-mix(in srgb, currentColor 5%, transparent);
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .16s ease, transform .16s ease;
+}
+
+.ct-pt-option:hover {
+  border-color: #438ce4;
+  transform: translateY(-2px);
+}
+
+.ct-pt-option strong {
+  font-size: 12px;
+}
+
+.ct-pt-option span {
+  font-size: 10px;
+  opacity: .78;
+}
+
+.ct-pt-option span:last-child {
+  margin-top: auto;
+  color: #4795ed;
+  opacity: 1;
+}
+
+.ct-pt-back {
+  margin: 0 0 10px;
+  padding: 5px 9px;
+  min-height: 28px;
+  font-size: 11px;
+}
+
+/* The patient was already selected in Patients.
+   Keep the embedded chart's additional picker/header out of
+   the treatment content. */
+.ct-patient-treatment .ct-chart-workspace-heading {
+  display: none;
+}
+
+.ct-patient-treatment .specialty-columns {
+  min-width: 0;
+}
+
+@media (max-width: 650px) {
+  .ct-pt-menu {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 430px) {
+  .ct-pt-menu {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-pt-option {
+    transition: none;
+  }
+  .ct-pt-option:hover {
+    transform: none;
+  }
+}
+
+
+/* CT_TREATMENT_ROLE_FIX_V2 */
+.ct-patient-treatment .ct-pt-role-message {
+  max-width: 520px;
+  margin: 12px auto;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, currentColor 5%, transparent);
+  color: inherit;
+}
+
+.ct-patient-treatment .ct-pt-role-message strong {
+  font-size: 14px;
+}
+
+.ct-patient-treatment .ct-pt-role-message p {
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 8px 0;
+}
+
+
+/* CT_TREATMENT_DESIGN_V3_START */
+
+/* Treatment landing: refined compact workspace */
+.ct-pv5-dialog .ct-patient-treatment {
+  --treat-accent: #4396ef;
+  --treat-line: color-mix(in srgb, currentColor 14%, transparent);
+  width: 100%;
+  min-width: 0;
+  padding: 10px 3px 14px;
+  box-sizing: border-box;
+}
+
+/* Section heading */
+.ct-patient-treatment .ct-pt-heading {
+  position: relative;
+  margin: 0 0 17px;
+  padding: 0 0 13px 12px;
+  border-bottom: 1px solid var(--treat-line);
+}
+
+.ct-patient-treatment .ct-pt-heading::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  bottom: 16px;
+  left: 0;
+  width: 3px;
+  border-radius: 8px;
+  background: var(--treat-accent);
+}
+
+.ct-patient-treatment .ct-pt-heading h2 {
+  margin: 0 0 5px;
+  font-size: 17px;
+  line-height: 1.25;
+  font-weight: 750;
+  letter-spacing: -.3px;
+  color: inherit;
+}
+
+.ct-patient-treatment .ct-pt-heading p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  opacity: .72;
+}
+
+/* Six balanced treatment choices */
+.ct-patient-treatment .ct-pt-menu {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* Each card has its own soft accent colour */
+.ct-patient-treatment .ct-pt-option {
+  --card-accent: #4c9df3;
+  --card-glow: rgba(76,157,243,.10);
+
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 155px;
+  padding: 15px 15px 13px !important;
+  text-align: left;
+  color: inherit;
+  border: 1px solid var(--treat-line) !important;
+  border-radius: 13px !important;
+  background:
+    radial-gradient(
+      ellipse at 100% 0%,
+      var(--card-glow),
+      transparent 65%
+    ),
+    color-mix(in srgb, currentColor 4%, transparent);
+  box-shadow:
+    0 3px 10px rgba(0,0,0,.045),
+    inset 0 1px 0 rgba(255,255,255,.035);
+  cursor: pointer;
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease,
+    transform .2s ease,
+    background .2s ease;
+  animation: ct-treatment-card-enter .33s ease both;
+}
+
+.ct-patient-treatment .ct-pt-option:nth-child(2) {
+  --card-accent: #31b9a4;
+  --card-glow: rgba(49,185,164,.09);
+  animation-delay: .035s;
+}
+
+.ct-patient-treatment .ct-pt-option:nth-child(3) {
+  --card-accent: #a98af9;
+  --card-glow: rgba(169,138,249,.10);
+  animation-delay: .07s;
+}
+
+.ct-patient-treatment .ct-pt-option:nth-child(4) {
+  --card-accent: #f0a857;
+  --card-glow: rgba(240,168,87,.09);
+  animation-delay: .105s;
+}
+
+.ct-patient-treatment .ct-pt-option:nth-child(5) {
+  --card-accent: #e58ab7;
+  --card-glow: rgba(229,138,183,.09);
+  animation-delay: .14s;
+}
+
+.ct-patient-treatment .ct-pt-option:nth-child(6) {
+  --card-accent: #65acd7;
+  --card-glow: rgba(101,172,215,.09);
+  animation-delay: .175s;
+}
+
+/* Small professional icon tiles */
+.ct-patient-treatment .ct-pt-option::before {
+  content: "🦷";
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  margin-bottom: 12px;
+  border: 1px solid color-mix(
+    in srgb, var(--card-accent) 35%, transparent
+  );
+  border-radius: 10px;
+  background: color-mix(
+    in srgb, var(--card-accent) 14%, transparent
+  );
+  font-size: 18px;
+  line-height: 1;
+}
+
+.ct-patient-treatment .ct-pt-option:nth-child(2)::before {
+  content: "♡";
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--card-accent);
+}
+
+.ct-patient-treatment .ct-pt-option:nth-child(3)::before {
+  content: "☷";
+  font-size: 23px;
+  color: var(--card-accent);
+}
+
+.ct-patient-treatment .ct-pt-option:nth-child(4)::before {
+  content: "✎";
+  font-size: 24px;
+  color: var(--card-accent);
+}
+
+.ct-patient-treatment .ct-pt-option:nth-child(5)::before {
+  content: "▧";
+  font-size: 22px;
+  color: var(--card-accent);
+}
+
+.ct-patient-treatment .ct-pt-option:nth-child(6)::before {
+  content: "◷";
+  font-size: 25px;
+  color: var(--card-accent);
+}
+
+/* Typography */
+.ct-patient-treatment .ct-pt-option strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 12px !important;
+  line-height: 1.35;
+  font-weight: 730;
+  color: inherit;
+}
+
+.ct-patient-treatment .ct-pt-option span:nth-of-type(1) {
+  display: block;
+  max-width: 100%;
+  font-size: 10px !important;
+  line-height: 1.5;
+  opacity: .72;
+}
+
+/* Open section action */
+.ct-patient-treatment .ct-pt-option span:last-child {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  align-self: flex-end;
+  margin-top: auto;
+  padding-top: 10px;
+  color: var(--card-accent);
+  font-size: 11px !important;
+  font-weight: 700;
+  opacity: 1;
+}
+
+.ct-patient-treatment .ct-pt-option:hover {
+  transform: translateY(-3px);
+  border-color: var(--card-accent) !important;
+  box-shadow:
+    0 9px 22px rgba(0,0,0,.11),
+    0 0 0 1px color-mix(
+      in srgb, var(--card-accent) 10%, transparent
+    );
+}
+
+.ct-patient-treatment .ct-pt-option:focus-visible {
+  outline: 2px solid var(--card-accent);
+  outline-offset: 3px;
+}
+
+.ct-patient-treatment .ct-pt-option:active {
+  transform: translateY(-1px);
+}
+
+/*
+  FOCUSED CLINICAL MODE
+
+  The selected section already replaces the six cards
+  through React state.
+
+  When its Back button exists, hide the outer patient tabs
+  and the chart's additional section navigation.
+*/
+.ct-pv5-dialog:has(.ct-patient-treatment .ct-pt-back)
+.ct-patient-tabs {
+  display: none !important;
+}
+
+.ct-patient-treatment:has(.ct-pt-back)
+.ct-recovered-tabs {
+  display: none !important;
+}
+
+/* Hide the chart's redundant heading inside patient records */
+.ct-patient-treatment:has(.ct-pt-back)
+.ct-chart-workspace-heading {
+  display: none !important;
+}
+
+/* Compact, clearly visible Back to Treatment control */
+.ct-patient-treatment .ct-pt-back {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 31px;
+  margin: 0 0 12px !important;
+  padding: 7px 11px !important;
+  border-radius: 7px !important;
+  border: 1px solid var(--treat-line) !important;
+  background: color-mix(
+    in srgb, currentColor 6%, transparent
+  ) !important;
+  color: inherit !important;
+  font-size: 11px !important;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background .15s ease, transform .15s ease;
+}
+
+.ct-patient-treatment .ct-pt-back:hover {
+  background: color-mix(
+    in srgb, currentColor 11%, transparent
+  ) !important;
+  transform: translateX(-2px);
+}
+
+/* Slightly more room for the selected clinical workspace */
+.ct-pv5-dialog:has(.ct-patient-treatment .ct-pt-back) {
+  width: min(920px, calc(100vw - 24px)) !important;
+  height: min(640px, calc(100dvh - 24px)) !important;
+}
+
+/* Responsive card layout */
+@media (max-width: 740px) {
+  .ct-patient-treatment .ct-pt-menu {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .ct-patient-treatment .ct-pt-option {
+    min-height: 142px;
+    padding: 12px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .ct-patient-treatment .ct-pt-menu {
+    grid-template-columns: 1fr;
+  }
+
+  .ct-patient-treatment .ct-pt-option {
+    min-height: 110px;
+  }
+}
+
+/* Respect reduced-motion preference */
+@keyframes ct-treatment-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-patient-treatment .ct-pt-option,
+  .ct-patient-treatment .ct-pt-back {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .ct-patient-treatment .ct-pt-option:hover,
+  .ct-patient-treatment .ct-pt-back:hover {
+    transform: none !important;
+  }
+}
+
+/* CT_TREATMENT_DESIGN_V3_END */
+
+
+
+/* ===== CT_TREATMENT_TILES_COMPACT_V1 ===== */
+/* Compact, button-like treatment launcher tiles */
+
+.ct-patients-experience .ct-treatment-title,
+.ct-patients-experience .ct-treatment-heading,
+.ct-patients-experience .ct-pv-treatment-title {
+  margin-bottom: 10px;
+}
+
+.ct-patients-experience .ct-treatment-title h2,
+.ct-patients-experience .ct-treatment-heading h2,
+.ct-patients-experience .ct-pv-treatment-title h2 {
+  margin: 0 0 4px;
+  font-size: 1.1rem;
+  line-height: 1.2;
+}
+
+.ct-patients-experience .ct-treatment-title p,
+.ct-patients-experience .ct-treatment-heading p,
+.ct-patients-experience .ct-pv-treatment-title p {
+  margin: 0;
+  font-size: 0.88rem;
+  opacity: 0.82;
+}
+
+/* Grid */
+.ct-patients-experience .ct-treatment-grid,
+.ct-patients-experience .ct-treatment-tiles,
+.ct-patients-experience .ct-treatment-cards,
+.ct-patients-experience .ct-patient-treatment-grid,
+.ct-patients-experience .ct-pv-treatment-grid,
+.ct-patients-experience .ct-pv6-treatment-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(170px, 1fr)) !important;
+  gap: 12px !important;
+  align-items: stretch !important;
+  margin-top: 12px !important;
+}
+
+@media (max-width: 1100px) {
+  .ct-patients-experience .ct-treatment-grid,
+  .ct-patients-experience .ct-treatment-tiles,
+  .ct-patients-experience .ct-treatment-cards,
+  .ct-patients-experience .ct-patient-treatment-grid,
+  .ct-patients-experience .ct-pv-treatment-grid,
+  .ct-patients-experience .ct-pv6-treatment-grid {
+    grid-template-columns: repeat(2, minmax(170px, 1fr)) !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .ct-patients-experience .ct-treatment-grid,
+  .ct-patients-experience .ct-treatment-tiles,
+  .ct-patients-experience .ct-treatment-cards,
+  .ct-patients-experience .ct-patient-treatment-grid,
+  .ct-patients-experience .ct-pv-treatment-grid,
+  .ct-patients-experience .ct-pv6-treatment-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Tile look */
+.ct-patients-experience .ct-treatment-card,
+.ct-patients-experience .ct-treatment-tile,
+.ct-patients-experience .ct-treatment-option,
+.ct-patients-experience .ct-treatment-action,
+.ct-patients-experience .ct-patient-treatment-card,
+.ct-patients-experience .ct-pv-treatment-card,
+.ct-patients-experience .ct-pv6-treatment-card,
+.ct-patients-experience [class*="treatment-card"],
+.ct-patients-experience [class*="treatment-tile"] {
+  position: relative !important;
+  min-height: 108px !important;
+  padding: 14px 16px !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(125, 160, 215, 0.26) !important;
+  background:
+    linear-gradient(145deg, rgba(34,53,89,0.98), rgba(19,34,64,0.98)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    0 10px 24px rgba(2, 10, 28, 0.22) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  text-align: left !important;
+  overflow: hidden !important;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease !important;
+}
+
+.ct-patients-experience .ct-treatment-card:hover,
+.ct-patients-experience .ct-treatment-tile:hover,
+.ct-patients-experience .ct-treatment-option:hover,
+.ct-patients-experience .ct-treatment-action:hover,
+.ct-patients-experience .ct-patient-treatment-card:hover,
+.ct-patients-experience .ct-pv-treatment-card:hover,
+.ct-patients-experience .ct-pv6-treatment-card:hover,
+.ct-patients-experience [class*="treatment-card"]:hover,
+.ct-patients-experience [class*="treatment-tile"]:hover {
+  transform: translateY(-2px) !important;
+  border-color: rgba(70, 147, 255, 0.46) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 14px 30px rgba(5, 16, 40, 0.28) !important;
+}
+
+.ct-patients-experience .ct-treatment-card:focus-visible,
+.ct-patients-experience .ct-treatment-tile:focus-visible,
+.ct-patients-experience .ct-treatment-option:focus-visible,
+.ct-patients-experience .ct-treatment-action:focus-visible,
+.ct-patients-experience .ct-patient-treatment-card:focus-visible,
+.ct-patients-experience .ct-pv-treatment-card:focus-visible,
+.ct-patients-experience .ct-pv6-treatment-card:focus-visible,
+.ct-patients-experience [class*="treatment-card"]:focus-visible,
+.ct-patients-experience [class*="treatment-tile"]:focus-visible {
+  outline: 2px solid rgba(66, 153, 225, 0.9) !important;
+  outline-offset: 2px !important;
+}
+
+/* Small icon square */
+.ct-patients-experience .ct-treatment-card svg,
+.ct-patients-experience .ct-treatment-tile svg,
+.ct-patients-experience .ct-treatment-option svg,
+.ct-patients-experience .ct-treatment-action svg,
+.ct-patients-experience .ct-patient-treatment-card svg,
+.ct-patients-experience .ct-pv-treatment-card svg,
+.ct-patients-experience .ct-pv6-treatment-card svg,
+.ct-patients-experience [class*="treatment-card"] svg,
+.ct-patients-experience [class*="treatment-tile"] svg {
+  width: 18px !important;
+  height: 18px !important;
+  flex: 0 0 auto !important;
+}
+
+/* Tile title */
+.ct-patients-experience .ct-treatment-card h3,
+.ct-patients-experience .ct-treatment-tile h3,
+.ct-patients-experience .ct-treatment-option h3,
+.ct-patients-experience .ct-treatment-action h3,
+.ct-patients-experience .ct-patient-treatment-card h3,
+.ct-patients-experience .ct-pv-treatment-card h3,
+.ct-patients-experience .ct-pv6-treatment-card h3,
+.ct-patients-experience [class*="treatment-card"] h3,
+.ct-patients-experience [class*="treatment-tile"] h3 {
+  margin: 8px 0 4px !important;
+  font-size: 0.98rem !important;
+  line-height: 1.25 !important;
+  font-weight: 700 !important;
+}
+
+/* Tile description */
+.ct-patients-experience .ct-treatment-card p,
+.ct-patients-experience .ct-treatment-tile p,
+.ct-patients-experience .ct-treatment-option p,
+.ct-patients-experience .ct-treatment-action p,
+.ct-patients-experience .ct-patient-treatment-card p,
+.ct-patients-experience .ct-pv-treatment-card p,
+.ct-patients-experience .ct-pv6-treatment-card p,
+.ct-patients-experience [class*="treatment-card"] p,
+.ct-patients-experience [class*="treatment-tile"] p {
+  margin: 0 !important;
+  font-size: 0.80rem !important;
+  line-height: 1.35 !important;
+  opacity: 0.82 !important;
+}
+
+/* Make arrow small and neat */
+.ct-patients-experience .ct-treatment-card .arrow,
+.ct-patients-experience .ct-treatment-tile .arrow,
+.ct-patients-experience .ct-treatment-option .arrow,
+.ct-patients-experience .ct-treatment-action .arrow,
+.ct-patients-experience .ct-patient-treatment-card .arrow,
+.ct-patients-experience .ct-pv-treatment-card .arrow,
+.ct-patients-experience .ct-pv6-treatment-card .arrow {
+  margin-top: 8px !important;
+  font-size: 0.9rem !important;
+  opacity: 0.88 !important;
+}
+
+/* If buttons/anchors are used directly, style them like compact launch buttons */
+.ct-patients-experience .ct-treatment-grid > button,
+.ct-patients-experience .ct-treatment-grid > a,
+.ct-patients-experience .ct-treatment-tiles > button,
+.ct-patients-experience .ct-treatment-tiles > a,
+.ct-patients-experience .ct-treatment-cards > button,
+.ct-patients-experience .ct-treatment-cards > a,
+.ct-patients-experience .ct-patient-treatment-grid > button,
+.ct-patients-experience .ct-patient-treatment-grid > a,
+.ct-patients-experience .ct-pv-treatment-grid > button,
+.ct-patients-experience .ct-pv-treatment-grid > a,
+.ct-patients-experience .ct-pv6-treatment-grid > button,
+.ct-patients-experience .ct-pv6-treatment-grid > a {
+  min-height: 108px !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(125, 160, 215, 0.26) !important;
+  padding: 14px 16px !important;
+  background:
+    linear-gradient(145deg, rgba(34,53,89,0.98), rgba(19,34,64,0.98)) !important;
+  text-align: left !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  text-decoration: none !important;
+}
+
+/* Keep the screen compact */
+.ct-patients-experience .ct-treatment-shell,
+.ct-patients-experience .ct-treatment-panel,
+.ct-patients-experience .ct-pv-treatment-shell,
+.ct-patients-experience .ct-pv6-treatment-shell {
+  padding-top: 4px !important;
+}
+
+/* Slight animation */
+@keyframes ctTreatmentLiftIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ct-patients-experience .ct-treatment-card,
+.ct-patients-experience .ct-treatment-tile,
+.ct-patients-experience .ct-treatment-option,
+.ct-patients-experience .ct-treatment-action,
+.ct-patients-experience .ct-patient-treatment-card,
+.ct-patients-experience .ct-pv-treatment-card,
+.ct-patients-experience .ct-pv6-treatment-card,
+.ct-patients-experience [class*="treatment-card"],
+.ct-patients-experience [class*="treatment-tile"] {
+  animation: ctTreatmentLiftIn 0.22s ease both;
+}
+/* ===== END CT_TREATMENT_TILES_COMPACT_V1 ===== */
+
+
+/* CT_COMPACT_PATIENT_ODONTOGRAM_V1_START */
+
+/* Compact chart inside the selected patient's Treatment workspace */
+.ct-patient-treatment {
+  --tooth-gap: 2px;
+}
+
+/* Use the available pop-up width without making a new page */
+.ct-pv5-dialog:has(.ct-patient-treatment .ct-pt-back) {
+  width: min(940px, calc(100vw - 24px)) !important;
+  max-width: calc(100vw - 24px) !important;
+}
+
+/* Chart only: prevent large child widths */
+.ct-patient-treatment .specialty-columns,
+.ct-patient-treatment .specialty-chart-panel,
+.ct-patient-treatment .specialty-jaws,
+.ct-patient-treatment .ct-clinical-arches,
+.ct-patient-treatment .specialty-tooth-grid {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Tooth selected: compact chart and existing observation panel */
+.ct-patient-treatment .ct-treatment-chart:not(.ct-treatment-no-tooth) {
+  display: grid !important;
+  grid-template-columns:
+    minmax(0, 1.35fr) minmax(230px, .8fr) !important;
+  align-items: start;
+  gap: 10px !important;
+}
+
+/* No tooth selected: chart occupies available space */
+.ct-patient-treatment .ct-treatment-no-tooth {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.ct-patient-treatment .ct-treatment-no-tooth
+.specialty-chart-panel {
+  width: 100% !important;
+}
+
+/* Smaller chart container */
+.ct-patient-treatment .specialty-chart-panel {
+  padding: 10px !important;
+  border-radius: 10px !important;
+  overflow-x: hidden !important;
+}
+
+.ct-patient-treatment .specialty-chart-panel .panel-header {
+  margin-bottom: 6px !important;
+  padding: 0 0 6px !important;
+}
+
+.ct-patient-treatment .specialty-chart-panel .panel-header h2 {
+  font-size: 13px !important;
+  margin: 0 !important;
+}
+
+.ct-patient-treatment .specialty-chart-panel .panel-header p {
+  font-size: 10px !important;
+  margin: 2px 0 !important;
+}
+
+/* Permanent / Primary controls */
+.ct-patient-treatment .specialty-switch {
+  display: flex !important;
+  align-items: center;
+  gap: 4px !important;
+  margin: 5px 0 9px !important;
+}
+
+.ct-patient-treatment .specialty-switch button {
+  min-height: 25px !important;
+  padding: 4px 9px !important;
+  font-size: 10px !important;
+  border-radius: 6px !important;
+}
+
+/* Reduce the oversized explanatory area */
+.ct-patient-treatment .specialty-hint {
+  font-size: 10px !important;
+  line-height: 1.35 !important;
+  margin: 5px 0 8px !important;
+}
+
+.ct-patient-treatment .ct-chart-guide {
+  padding: 7px 9px !important;
+  margin: 5px 0 9px !important;
+  border-radius: 8px !important;
+}
+
+.ct-patient-treatment .ct-chart-guide > strong {
+  font-size: 10px !important;
+}
+
+.ct-patient-treatment .ct-chart-guide > p {
+  display: none !important;
+}
+
+.ct-patient-treatment .ct-chart-legend {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 5px 10px !important;
+  margin-top: 5px !important;
+}
+
+.ct-patient-treatment .ct-chart-legend span {
+  font-size: 9px !important;
+}
+
+/* Upper and lower arches stacked neatly */
+.ct-patient-treatment .specialty-jaws,
+.ct-patient-treatment .ct-clinical-arches {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 11px !important;
+  width: 100% !important;
+  overflow: hidden !important;
+}
+
+.ct-patient-treatment .specialty-jaws > div {
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.ct-patient-treatment .specialty-jaws > div > strong {
+  display: block;
+  font-size: 10px !important;
+  margin-bottom: 5px !important;
+}
+
+/* Sixteen adult teeth fit in each complete arch */
+.ct-patient-treatment .specialty-tooth-grid {
+  display: grid !important;
+  grid-template-columns: repeat(16, minmax(0, 1fr)) !important;
+  gap: var(--tooth-gap) !important;
+  width: 100% !important;
+  overflow: visible !important;
+  padding: 2px 0 4px !important;
+  margin: 0 !important;
+}
+
+/* Tooth buttons remain interactive */
+.ct-patient-treatment .specialty-tooth-grid > * {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.ct-patient-treatment .specialty-tooth-grid button {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 43px !important;
+  height: auto !important;
+  padding: 2px 0 !important;
+  margin: 0 !important;
+  border-radius: 5px !important;
+  font-size: 8px !important;
+  line-height: 1.1 !important;
+  overflow: hidden !important;
+}
+
+/* Scale existing tooth drawings without replacing them */
+.ct-patient-treatment .specialty-tooth-grid button svg {
+  display: block;
+  width: min(100%, 23px) !important;
+  max-width: 23px !important;
+  height: 29px !important;
+  max-height: 29px !important;
+  margin-inline: auto !important;
+  flex-shrink: 1 !important;
+}
+
+/* Tooth numbers and labels */
+.ct-patient-treatment .specialty-tooth-grid button span,
+.ct-patient-treatment .specialty-tooth-grid button small {
+  font-size: 8px !important;
+  line-height: 1.1 !important;
+}
+
+/* Keep recorded-condition legend tidy */
+.ct-patient-treatment .specialty-history {
+  margin-top: 9px !important;
+  padding-top: 8px !important;
+}
+
+.ct-patient-treatment .specialty-history h3 {
+  font-size: 11px !important;
+}
+
+/* Selected tooth's existing observation form */
+.ct-patient-treatment .specialty-form-panel {
+  min-width: 0 !important;
+  padding: 11px !important;
+  border-radius: 10px !important;
+}
+
+.ct-patient-treatment .specialty-form-panel .panel-header h2 {
+  font-size: 13px !important;
+}
+
+.ct-patient-treatment .specialty-form-panel label {
+  font-size: 10px !important;
+}
+
+.ct-patient-treatment .specialty-form-panel
+:is(input, select, textarea) {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  font-size: 11px !important;
+}
+
+.ct-patient-treatment .specialty-form-panel textarea {
+  min-height: 52px !important;
+}
+
+/* Narrow pop-ups: keep touch targets usable without side scrolling */
+@media (max-width: 700px) {
+  .ct-patient-treatment .ct-treatment-chart:not(.ct-treatment-no-tooth) {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .ct-patient-treatment .specialty-tooth-grid button {
+    min-height: 39px !important;
+  }
+
+  .ct-patient-treatment .specialty-tooth-grid button svg {
+    height: 24px !important;
+    max-height: 24px !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .ct-patient-treatment {
+    --tooth-gap: 1px;
+  }
+
+  .ct-patient-treatment .specialty-tooth-grid button {
+    font-size: 7px !important;
+  }
+
+  .ct-patient-treatment .specialty-tooth-grid button svg {
+    height: 20px !important;
+    max-height: 20px !important;
+  }
+}
+
+/* CT_COMPACT_PATIENT_ODONTOGRAM_V1_END */
+
+
+/* CT_TREATMENT_SMALL_BUTTONS_V4_START */
+
+/* Exactly the existing six Treatment buttons */
+.ct-pv5-dialog .ct-patient-treatment .ct-pt-menu {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 9px !important;
+  margin-top: 10px !important;
+  align-items: stretch !important;
+}
+
+/* Compact horizontal button instead of a large card */
+.ct-pv5-dialog .ct-patient-treatment .ct-pt-option {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 9px !important;
+
+  min-width: 0 !important;
+  width: 100% !important;
+  min-height: 51px !important;
+  height: 51px !important;
+  max-height: 51px !important;
+
+  padding: 7px 10px !important;
+  margin: 0 !important;
+
+  border-radius: 9px !important;
+  border: 1px solid color-mix(
+    in srgb, currentColor 17%, transparent
+  ) !important;
+
+  background:
+    linear-gradient(
+      125deg,
+      color-mix(in srgb, var(--card-accent, #4c9df3) 8%, transparent),
+      transparent 70%
+    ),
+    color-mix(in srgb, currentColor 4%, transparent) !important;
+
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+  text-align: left !important;
+  cursor: pointer;
+  overflow: hidden !important;
+
+  transition:
+    border-color .16s ease,
+    background .16s ease,
+    transform .16s ease,
+    box-shadow .16s ease !important;
+}
+
+/* The existing icon tiles become small */
+.ct-pv5-dialog .ct-patient-treatment .ct-pt-option::before {
+  display: grid !important;
+  place-items: center !important;
+
+  width: 29px !important;
+  height: 29px !important;
+  min-width: 29px !important;
+  min-height: 29px !important;
+  flex: 0 0 29px !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+
+  border-radius: 7px !important;
+  font-size: 16px !important;
+  line-height: 1 !important;
+}
+
+/* Section title */
+.ct-pv5-dialog .ct-patient-treatment .ct-pt-option strong {
+  display: block !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  color: inherit !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  line-height: 1.3 !important;
+  text-align: left !important;
+}
+
+/* Hide the descriptive sentence ONLY within launcher buttons */
+.ct-pv5-dialog .ct-patient-treatment .ct-pt-option
+span:nth-of-type(1) {
+  display: none !important;
+}
+
+/* Arrow is aligned to the right */
+.ct-pv5-dialog .ct-patient-treatment .ct-pt-option
+span:last-child {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  flex: 0 0 auto !important;
+  align-self: center !important;
+
+  margin: 0 0 0 auto !important;
+  padding: 0 !important;
+
+  color: var(--card-accent, #4c9df3) !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  opacity: 1 !important;
+}
+
+/* Gentle interaction */
+.ct-pv5-dialog .ct-patient-treatment .ct-pt-option:hover {
+  transform: translateY(-1px) !important;
+  border-color: var(--card-accent, #4c9df3) !important;
+  box-shadow: 0 3px 11px rgba(0,0,0,.10) !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment .ct-pt-option:active {
+  transform: translateY(0) !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment .ct-pt-option:focus-visible {
+  outline: 2px solid var(--card-accent, #4c9df3) !important;
+  outline-offset: 2px !important;
+}
+
+/* Keep heading compact */
+.ct-pv5-dialog .ct-patient-treatment .ct-pt-heading {
+  margin-bottom: 10px !important;
+  padding-bottom: 9px !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment .ct-pt-heading h2 {
+  font-size: 14px !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment .ct-pt-heading p {
+  font-size: 10px !important;
+}
+
+/* Responsive layout */
+@media (max-width: 720px) {
+  .ct-pv5-dialog .ct-patient-treatment .ct-pt-menu {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .ct-pv5-dialog .ct-patient-treatment .ct-pt-menu {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-pv5-dialog .ct-patient-treatment .ct-pt-option {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* CT_TREATMENT_SMALL_BUTTONS_V4_END */
+
+
+/* CT_CLIENT_SIZE_TEETH_V2_START */
+
+/* The actual odontogram inside Patients > Treatment */
+.ct-pv5-dialog .ct-patient-treatment
+.specialty-chart-panel {
+  min-width: 0 !important;
+  padding: 10px 12px !important;
+  overflow-x: hidden !important;
+}
+
+/* Keep both arches close together */
+.ct-pv5-dialog .ct-patient-treatment
+.specialty-jaws {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 13px !important;
+  width: 100% !important;
+  margin: 8px auto 10px !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.specialty-jaws > div {
+  width: min(100%, 500px) !important;
+  max-width: 500px !important;
+  min-width: 0 !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Arch names */
+.ct-pv5-dialog .ct-patient-treatment
+.specialty-jaws > div > strong {
+  display: block !important;
+  margin: 0 0 5px !important;
+  font-size: 10px !important;
+  font-weight: 650 !important;
+  line-height: 1.2 !important;
+}
+
+/* Sixteen adult teeth neatly packed into a small row */
+.ct-pv5-dialog .ct-patient-treatment
+.specialty-tooth-grid {
+  display: grid !important;
+  grid-template-columns: repeat(16, minmax(0, 1fr)) !important;
+  justify-content: center !important;
+  align-items: start !important;
+  gap: 3px !important;
+  width: 100% !important;
+  max-width: 500px !important;
+  min-width: 0 !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+/* Primary dentition has ten teeth per arch */
+.ct-pv5-dialog .ct-patient-treatment
+.specialty-tooth-grid:not(:has(> :nth-child(11))) {
+  grid-template-columns: repeat(10, minmax(0, 29px)) !important;
+}
+
+/* Ensure wrappers cannot force large tooth sizes */
+.ct-pv5-dialog .ct-patient-treatment
+.specialty-tooth-grid > * {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Compact, clickable tooth controls */
+.ct-pv5-dialog .ct-patient-treatment
+.specialty-tooth-grid button {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 2px !important;
+
+  min-width: 0 !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  min-height: 36px !important;
+  height: 36px !important;
+  max-height: 36px !important;
+
+  margin: 0 !important;
+  padding: 2px 1px !important;
+  border-radius: 5px !important;
+  font-size: 8px !important;
+  line-height: 1 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  cursor: pointer !important;
+}
+
+/* Limit tooth SVG artwork itself */
+.ct-pv5-dialog .ct-patient-treatment
+.specialty-tooth-grid button svg {
+  display: block !important;
+  width: 22px !important;
+  max-width: 100% !important;
+  height: 25px !important;
+  max-height: 25px !important;
+  min-height: 0 !important;
+  flex: 0 1 auto !important;
+  margin: 0 auto !important;
+}
+
+/* Small tooth numbering */
+.ct-pv5-dialog .ct-patient-treatment
+.specialty-tooth-grid :is(span, small, label) {
+  font-size: 8px !important;
+  line-height: 1.1 !important;
+}
+
+/* Make the chart guide much less prominent */
+.ct-pv5-dialog .ct-patient-treatment
+.ct-chart-guide {
+  max-width: 650px !important;
+  padding: 6px 9px !important;
+  margin: 4px auto 11px !important;
+  border-radius: 7px !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-chart-guide > strong {
+  font-size: 10px !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-chart-legend {
+  gap: 4px 9px !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-chart-legend span {
+  font-size: 9px !important;
+}
+
+/* Keep history compact below the chart */
+.ct-pv5-dialog .ct-patient-treatment
+.specialty-history {
+  margin-top: 10px !important;
+  padding-top: 8px !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.specialty-history h3 {
+  font-size: 11px !important;
+}
+
+/* Smaller screen: preserve all 16 teeth */
+@media (max-width: 600px) {
+  .ct-pv5-dialog .ct-patient-treatment
+  .specialty-tooth-grid {
+    gap: 1px !important;
+  }
+
+  .ct-pv5-dialog .ct-patient-treatment
+  .specialty-tooth-grid button {
+    height: 31px !important;
+    min-height: 31px !important;
+    max-height: 31px !important;
+  }
+
+  .ct-pv5-dialog .ct-patient-treatment
+  .specialty-tooth-grid button svg {
+    height: 20px !important;
+    width: 18px !important;
+  }
+}
+
+/* CT_CLIENT_SIZE_TEETH_V2_END */
+
+
+
+/* CT_REAL_TOOTH_ARTWORK_V1
+   Applies only to the odontogram inside patient Treatment.
+   The underlying FDI tooth/surface controls remain functional.
+*/
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-clinical-arches .specialty-tooth-grid {
+  display: grid !important;
+  grid-template-columns: repeat(16, minmax(0, 1fr)) !important;
+  gap: 3px !important;
+  width: min(100%, 540px) !important;
+  max-width: 540px !important;
+  overflow: visible !important;
+  padding: 3px 0 !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-odonto-tooth {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  flex: 0 1 auto !important;
+  gap: 3px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: 64px !important;
+  min-height: 64px !important;
+  padding: 2px 0 3px !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  border: 1px solid transparent !important;
+  border-radius: 7px !important;
+  background: transparent !important;
+  box-sizing: border-box !important;
+  isolation: isolate;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-odonto-number {
+  display: block !important;
+  order: 0;
+  flex: 0 0 11px;
+  width: auto !important;
+  height: 11px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  line-height: 11px !important;
+  font-size: 8px !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+  color: inherit !important;
+  position: relative !important;
+  z-index: 2;
+}
+
+/* Individual SVG tooth silhouettes */
+.ct-pv5-dialog .ct-patient-treatment
+.ct-real-tooth {
+  display: block !important;
+  order: 1;
+  width: min(100%, 29px) !important;
+  height: 43px !important;
+  max-width: 29px !important;
+  flex: 0 0 43px;
+  overflow: visible;
+  pointer-events: none;
+  position: relative;
+  z-index: 0;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,.18));
+}
+
+/* Upper arch: roots toward top, crown toward bottom */
+.ct-pv5-dialog .ct-patient-treatment
+.ct-real-tooth-upper {
+  transform: rotate(180deg);
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-real-tooth-body {
+  fill: #e4efff;
+  stroke: #8ebce9;
+  stroke-width: 1.2px;
+  stroke-linejoin: round;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-real-tooth-shine {
+  fill: none;
+  stroke: rgba(255,255,255,.75);
+  stroke-width: 1.2px;
+  stroke-linecap: round;
+}
+
+/* Keep all five clinical surface controls interactive.
+   They sit transparently over the tooth drawing. */
+.ct-pv5-dialog .ct-patient-treatment
+.ct-odonto-surfaces {
+  display: grid !important;
+  position: absolute !important;
+  inset: auto !important;
+  left: 3px !important;
+  right: 3px !important;
+  top: 17px !important;
+  bottom: auto !important;
+  width: calc(100% - 6px) !important;
+  height: 42px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  grid-template-columns: repeat(3, minmax(0,1fr)) !important;
+  grid-template-rows: repeat(3, minmax(0,1fr)) !important;
+  gap: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+  overflow: visible !important;
+  z-index: 1;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-odonto-surfaces .ct-odonto-surface {
+  position: static !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 3px !important;
+  box-shadow: none !important;
+  transform: none !important;
+  opacity: .45;
+  cursor: pointer;
+  transition: opacity .14s ease, outline-color .14s ease;
+}
+
+/* Retain the clinical surface positions */
+.ct-pv5-dialog .ct-patient-treatment
+.ct-odonto-top {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-odonto-left {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-odonto-centre {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-odonto-right {
+  grid-column: 3 !important;
+  grid-row: 2 !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-odonto-bottom {
+  grid-column: 2 !important;
+  grid-row: 3 !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-odonto-surface:hover,
+.ct-pv5-dialog .ct-patient-treatment
+.ct-odonto-surface:focus-visible {
+  opacity: .85 !important;
+  outline: 1px solid #1b93ff !important;
+  outline-offset: 0 !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-odonto-surface.is-active {
+  opacity: .8 !important;
+  outline: 1px solid #168fff !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-odonto-tooth.is-selected {
+  border-color: #168fff !important;
+  background: rgba(28,140,255,.09) !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-odonto-tooth.is-selected .ct-real-tooth-body {
+  fill: #a5d6ff;
+  stroke: #168fff;
+}
+
+/* Compact spacing between upper and lower rows */
+.ct-pv5-dialog .ct-patient-treatment
+.ct-clinical-arches {
+  gap: 12px !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-clinical-arches > div {
+  max-width: 540px !important;
+  margin-inline: auto !important;
+}
+
+/* Ensure history is hidden until a tooth is selected */
+.ct-pv5-dialog .ct-patient-treatment
+.specialty-history[hidden] {
+  display: none !important;
+}
+
+/* Narrow screens still keep the FDI order */
+@media (max-width: 620px) {
+  .ct-pv5-dialog .ct-patient-treatment
+  .ct-clinical-arches .specialty-tooth-grid {
+    gap: 1px !important;
+  }
+
+  .ct-pv5-dialog .ct-patient-treatment
+  .ct-real-tooth {
+    height: 35px !important;
+    flex-basis: 35px;
+  }
+
+  .ct-pv5-dialog .ct-patient-treatment
+  .ct-odonto-tooth {
+    height: 57px !important;
+    min-height: 57px !important;
+  }
+
+  .ct-pv5-dialog .ct-patient-treatment
+  .ct-odonto-surfaces {
+    height: 35px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-pv5-dialog .ct-patient-treatment
+  .ct-odonto-surface {
+    transition: none !important;
+  }
+}
+
+
+/* CT_CLIENT_TOOTH_VISUAL_V2_START */
+
+/* Compact, reference-style dental arches */
+.ct-pv5-dialog .ct-patient-treatment
+.ct-clinical-arches {
+  gap: 15px !important;
+  margin: 10px auto !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-clinical-arches > div {
+  width: min(100%, 570px) !important;
+  max-width: 570px !important;
+  margin-inline: auto !important;
+}
+
+/* Each FDI tooth gets its own space */
+.ct-pv5-dialog .ct-patient-treatment
+.ct-clinical-arches .specialty-tooth-grid {
+  display: grid !important;
+  grid-template-columns: repeat(16, minmax(0, 1fr)) !important;
+  gap: 3px !important;
+  width: 100% !important;
+  max-width: 570px !important;
+  padding: 5px 0 !important;
+  overflow: visible !important;
+}
+
+/* Primary arches have 10 teeth */
+.ct-pv5-dialog .ct-patient-treatment
+.specialty-tooth-grid:not(:has(> :nth-child(11))) {
+  grid-template-columns: repeat(10, minmax(0, 32px)) !important;
+  justify-content: center !important;
+}
+
+/* No rectangular-looking borders around individual teeth */
+.ct-pv5-dialog .ct-patient-treatment
+.ct-odonto-tooth {
+  width: 100% !important;
+  height: 66px !important;
+  min-height: 66px !important;
+  padding: 2px 0 !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  border-radius: 7px !important;
+  overflow: visible !important;
+}
+
+/* Realistic ivory enamel */
+.ct-pv5-dialog .ct-patient-treatment
+.ct-real-tooth-body {
+  fill: #eef6ff !important;
+  stroke: #c2d8eb !important;
+  stroke-width: .75px !important;
+  stroke-linejoin: round !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-real-tooth {
+  width: min(100%, 30px) !important;
+  max-width: 30px !important;
+  height: 44px !important;
+  flex-basis: 44px !important;
+  filter:
+    drop-shadow(0 1px 1px rgba(3,14,29,.25)) !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-real-tooth-shine {
+  stroke: rgba(255,255,255,.72) !important;
+  stroke-width: 1.5px !important;
+}
+
+/* FDI labels stay above each tooth */
+.ct-pv5-dialog .ct-patient-treatment
+.ct-odonto-number {
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  height: 12px !important;
+  line-height: 12px !important;
+  flex-basis: 12px !important;
+}
+
+/* Surface controls remain available for clinical charting */
+.ct-pv5-dialog .ct-patient-treatment
+.ct-odonto-surfaces {
+  top: 18px !important;
+  height: 43px !important;
+}
+
+/* Selected tooth */
+.ct-pv5-dialog .ct-patient-treatment
+.ct-odonto-tooth.is-selected {
+  border-color: #288eff !important;
+  background: rgba(40,142,255,.10) !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-odonto-tooth.is-selected .ct-real-tooth-body {
+  fill: #c5e7ff !important;
+  stroke: #3797ff !important;
+}
+
+/* Recorded surface findings retain their API-driven colours */
+.ct-pv5-dialog .ct-patient-treatment
+.ct-odonto-surface {
+  border-radius: 5px !important;
+  opacity: .60 !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-odonto-surface:hover,
+.ct-pv5-dialog .ct-patient-treatment
+.ct-odonto-surface:focus-visible {
+  opacity: .88 !important;
+}
+
+/* Small, subtle clinical guide */
+.ct-pv5-dialog .ct-patient-treatment
+.ct-chart-guide {
+  width: fit-content !important;
+  max-width: 100% !important;
+  margin: 6px auto 13px !important;
+  padding: 7px 10px !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-chart-guide > p {
+  display: none !important;
+}
+
+/* No oversized gap underneath */
+.ct-pv5-dialog .ct-patient-treatment
+.specialty-history {
+  margin-top: 8px !important;
+}
+
+/* Hide tooth-specific content until selection */
+.ct-pv5-dialog .ct-patient-treatment
+.specialty-history[hidden] {
+  display: none !important;
+}
+
+@media(max-width: 600px) {
+  .ct-pv5-dialog .ct-patient-treatment
+  .ct-clinical-arches .specialty-tooth-grid {
+    gap: 1px !important;
+  }
+
+  .ct-pv5-dialog .ct-patient-treatment
+  .ct-real-tooth {
+    height: 35px !important;
+    flex-basis: 35px !important;
+  }
+
+  .ct-pv5-dialog .ct-patient-treatment
+  .ct-odonto-tooth {
+    height: 57px !important;
+    min-height: 57px !important;
+  }
+
+  .ct-pv5-dialog .ct-patient-treatment
+  .ct-odonto-surfaces {
+    height: 35px !important;
+  }
+}
+
+/* CT_CLIENT_TOOTH_VISUAL_V2_END */
+
+
+/* CT_TREATMENT_POPUP_V5_START */
+
+/* 1. SMALL patient pop-up while displaying Treatment choices */
+.ct-pv5-dialog:has(.ct-patient-treatment .ct-pt-menu) {
+  width: min(660px, calc(100vw - 24px)) !important;
+  height: min(425px, calc(100dvh - 24px)) !important;
+  max-height: calc(100dvh - 24px) !important;
+  min-width: 0 !important;
+  padding: 12px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  transition:
+    width .2s ease,
+    height .2s ease;
+}
+
+/* Keep the menu centred in the small pop-up */
+.ct-pv5-dialog .ct-patient-treatment:has(.ct-pt-menu) {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 5px 0 !important;
+  box-sizing: border-box;
+}
+
+.ct-pv5-dialog .ct-patient-treatment .ct-pt-heading {
+  max-width: 500px;
+  margin: 0 auto 12px !important;
+  padding: 0 0 9px 10px !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment .ct-pt-heading h2 {
+  font-size: 13px !important;
+  margin: 0 0 3px !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment .ct-pt-heading p {
+  font-size: 10px !important;
+}
+
+/* 2. Six small, neat buttons in two columns */
+.ct-pv5-dialog .ct-patient-treatment .ct-pt-menu {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  width: min(100%, 500px) !important;
+  max-width: 500px !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  align-items: stretch !important;
+}
+
+/* Override the earlier tall card styling */
+.ct-pv5-dialog .ct-patient-treatment
+.ct-pt-menu > button.ct-pt-option {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 9px !important;
+
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 45px !important;
+  min-height: 45px !important;
+  max-height: 45px !important;
+
+  padding: 7px 9px !important;
+  margin: 0 !important;
+
+  border-radius: 9px !important;
+  border: 1px solid color-mix(
+    in srgb, currentColor 17%, transparent
+  ) !important;
+
+  background:
+    linear-gradient(
+      115deg,
+      color-mix(
+        in srgb,
+        var(--card-accent, #4895ec) 9%,
+        transparent
+      ),
+      transparent 88%
+    ),
+    color-mix(in srgb, currentColor 4%, transparent) !important;
+
+  color: inherit !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  text-align: left !important;
+  cursor: pointer;
+
+  transition:
+    border-color .16s ease,
+    background .16s ease,
+    transform .16s ease,
+    box-shadow .16s ease !important;
+}
+
+/* Small icon on the left */
+.ct-pv5-dialog .ct-patient-treatment
+.ct-pt-menu > .ct-pt-option::before {
+  display: grid !important;
+  place-items: center !important;
+  width: 27px !important;
+  height: 27px !important;
+  min-width: 27px !important;
+  min-height: 27px !important;
+  flex: 0 0 27px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 7px !important;
+  font-size: 15px !important;
+  line-height: 1 !important;
+}
+
+/* Small section label */
+.ct-pv5-dialog .ct-patient-treatment
+.ct-pt-menu > .ct-pt-option strong {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+}
+
+/* Keep descriptions out of this compact button layout */
+.ct-pv5-dialog .ct-patient-treatment
+.ct-pt-menu > .ct-pt-option span:nth-of-type(1) {
+  display: none !important;
+}
+
+/* Arrow on the right */
+.ct-pv5-dialog .ct-patient-treatment
+.ct-pt-menu > .ct-pt-option span:last-child {
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  align-items: center !important;
+  justify-content: center !important;
+  align-self: center !important;
+  margin: 0 0 0 auto !important;
+  padding: 0 !important;
+  color: var(--card-accent, #4895ec) !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  opacity: 1 !important;
+}
+
+.ct-pv5-dialog .ct-patient-treatment
+.ct-pt-menu > .ct-pt-option:hover {
+  transform: translateY(-1px) !important;
+  border-color: var(--card-accent, #4895ec) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,.1) !important;
+}
+
+/* 3. Expand the SAME patient pop-up when a section is opened */
+.ct-pv5-dialog:has(.ct-patient-treatment .ct-pt-back) {
+  width: min(940px, calc(100vw - 24px)) !important;
+  height: min(635px, calc(100dvh - 24px)) !important;
+  max-height: calc(100dvh - 24px) !important;
+  min-width: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+/* The current patient header remains visible */
+.ct-pv5-dialog:has(.ct-pt-back)
+.ct-patient-detail-header {
+  margin-bottom: 10px !important;
+}
+
+/* When focused on one clinical section, hide outer navigation */
+.ct-pv5-dialog:has(.ct-pt-back) .ct-patient-tabs {
+  display: none !important;
+}
+
+/* Hide the chart component's own redundant section choices */
+.ct-pv5-dialog .ct-patient-treatment:has(.ct-pt-back)
+.ct-recovered-tabs {
+  display: none !important;
+}
+
+/* Location indicator: Patients / Treatment / Dental Chart */
+.ct-patient-treatment .ct-pt-breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 100%;
+  margin: 0 0 12px 9px;
+  padding: 5px 9px;
+  border: 1px solid color-mix(
+    in srgb, currentColor 13%, transparent
+  );
+  border-radius: 7px;
+  background: color-mix(
+    in srgb, currentColor 4%, transparent
+  );
+  color: inherit;
+  font-size: 10px;
+  vertical-align: middle;
+}
+
+.ct-patient-treatment .ct-pt-breadcrumb span {
+  opacity: .65;
+}
+
+.ct-patient-treatment .ct-pt-breadcrumb strong {
+  color: inherit;
+  font-size: 10px;
+  font-weight: 750;
+  opacity: 1;
+}
+
+/* Compact Back to Treatment */
+.ct-patient-treatment .ct-pt-back {
+  display: inline-flex !important;
+  align-items: center;
+  min-height: 29px !important;
+  margin: 0 0 12px !important;
+  padding: 5px 10px !important;
+  border-radius: 7px !important;
+  font-size: 10px !important;
+}
+
+/* Mobile layout */
+@media (max-width: 590px) {
+  .ct-pv5-dialog:has(.ct-patient-treatment .ct-pt-menu) {
+    width: calc(100vw - 16px) !important;
+    height: min(425px, calc(100dvh - 16px)) !important;
+  }
+
+  .ct-pv5-dialog:has(.ct-patient-treatment .ct-pt-back) {
+    width: calc(100vw - 16px) !important;
+    height: calc(100dvh - 16px) !important;
+  }
+
+  .ct-pv5-dialog .ct-patient-treatment .ct-pt-menu {
+    grid-template-columns: 1fr !important;
+    max-width: 340px !important;
+  }
+
+  .ct-pv5-dialog:has(.ct-patient-treatment .ct-pt-menu) {
+    height: min(530px, calc(100dvh - 16px)) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-pv5-dialog:has(.ct-patient-treatment) {
+    transition: none !important;
+  }
+
+  .ct-pv5-dialog .ct-patient-treatment .ct-pt-option {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* CT_TREATMENT_POPUP_V5_END */
+
+
+
+/* CT_FLOATING_TREATMENT_CHOOSER_V6 */
+
+/*
+ * The patient record remains the main pop-up.
+ * Treatment choices open in a second, smaller floating dialog.
+ */
+
+.ct-pv5-dialog:has(.ct-pt-chooser-backdrop) {
+  width: min(790px, calc(100vw - 24px)) !important;
+  height: min(565px, calc(100dvh - 24px)) !important;
+  max-height: calc(100dvh - 24px) !important;
+}
+
+/* Separate darkened layer over the patient record */
+.ct-pv5-dialog .ct-pt-chooser-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 6000 !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  padding: 16px !important;
+  box-sizing: border-box !important;
+
+  background: rgba(3, 12, 27, .66) !important;
+  backdrop-filter: blur(3px);
+}
+
+/* Actual small Treatment window */
+.ct-pv5-dialog .ct-pt-chooser-dialog {
+  position: relative !important;
+  display: block !important;
+
+  width: min(475px, 100%) !important;
+  max-width: 475px !important;
+  height: auto !important;
+  max-height: calc(100dvh - 32px) !important;
+
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+
+  margin: 0 !important;
+  padding: 18px !important;
+  box-sizing: border-box !important;
+
+  border: 1px solid var(
+    --border-color,
+    color-mix(in srgb, currentColor 22%, transparent)
+  ) !important;
+
+  border-radius: 13px !important;
+
+  background: var(
+    --surface,
+    var(--card-bg, #ffffff)
+  ) !important;
+
+  color: var(--text-primary, inherit) !important;
+
+  box-shadow: 0 25px 70px rgba(0, 0, 0, .36) !important;
+
+  animation: ct-pt-chooser-appear .2s ease both;
+}
+
+/* Use the app's existing dark-theme mechanism */
+:is(.dark, .theme-dark, [data-theme="dark"])
+.ct-pv5-dialog .ct-pt-chooser-dialog {
+  background: var(--surface, #19283a) !important;
+  color: var(--text-primary, #f1f6fc) !important;
+}
+
+/* Compact heading */
+.ct-pv5-dialog .ct-pt-chooser-dialog .ct-pt-heading {
+  width: 100% !important;
+  max-width: 100% !important;
+
+  margin: 0 0 13px !important;
+  padding: 0 30px 10px 10px !important;
+
+  box-sizing: border-box !important;
+}
+
+.ct-pv5-dialog .ct-pt-chooser-dialog .ct-pt-heading h2 {
+  margin: 0 0 3px !important;
+  font-size: 15px !important;
+  line-height: 1.25 !important;
+}
+
+.ct-pv5-dialog .ct-pt-chooser-dialog .ct-pt-heading p {
+  margin: 0 !important;
+  font-size: 10px !important;
+  opacity: .75;
+}
+
+/* Small close control */
+.ct-pv5-dialog .ct-pt-chooser-close {
+  position: absolute !important;
+  top: 12px !important;
+  right: 12px !important;
+
+  display: grid !important;
+  place-items: center !important;
+
+  width: 27px !important;
+  height: 27px !important;
+  min-width: 27px !important;
+  min-height: 27px !important;
+
+  padding: 0 !important;
+
+  border: 1px solid color-mix(
+    in srgb, currentColor 20%, transparent
+  ) !important;
+
+  border-radius: 7px !important;
+
+  background: color-mix(
+    in srgb, currentColor 6%, transparent
+  ) !important;
+
+  color: inherit !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+  cursor: pointer;
+}
+
+/* Six compact buttons in the second pop-up */
+.ct-pv5-dialog .ct-pt-chooser-dialog .ct-pt-menu {
+  display: grid !important;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr)) !important;
+
+  gap: 8px !important;
+
+  width: 100% !important;
+  max-width: 100% !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.ct-pv5-dialog
+.ct-pt-chooser-dialog
+.ct-pt-menu > button.ct-pt-option {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+
+  width: 100% !important;
+  min-width: 0 !important;
+
+  height: 43px !important;
+  min-height: 43px !important;
+  max-height: 43px !important;
+
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 6px 9px !important;
+
+  border-radius: 8px !important;
+  box-sizing: border-box !important;
+  box-shadow: none !important;
+
+  animation: none !important;
+}
+
+/* Small icon tile */
+.ct-pv5-dialog
+.ct-pt-chooser-dialog
+.ct-pt-option::before {
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px !important;
+  min-height: 26px !important;
+
+  flex: 0 0 26px !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  border-radius: 6px !important;
+  font-size: 14px !important;
+}
+
+/* Button label */
+.ct-pv5-dialog
+.ct-pt-chooser-dialog
+.ct-pt-option strong {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+
+  margin: 0 !important;
+  font-size: 10px !important;
+  line-height: 1.25 !important;
+}
+
+/* Hide the lengthy description */
+.ct-pv5-dialog
+.ct-pt-chooser-dialog
+.ct-pt-option span:nth-of-type(1) {
+  display: none !important;
+}
+
+/* Arrow */
+.ct-pv5-dialog
+.ct-pt-chooser-dialog
+.ct-pt-option span:last-child {
+  display: inline-flex !important;
+
+  align-self: center !important;
+  align-items: center !important;
+
+  flex: 0 0 auto !important;
+
+  margin: 0 0 0 auto !important;
+  padding: 0 !important;
+
+  font-size: 13px !important;
+}
+
+/* Single clinical workspace stays in the main patient pop-up */
+.ct-pv5-dialog:has(.ct-patient-treatment .ct-pt-back) {
+  width: min(940px, calc(100vw - 24px)) !important;
+  height: min(635px, calc(100dvh - 24px)) !important;
+}
+
+/* Hide upper navigation while inside a selected section */
+.ct-pv5-dialog:has(.ct-patient-treatment .ct-pt-back)
+.ct-patient-tabs {
+  display: none !important;
+}
+
+/* Hide the embedded chart's secondary section menu */
+.ct-pv5-dialog
+.ct-patient-treatment:has(.ct-pt-back)
+.ct-recovered-tabs {
+  display: none !important;
+}
+
+/* Responsive */
+@media (max-width: 490px) {
+  .ct-pv5-dialog .ct-pt-chooser-dialog {
+    width: 100% !important;
+    padding: 14px !important;
+  }
+
+  .ct-pv5-dialog .ct-pt-chooser-dialog .ct-pt-menu {
+    grid-template-columns: 1fr !important;
+  }
+
+  .ct-pv5-dialog:has(.ct-pt-chooser-backdrop) {
+    width: calc(100vw - 16px) !important;
+    height: calc(100dvh - 16px) !important;
+  }
+}
+
+@keyframes ct-pt-chooser-appear {
+  from {
+    opacity: 0;
+    transform: translateY(7px) scale(.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-pv5-dialog .ct-pt-chooser-dialog {
+    animation: none !important;
+  }
+}
+
+
+/* CT_TREATMENT_CHOOSER_ACTIONS_V7 */
+
+/* Make every chooser action clickable */
+.ct-pv5-dialog .ct-pt-chooser-dialog {
+  pointer-events: auto !important;
+}
+
+.ct-pv5-dialog .ct-pt-chooser-close {
+  z-index: 10 !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* Back to patient */
+.ct-pv5-dialog .ct-pt-chooser-top-actions {
+  display: flex;
+  align-items: center;
+  margin: 0 36px 10px 0;
+}
+
+.ct-pv5-dialog .ct-pt-chooser-back-button {
+  min-height: 28px !important;
+  padding: 5px 9px !important;
+  border: 1px solid color-mix(
+    in srgb, currentColor 19%, transparent
+  ) !important;
+  border-radius: 7px !important;
+  background: color-mix(
+    in srgb, currentColor 5%, transparent
+  ) !important;
+  color: inherit !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+}
+
+/* Cancel */
+.ct-pv5-dialog .ct-pt-chooser-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 11px;
+  border-top: 1px solid color-mix(
+    in srgb, currentColor 13%, transparent
+  );
+}
+
+.ct-pv5-dialog .ct-pt-cancel-button {
+  min-height: 29px !important;
+  padding: 6px 14px !important;
+  border: 1px solid color-mix(
+    in srgb, currentColor 24%, transparent
+  ) !important;
+  border-radius: 7px !important;
+  background: color-mix(
+    in srgb, currentColor 7%, transparent
+  ) !important;
+  color: inherit !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+  cursor: pointer !important;
+}
+
+.ct-pv5-dialog .ct-pt-cancel-button:hover,
+.ct-pv5-dialog .ct-pt-chooser-back-button:hover {
+  border-color: #589dea !important;
+  background: color-mix(
+    in srgb, #589dea 12%, transparent
+  ) !important;
+}
+
+.ct-pv5-dialog .ct-pt-cancel-button:focus-visible,
+.ct-pv5-dialog .ct-pt-chooser-back-button:focus-visible,
+.ct-pv5-dialog .ct-pt-chooser-close:focus-visible {
+  outline: 2px solid #589dea !important;
+  outline-offset: 2px !important;
+}
+
+
+
+/* CT_TREATMENT_PLAN_MODAL_THEME_V1 */
+
+/*
+  Scoped to the patient Treatment workspace.
+  Do not affect registration dialogs or other application forms.
+*/
+
+/* Modal colours follow the surrounding app theme variables. */
+.ct-patient-treatment .ct-recovered-modal {
+  --ct-clinical-dialog-bg:
+    var(--surface, var(--card-bg, #1b2d44));
+  --ct-clinical-dialog-text:
+    var(--text-primary, var(--reg-text, #f2f7ff));
+  --ct-clinical-dialog-border:
+    var(--border-color, #405770);
+  --ct-clinical-field-bg:
+    var(--input-bg, var(--surface-secondary, #14263d));
+  --ct-clinical-field-text:
+    var(--text-primary, #f2f7ff);
+  --ct-clinical-placeholder:
+    var(--text-secondary, #adbed2);
+}
+
+/* Treatment Plan pop-up surface */
+.ct-patient-treatment .ct-recovered-modal {
+  color: var(--ct-clinical-dialog-text) !important;
+  background: var(--ct-clinical-dialog-bg) !important;
+  border: 1px solid var(--ct-clinical-dialog-border) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 20px 55px rgba(0,0,0,.25);
+}
+
+/* Header and modal descriptions */
+.ct-patient-treatment .ct-recovered-modal
+:is(h1, h2, h3, h4, strong) {
+  color: var(--ct-clinical-dialog-text) !important;
+  opacity: 1 !important;
+}
+
+.ct-patient-treatment .ct-recovered-modal
+:is(p, small) {
+  color: var(--ct-clinical-dialog-text) !important;
+  opacity: .84;
+}
+
+/* Labels must remain clearly readable */
+.ct-patient-treatment .ct-recovered-modal label {
+  color: var(--ct-clinical-dialog-text) !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+  opacity: 1 !important;
+}
+
+/* Input fields */
+.ct-patient-treatment .ct-recovered-modal
+:is(input, textarea, select) {
+  background: var(--ct-clinical-field-bg) !important;
+  color: var(--ct-clinical-field-text) !important;
+
+  border: 1px solid var(--ct-clinical-dialog-border) !important;
+  border-radius: 7px !important;
+
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+
+  opacity: 1 !important;
+  box-sizing: border-box !important;
+}
+
+/* Explicitly fix invisible placeholder text */
+.ct-patient-treatment .ct-recovered-modal
+:is(input, textarea)::placeholder {
+  color: var(--ct-clinical-placeholder) !important;
+  opacity: 1 !important;
+}
+
+/* Accessible keyboard focus */
+.ct-patient-treatment .ct-recovered-modal
+:is(input, textarea, select):focus-visible {
+  border-color: #64a8ff !important;
+  outline: 2px solid rgba(100,168,255,.3) !important;
+  outline-offset: 1px !important;
+}
+
+/* Keep the form compact */
+.ct-patient-treatment .ct-recovered-modal input,
+.ct-patient-treatment .ct-recovered-modal select {
+  min-height: 33px !important;
+  padding: 7px 9px !important;
+}
+
+.ct-patient-treatment .ct-recovered-modal textarea {
+  min-height: 75px !important;
+  padding: 8px 10px !important;
+  resize: vertical;
+}
+
+/* Neutral buttons inherit the theme */
+.ct-patient-treatment .ct-recovered-modal button {
+  border-radius: 7px !important;
+  font-size: 11px !important;
+  cursor: pointer;
+}
+
+/* Preserve the existing primary Save button styling */
+.ct-patient-treatment .ct-recovered-modal
+:is(.primary-button, button[type="submit"]) {
+  background: var(--practice-primary, #267ee7) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+
+/* Modal title and close control */
+.ct-patient-treatment .ct-recovered-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.ct-patient-treatment .ct-recovered-card-head h3 {
+  font-size: 15px !important;
+  font-weight: 750 !important;
+  margin: 0 !important;
+}
+
+/* A consistent light appearance when light mode is explicit */
+:is(.light, .theme-light, [data-theme="light"])
+.ct-patient-treatment .ct-recovered-modal {
+  --ct-clinical-dialog-bg: #ffffff;
+  --ct-clinical-dialog-text: #19314e;
+  --ct-clinical-dialog-border: #ccd8e6;
+  --ct-clinical-field-bg: #f5f8fc;
+  --ct-clinical-field-text: #19314e;
+  --ct-clinical-placeholder: #63788e;
+}
+
+/* Explicit dark mode */
+:is(.dark, .theme-dark, [data-theme="dark"])
+.ct-patient-treatment .ct-recovered-modal {
+  --ct-clinical-dialog-bg: #1b2d44;
+  --ct-clinical-dialog-text: #f2f7ff;
+  --ct-clinical-dialog-border: #405770;
+  --ct-clinical-field-bg: #14263d;
+  --ct-clinical-field-text: #f2f7ff;
+  --ct-clinical-placeholder: #adbed2;
+}
+
+/* Maintain contrast for fields inside the modal */
+.ct-patient-treatment .ct-recovered-modal
+:is(input, textarea, select):disabled {
+  opacity: .55 !important;
+}
+
+/* Keep header proportional inside the patient pop-up */
+.ct-patient-treatment h1 {
+  font-size: 17px !important;
+  line-height: 1.3 !important;
+  margin: 5px 0 9px !important;
+}
+
+/* Prevent huge title spacing */
+.ct-patient-treatment .eyebrow {
+  font-size: 9px !important;
+  letter-spacing: .08em !important;
+}
+
+@media (max-width: 550px) {
+  .ct-patient-treatment .ct-recovered-modal {
+    max-width: calc(100vw - 24px) !important;
+  }
+}
+
+
+
+/* CT_PATIENT_DIRECTORY_V4
+   Compact presentation of the EXISTING patient directory.
+   No patient actions or patient fields are removed.
+*/
+
+.ct-dir4-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 4900;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  box-sizing: border-box;
+  background: rgba(3, 12, 25, .60);
+  backdrop-filter: blur(3px);
+}
+
+.ct-dir4-dialog {
+  --dir-bg: var(--surface, var(--card-bg, #17283e));
+  --dir-panel: var(--surface-secondary, rgba(125,155,195,.09));
+  --dir-text: var(--text-primary, inherit);
+  --dir-line: var(--border-color, rgba(140,170,210,.28));
+
+  position: relative;
+  width: min(600px, 100%) !important;
+  height: min(510px, calc(100dvh - 24px)) !important;
+  min-width: 0 !important;
+  max-width: 600px !important;
+  margin: 0 !important;
+  padding: 15px !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+
+  border: 1px solid var(--dir-line);
+  border-radius: 13px;
+  background: var(--dir-bg);
+  color: var(--dir-text);
+  box-shadow: 0 24px 65px rgba(0,0,0,.28);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Close the Patients pop-up */
+.ct-dir4-dialog .ct-dir4-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0;
+  border: 1px solid var(--dir-line);
+  border-radius: 7px;
+  background: var(--dir-panel);
+  color: inherit;
+  font-size: 19px;
+  cursor: pointer;
+}
+
+/* Smaller heading */
+.ct-dir4-dialog .ct-patient-toolbar {
+  flex: 0 0 auto;
+  padding-right: 30px;
+  margin: 0 0 10px !important;
+}
+
+.ct-dir4-dialog .ct-patient-eyebrow {
+  display: none !important;
+}
+
+.ct-dir4-dialog .ct-patient-toolbar h1 {
+  margin: 0 !important;
+  color: inherit !important;
+  font-size: 16px !important;
+  line-height: 1.3 !important;
+}
+
+.ct-dir4-dialog .ct-patient-toolbar p {
+  margin: 3px 0 0 !important;
+  font-size: 10px !important;
+  color: inherit !important;
+  opacity: .7;
+}
+
+.ct-dir4-dialog .ct-patient-toolbar .primary-button {
+  min-height: 30px !important;
+  padding: 5px 9px !important;
+  font-size: 10px !important;
+}
+
+/* Existing search and refresh remain functional */
+.ct-dir4-dialog .ct-patient-searchrow {
+  flex: 0 0 auto;
+  display: flex !important;
+  align-items: center;
+  gap: 7px !important;
+  margin: 0 0 10px !important;
+}
+
+.ct-dir4-dialog .ct-patient-search {
+  min-width: 0 !important;
+  flex: 1;
+  min-height: 34px !important;
+  border-radius: 8px !important;
+  border-color: var(--dir-line) !important;
+  background: var(--dir-panel) !important;
+}
+
+.ct-dir4-dialog .ct-patient-search input {
+  min-width: 0 !important;
+  background: transparent !important;
+  color: inherit !important;
+  font-size: 11px !important;
+}
+
+.ct-dir4-dialog .ct-patient-search input::placeholder {
+  color: inherit !important;
+  opacity: .6 !important;
+}
+
+.ct-dir4-dialog .ct-patient-searchrow > button {
+  min-height: 34px !important;
+  padding: 6px 10px !important;
+  font-size: 10px !important;
+}
+
+/* Existing cards become one vertical list */
+.ct-dir4-dialog .ct-patient-grid {
+  flex: 1 1 auto;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 6px !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 1px 2px 4px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  scrollbar-width: thin;
+}
+
+/* Compact horizontal avatar rows */
+.ct-dir4-dialog .ct-patient-card {
+  position: relative;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: 4px !important;
+
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 74px !important;
+  height: auto !important;
+
+  margin: 0 !important;
+  padding: 9px 85px 9px 10px !important;
+
+  border: 1px solid var(--dir-line) !important;
+  border-radius: 9px !important;
+  background: var(--dir-panel) !important;
+  color: inherit !important;
+  box-shadow: none !important;
+  text-align: left !important;
+
+  transition:
+    transform .16s ease,
+    border-color .16s ease !important;
+}
+
+.ct-dir4-dialog .ct-patient-card:hover {
+  transform: translateX(2px) !important;
+  border-color: #549cec !important;
+  box-shadow: none !important;
+}
+
+/* Circular avatars and patient names */
+.ct-dir4-dialog .ct-patient-card-title {
+  gap: 10px !important;
+  min-height: 35px;
+}
+
+.ct-dir4-dialog .ct-patient-avatar {
+  flex: 0 0 35px;
+  width: 35px !important;
+  height: 35px !important;
+  min-width: 35px !important;
+  border-radius: 50% !important;
+  font-size: 10px !important;
+}
+
+.ct-dir4-dialog .ct-patient-card-title strong {
+  color: inherit !important;
+  font-size: 12px !important;
+  line-height: 1.3 !important;
+}
+
+.ct-dir4-dialog .ct-patient-card-title small {
+  display: none !important;
+}
+
+/* Age / gender / payment under the name */
+.ct-dir4-dialog .ct-patient-tags {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center;
+  gap: 5px !important;
+  margin: 0 0 0 45px !important;
+}
+
+.ct-dir4-dialog .ct-patient-tags span {
+  padding: 2px 5px !important;
+  font-size: 9px !important;
+  border-radius: 4px !important;
+}
+
+/* Phone remains available */
+.ct-dir4-dialog .ct-patient-contact {
+  margin: 0 0 0 45px !important;
+  font-size: 9px !important;
+  color: inherit !important;
+  opacity: .75;
+}
+
+/* Status remains to the right */
+.ct-dir4-dialog .ct-patient-card-top {
+  position: absolute !important;
+  right: 10px;
+  top: 12px;
+  display: flex !important;
+  align-items: center;
+  gap: 6px !important;
+}
+
+.ct-dir4-dialog .ct-patient-card-top .ct-patient-status {
+  font-size: 9px !important;
+  padding: 4px 7px !important;
+}
+
+.ct-dir4-dialog .ct-patient-card-top > svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Whole row opens patient; redundant action text is hidden */
+.ct-dir4-dialog .ct-patient-open {
+  display: none !important;
+}
+
+.ct-dir4-dialog .ct-patient-limit-note {
+  flex: 0 0 auto;
+  margin: 8px 0 0 !important;
+  font-size: 10px !important;
+  color: inherit !important;
+  opacity: .65;
+}
+
+.ct-dir4-dialog button:focus-visible {
+  outline: 2px solid #63a9f5 !important;
+  outline-offset: 2px !important;
+}
+
+@media(max-width: 500px) {
+  .ct-dir4-dialog {
+    height: min(540px, calc(100dvh - 16px)) !important;
+    padding: 11px !important;
+  }
+
+  .ct-dir4-dialog .ct-patient-toolbar .primary-button {
+    width: auto !important;
+  }
+
+  .ct-dir4-dialog .ct-patient-card {
+    padding-right: 70px !important;
+  }
+
+  .ct-dir4-dialog .ct-patient-tags {
+    margin-left: 0 !important;
+  }
+
+  .ct-dir4-dialog .ct-patient-contact {
+    margin-left: 0 !important;
+  }
+}
+
+@media(prefers-reduced-motion: reduce) {
+  .ct-dir4-dialog .ct-patient-card {
+    transition: none !important;
+  }
+
+  .ct-dir4-dialog .ct-patient-card:hover {
+    transform: none !important;
+  }
+}
+
+
+/* CT_PATIENT_DIRECTORY_SPACIOUS_V5_START */
+
+/* Wider, taller Patients pop-up */
+.ct-dir4-overlay .ct-dir4-dialog {
+  width: min(900px, calc(100vw - 36px)) !important;
+  max-width: 900px !important;
+  height: min(560px, calc(100dvh - 36px)) !important;
+  max-height: calc(100dvh - 36px) !important;
+  padding: 19px 22px !important;
+  border-radius: 15px !important;
+}
+
+/* Patient directory heading */
+.ct-dir4-dialog .ct-patient-toolbar {
+  margin-bottom: 15px !important;
+}
+
+.ct-dir4-dialog .ct-patient-toolbar h1 {
+  font-size: 18px !important;
+}
+
+.ct-dir4-dialog .ct-patient-toolbar p {
+  font-size: 11px !important;
+}
+
+/* Wide, elegant search field */
+.ct-dir4-dialog .ct-patient-searchrow {
+  gap: 10px !important;
+  margin-bottom: 14px !important;
+}
+
+.ct-dir4-dialog .ct-patient-search {
+  min-height: 39px !important;
+  border-radius: 9px !important;
+}
+
+.ct-dir4-dialog .ct-patient-search input {
+  font-size: 12px !important;
+}
+
+.ct-dir4-dialog .ct-patient-searchrow > button {
+  min-height: 39px !important;
+  padding: 7px 13px !important;
+}
+
+/* Comfortable list spacing */
+.ct-dir4-dialog .ct-patient-grid {
+  gap: 9px !important;
+  padding: 2px 5px 5px 0 !important;
+}
+
+/* Keep rows compact instead of returning to big cards */
+.ct-dir4-dialog .ct-patient-card {
+  min-height: 82px !important;
+  padding: 11px 110px 11px 15px !important;
+  border-radius: 10px !important;
+  gap: 5px !important;
+}
+
+/* Slightly larger circular avatars */
+.ct-dir4-dialog .ct-patient-avatar {
+  width: 42px !important;
+  min-width: 42px !important;
+  height: 42px !important;
+  flex-basis: 42px !important;
+  font-size: 12px !important;
+}
+
+/* Patient identity */
+.ct-dir4-dialog .ct-patient-card-title {
+  gap: 13px !important;
+}
+
+.ct-dir4-dialog .ct-patient-card-title strong {
+  font-size: 13px !important;
+}
+
+/* Details line up beneath the patient's name */
+.ct-dir4-dialog .ct-patient-tags {
+  margin-left: 55px !important;
+  gap: 6px !important;
+}
+
+.ct-dir4-dialog .ct-patient-tags span {
+  font-size: 10px !important;
+  padding: 3px 7px !important;
+}
+
+.ct-dir4-dialog .ct-patient-contact {
+  margin-left: 55px !important;
+  font-size: 10px !important;
+}
+
+/* Status neatly positioned on the right */
+.ct-dir4-dialog .ct-patient-card-top {
+  top: 18px !important;
+  right: 16px !important;
+}
+
+.ct-dir4-dialog .ct-patient-card-top .ct-patient-status {
+  font-size: 10px !important;
+  padding: 5px 9px !important;
+}
+
+/* Remove unnecessary horizontal divider within a row */
+.ct-dir4-dialog .ct-patient-card-title {
+  border: 0 !important;
+}
+
+.ct-dir4-dialog .ct-patient-card hr {
+  display: none !important;
+}
+
+/* Bottom record count */
+.ct-dir4-dialog .ct-patient-limit-note {
+  padding-top: 8px;
+  margin-top: 7px !important;
+  font-size: 10px !important;
+}
+
+/* Responsive sizing */
+@media (max-width: 650px) {
+  .ct-dir4-overlay .ct-dir4-dialog {
+    width: calc(100vw - 20px) !important;
+    height: min(580px, calc(100dvh - 20px)) !important;
+    padding: 12px !important;
+  }
+
+  .ct-dir4-dialog .ct-patient-card {
+    padding: 10px 80px 10px 11px !important;
+  }
+
+  .ct-dir4-dialog .ct-patient-tags,
+  .ct-dir4-dialog .ct-patient-contact {
+    margin-left: 0 !important;
+  }
+
+  .ct-dir4-dialog .ct-patient-card-top {
+    top: 12px !important;
+    right: 9px !important;
+  }
+}
+
+/* CT_PATIENT_DIRECTORY_SPACIOUS_V5_END */
+
+
+
+/* CT_DIRECT_QUICK_REGISTRATION_V1 */
+
+/*
+  When the six-step registration wizard is open,
+  hide the old PatientsPage interface behind it.
+  Keep the existing wizard untouched.
+*/
+.ct-reg-v3-overlay {
+  z-index: 7000 !important;
+}
+
+/* Hide only the siblings of the active registration modal. */
+:has(> .ct-reg-v3-overlay) > :not(.ct-reg-v3-overlay) {
+  display: none !important;
+}
+
+
+/* CT_PATIENT_CIRCLES_VISUAL_V3_START */
+
+/* Scoped to the Patients directory, not patient details */
+.ct-dir4-overlay .ct-dir4-dialog {
+  --circle-surface: var(--surface-secondary, #f2f7fd);
+  --circle-text: var(--text-primary, #19334f);
+  --circle-muted: var(--text-secondary, #566e88);
+  --circle-border: #bed2e8;
+  --circle-accent: #358ee9;
+  --circle-avatar: #dbeaff;
+  --circle-chip: #e5effa;
+  --circle-status-bg: #ddf7eb;
+  --circle-status-text: #08734c;
+}
+
+/* Dark theme — keep all patient content legible */
+:is(.dark, .theme-dark, [data-theme="dark"])
+.ct-dir4-dialog,
+.ct-dir4-dialog:is(.dark, .theme-dark, [data-theme="dark"]) {
+  --circle-surface: #20344d;
+  --circle-text: #f3f8ff;
+  --circle-muted: #c0d0e2;
+  --circle-border: #476482;
+  --circle-accent: #72b5ff;
+  --circle-avatar: #34577a;
+  --circle-chip: #304a66;
+  --circle-status-bg: #17483d;
+  --circle-status-text: #8ff0be;
+}
+
+.ct-dir4-dialog .ct-patient-grid {
+  display: grid !important;
+  grid-template-columns: repeat(
+    auto-fill, minmax(190px, 1fr)
+  ) !important;
+  justify-items: center !important;
+  align-content: start !important;
+  align-items: start !important;
+  gap: 18px 12px !important;
+  padding: 10px 8px 16px !important;
+  margin: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+/* Clean circular patient profiles, no black border arc */
+.ct-dir4-dialog .ct-patient-grid > button.ct-patient-card {
+  position: relative !important;
+  isolation: isolate;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: none !important;
+  order: initial !important;
+
+  width: 190px !important;
+  height: 190px !important;
+  min-width: 190px !important;
+  min-height: 190px !important;
+  max-width: 190px !important;
+  max-height: 190px !important;
+  aspect-ratio: 1 !important;
+
+  padding: 12px 13px !important;
+  margin: 0 !important;
+  gap: 7px !important;
+
+  border: 1.5px solid var(--circle-border) !important;
+  border-top: 1.5px solid var(--circle-border) !important;
+  border-radius: 50% !important;
+
+  background:
+    radial-gradient(
+      circle at 50% 10%,
+      color-mix(in srgb, var(--circle-accent) 13%, transparent),
+      transparent 62%
+    ),
+    var(--circle-surface) !important;
+
+  color: var(--circle-text) !important;
+  box-shadow:
+    0 5px 17px rgba(8, 31, 63, .11),
+    inset 0 1px 0 rgba(255,255,255,.12) !important;
+
+  text-align: center !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  cursor: pointer !important;
+
+  transition:
+    transform .18s ease,
+    border-color .18s ease,
+    box-shadow .18s ease !important;
+}
+
+.ct-dir4-dialog .ct-patient-grid > .ct-patient-card:hover {
+  transform: translateY(-3px) !important;
+  border-color: var(--circle-accent) !important;
+  box-shadow:
+    0 10px 24px rgba(8,31,63,.18),
+    0 0 0 2px color-mix(
+      in srgb, var(--circle-accent) 15%, transparent
+    ) !important;
+}
+
+.ct-dir4-dialog .ct-patient-grid > .ct-patient-card:focus-visible {
+  outline: 2px solid var(--circle-accent) !important;
+  outline-offset: 3px !important;
+}
+
+/* Remove old decorative lines from the card */
+.ct-dir4-dialog .ct-patient-card hr,
+.ct-dir4-dialog .ct-patient-card-title::before,
+.ct-dir4-dialog .ct-patient-card-title::after {
+  display: none !important;
+}
+
+/* Status centred above avatar */
+.ct-dir4-dialog .ct-patient-card-top {
+  position: static !important;
+  order: 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.ct-dir4-dialog .ct-patient-card-top > svg {
+  display: none !important;
+}
+
+.ct-dir4-dialog .ct-patient-card-top .ct-patient-status {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 3px 8px !important;
+  border: 0 !important;
+  border-radius: 99px !important;
+  background: var(--circle-status-bg) !important;
+  color: var(--circle-status-text) !important;
+  font-size: 9px !important;
+  font-weight: 750 !important;
+  line-height: 1.1 !important;
+}
+
+/* Patient initials and full name */
+.ct-dir4-dialog .ct-patient-card-title {
+  position: static !important;
+  order: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  gap: 5px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+.ct-dir4-dialog .ct-patient-avatar {
+  display: grid !important;
+  place-items: center !important;
+  flex: 0 0 42px !important;
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  min-height: 42px !important;
+  max-width: 42px !important;
+  max-height: 42px !important;
+
+  border: 1px solid var(--circle-border) !important;
+  border-radius: 50% !important;
+  background: var(--circle-avatar) !important;
+  color: var(--circle-text) !important;
+  box-shadow: none !important;
+
+  font-size: 12px !important;
+  font-weight: 800 !important;
+}
+
+.ct-dir4-dialog .ct-patient-card-title > div:last-child {
+  width: 100% !important;
+  min-width: 0 !important;
+  text-align: center !important;
+}
+
+.ct-dir4-dialog .ct-patient-card-title strong {
+  display: block !important;
+  width: 100% !important;
+  max-width: 159px !important;
+  margin: 0 auto !important;
+
+  color: var(--circle-text) !important;
+  font-size: 11px !important;
+  line-height: 1.25 !important;
+  font-weight: 750 !important;
+
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  text-overflow: clip !important;
+}
+
+.ct-dir4-dialog .ct-patient-card-title small {
+  display: none !important;
+}
+
+/* Readable patient information — no tiny white chips */
+.ct-dir4-dialog .ct-patient-tags {
+  position: static !important;
+  order: 2 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-wrap: wrap !important;
+  gap: 4px !important;
+  width: 100% !important;
+  max-width: 166px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.ct-dir4-dialog .ct-patient-tags span {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  margin: 0 !important;
+  padding: 3px 5px !important;
+  border: 1px solid var(--circle-border) !important;
+  border-radius: 5px !important;
+  background: var(--circle-chip) !important;
+  color: var(--circle-text) !important;
+
+  font-size: 9px !important;
+  line-height: 1.2 !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+}
+
+/* Phone number remains readable and horizontal */
+.ct-dir4-dialog .ct-patient-contact {
+  position: static !important;
+  order: 3 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+
+  width: 100% !important;
+  max-width: 168px !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+
+  color: var(--circle-muted) !important;
+  font-size: 10px !important;
+  line-height: 1.25 !important;
+  opacity: 1 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.ct-dir4-dialog .ct-patient-contact svg {
+  flex: 0 0 12px !important;
+  width: 12px !important;
+  height: 12px !important;
+}
+
+.ct-dir4-dialog .ct-patient-open {
+  display: none !important;
+}
+
+/* Smaller screens retain true circles */
+@media(max-width: 520px) {
+  .ct-dir4-dialog .ct-patient-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px 5px !important;
+    padding: 8px 3px !important;
+  }
+
+  .ct-dir4-dialog .ct-patient-grid > button.ct-patient-card {
+    width: min(170px, 100%) !important;
+    height: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: 170px !important;
+    max-height: none !important;
+    aspect-ratio: 1 !important;
+    padding: 8px 6px !important;
+    gap: 4px !important;
+  }
+
+  .ct-dir4-dialog .ct-patient-avatar {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    flex-basis: 34px !important;
+  }
+
+  .ct-dir4-dialog .ct-patient-tags span {
+    font-size: 8px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-dir4-dialog .ct-patient-card {
+    transition: none !important;
+  }
+
+  .ct-dir4-dialog .ct-patient-card:hover {
+    transform: none !important;
+  }
+}
+
+/* CT_PATIENT_CIRCLES_VISUAL_V3_END */
+
+
+
+/* CT_PATIENT_ACCOUNTS_V1_START */
+
+
+
+
+
+.ct-pa-workspace {
+  --pa-text: var(--text, inherit);
+  --pa-muted: var(--muted, #91a7bf);
+  --pa-surface: var(--surface-soft, transparent);
+  --pa-border: var(--border, rgba(139,169,204,.28));
+  --pa-accent: var(--primary, #4397ec);
+
+  padding: 12px 4px;
+  color: var(--pa-text);
+}
+
+.ct-pa-menu {
+  max-width: 530px;
+  margin: 0 auto;
+}
+
+.ct-pa-heading {
+  margin-bottom: 13px;
+  padding-left: 10px;
+  border-left: 3px solid var(--pa-accent);
+}
+
+.ct-pa-heading h2,
+.ct-pa-detail h2 {
+  margin: 0 0 4px !important;
+  color: var(--pa-text) !important;
+  font-size: 15px !important;
+  font-weight: 750;
+}
+
+.ct-pa-heading p,
+.ct-pa-patient {
+  margin: 0;
+  color: var(--pa-muted);
+  font-size: 10px;
+}
+
+.ct-pa-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ct-pa-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 7px 9px;
+
+  border: 1px solid var(--pa-border);
+  border-radius: 9px;
+  background: var(--pa-surface);
+  color: var(--pa-text);
+  text-align: left;
+  cursor: pointer;
+
+  transition: border-color .16s, transform .16s;
+}
+
+.ct-pa-option:hover {
+  border-color: var(--pa-accent);
+  transform: translateY(-1px);
+}
+
+.ct-pa-option-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 29px;
+  width: 29px;
+  height: 29px;
+  border-radius: 7px;
+  color: var(--pa-accent);
+  background: color-mix(in srgb, var(--pa-accent) 12%, transparent);
+  font-size: 16px;
+}
+
+.ct-pa-option-label {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.ct-pa-option-label strong {
+  color: var(--pa-text) !important;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.ct-pa-option-label small {
+  color: var(--pa-muted);
+  font-size: 9px;
+  line-height: 1.25;
+}
+
+.ct-pa-arrow {
+  color: var(--pa-accent);
+  font-size: 19px;
+}
+
+.ct-pa-back {
+  padding: 6px 10px;
+  margin-bottom: 12px;
+  border: 1px solid var(--pa-border);
+  border-radius: 7px;
+  background: var(--pa-surface);
+  color: var(--pa-text);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.ct-pa-path {
+  margin-bottom: 11px;
+  color: var(--pa-muted);
+  font-size: 10px;
+}
+
+.ct-pa-detail {
+  padding: 5px 9px;
+}
+
+.ct-pa-notice {
+  margin-top: 17px;
+  padding: 12px;
+  border: 1px solid var(--pa-border);
+  border-radius: 9px;
+  background: var(--pa-surface);
+  color: var(--pa-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.ct-pa-workspace button:focus-visible {
+  outline: 2px solid var(--pa-accent);
+  outline-offset: 2px;
+}
+
+@media(max-width: 500px) {
+  .ct-pa-options {
+    grid-template-columns: 1fr;
+  }
+
+  
+}
+
+@media(prefers-reduced-motion: reduce) {
+  .ct-pa-option {
+    transition: none;
+  }
+
+  .ct-pa-option:hover {
+    transform: none;
+  }
+}
+
+/* CT_PATIENT_ACCOUNTS_V1_END */
+
+
+/* CT_PATIENT_ACCOUNTS_INVOICES_V2_START */
+
+.ct-pa-v2 {
+  width: 100%;
+  min-width: 0;
+  margin-top: 12px;
+  color: var(--pa-text, var(--text));
+}
+
+.ct-pa-v2-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ct-pa-v2-grid article,
+.ct-pa-v2-invoice,
+.ct-pa-v2-message {
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid var(--pa-border, var(--border));
+  border-radius: 9px;
+  background: var(--pa-surface, var(--surface-soft));
+  color: var(--pa-text, var(--text));
+}
+
+.ct-pa-v2-grid article {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.ct-pa-v2-grid article span {
+  color: var(--pa-muted, var(--muted));
+  font-size: 10px;
+}
+
+.ct-pa-v2-grid article strong {
+  color: var(--pa-text, var(--text));
+  font-size: 16px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.ct-pa-v2-note {
+  margin: 10px 0 0;
+  color: var(--pa-muted, var(--muted));
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.ct-pa-v2-invoices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 235px;
+  overflow-y: auto;
+}
+
+.ct-pa-v2-invoice {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ct-pa-v2-invoice > strong {
+  font-size: 12px;
+  color: var(--pa-text, var(--text));
+}
+
+.ct-pa-v2-invoice > div {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px 14px;
+  font-size: 10px;
+  color: var(--pa-muted, var(--muted));
+}
+
+.ct-pa-v2-invoice > div strong {
+  color: var(--pa-text, var(--text));
+}
+
+.ct-pa-v2-message {
+  margin-top: 12px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.ct-pa-v2-message button {
+  margin-top: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--pa-border, var(--border));
+  border-radius: 7px;
+  background: var(--pa-surface, var(--surface-soft));
+  color: inherit;
+  cursor: pointer;
+}
+
+@media (max-width: 490px) {
+  .ct-pa-v2-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* CT_PATIENT_ACCOUNTS_INVOICES_V2_END */
+
+
+/* CT_PATIENT_ACCOUNTS_PAYMENTS_V3_START */
+
+.ct-pa-v3 {
+  margin-top: 12px;
+  width: 100%;
+  min-width: 0;
+  color: var(--pa-text, var(--text));
+}
+
+.ct-pa-v3-totals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ct-pa-v3-totals > div,
+.ct-pa-v3-entry,
+.ct-pa-v3-message {
+  padding: 10px 11px;
+  min-width: 0;
+  background: var(--pa-surface, var(--surface-soft));
+  color: var(--pa-text, var(--text));
+  border: 1px solid var(--pa-border, var(--border));
+  border-radius: 9px;
+}
+
+.ct-pa-v3-totals > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ct-pa-v3-totals span {
+  font-size: 10px;
+  color: var(--pa-muted, var(--muted));
+}
+
+.ct-pa-v3-totals strong {
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.ct-pa-v3-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  max-height: 230px;
+  overflow-y: auto;
+}
+
+.ct-pa-v3-entry-head,
+.ct-pa-v3-entry-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+}
+
+.ct-pa-v3-entry-head strong {
+  font-size: 11px;
+  color: var(--pa-text, var(--text));
+}
+
+.ct-pa-v3-entry-head span,
+.ct-pa-v3-entry-meta {
+  font-size: 10px;
+  color: var(--pa-muted, var(--muted));
+}
+
+.ct-pa-v3-entry-meta {
+  margin-top: 7px;
+}
+
+.ct-pa-v3-entry-meta strong {
+  color: var(--pa-text, var(--text));
+}
+
+.ct-pa-v3-message {
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.ct-pa-v3-message button {
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 7px;
+  border: 1px solid var(--pa-border, var(--border));
+  background: var(--pa-surface, var(--surface-soft));
+  color: inherit;
+  cursor: pointer;
+}
+
+.ct-pa-v3-footnote {
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--pa-muted, var(--muted));
+  margin: 10px 0 0;
+}
+
+@media (max-width: 490px) {
+  .ct-pa-v3-totals {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* CT_PATIENT_ACCOUNTS_PAYMENTS_V3_END */
+
+
+/* CT_PATIENT_ACCOUNTS_LAYOUT_V4_START */
+
+/*
+  Patient Accounts:
+  All Transactions is the default content.
+  Compact buttons replace the large Accounts menu.
+  The existing patient modal dimensions are preserved.
+*/
+
+.ct-pa-v4-workspace {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 10px 4px !important;
+}
+
+.ct-pa-v4-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+}
+
+.ct-pa-v4-header h2 {
+  margin: 0 0 4px !important;
+  font-size: 15px !important;
+  font-weight: 750;
+  color: var(--text) !important;
+}
+
+.ct-pa-v4-header p {
+  margin: 0;
+  font-size: 10px !important;
+  line-height: 1.45;
+  color: var(--muted) !important;
+}
+
+.ct-pa-v4-navigation {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  padding: 0 0 11px;
+  margin-bottom: 10px;
+
+  border-bottom: 1px solid var(--border);
+}
+
+.ct-pa-v4-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 30px;
+  padding: 6px 10px;
+
+  border: 1px solid var(--border);
+  border-radius: 7px;
+
+  background: var(--surface-soft);
+  color: var(--text);
+
+  font: inherit;
+  font-size: 10px !important;
+  font-weight: 650;
+
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+
+.ct-pa-v4-tab:hover {
+  border-color: var(--primary);
+  background: color-mix(
+    in srgb,
+    var(--primary) 10%,
+    var(--surface-soft)
+  );
+}
+
+.ct-pa-v4-tab.active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #ffffff !important;
+}
+
+.ct-pa-v4-tab:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.ct-pa-v4-content {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+
+  box-sizing: border-box;
+}
+
+.ct-pa-v4-content .ct-pa-v3,
+.ct-pa-v4-content .ct-pa-v2 {
+  margin-top: 0 !important;
+}
+
+.ct-pa-v4-pending {
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+
+  background: var(--surface-soft);
+  color: var(--muted);
+
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+@media (max-width: 600px) {
+  .ct-pa-v4-navigation {
+    gap: 5px;
+  }
+
+  .ct-pa-v4-tab {
+    min-height: 28px;
+    padding: 5px 8px;
+    font-size: 9px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-pa-v4-tab {
+    transition: none;
+  }
+}
+
+/* CT_PATIENT_ACCOUNTS_LAYOUT_V4_END */
+
+
+
+/* CT_PATIENT_TRANSACTIONS_DESIGN_V5_START */
+
+/*
+  Patient Accounts — polished transaction history
+  CSS only. No financial operations or API changes.
+*/
+
+/* TRANSACTION CONTENT AREA */
+
+.ct-pa-v4-content .ct-pa-v3 {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin-top: 0 !important;
+}
+
+/* TRANSACTION LIST */
+
+.ct-pa-v4-content .ct-pa-v3-list {
+  display: flex !important;
+  flex-direction: column;
+  gap: 9px !important;
+
+  width: 100%;
+  min-width: 0;
+
+  max-height: 340px !important;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding: 2px 3px 5px 0;
+  box-sizing: border-box;
+}
+
+/* INDIVIDUAL TRANSACTION ROW */
+
+.ct-pa-v4-content .ct-pa-v3-entry {
+  position: relative;
+
+  display: flex !important;
+  flex-direction: column;
+  gap: 9px !important;
+
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+
+  margin: 0 !important;
+  padding: 12px 15px !important;
+
+  border: 1px solid
+    var(--pa-border, var(--border)) !important;
+
+  border-left: 3px solid
+    var(--pa-accent, var(--primary)) !important;
+
+  border-radius: 10px !important;
+
+  background:
+    color-mix(
+      in srgb,
+      var(--pa-accent, var(--primary)) 4%,
+      var(--pa-surface, var(--surface-soft))
+    ) !important;
+
+  color: var(--pa-text, var(--text)) !important;
+
+  box-shadow: 0 2px 7px rgba(0, 0, 0, .035);
+
+  transition:
+    border-color .15s ease,
+    background .15s ease;
+}
+
+.ct-pa-v4-content .ct-pa-v3-entry:hover {
+  border-color:
+    color-mix(
+      in srgb,
+      var(--pa-accent, var(--primary)) 50%,
+      var(--pa-border, var(--border))
+    ) !important;
+}
+
+/* RECEIPT NUMBER + TYPE BADGE */
+
+.ct-pa-v4-content .ct-pa-v3-entry-head {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.ct-pa-v4-content .ct-pa-v3-entry-head > strong {
+  color: var(--pa-text, var(--text)) !important;
+  font-size: 12px !important;
+  font-weight: 750 !important;
+  line-height: 1.4 !important;
+  letter-spacing: .1px;
+
+  overflow-wrap: anywhere;
+}
+
+.ct-pa-v4-content .ct-pa-v3-entry-head > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 4px 9px !important;
+  min-height: 22px;
+
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--pa-accent, var(--primary)) 32%,
+      transparent
+    );
+
+  border-radius: 20px;
+
+  background:
+    color-mix(
+      in srgb,
+      var(--pa-accent, var(--primary)) 12%,
+      transparent
+    );
+
+  color: var(--pa-accent, var(--primary)) !important;
+
+  font-size: 10px !important;
+  line-height: 1.2 !important;
+  font-weight: 700 !important;
+  white-space: nowrap;
+}
+
+/* DATE, PAYMENT METHOD AND AMOUNT */
+
+.ct-pa-v4-content .ct-pa-v3-entry-meta {
+  display: grid !important;
+  grid-template-columns:
+    minmax(0, 1.3fr)
+    minmax(0, .8fr)
+    minmax(100px, .9fr);
+
+  align-items: center;
+  gap: 8px 12px !important;
+
+  width: 100%;
+  min-width: 0;
+
+  padding-top: 9px;
+  margin-top: 0 !important;
+
+  border-top: 1px solid
+    var(--pa-border, var(--border));
+
+  color: var(--pa-muted, var(--muted)) !important;
+}
+
+.ct-pa-v4-content .ct-pa-v3-entry-meta > span {
+  min-width: 0;
+  color: var(--pa-muted, var(--muted)) !important;
+
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+}
+
+.ct-pa-v4-content .ct-pa-v3-entry-meta > span:nth-child(2) {
+  justify-self: start;
+
+  padding: 4px 9px;
+  border: 1px solid var(--pa-border, var(--border));
+  border-radius: 6px;
+
+  background: var(--pa-surface, var(--surface-soft));
+
+  color: var(--pa-text, var(--text)) !important;
+  font-weight: 650;
+  text-align: center;
+}
+
+/* Transaction amount — highly readable */
+.ct-pa-v4-content .ct-pa-v3-entry-meta > strong {
+  justify-self: end;
+
+  color: var(--pa-text, var(--text)) !important;
+  font-size: 15px !important;
+  line-height: 1.3 !important;
+  font-weight: 800 !important;
+
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* PAYMENT TOTALS */
+
+.ct-pa-v4-content .ct-pa-v3-totals {
+  gap: 9px !important;
+  margin-bottom: 12px !important;
+}
+
+.ct-pa-v4-content .ct-pa-v3-totals > div {
+  padding: 12px 14px !important;
+
+  border-radius: 9px !important;
+  background: var(--pa-surface, var(--surface-soft)) !important;
+  border-color: var(--pa-border, var(--border)) !important;
+}
+
+.ct-pa-v4-content .ct-pa-v3-totals strong {
+  color: var(--pa-text, var(--text)) !important;
+  font-size: 18px !important;
+  font-weight: 800;
+}
+
+/* READ-ONLY INFORMATION */
+
+.ct-pa-v4-content .ct-pa-v3-footnote {
+  margin: 13px 0 0 !important;
+  padding: 9px 11px;
+
+  border: 1px solid var(--pa-border, var(--border));
+  border-radius: 8px;
+
+  background: var(--pa-surface, var(--surface-soft));
+  color: var(--pa-muted, var(--muted)) !important;
+
+  font-size: 10px !important;
+  line-height: 1.6 !important;
+}
+
+/* SMALL SCREENS */
+
+@media (max-width: 600px) {
+  .ct-pa-v4-content .ct-pa-v3-entry {
+    padding: 10px 11px !important;
+  }
+
+  .ct-pa-v4-content .ct-pa-v3-entry-meta {
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(0, 1fr);
+  }
+
+  .ct-pa-v4-content .ct-pa-v3-entry-meta > strong {
+    grid-column: 1 / -1;
+    justify-self: start;
+    font-size: 15px !important;
+  }
+
+  .ct-pa-v4-content .ct-pa-v3-entry-head > strong {
+    font-size: 11px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-pa-v4-content .ct-pa-v3-entry {
+    transition: none !important;
+  }
+}
+
+/* CT_PATIENT_TRANSACTIONS_DESIGN_V5_END */
+
+
+
+/* CT_PATIENT_ACCOUNTS_EXPANDABLE_V6_START */
+
+/*
+  Compact expandable Accounts navigation.
+  Reuses the application's theme variables.
+  Does not change patient modal dimensions.
+*/
+
+.ct-pa-v6-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  position: relative;
+  z-index: 10;
+
+  min-height: 36px;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+
+  border-bottom: 1px solid var(--border);
+}
+
+.ct-pa-v6-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+/* Only one visible button */
+.ct-pa-v6-trigger {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  min-height: 32px !important;
+  padding: 6px 12px !important;
+
+  border: 1px solid var(--primary) !important;
+  border-radius: 8px !important;
+
+  background: var(--primary) !important;
+  color: #ffffff !important;
+
+  font-size: 11px !important;
+  font-weight: 700 !important;
+
+  box-shadow: none !important;
+  cursor: pointer;
+}
+
+.ct-pa-v6-chevron {
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.ct-pa-v6-trigger:hover {
+  filter: brightness(1.06);
+}
+
+/* Current section indicator */
+.ct-pa-v6-current {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 5px 9px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+
+  background: var(--surface-soft);
+  color: var(--muted);
+
+  font-size: 10px;
+  font-weight: 650;
+}
+
+/* Floating small dropdown */
+.ct-pa-v6-menu {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  width: 220px;
+  max-width: calc(100vw - 45px);
+
+  padding: 8px;
+
+  background: var(--surface) !important;
+  color: var(--text) !important;
+
+  border: 1px solid var(--border) !important;
+  border-radius: 11px !important;
+
+  box-shadow: 0 16px 36px rgba(0, 0, 0, .22) !important;
+
+  z-index: 100;
+}
+
+/* Dropdown title */
+.ct-pa-v6-menu-heading {
+  padding: 5px 8px 8px;
+
+  color: var(--muted) !important;
+  border-bottom: 1px solid var(--border);
+
+  font-size: 10px;
+  font-weight: 750;
+}
+
+/* Small menu options */
+.ct-pa-v6-menu-item {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+
+  width: 100%;
+  min-height: 31px !important;
+
+  padding: 7px 9px !important;
+
+  background: transparent !important;
+  color: var(--text) !important;
+
+  border: 1px solid transparent !important;
+  border-radius: 7px !important;
+
+  font-size: 11px !important;
+  font-weight: 600 !important;
+
+  text-align: left;
+  cursor: pointer;
+}
+
+.ct-pa-v6-menu-item:hover {
+  background: var(--surface-soft) !important;
+  border-color: var(--border) !important;
+}
+
+.ct-pa-v6-menu-item.active {
+  background:
+    color-mix(
+      in srgb,
+      var(--primary) 12%,
+      var(--surface)
+    ) !important;
+
+  color: var(--text) !important;
+  border-color:
+    color-mix(
+      in srgb,
+      var(--primary) 35%,
+      var(--border)
+    ) !important;
+}
+
+.ct-pa-v6-check {
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.ct-pa-v6-trigger:focus-visible,
+.ct-pa-v6-menu-item:focus-visible {
+  outline: 2px solid var(--primary) !important;
+  outline-offset: 2px;
+}
+
+/* Prevent the dropdown from changing page layout */
+.ct-pa-v6-menu {
+  box-sizing: border-box;
+}
+
+@media (max-width: 500px) {
+  .ct-pa-v6-toolbar {
+    gap: 7px;
+  }
+
+  .ct-pa-v6-trigger {
+    padding: 6px 9px !important;
+    font-size: 10px !important;
+  }
+
+  .ct-pa-v6-current {
+    font-size: 9px;
+  }
+
+  .ct-pa-v6-menu {
+    width: 205px;
+  }
+}
+
+/* CT_PATIENT_ACCOUNTS_EXPANDABLE_V6_END */
+
+
+/* CT_ACCOUNTS_THEME_COMPACT_V8_START */
+
+/* Use the selected Accounts tab's actual colour or gradient. */
+.ct-pa-v4-workspace {
+  --ct-account-colour:
+    var(--ct-account-tab-accent, var(--primary));
+  --ct-account-paint:
+    var(--ct-account-tab-background, var(--primary));
+}
+
+/* ALL ACCOUNTS BUTTON */
+.ct-pa-v4-workspace .ct-pa-v6-trigger {
+  background: var(--ct-account-paint) !important;
+  border-color: var(--ct-account-colour) !important;
+  color: var(--ct-account-tab-foreground, #fff) !important;
+
+  min-height: 29px !important;
+  padding: 5px 10px !important;
+  font-size: 10px !important;
+
+  box-shadow: none !important;
+}
+
+/* DROPDOWN SELECTED ITEM */
+.ct-pa-v4-workspace .ct-pa-v6-menu-item.active {
+  background: color-mix(
+    in srgb,
+    var(--ct-account-colour) 13%,
+    var(--surface)
+  ) !important;
+
+  border-color: color-mix(
+    in srgb,
+    var(--ct-account-colour) 35%,
+    var(--border)
+  ) !important;
+
+  color: var(--text) !important;
+}
+
+.ct-pa-v4-workspace .ct-pa-v6-check {
+  color: var(--ct-account-colour) !important;
+}
+
+/* CURRENT SECTION INDICATOR */
+.ct-pa-v4-workspace .ct-pa-v6-current {
+  background: color-mix(
+    in srgb,
+    var(--ct-account-colour) 7%,
+    var(--surface)
+  ) !important;
+
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+
+  padding: 4px 8px !important;
+  font-size: 10px !important;
+}
+
+/* SMALL TRANSACTION ROWS — NO LARGE CARDS */
+.ct-pa-v4-content .ct-pa-v3-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  max-height: 320px !important;
+  padding: 0 2px 2px 0 !important;
+}
+
+.ct-pa-v4-content .ct-pa-v3-entry {
+  display: flex !important;
+  flex-direction: column !important;
+
+  gap: 4px !important;
+  min-height: 0 !important;
+
+  padding: 8px 11px !important;
+  margin: 0 !important;
+
+  border: 1px solid var(--border) !important;
+  border-left: 3px solid var(--ct-account-colour) !important;
+  border-radius: 7px !important;
+
+  background: color-mix(
+    in srgb,
+    var(--ct-account-colour) 6%,
+    var(--surface)
+  ) !important;
+
+  color: var(--text) !important;
+
+  box-shadow: none !important;
+}
+
+/* ONE COMPACT LINE FOR RECEIPT + BADGE */
+.ct-pa-v4-content .ct-pa-v3-entry-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+
+  gap: 8px !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+}
+
+.ct-pa-v4-content .ct-pa-v3-entry-head > strong {
+  font-size: 11px !important;
+  line-height: 1.25 !important;
+  font-weight: 700 !important;
+  color: var(--text) !important;
+}
+
+.ct-pa-v4-content .ct-pa-v3-entry-head > span {
+  padding: 2px 7px !important;
+  min-height: 0 !important;
+
+  font-size: 9px !important;
+  line-height: 1.3 !important;
+
+  color: var(--ct-account-colour) !important;
+
+  background: color-mix(
+    in srgb,
+    var(--ct-account-colour) 10%,
+    var(--surface)
+  ) !important;
+
+  border: 1px solid color-mix(
+    in srgb,
+    var(--ct-account-colour) 30%,
+    var(--border)
+  ) !important;
+
+  border-radius: 20px !important;
+}
+
+/* DATE | PAYMENT METHOD | AMOUNT — SAME LINE */
+.ct-pa-v4-content .ct-pa-v3-entry-meta {
+  display: grid !important;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(60px, .5fr)
+    auto !important;
+
+  align-items: center !important;
+  gap: 6px 12px !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+
+  border-top: none !important;
+}
+
+.ct-pa-v4-content .ct-pa-v3-entry-meta > span {
+  font-size: 10px !important;
+  line-height: 1.25 !important;
+  color: var(--muted) !important;
+}
+
+.ct-pa-v4-content
+.ct-pa-v3-entry-meta > span:nth-child(2) {
+  justify-self: start;
+  padding: 2px 7px !important;
+
+  background: var(--surface-soft) !important;
+  color: var(--text) !important;
+
+  border: 1px solid var(--border) !important;
+  border-radius: 5px !important;
+
+  font-size: 10px !important;
+}
+
+/* AMOUNT */
+.ct-pa-v4-content .ct-pa-v3-entry-meta > strong {
+  justify-self: end !important;
+  grid-column: auto !important;
+
+  font-size: 12px !important;
+  font-weight: 750 !important;
+  color: var(--text) !important;
+
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* COMPACT FOOTNOTE */
+.ct-pa-v4-content .ct-pa-v3-footnote {
+  margin-top: 9px !important;
+  padding: 6px 9px !important;
+
+  background: var(--surface-soft) !important;
+  color: var(--muted) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 7px !important;
+
+  font-size: 9px !important;
+  line-height: 1.4 !important;
+}
+
+/* FOLLOW THE SAME COLOUR ON FOCUS */
+.ct-pa-v4-workspace button:focus-visible {
+  outline: 2px solid var(--ct-account-colour) !important;
+  outline-offset: 2px;
+}
+
+/* RESPONSIVE WITHOUT OVERSIZED CARDS */
+@media (max-width: 520px) {
+  .ct-pa-v4-content .ct-pa-v3-entry {
+    padding: 7px 9px !important;
+  }
+
+  .ct-pa-v4-content .ct-pa-v3-entry-meta {
+    grid-template-columns:
+      minmax(0, 1fr) auto !important;
+    gap: 5px 8px !important;
+  }
+
+  .ct-pa-v4-content
+  .ct-pa-v3-entry-meta > span:nth-child(2) {
+    grid-column: 1;
+  }
+
+  .ct-pa-v4-content
+  .ct-pa-v3-entry-meta > strong {
+    grid-column: 2 !important;
+    grid-row: 1 / 3;
+    align-self: center;
+  }
+}
+
+/* CT_ACCOUNTS_THEME_COMPACT_V8_END */
+
+
+/* CT_ACCOUNTS_MINIMAL_V9_START */
+
+/*
+  Compact financial rows.
+  Neutral backgrounds, theme accent only.
+  No changes to data or popup dimensions.
+*/
+
+/* ALL ACCOUNTS BUTTON */
+
+.ct-pa-v4-workspace .ct-pa-v6-trigger {
+  background: var(
+    --ct-account-tab-background,
+    var(--primary)
+  ) !important;
+
+  color: #ffffff !important;
+
+  border-color: transparent !important;
+  border-radius: 6px !important;
+
+  min-height: 28px !important;
+  padding: 5px 10px !important;
+
+  font-size: 10px !important;
+  font-weight: 700 !important;
+
+  box-shadow: none !important;
+}
+
+.ct-pa-v4-workspace .ct-pa-v6-trigger * {
+  color: #ffffff !important;
+}
+
+.ct-pa-v4-workspace .ct-pa-v6-current {
+  background: var(--surface-soft) !important;
+  color: var(--muted) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: none !important;
+}
+
+/* NO OVERSIZED CARDS */
+
+.ct-pa-v4-content .ct-pa-v3-list {
+  gap: 5px !important;
+  padding: 0 !important;
+  max-height: 340px !important;
+}
+
+/* ONE ROW CONTAINER */
+
+.ct-pa-v4-content .ct-pa-v3-entry {
+  display: grid !important;
+  grid-template-columns:
+    minmax(0, 1.05fr)
+    minmax(0, 1.1fr) !important;
+
+  align-items: center !important;
+  column-gap: 12px !important;
+  row-gap: 4px !important;
+
+  width: 100% !important;
+  min-height: 0 !important;
+  height: auto !important;
+
+  padding: 7px 10px !important;
+  margin: 0 !important;
+
+  border: 1px solid var(--border) !important;
+  border-left: 2px solid
+    var(--ct-account-colour, var(--primary)) !important;
+
+  border-radius: 6px !important;
+
+  /* Neutral colour, not red or blue */
+  background: var(--surface-soft) !important;
+  background-image: none !important;
+
+  color: var(--text) !important;
+
+  box-shadow: none !important;
+}
+
+/* RECEIPT REFERENCE AND TYPE */
+
+.ct-pa-v4-content .ct-pa-v3-entry-head {
+  display: flex !important;
+  flex-direction: row !important;
+
+  align-items: center !important;
+  justify-content: space-between !important;
+
+  gap: 6px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+
+  border: 0 !important;
+}
+
+.ct-pa-v4-content .ct-pa-v3-entry-head > strong {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+
+  color: var(--text) !important;
+  overflow-wrap: anywhere;
+}
+
+/* Minimal Receipt / Invoice label */
+
+.ct-pa-v4-content .ct-pa-v3-entry-head > span {
+  min-height: 0 !important;
+  padding: 2px 5px !important;
+
+  border: 1px solid var(--border) !important;
+  border-radius: 4px !important;
+
+  background: var(--surface) !important;
+  color: var(--muted) !important;
+
+  font-size: 9px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  white-space: nowrap;
+}
+
+/* DATE | METHOD | AMOUNT */
+
+.ct-pa-v4-content .ct-pa-v3-entry-meta {
+  display: grid !important;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto
+    auto !important;
+
+  align-items: center !important;
+
+  column-gap: 12px !important;
+  row-gap: 3px !important;
+
+  min-width: 0 !important;
+  min-height: 0 !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+
+  border: 0 !important;
+}
+
+.ct-pa-v4-content .ct-pa-v3-entry-meta > span {
+  font-size: 10px !important;
+  line-height: 1.25 !important;
+  color: var(--muted) !important;
+}
+
+/* Payment method: no coloured pill */
+
+.ct-pa-v4-content
+.ct-pa-v3-entry-meta > span:nth-child(2) {
+  grid-column: auto !important;
+  grid-row: auto !important;
+
+  justify-self: center !important;
+
+  padding: 0 !important;
+
+  background: transparent !important;
+  color: var(--muted) !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+
+  font-size: 10px !important;
+  font-weight: 600 !important;
+}
+
+/* Amount stays clearly visible */
+
+.ct-pa-v4-content .ct-pa-v3-entry-meta > strong {
+  grid-column: auto !important;
+  grid-row: auto !important;
+
+  justify-self: end !important;
+
+  color: var(--text) !important;
+
+  font-size: 11px !important;
+  font-weight: 750 !important;
+  line-height: 1.25 !important;
+
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Remove the large footnote card */
+
+.ct-pa-v4-content .ct-pa-v3-footnote {
+  margin: 7px 0 0 !important;
+  padding: 3px 0 !important;
+
+  background: transparent !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+
+  color: var(--muted) !important;
+
+  font-size: 9px !important;
+  line-height: 1.4 !important;
+
+  box-shadow: none !important;
+}
+
+/* Smaller menu heading */
+
+.ct-pa-v4-workspace .ct-pa-v4-header {
+  margin-bottom: 8px !important;
+}
+
+.ct-pa-v4-workspace .ct-pa-v6-toolbar {
+  margin-bottom: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+/* Responsive: two short lines when space is limited */
+
+@media (max-width: 700px) {
+  .ct-pa-v4-content .ct-pa-v3-entry {
+    grid-template-columns: minmax(0, 1fr) !important;
+    row-gap: 5px !important;
+  }
+
+  .ct-pa-v4-content .ct-pa-v3-entry-meta {
+    grid-template-columns: minmax(0, 1fr) auto auto !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .ct-pa-v4-content .ct-pa-v3-entry-meta {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+  }
+
+  .ct-pa-v4-content
+  .ct-pa-v3-entry-meta > span:nth-child(2) {
+    grid-column: 1 !important;
+    justify-self: start !important;
+  }
+
+  .ct-pa-v4-content .ct-pa-v3-entry-meta > strong {
+    grid-column: 2 !important;
+    grid-row: 1 / 3 !important;
+    align-self: center !important;
+  }
+}
+
+/* CT_ACCOUNTS_MINIMAL_V9_END */
+
+
+/* CT_ACCOUNTS_ROW_WIDTH_V10_START */
+
+/* Reduce the actual transaction row width. */
+.ct-pa-v4-content .ct-pa-v3-list {
+  align-items: flex-start !important;
+}
+
+.ct-pa-v4-content .ct-pa-v3-entry {
+  width: 65% !important;
+  max-width: 540px !important;
+  min-width: 0 !important;
+
+  grid-template-columns: minmax(0, 1fr) !important;
+  row-gap: 5px !important;
+}
+
+/* Keep receipt details aligned inside narrow rows. */
+.ct-pa-v4-content .ct-pa-v3-entry-meta {
+  grid-template-columns: minmax(0, 1fr) auto auto !important;
+}
+
+@media (max-width: 650px) {
+  .ct-pa-v4-content .ct-pa-v3-entry {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* CT_ACCOUNTS_ROW_WIDTH_V10_END */
+
+
+/* CT_PATIENT_REMOVE_CIRCLE_BORDERS_V1_START */
+
+/*
+  PATIENT DIRECTORY ONLY
+
+  Remove decorative blue arcs, rings, outlines
+  and borders from patient circles.
+
+  Preserve:
+  - Circular shape
+  - Patient information
+  - Active badges
+  - Avatars
+  - Click functionality
+  - Keyboard focus accessibility
+*/
+
+/* 1. ALL PATIENT CARD CIRCLES */
+
+.ct-patient-grid .ct-patient-card,
+.ct-patient-grid .ct-patient-card:hover,
+.ct-patient-grid .ct-patient-card:active,
+.ct-patient-grid .ct-patient-card:focus {
+  border: 0 !important;
+  border-top: 0 !important;
+  border-bottom: 0 !important;
+
+  outline: none !important;
+
+  background-image: none !important;
+
+  box-shadow:
+    0 5px 14px rgba(0, 0, 0, 0.07) !important;
+
+  border-radius: 50% !important;
+}
+
+/* 2. REMOVE DECORATIVE BORDER ARCS */
+
+.ct-patient-grid .ct-patient-card::before,
+.ct-patient-grid .ct-patient-card::after,
+.ct-patient-grid .ct-patient-card-top::before,
+.ct-patient-grid .ct-patient-card-top::after {
+  content: none !important;
+  display: none !important;
+
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+
+/* 3. REMOVE TOP SECTION OUTLINES */
+
+.ct-patient-grid .ct-patient-card-top {
+  border: 0 !important;
+  outline: none !important;
+
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* 4. REMOVE RINGS AROUND AVATAR CIRCLES */
+
+.ct-patient-grid .ct-patient-avatar {
+  border: 0 !important;
+  outline: none !important;
+
+  background-image: none !important;
+  box-shadow: none !important;
+
+  border-radius: 50% !important;
+}
+
+.ct-patient-grid .ct-patient-avatar::before,
+.ct-patient-grid .ct-patient-avatar::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* 5. REMOVE DECORATIVE INNER CARD BORDERS */
+
+.ct-patient-grid .ct-patient-card-title,
+.ct-patient-grid .ct-patient-card-title > div {
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* 6. KEEP TEXT AND STATUS BADGES */
+
+.ct-patient-grid .ct-patient-card strong,
+.ct-patient-grid .ct-patient-card small,
+.ct-patient-grid .ct-patient-card p,
+.ct-patient-grid .ct-patient-status {
+  opacity: 1;
+}
+
+/* 7. PRESERVE KEYBOARD ACCESSIBILITY */
+
+.ct-patient-grid .ct-patient-card:focus-visible {
+  outline: 2px solid
+    var(--text, currentColor) !important;
+
+  outline-offset: 3px !important;
+}
+
+/* CT_PATIENT_REMOVE_CIRCLE_BORDERS_V1_END */
+
+
+/* CT_PATIENT_CIRCLES_BORDERLESS_V2_START */
+
+/*
+  Exact fix for patient directory circles.
+  Override the original high-specificity card styles.
+*/
+
+/* Remove the entire coloured outline and gradient. */
+.ct-dir4-dialog .ct-patient-grid > button.ct-patient-card,
+.ct-dir4-dialog .ct-patient-grid > button.ct-patient-card:hover,
+.ct-dir4-dialog .ct-patient-grid > button.ct-patient-card:active {
+  border: none !important;
+  border-width: 0 !important;
+  border-top: none !important;
+
+  background: var(--circle-surface, var(--surface)) !important;
+  background-image: none !important;
+
+  border-radius: 50% !important;
+
+  box-shadow: 0 5px 14px rgba(8,31,63,.09) !important;
+}
+
+/* Remove decorative pseudo-elements if present. */
+.ct-dir4-dialog .ct-patient-grid > button.ct-patient-card::before,
+.ct-dir4-dialog .ct-patient-grid > button.ct-patient-card::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* Remove the coloured avatar outline. */
+.ct-dir4-dialog .ct-patient-grid > button.ct-patient-card
+.ct-patient-avatar {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Keep keyboard focus clearly visible for accessibility. */
+.ct-dir4-dialog .ct-patient-grid > button.ct-patient-card:focus-visible {
+  outline: 2px solid var(--text, currentColor) !important;
+  outline-offset: 3px !important;
+}
+
+/* CT_PATIENT_CIRCLES_BORDERLESS_V2_END */

@@ -120,7 +120,7 @@ public class PatientsController : ControllerBase
             if (request.DateOfBirth is DateOnly dob && dob > DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-18)) &&
                 (string.IsNullOrWhiteSpace(r.ResponsibleName) ||
                  string.IsNullOrWhiteSpace(r.ResponsibleRelationship) ||
-                 string.IsNullOrWhiteSpace(r.ResponsiblePhone) || r.SignerCapacity == "Patient"))
+                 string.IsNullOrWhiteSpace(r.ResponsiblePhone) || r.SignerCapacity == "Patient" || r.GuardianConsent != true))
                 return BadRequest(new { title = "A minor requires a recorded responsible person and a guardian/representative signature." });
 
             if (!string.IsNullOrWhiteSpace(r.WitnessSignatureDataUrl) && !ValidSignature(r.WitnessSignatureDataUrl))
@@ -136,7 +136,9 @@ public class PatientsController : ControllerBase
                 ResponsiblePhone = Clean(r.ResponsiblePhone),
                 ResponsibleEmail = Clean(r.ResponsibleEmail),
                 ResponsibleAddress = Clean(r.ResponsibleAddress),
-                ResponsibleIdNumber = Clean(r.ResponsibleIdNumber),
+                ResponsibleIdNumber = null,
+                ProfileJson = Clean(r.ProfileJson),
+                GuardianConsent = r.GuardianConsent,
                 DeclarationAccepted = true, InformationConsent = true,
                 SignerName = r.SignerName!.Trim(), SignerCapacity = r.SignerCapacity!,
                 SignatureDataUrl = r.SignatureDataUrl!,

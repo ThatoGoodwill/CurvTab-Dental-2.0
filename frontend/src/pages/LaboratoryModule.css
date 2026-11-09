@@ -136,3 +136,769 @@
 @media(max-width:1070px){.lab-case-grid{grid-template-columns:1fr}.lab-side-panel{max-height:none}.lab-head{align-items:flex-start}}
 @media(max-width:740px){.lab-module{padding:13px 12px}.lab-head-actions{width:100%}.lab-tabs{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:thin}.lab-tab{flex-shrink:0}.lab-status-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.lab-panel{padding:13px!important}.lab-setup-banner{align-items:flex-start;flex-wrap:wrap}.lab-search{max-width:100%;min-width:190px}.lab-status-grid{grid-template-columns:1fr}.lab-form-grid{grid-template-columns:1fr}.lab-item-editor{grid-template-columns:90px minmax(0,1fr)}.lab-item-editor label{grid-column:2}.lab-item-editor button{grid-column:1}}
 @media print{body *{visibility:hidden!important}.lab-module,.lab-module *{visibility:visible!important}.lab-module{position:absolute;left:0;top:0;width:100%;max-width:none;padding:0!important;background:#fff!important}.lab-tabs,.lab-head-actions,.lab-primary,.lab-secondary,.lab-open-case,.lab-item-actions,.lab-security-note{display:none!important}.lab-panel{box-shadow:none!important;break-inside:avoid}.lab-case-grid{display:block}.lab-side-panel{max-height:none!important}.lab-modal-backdrop{position:absolute;left:0;top:0;right:0;bottom:auto;background:#fff!important;padding:0}.lab-modal-backdrop,.lab-modal-backdrop *{visibility:visible!important}.lab-modal{max-height:none;width:100%;overflow:visible;border:0;box-shadow:none}.lab-modal button{display:none!important}}
+
+
+/* CT_LAB_THEME_V1_START */
+
+/*
+   CurvTab Dental Laboratory Theme
+
+   Use existing application theme tokens.
+   No separate hardcoded dark or light mode.
+   No changes to workflow or clinical data.
+*/
+
+/* ====================================
+   1. SHARED LABORATORY THEME
+   ==================================== */
+
+.lab-module.lab-v3,
+.lab-modal-backdrop {
+  --lab-bg: var(--surface, #ffffff);
+  --lab-soft: var(--surface-soft, #f1f5fa);
+  --lab-text: var(--text, #1c3048);
+  --lab-muted: var(--muted, #61758d);
+  --lab-line: var(--border, #cbd8e5);
+  --lab-accent: var(--primary, #287ce3);
+
+  --lab-soft-hover:
+    color-mix(
+      in srgb,
+      var(--lab-accent) 8%,
+      var(--lab-soft)
+    );
+
+  background: var(--lab-bg) !important;
+  color: var(--lab-text) !important;
+  color-scheme: normal;
+}
+
+/* Do not force light mode or dark mode. */
+.lab-module.lab-v3 {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 12px !important;
+  box-sizing: border-box;
+}
+
+/* ====================================
+   2. MAIN HEADING AND NAVIGATION
+   ==================================== */
+
+.lab-module.lab-v3 .lab-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  padding: 6px 0 12px !important;
+  margin-bottom: 10px !important;
+
+  border-bottom: 1px solid var(--lab-line);
+}
+
+.lab-module.lab-v3 .lab-head h1,
+.lab-module.lab-v3 .lab-head h2,
+.lab-module.lab-v3 .lab-head strong {
+  color: var(--lab-text) !important;
+  opacity: 1 !important;
+}
+
+.lab-module.lab-v3 .lab-head h1 {
+  font-size: 19px !important;
+  line-height: 1.25 !important;
+  margin: 0 0 5px !important;
+}
+
+.lab-module.lab-v3 .lab-head p {
+  color: var(--lab-muted) !important;
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+}
+
+.lab-module.lab-v3 .lab-head-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+/* Lab Orders / Dispatch / Receive / Returns / History */
+
+.lab-module.lab-v3 .lab-tabs {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+
+  gap: 6px !important;
+  padding: 5px 0 11px !important;
+  margin-bottom: 11px !important;
+
+  background: transparent !important;
+  border-bottom: 1px solid var(--lab-line) !important;
+}
+
+.lab-module.lab-v3 .lab-tab {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  min-height: 32px !important;
+  padding: 6px 10px !important;
+
+  border: 1px solid transparent !important;
+  border-radius: 7px !important;
+
+  background: transparent !important;
+  color: var(--lab-muted) !important;
+
+  font-size: 11px !important;
+  font-weight: 650 !important;
+
+  box-shadow: none !important;
+  cursor: pointer;
+}
+
+.lab-module.lab-v3 .lab-tab:hover {
+  background: var(--lab-soft-hover) !important;
+  color: var(--lab-text) !important;
+  border-color: var(--lab-line) !important;
+}
+
+.lab-module.lab-v3 .lab-tab.active {
+  background: var(--lab-soft-hover) !important;
+  color: var(--lab-text) !important;
+  border-color:
+    color-mix(
+      in srgb,
+      var(--lab-accent) 55%,
+      var(--lab-line)
+    ) !important;
+  box-shadow: inset 0 -2px 0 var(--lab-accent) !important;
+}
+
+/* ====================================
+   3. ALL LABORATORY PANELS
+   ==================================== */
+
+.lab-module.lab-v3 .lab-workspace,
+.lab-module.lab-v3 .lab-stack,
+.lab-module.lab-v3 .lab-case-grid {
+  min-width: 0 !important;
+  max-width: 100%;
+}
+
+.lab-module.lab-v3 .lab-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px !important;
+}
+
+.lab-module.lab-v3 .lab-panel,
+.lab-module.lab-v3 .lab-setup-banner {
+  min-width: 0 !important;
+  max-width: 100% !important;
+
+  padding: 13px 15px !important;
+  margin: 0 !important;
+
+  background: var(--lab-soft) !important;
+  color: var(--lab-text) !important;
+
+  border: 1px solid var(--lab-line) !important;
+  border-radius: 11px !important;
+
+  box-shadow: 0 2px 9px rgba(0, 0, 0, .035) !important;
+  box-sizing: border-box;
+}
+
+.lab-module.lab-v3 .lab-panel h2,
+.lab-module.lab-v3 .lab-panel h3,
+.lab-module.lab-v3 .lab-panel h4,
+.lab-module.lab-v3 .lab-panel strong,
+.lab-module.lab-v3 .lab-setup-banner strong {
+  color: var(--lab-text) !important;
+  opacity: 1 !important;
+}
+
+.lab-module.lab-v3 .lab-panel h2 {
+  font-size: 15px !important;
+  line-height: 1.3 !important;
+  margin: 0 0 6px !important;
+}
+
+.lab-module.lab-v3 .lab-panel h3 {
+  font-size: 13px !important;
+  line-height: 1.3 !important;
+  margin: 0 0 6px !important;
+}
+
+.lab-module.lab-v3 .lab-panel p,
+.lab-module.lab-v3 .lab-setup-banner p,
+.lab-module.lab-v3 .lab-section-head p {
+  color: var(--lab-muted) !important;
+  font-size: 11px !important;
+  line-height: 1.45 !important;
+  margin-top: 4px !important;
+}
+
+.lab-module.lab-v3 .lab-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-bottom: 10px;
+}
+
+.lab-module.lab-v3 .lab-case-grid {
+  gap: 11px !important;
+}
+
+/* ====================================
+   4. RECORDS, ORDERS AND MANIFESTS
+   ==================================== */
+
+.lab-module.lab-v3 .lab-record,
+.lab-module.lab-v3 .lab-case-item,
+.lab-module.lab-v3 .lab-item-editor,
+.lab-module.lab-v3 .lab-evidence,
+.lab-module.lab-v3 .lab-event {
+  min-width: 0 !important;
+  box-sizing: border-box;
+
+  background: var(--lab-bg) !important;
+  color: var(--lab-text) !important;
+
+  border: 1px solid var(--lab-line) !important;
+  border-radius: 9px !important;
+
+  padding: 10px 12px !important;
+  margin-bottom: 7px !important;
+}
+
+.lab-module.lab-v3 .lab-record strong,
+.lab-module.lab-v3 .lab-case-item strong,
+.lab-module.lab-v3 .lab-event strong,
+.lab-module.lab-v3 .lab-event-content,
+.lab-module.lab-v3 .lab-record-main {
+  color: var(--lab-text) !important;
+}
+
+.lab-module.lab-v3 .lab-ref {
+  color: var(--lab-accent) !important;
+  font-size: 11px !important;
+  font-weight: 750;
+}
+
+.lab-module.lab-v3 .lab-record small,
+.lab-module.lab-v3 .lab-case-item small,
+.lab-module.lab-v3 .lab-event small,
+.lab-module.lab-v3 .lab-event-top,
+.lab-module.lab-v3 .lab-case-footer {
+  color: var(--lab-muted) !important;
+  font-size: 10px !important;
+}
+
+.lab-module.lab-v3 .lab-record:hover,
+.lab-module.lab-v3 .lab-case-item:hover {
+  border-color:
+    color-mix(
+      in srgb,
+      var(--lab-accent) 40%,
+      var(--lab-line)
+    ) !important;
+}
+
+/* Keep real statuses visually distinct;
+   do not overwrite the existing lab-pill colours. */
+
+.lab-module.lab-v3 .lab-status-strip,
+.lab-module.lab-v3 .lab-status-grid,
+.lab-module.lab-v3 .lab-chip-row {
+  color: var(--lab-text);
+}
+
+.lab-module.lab-v3 .lab-count {
+  border-radius: 99px;
+  font-size: 10px;
+}
+
+/* ====================================
+   5. TABLES AND HISTORY
+   ==================================== */
+
+.lab-module.lab-v3 .lab-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+
+  border: 1px solid var(--lab-line) !important;
+  border-radius: 9px !important;
+  background: var(--lab-bg) !important;
+}
+
+.lab-module.lab-v3 .lab-table {
+  color: var(--lab-text) !important;
+  background: var(--lab-bg) !important;
+  border-collapse: collapse;
+}
+
+.lab-module.lab-v3 .lab-table thead,
+.lab-module.lab-v3 .lab-table th {
+  color: var(--lab-muted) !important;
+  background: var(--lab-soft) !important;
+}
+
+.lab-module.lab-v3 .lab-table td,
+.lab-module.lab-v3 .lab-table th {
+  padding: 9px 11px !important;
+  border-bottom: 1px solid var(--lab-line) !important;
+  font-size: 11px !important;
+}
+
+.lab-module.lab-v3 .lab-history-list {
+  gap: 7px !important;
+}
+
+.lab-module.lab-v3 .lab-event-marker {
+  border-color: var(--lab-accent) !important;
+}
+
+/* ====================================
+   6. EMPTY STATES AND NOTICES
+   ==================================== */
+
+.lab-module.lab-v3 .lab-empty,
+.lab-module.lab-v3 .lab-security-note,
+.lab-module.lab-v3 .lab-setup-text {
+  color: var(--lab-muted) !important;
+}
+
+.lab-module.lab-v3 .lab-empty {
+  min-height: 65px !important;
+  padding: 18px !important;
+
+  background: var(--lab-bg) !important;
+  border: 1px dashed var(--lab-line) !important;
+  border-radius: 8px !important;
+
+  font-size: 11px !important;
+  text-align: center;
+}
+
+.lab-module.lab-v3 .lab-empty-large {
+  min-height: 90px !important;
+}
+
+.lab-module.lab-v3 .lab-alert {
+  font-size: 11px !important;
+  border-radius: 8px !important;
+  padding: 9px 11px !important;
+}
+
+/* ====================================
+   7. BUTTONS
+   ==================================== */
+
+.lab-module.lab-v3 .lab-primary,
+.lab-module.lab-v3 .lab-secondary,
+.lab-module.lab-v3 .lab-icon-button,
+.lab-modal .lab-primary,
+.lab-modal .lab-secondary,
+.lab-modal .lab-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  min-height: 31px !important;
+  padding: 6px 10px !important;
+
+  border-radius: 7px !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+
+  cursor: pointer;
+  box-shadow: none !important;
+}
+
+.lab-module.lab-v3 .lab-primary,
+.lab-modal .lab-primary {
+  background: var(--lab-accent) !important;
+  color: #ffffff !important;
+  border: 1px solid transparent !important;
+}
+
+.lab-module.lab-v3 .lab-secondary,
+.lab-module.lab-v3 .lab-icon-button,
+.lab-modal .lab-secondary,
+.lab-modal .lab-icon-button {
+  background: var(--lab-bg) !important;
+  color: var(--lab-text) !important;
+  border: 1px solid var(--lab-line) !important;
+}
+
+.lab-module.lab-v3 .lab-secondary:hover,
+.lab-modal .lab-secondary:hover {
+  background: var(--lab-soft-hover) !important;
+}
+
+.lab-module.lab-v3 .lab-text-link,
+.lab-module.lab-v3 .lab-evidence-link {
+  color: var(--lab-accent) !important;
+  font-size: 11px !important;
+}
+
+.lab-module.lab-v3 button:focus-visible,
+.lab-modal button:focus-visible {
+  outline: 2px solid var(--lab-accent) !important;
+  outline-offset: 2px;
+}
+
+/* ====================================
+   8. SEARCH AND FORM INPUTS
+   ==================================== */
+
+.lab-module.lab-v3 .lab-search,
+.lab-module.lab-v3 .lab-field input,
+.lab-module.lab-v3 .lab-field select,
+.lab-module.lab-v3 .lab-field textarea,
+.lab-modal .lab-field input,
+.lab-modal .lab-field select,
+.lab-modal .lab-field textarea {
+  background: var(--lab-bg) !important;
+  color: var(--lab-text) !important;
+
+  border: 1px solid var(--lab-line) !important;
+  border-radius: 7px !important;
+
+  min-width: 0;
+  box-sizing: border-box;
+
+  font-size: 12px !important;
+}
+
+.lab-module.lab-v3 .lab-search,
+.lab-module.lab-v3 .lab-field input,
+.lab-module.lab-v3 .lab-field select,
+.lab-modal .lab-field input,
+.lab-modal .lab-field select {
+  min-height: 34px !important;
+  padding: 7px 10px !important;
+}
+
+.lab-module.lab-v3 .lab-field textarea,
+.lab-modal .lab-field textarea {
+  min-height: 70px !important;
+  padding: 8px 10px !important;
+}
+
+.lab-module.lab-v3 .lab-field > span,
+.lab-modal .lab-field > span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--lab-text) !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+}
+
+.lab-module.lab-v3 input::placeholder,
+.lab-module.lab-v3 textarea::placeholder,
+.lab-modal input::placeholder,
+.lab-modal textarea::placeholder {
+  color: var(--lab-muted) !important;
+  opacity: 1 !important;
+}
+
+.lab-module.lab-v3 input:focus,
+.lab-module.lab-v3 select:focus,
+.lab-module.lab-v3 textarea:focus,
+.lab-modal input:focus,
+.lab-modal select:focus,
+.lab-modal textarea:focus {
+  outline: 2px solid
+    color-mix(
+      in srgb,
+      var(--lab-accent) 40%,
+      transparent
+    ) !important;
+  outline-offset: 1px;
+  border-color: var(--lab-accent) !important;
+}
+
+/* ====================================
+   9. ALL LABORATORY POP-UP FORMS
+   ==================================== */
+
+.lab-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 8000;
+
+  display: grid;
+  place-items: center;
+  padding: 12px;
+
+  box-sizing: border-box;
+
+  background: rgba(4, 12, 25, .65) !important;
+  backdrop-filter: blur(3px);
+}
+
+.lab-modal-backdrop .lab-modal {
+  /* Reuse existing theme variables */
+  --lab-bg: var(--surface, #ffffff);
+  --lab-soft: var(--surface-soft, #f1f5fa);
+  --lab-text: var(--text, #1c3048);
+  --lab-muted: var(--muted, #61758d);
+  --lab-line: var(--border, #cbd8e5);
+  --lab-accent: var(--primary, #287ce3);
+
+  width: min(520px, 100%) !important;
+  max-width: calc(100vw - 24px) !important;
+  max-height: calc(100dvh - 24px) !important;
+
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+
+  padding: 15px !important;
+  border-radius: 12px !important;
+
+  background: var(--lab-bg) !important;
+  color: var(--lab-text) !important;
+  border: 1px solid var(--lab-line) !important;
+
+  box-shadow: 0 22px 65px rgba(0,0,0,.32) !important;
+}
+
+.lab-modal h2,
+.lab-modal h3,
+.lab-modal h4,
+.lab-modal strong {
+  color: var(--lab-text) !important;
+  opacity: 1 !important;
+}
+
+.lab-modal h2 {
+  font-size: 15px !important;
+}
+
+.lab-modal h3 {
+  font-size: 13px !important;
+}
+
+.lab-modal p,
+.lab-modal small {
+  color: var(--lab-muted) !important;
+  font-size: 11px !important;
+}
+
+.lab-modal-body {
+  color: var(--lab-text) !important;
+}
+
+.lab-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 7px;
+
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--lab-line);
+}
+
+/* ====================================
+   10. RESPONSIVE AND ACCESSIBILITY
+   ==================================== */
+
+@media (max-width: 650px) {
+  .lab-module.lab-v3 {
+    padding: 8px !important;
+  }
+
+  .lab-module.lab-v3 .lab-panel {
+    padding: 11px !important;
+  }
+
+  .lab-module.lab-v3 .lab-tabs {
+    gap: 4px !important;
+  }
+
+  .lab-module.lab-v3 .lab-tab {
+    padding: 5px 8px !important;
+    font-size: 10px !important;
+  }
+
+  .lab-modal-backdrop .lab-modal {
+    padding: 12px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lab-module.lab-v3 *,
+  .lab-modal-backdrop * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* CT_LAB_THEME_V1_END */
+
+
+/* CT_LAB_CARDS_THEME_V2_START */
+
+/*
+  Fix Laboratory summary cards and table rows.
+  Colours are derived from the active app theme.
+  Do not change statuses, buttons, or clinical data.
+*/
+
+/* Theme-aware shared colours */
+.lab-module.lab-v3 {
+  --lab-summary-bg: color-mix(
+    in srgb,
+    var(--lab-accent) 5%,
+    var(--lab-soft)
+  );
+
+  --lab-row-bg: color-mix(
+    in srgb,
+    var(--lab-text) 3%,
+    var(--lab-bg)
+  );
+
+  --lab-row-hover: color-mix(
+    in srgb,
+    var(--lab-accent) 9%,
+    var(--lab-bg)
+  );
+}
+
+/* 1. FOUR LABORATORY SUMMARY CARDS */
+.lab-module.lab-v3 .lab-status-grid > * {
+  background: var(--lab-summary-bg) !important;
+  background-image: none !important;
+  color: var(--lab-text) !important;
+
+  border: 1px solid var(--lab-line) !important;
+  border-radius: 10px !important;
+
+  box-shadow: none !important;
+}
+
+/* Keep numbers clearly visible */
+.lab-module.lab-v3 .lab-status-grid > *
+:is(strong, b, h2, h3) {
+  color: var(--lab-text) !important;
+  opacity: 1 !important;
+}
+
+/* Descriptions beneath numbers */
+.lab-module.lab-v3 .lab-status-grid > *
+:is(p, small, span) {
+  color: var(--lab-muted) !important;
+  opacity: 1 !important;
+}
+
+/* Also support the existing laboratory metric classes */
+.lab-module.lab-v3
+:is(.lab-stat, .lab-stat-card, .lab-summary-card, .lab-kpi) {
+  background: var(--lab-summary-bg) !important;
+  background-image: none !important;
+  color: var(--lab-text) !important;
+  border-color: var(--lab-line) !important;
+}
+
+/* 2. LABORATORY ORDER TABLE */
+.lab-module.lab-v3 .lab-table tbody {
+  background: var(--lab-row-bg) !important;
+  color: var(--lab-text) !important;
+}
+
+.lab-module.lab-v3 .lab-table tbody tr {
+  background: var(--lab-row-bg) !important;
+  color: var(--lab-text) !important;
+}
+
+.lab-module.lab-v3 .lab-table tbody td {
+  background: transparent !important;
+  color: var(--lab-text) !important;
+
+  border-bottom: 1px solid var(--lab-line) !important;
+  font-size: 11px !important;
+}
+
+/* Highlight a row gently on hover */
+.lab-module.lab-v3 .lab-table tbody tr:hover {
+  background: var(--lab-row-hover) !important;
+}
+
+/* Reference numbers and patient links */
+.lab-module.lab-v3 .lab-table tbody
+:is(a, .lab-ref, .lab-text-link) {
+  color: var(--lab-accent) !important;
+  opacity: 1 !important;
+  font-weight: 700 !important;
+}
+
+/* Other text in the laboratory orders */
+.lab-module.lab-v3 .lab-table tbody
+:is(strong, b) {
+  color: var(--lab-text) !important;
+  opacity: 1 !important;
+}
+
+.lab-module.lab-v3 .lab-table tbody small {
+  color: var(--lab-muted) !important;
+  opacity: 1 !important;
+}
+
+/* Preserve existing coloured status pills */
+.lab-module.lab-v3 .lab-table .lab-pill {
+  font-size: 10px !important;
+}
+
+/* 3. NO BRIGHT WHITE HIGHLIGHTED ROWS */
+.lab-module.lab-v3
+.lab-table tbody tr:is(
+  .selected,
+  .active,
+  [aria-selected="true"]
+) {
+  background: var(--lab-row-hover) !important;
+}
+
+/* 4. CONSISTENT TABLE CONTAINER */
+.lab-module.lab-v3 .lab-table-wrap {
+  background: var(--lab-bg) !important;
+  border-color: var(--lab-line) !important;
+  overflow-x: auto !important;
+}
+
+/* 5. COMPACT, CONSISTENT SPACING */
+.lab-module.lab-v3 .lab-status-grid {
+  gap: 10px !important;
+  margin-bottom: 12px !important;
+}
+
+.lab-module.lab-v3 .lab-status-grid > * {
+  padding: 12px 14px !important;
+  min-width: 0 !important;
+}
+
+@media (max-width: 650px) {
+  .lab-module.lab-v3 .lab-status-grid {
+    gap: 7px !important;
+  }
+
+  .lab-module.lab-v3 .lab-status-grid > * {
+    padding: 9px !important;
+  }
+}
+
+/* CT_LAB_CARDS_THEME_V2_END */

@@ -5,7 +5,7 @@ import { useConfirmDialog } from './components/useConfirmDialog'
 import './PlatformManagement.css'
 import { Images as ClinicalImagingIcon } from 'lucide-react'
 import ClinicalImagingPage from './pages/ClinicalImagingPage'
-import { BriefcaseBusiness as CtManagementIcon, Building2 as CtPracticeIcon, Palette as CtAppearanceIcon } from 'lucide-react'
+import { BriefcaseBusiness as CtManagementIcon, Palette as CtAppearanceIcon } from 'lucide-react'
 import WhatsAppPanel from './pages/WhatsAppPanel'
 import LiveClinicNotifications from './components/LiveClinicNotifications'
 import ClinicDashboardEnhancements from './components/ClinicDashboardEnhancements'
@@ -33,7 +33,8 @@ import type { FormEvent } from 'react'
 import { useAuth } from './auth/AuthContext'
 import type { CSSProperties } from 'react'
 import { usePracticeAppearance } from './hooks/usePracticeAppearance'
-import AppearanceSettingsPage from './pages/AppearanceSettingsPage'
+// CT_CONFIGURATION_CENTER_V1
+import ConfigurationCenterPage from './pages/ConfigurationCenterPage'
 import { apiRequest } from './services/api'
 
 import PatientExperiencePage from './pages/PatientExperiencePage'
@@ -87,7 +88,7 @@ type Section =
   | 'Management'
   | 'Dental Practices'
   | 'Subscriptions'
-  | 'Appearance & Workspace'
+  | 'Configuration Center'
   | 'My Profile'
 
 // =========================================
@@ -707,10 +708,9 @@ export default function App() {
         ...(canManageStaff
           ? [
               { name: 'Management' as Section, icon: CtManagementIcon },
-              { name: 'Practice Settings' as Section, icon: CtPracticeIcon },
             ]
           : []),
-        ...(canManageStaff ? [{ name: 'Appearance & Workspace' as Section, icon: CtAppearanceIcon }] : []),
+        ...(canManageStaff ? [{ name: 'Configuration Center' as Section, icon: CtAppearanceIcon }] : []),
         // CT_LAB_TECH_NAV
         ...(role === 'LabTechnician' ? [{ name: 'Laboratory' as Section, icon: FlaskConical }] : []),
         { name: 'My Profile' as Section, icon: UserCircle },
@@ -932,7 +932,7 @@ export default function App() {
             <button type="button"
               className={section === 'Checkout & Payments' ? 'nav-item nav-active' : 'nav-item'}
               onClick={() => navigate('Checkout & Payments')}>
-              <CheckoutIcon size={19} /> <span>Checkout &amp; Payments</span>
+              <CheckoutIcon size={19} /> <span>Billing</span>
             </button>
           )}
           {role === 'Dentist' && (
@@ -1244,7 +1244,7 @@ export default function App() {
 
           {/* PATIENTS */}
           {section === 'Patients' && canViewPatients && (
-            <PatientExperiencePage role={role} onOpenAppointments={() => openAppointmentTab('Scheduling')} onOpenChart={(patientId) => {
+            <PatientExperiencePage role={role} onClose={() => navigate('Dashboard')} onOpenAppointments={() => openAppointmentTab('Scheduling')} onOpenChart={(patientId) => {
               setChartPatientId(patientId)
               navigate('Dental Charting')
             }} />
@@ -1253,6 +1253,7 @@ export default function App() {
           {/* APPOINTMENTS + EXPANDABLE WORKSPACE */}
           {section === 'Appointments' && canViewPatients && (
             <AppointmentsPage
+              onClose={() => navigate('Dashboard')}
               tab={appointmentTab}
               onTabChange={setAppointmentTab}
               onOpenPatients={() => navigate('Patients')}
@@ -1303,7 +1304,45 @@ export default function App() {
           )}
 
           {/* PHASE 4/5: DENTIST SPECIALTIES */}
-          {section === 'Laboratory' && role !== 'SuperAdmin' && <LaboratoryModule />}
+          {section === 'Laboratory' && role !== 'SuperAdmin' && (
+  <div
+    className="ct-lab-floating-overlay"
+    role="presentation"
+    onMouseDown={(event) => {
+      if (event.target === event.currentTarget) {
+        navigate('Dashboard')
+      }
+    }}
+  >
+    {/* CT_LAB_FLOATING_POPUP_V1 */}
+    <section
+      className="ct-lab-floating-window"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Laboratory"
+    >
+      <div className="ct-lab-floating-toolbar">
+        <div>
+          <strong>Laboratory</strong>
+          <small>Orders, dispatch, deliveries and clinical outcomes</small>
+        </div>
+
+        <button
+          type="button"
+          className="ct-lab-floating-close"
+          aria-label="Close Laboratory"
+          onClick={() => navigate('Dashboard')}
+        >
+          ×
+        </button>
+      </div>
+
+      <div className="ct-lab-floating-content">
+        <LaboratoryModule />
+      </div>
+    </section>
+  </div>
+)}
           {section === 'Dental Charting' && role === 'Dentist' && <DentalChartingPage initialPatientId={chartPatientId} />}
           {section === 'Clinical Imaging' && role === 'Dentist' && (
             <ClinicalImagingPage />
@@ -1319,9 +1358,13 @@ export default function App() {
           )}
 
           {/* PRACTICE ADMIN: WHITE-LABEL APPEARANCE */}
-          {section === 'Appearance & Workspace' && isPracticeAdmin && appearance && (
-            <AppearanceSettingsPage key={user?.practiceId ?? 'practice'}
-              appearance={appearance} onSaved={setAppearance} />
+          {section === 'Configuration Center' && isPracticeAdmin && appearance && (
+            <ConfigurationCenterPage
+              appearance={appearance}
+              onSaved={setAppearance}
+              onClose={() => navigate('Dashboard')}
+              onOpenStaff={() => navigate('Management')}
+            />
           )}
 
           {/* PROFILE FOR ALL ROLES */}
@@ -1342,7 +1385,7 @@ export default function App() {
             (section === 'Appointments' && !canViewPatients) ||
             (section === 'Management' && !canManageStaff) ||
             (section === 'Practice Settings' && !canManageStaff) ||
-            (section === 'Appearance & Workspace' && !isPracticeAdmin) ||
+            (section === 'Configuration Center' && !isPracticeAdmin) ||
             (section === 'Dental Practices' && !isSuperAdmin)
           ) && (
             <section className="panel empty-panel">

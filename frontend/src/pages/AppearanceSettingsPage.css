@@ -13,3 +13,178 @@
 .appearance-preview-hero p {margin:0}.appearance-preview-cards {display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .appearance-preview-cards>div {padding:18px 10px;border:1px solid #dce5ef;border-radius:12px;background:#f9fbff;text-align:center;font-size:13px;font-weight:600}
 @media(max-width:900px){.appearance-settings-grid{grid-template-columns:1fr}}
+
+
+/* CT_APPEARANCE_DROPDOWN_V3_START */
+
+/* Hide original four-button tab bar. */
+.ct-appearance-original-tabs-v3 {
+  display: none !important;
+}
+
+/* Compact navigation */
+.ct-appearance-compact-nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+
+  margin: 0 0 12px;
+  padding: 8px 0;
+
+  background: transparent;
+  color: var(--text);
+}
+
+.ct-appearance-dropdown {
+  position: relative;
+  z-index: 30;
+}
+
+/* Follow the actual practice colour settings. */
+.ct-appearance-dropdown-trigger {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+
+  min-height: 31px !important;
+  padding: 6px 11px !important;
+
+  border: 1px solid transparent !important;
+  border-radius: 7px !important;
+
+  background: linear-gradient(
+    110deg,
+    var(--practice-primary, var(--primary)),
+    var(--practice-accent, var(--primary))
+  ) !important;
+
+  color: #ffffff !important;
+
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  cursor: pointer;
+}
+
+.ct-appearance-dropdown-trigger * {
+  color: #ffffff !important;
+}
+
+.ct-appearance-current-tab {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 5px 9px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+
+  background: var(--surface-soft);
+  color: var(--text);
+
+  font-size: 10px;
+  font-weight: 650;
+}
+
+/* Small floating menu */
+.ct-appearance-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  width: 235px;
+  max-width: calc(100vw - 45px);
+
+  padding: 8px;
+
+  border: 1px solid var(--border);
+  border-radius: 10px;
+
+  background: var(--surface);
+  color: var(--text);
+
+  box-shadow: 0 14px 35px rgba(0,0,0,.22);
+  z-index: 100;
+}
+
+.ct-appearance-dropdown-menu > small {
+  padding: 5px 8px 8px;
+  border-bottom: 1px solid var(--border);
+
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.ct-appearance-dropdown-item {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+
+  width: 100%;
+  min-height: 33px !important;
+
+  padding: 7px 9px !important;
+
+  border: 1px solid transparent !important;
+  border-radius: 7px !important;
+
+  background: transparent !important;
+  color: var(--text) !important;
+
+  text-align: left;
+  font-size: 11px !important;
+  cursor: pointer;
+}
+
+.ct-appearance-dropdown-item > span:nth-child(2) {
+  flex: 1;
+}
+
+.ct-appearance-dropdown-item:hover {
+  background: var(--surface-soft) !important;
+  border-color: var(--border) !important;
+}
+
+.ct-appearance-dropdown-item.active {
+  background: color-mix(
+    in srgb,
+    var(--practice-primary, var(--primary)) 12%,
+    var(--surface)
+  ) !important;
+
+  border-color: color-mix(
+    in srgb,
+    var(--practice-primary, var(--primary)) 35%,
+    var(--border)
+  ) !important;
+}
+
+.ct-appearance-dropdown-item.active > svg,
+.ct-appearance-menu-check {
+  color: var(--practice-primary, var(--primary)) !important;
+}
+
+.ct-appearance-dropdown-trigger:focus-visible,
+.ct-appearance-dropdown-item:focus-visible {
+  outline: 2px solid
+    var(--practice-primary, var(--primary)) !important;
+  outline-offset: 2px;
+}
+
+@media(max-width: 520px) {
+  .ct-appearance-dropdown-trigger {
+    padding: 6px 9px !important;
+    font-size: 10px !important;
+  }
+
+  .ct-appearance-dropdown-menu {
+    width: 215px;
+  }
+}
+
+/* CT_APPEARANCE_DROPDOWN_V3_END */

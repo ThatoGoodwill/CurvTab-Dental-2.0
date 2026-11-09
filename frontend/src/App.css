@@ -580,3 +580,261 @@ button {
 /* .app-shell .sidebar .brand {
   display: none !important;
 } */
+
+
+
+/* CT_LAB_FLOATING_POPUP_V1_START */
+
+/* Dim the dashboard behind Laboratory */
+.ct-lab-floating-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 7000 !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  padding: 14px !important;
+  box-sizing: border-box !important;
+
+  background: rgba(3, 12, 28, 0.72) !important;
+  backdrop-filter: blur(4px);
+}
+
+/* Main compact Laboratory window */
+.ct-lab-floating-window {
+  display: flex;
+  flex-direction: column;
+
+  width: min(1020px, 100%) !important;
+  height: min(670px, calc(100dvh - 28px)) !important;
+  max-width: calc(100vw - 28px) !important;
+  max-height: calc(100dvh - 28px) !important;
+
+  margin: 0 auto !important;
+  padding: 0 !important;
+
+  overflow: hidden !important;
+  box-sizing: border-box;
+
+  background: var(--surface, #132039) !important;
+  color: var(--text, #e7edf7) !important;
+
+  border: 1px solid var(--border, #334563) !important;
+  border-radius: 14px !important;
+
+  box-shadow: 0 24px 80px rgba(0,0,0,.4) !important;
+}
+
+/* Small header */
+.ct-lab-floating-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  flex: 0 0 auto;
+  gap: 12px;
+
+  padding: 11px 15px !important;
+
+  background: var(--surface-soft, var(--surface)) !important;
+  color: var(--text) !important;
+
+  border-bottom: 1px solid var(--border) !important;
+}
+
+.ct-lab-floating-toolbar > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.ct-lab-floating-toolbar strong {
+  font-size: 13px !important;
+  font-weight: 750;
+  color: var(--text) !important;
+}
+
+.ct-lab-floating-toolbar small {
+  font-size: 10px !important;
+  color: var(--muted) !important;
+}
+
+/* Close button */
+.ct-lab-floating-close {
+  display: grid !important;
+  place-items: center !important;
+
+  flex: 0 0 29px;
+  width: 29px !important;
+  height: 29px !important;
+  min-height: 29px !important;
+
+  padding: 0 !important;
+
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+
+  background: var(--surface, transparent) !important;
+  color: var(--text) !important;
+
+  font-size: 21px !important;
+  line-height: 1 !important;
+  cursor: pointer;
+}
+
+.ct-lab-floating-close:hover {
+  border-color: var(--primary) !important;
+}
+
+.ct-lab-floating-close:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Scroll the content, not the entire application */
+.ct-lab-floating-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+
+  overscroll-behavior: contain;
+  padding: 11px !important;
+  box-sizing: border-box;
+
+  background: var(--surface, #132039) !important;
+}
+
+/* Existing Laboratory component */
+.ct-lab-floating-content .lab-module.lab-v3 {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+
+  padding: 7px !important;
+  margin: 0 !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* The floating toolbar supplies the main title.
+   Keep the Laboratory's own controls available. */
+.ct-lab-floating-content .lab-head {
+  padding: 4px 0 9px !important;
+  margin-bottom: 7px !important;
+  gap: 8px !important;
+}
+
+.ct-lab-floating-content .lab-head h1 {
+  font-size: 14px !important;
+}
+
+/* Compact navigation */
+.ct-lab-floating-content .lab-tabs {
+  display: flex !important;
+  flex-wrap: wrap !important;
+
+  gap: 5px !important;
+  padding: 5px 0 9px !important;
+  margin-bottom: 9px !important;
+}
+
+.ct-lab-floating-content .lab-tab {
+  min-height: 29px !important;
+  padding: 5px 9px !important;
+  font-size: 10px !important;
+  border-radius: 7px !important;
+}
+
+/* Compact summary cards */
+.ct-lab-floating-content .lab-status-grid {
+  gap: 8px !important;
+  margin-bottom: 10px !important;
+}
+
+.ct-lab-floating-content .lab-status-grid > * {
+  min-width: 0 !important;
+  padding: 10px !important;
+
+  background: var(--surface-soft) !important;
+  color: var(--text) !important;
+
+  border: 1px solid var(--border) !important;
+  border-radius: 9px !important;
+  box-shadow: none !important;
+}
+
+/* All Laboratory panels */
+.ct-lab-floating-content .lab-panel {
+  padding: 11px 12px !important;
+  border-radius: 9px !important;
+}
+
+.ct-lab-floating-content .lab-panel h2 {
+  font-size: 13px !important;
+}
+
+.ct-lab-floating-content .lab-panel h3 {
+  font-size: 12px !important;
+}
+
+/* Compact laboratory records */
+.ct-lab-floating-content .lab-record,
+.ct-lab-floating-content .lab-case-item {
+  padding: 9px 10px !important;
+  border-radius: 8px !important;
+}
+
+/* Small buttons throughout */
+.ct-lab-floating-content .lab-primary,
+.ct-lab-floating-content .lab-secondary,
+.ct-lab-floating-content .lab-icon-button {
+  min-height: 29px !important;
+  padding: 5px 9px !important;
+  font-size: 10px !important;
+  border-radius: 7px !important;
+}
+
+/* Responsive layout */
+@media (max-width: 650px) {
+  .ct-lab-floating-overlay {
+    padding: 7px !important;
+  }
+
+  .ct-lab-floating-window {
+    width: 100% !important;
+    height: calc(100dvh - 14px) !important;
+    max-width: calc(100vw - 14px) !important;
+    max-height: calc(100dvh - 14px) !important;
+  }
+
+  .ct-lab-floating-toolbar {
+    padding: 9px 11px !important;
+  }
+
+  .ct-lab-floating-content {
+    padding: 7px !important;
+  }
+
+  .ct-lab-floating-content .lab-status-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-lab-floating-window,
+  .ct-lab-floating-overlay {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* CT_LAB_FLOATING_POPUP_V1_END */

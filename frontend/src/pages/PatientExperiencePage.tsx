@@ -1,10 +1,9 @@
+import PatientPrescriptionNotes from './PatientPrescriptionNotes'
+import PatientAccountActivityView from './PatientAccountActivityView'
+import PatientAccountInvoiceView from './PatientAccountInvoiceView'
+import DentalChartingPage from './DentalChartingPage'
 import { useEffect, useMemo, useState } from 'react'
-import {
-  ArrowLeft, ArrowRight, CalendarDays, CheckCircle2, ChevronRight,
-  Clock3, FileHeart, History, Mail, MapPin,
-  Phone, Plus, RefreshCw, Search, ShieldCheck, Stethoscope, UserRound,
-  Users,
-} from 'lucide-react'
+import { ArrowLeft, ArrowRight, ChevronRight, Mail, Phone, Plus, RefreshCw, Search, ShieldCheck, Users } from 'lucide-react'
 import { apiRequest } from '../services/api'
 import PatientsPage from './PatientsPage'
 import PatientMedicalCards from './PatientMedicalCards'
@@ -48,9 +47,9 @@ type HistoryRecord = {
   additionalNotes?: string | null
 }
 
-type PatientTab = 'Overview' | 'Medical Records' | 'Details' | 'Visit' | 'History'
-type Props = { role: string; onOpenAppointments?: () => void; onOpenChart?: (patientId: string) => void }
-const tabs: PatientTab[] = ['Overview', 'Medical Records', 'Details', 'Visit', 'History']
+type PatientTab = 'Overview' | 'Treatment' | 'Medical Records' | 'Accounts' | 'Details' | 'Visit' | 'History'
+type Props = { role: string; onClose?: () => void; onOpenAppointments?: () => void; onOpenChart?: (patientId: string) => void }
+const tabs: PatientTab[] = ['Overview', 'Treatment', 'Accounts', 'Details', 'Visit', 'History']
 
 function record(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -107,12 +106,228 @@ function patientField(label: string, value: unknown) {
   </div>
 }
 
-export default function PatientExperiencePage({ role, onOpenAppointments, onOpenChart }: Props) {
+
+/* CT_PATIENT_OVERVIEW_POLISH_V6 */
+
+/**
+ * Small read-only calendar for the current patient.
+ * Uses the appointments already loaded by PatientExperiencePage.
+ */
+function MiniVisitCalendar({
+  visits,
+}: {
+  visits: Array<{ startUtc: string }>
+}) {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = today.getMonth()
+
+  const firstDay = new Date(year, month, 1)
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+
+  // Monday is the first day of the week.
+  const offset = (firstDay.getDay() + 6) % 7
+
+  const appointmentDates = new Set(
+    visits
+      .filter(visit => !Number.isNaN(
+        new Date(visit.startUtc).getTime()
+      ))
+      .map(visit =>
+        new Date(visit.startUtc).toDateString()
+      )
+  )
+
+  const cells = Array.from(
+    { length: offset + daysInMonth },
+    (_, index) => {
+      const day = index - offset + 1
+      return day > 0 ? day : null
+    }
+  )
+
+  const monthLabel = today.toLocaleDateString(
+    'en-ZA',
+    { month: 'short', year: 'numeric' }
+  )
+
+  return (
+    <div
+      className="ct-pv6-calendar"
+      aria-label={`Patient appointment calendar for ${monthLabel}`}
+    >
+      <div className="ct-pv6-calendar-heading">
+        <span>Calendar</span>
+        <strong>{monthLabel}</strong>
+      </div>
+
+      <div className="ct-pv6-calendar-grid">
+        {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(
+          (label, index) => (
+            <span
+              className="ct-pv6-weekday"
+              key={`weekday-${index}`}
+            >
+              {label}
+            </span>
+          )
+        )}
+
+        {cells.map((day, index) => {
+          if (day === null) {
+            return (
+              <span
+                className="ct-pv6-empty"
+                key={`blank-${index}`}
+                aria-hidden="true"
+              />
+            )
+          }
+
+          const date = new Date(year, month, day)
+
+          const isToday =
+            date.toDateString() === today.toDateString()
+
+          const hasAppointment =
+            appointmentDates.has(date.toDateString())
+
+          return (
+            <span
+              key={`day-${day}`}
+              className={[
+                'ct-pv6-day',
+                isToday ? 'ct-pv6-today' : '',
+                hasAppointment ? 'ct-pv6-booked' : '',
+              ].filter(Boolean).join(' ')}
+              title={
+                hasAppointment
+                  ? `Appointment on ${date.toLocaleDateString('en-ZA')}`
+                  : date.toLocaleDateString('en-ZA')
+              }
+              aria-label={
+                `${date.toLocaleDateString('en-ZA')}` +
+                (hasAppointment ? ', appointment recorded' : '') +
+                (isToday ? ', today' : '')
+              }
+            >
+              {day}
+              {hasAppointment && (
+                <span
+                  className="ct-pv6-dot"
+                  aria-hidden="true"
+                />
+              )}
+            </span>
+          )
+        })}
+      </div>
+
+      <div className="ct-pv6-calendar-legend">
+        <span className="ct-pv6-legend-dot" />
+        Appointment
+      </div>
+    </div>
+  )
+}
+
+export default function PatientExperiencePage({ role, onClose, onOpenAppointments, onOpenChart }: Props) {
   const [patients, setPatients] = useState<Patient[]>([])
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<Patient | null>(null)
   const [tab, setTab] = useState<PatientTab>('Overview')
+  const [treatmentSection, setTreatmentSection] = useState<'Dental Chart' | 'Treatment Plan' | 'Clinical Notes & Encounters' | 'Medical Records' | 'Clinical Images' | 'Tooth History' | 'Prescriptions' | null>(null)
   const [manage, setManage] = useState(false)
+  // CT_PATIENT_ACCOUNTS_V1
+  const [accountSection, setAccountSection] = useState<string | null>(null)
+
+  const [accountsMenuOpen, setAccountsMenuOpen] = useState(false)
+
+  // CT_ACCOUNTS_THEME_COMPACT_V8
+  // Match the actual rendered Accounts tab, including gradient themes.
+  useEffect(() => {
+    if (tab !== 'Accounts') return
+
+    const syncAccountTheme = () => {
+      const activeTab = document.querySelector<HTMLElement>(
+        '.ct-patient-tabs [role="tab"][aria-selected="true"]'
+      )
+      const workspace = document.querySelector<HTMLElement>(
+        '.ct-pa-v4-workspace'
+      )
+
+      if (!activeTab || !workspace) return
+
+      const style = window.getComputedStyle(activeTab)
+      const background = style.backgroundImage !== 'none'
+        ? style.backgroundImage
+        : style.backgroundColor
+
+      if (!background || background === 'transparent' ||
+          background === 'rgba(0, 0, 0, 0)') return
+
+      const colour = background.match(
+        /#[0-9a-f]{3,8}\b|rgba?\([^)]+\)/i
+      )
+
+      const accent = colour?.[0] ?? style.borderTopColor
+
+      workspace.style.setProperty(
+        '--ct-account-tab-background',
+        background
+      )
+      workspace.style.setProperty(
+        '--ct-account-tab-accent',
+        accent
+      )
+      workspace.style.setProperty(
+        '--ct-account-tab-foreground',
+        style.color
+      )
+    }
+
+    syncAccountTheme()
+
+    // Re-sync when Settings changes the active theme,
+    // without observing our own Account styling updates.
+    const observer = new MutationObserver(mutations => {
+      const externalChange = mutations.some(mutation => {
+        const target = mutation.target
+        return !(target instanceof Element &&
+          target.closest('.ct-pa-v4-workspace'))
+      })
+
+      if (externalChange) syncAccountTheme()
+    })
+
+    observer.observe(document.documentElement, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: [
+        'class', 'style', 'data-theme',
+        'data-accent', 'aria-selected'
+      ]
+    })
+
+    return () => observer.disconnect()
+  }, [tab])
+
+
+  // Close the dropdown when leaving the Accounts tab.
+  useEffect(() => {
+    setAccountsMenuOpen(false)
+  }, [tab])
+
+
+  // CT_PATIENT_ACCOUNTS_LAYOUT_V4_RESET
+  useEffect(() => {
+    if (tab !== 'Accounts') {
+      setAccountSection(null)
+    }
+  }, [tab])
+
+
+  const [quickRegister, setQuickRegister] = useState(false)
   const [loading, setLoading] = useState(true)
   const [detailLoading, setDetailLoading] = useState(false)
   const [error, setError] = useState('')
@@ -221,6 +436,7 @@ export default function PatientExperiencePage({ role, onOpenAppointments, onOpen
   }, [patients, query])
 
   function openPatient(patient: Patient) {
+    setAccountSection(null)
     setSelected(patient)
     setTab('Overview')
     setManage(false)
@@ -240,6 +456,22 @@ export default function PatientExperiencePage({ role, onOpenAppointments, onOpen
     setReload(value => value + 1)
   }
 
+
+  // CT_DIRECT_QUICK_REGISTRATION_V1
+  if (quickRegister && canManage) {
+    return (
+      <PatientsPage
+        autoOpenRegistration
+        onRegistrationExit={() => setQuickRegister(false)}
+        onExistingPatientSelect={(patientId) => {
+          const existing = patients.find(item => item.id === patientId)
+          if (existing) openPatient(existing)
+          setQuickRegister(false)
+        }}
+      />
+    )
+  }
+
   if (manage && canManage) {
     return <div className="ct-patients-experience">
       <div className="ct-patient-toolbar">
@@ -251,10 +483,27 @@ export default function PatientExperiencePage({ role, onOpenAppointments, onOpen
   }
 
   if (!selected) {
-    return <div className="ct-patients-experience">
+    return (
+      <div className="ct-dir4-overlay">
+        <section
+          className="ct-patients-experience ct-dir4-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Patients"
+        >
+          {/* CT_PATIENT_DIRECTORY_V4 */}
+          <button
+            type="button"
+            className="ct-dir4-close"
+            aria-label="Close Patients"
+            onClick={() => onClose?.()}
+          >
+            ×
+          </button>
+
       <div className="ct-patient-toolbar">
         <div><p className="ct-patient-eyebrow">PATIENT DIRECTORY</p><h1>Patients</h1><p>Open a patient card to view their full practice record.</p></div>
-        {canManage && <button type="button" className="primary-button" onClick={() => setManage(true)}><Plus size={17}/> Quick Register / Manage</button>}
+        {canManage && <button type="button" className="primary-button" onClick={() => setQuickRegister(true)}><Plus size={17}/> Quick Register / Manage</button>}
       </div>
       <div className="ct-patient-searchrow">
         <label className="ct-patient-search"><Search size={19}/><input aria-label="Search patients" value={query} placeholder="Search by name, phone or patient ID" onChange={event => setQuery(event.target.value)}/></label>
@@ -273,54 +522,530 @@ export default function PatientExperiencePage({ role, onOpenAppointments, onOpen
           </button>)}
         </div>}
       <p className="ct-patient-limit-note">Showing {filtered.length} of {patients.length} patient records returned by this request.</p>
-    </div>
+    </section>
+      </div>
+    )
   }
 
-  return <div className="ct-patients-experience">
-    <div className="ct-patient-detail-header">
-      <button type="button" className="secondary-button" onClick={backToCards}><ArrowLeft size={16}/> Patients</button>
-      <div className="ct-patient-avatar ct-patient-avatar-large">{initials(selected)}</div>
-      <div className="ct-patient-header-identity"><div><h1>{patientName(selected)}</h1><span className={selected.isArchived ? 'ct-patient-status ct-archived' : 'ct-patient-status'}>{selected.isArchived ? 'Archived' : 'Active'}</span></div><p>{detailValue(selected.gender)} · {age(selected.dateOfBirth)} · Patient file</p></div>
-      {canManage && <button type="button" className="secondary-button" onClick={() => setManage(true)}>Manage record</button>}
-    </div>
+  return <div
+    className="ct-pv5-overlay"
+    onMouseDown={event => {
+      if (event.target === event.currentTarget) backToCards()
+    }}
+  >
+    <section
+      className="ct-patients-experience ct-pv5-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Patient record"
+    >
+    {/* CT_PATIENT_HEADER_V8 */}
+    <header className="ct-patient-detail-header ct-pv8-header">
+      <button
+        type="button"
+        className="secondary-button ct-pv8-back"
+        onClick={backToCards}
+      >
+        <ArrowLeft size={14}/>
+        Patients
+      </button>
+
+      <div className="ct-patient-avatar ct-patient-avatar-large ct-pv8-avatar">
+        {initials(selected)}
+      </div>
+
+      <div className="ct-pv8-identity">
+        <div className="ct-pv8-name-row">
+          <h1>{patientName(selected)}</h1>
+          <span
+            className={
+              selected.isArchived
+                ? 'ct-patient-status ct-archived'
+                : 'ct-patient-status'
+            }
+          >
+            {selected.isArchived ? 'Archived' : 'Active'}
+          </span>
+        </div>
+
+        <div className="ct-pv8-meta">
+          <span title={selected.id}>
+            <strong>Patient ID:</strong> {selected.id.slice(0, 8)}
+          </span>
+
+          <span>
+            <strong>DOB:</strong> {formattedDate(selected.dateOfBirth)}
+            {' '}({age(selected.dateOfBirth)})
+          </span>
+
+          <span>
+            <strong>Gender:</strong> {detailValue(selected.gender)}
+          </span>
+        </div>
+      </div>
+
+      <div className="ct-pv8-contact">
+        <span>
+          <Phone size={13}/>
+          {detailValue(selected.phoneNumber)}
+        </span>
+        <span>
+          <Mail size={13}/>
+          {detailValue(selected.email)}
+        </span>
+      </div>
+
+      <div className="ct-pv8-payment">
+        {selected.paymentMethod === 'MedicalAid'
+          ? 'Medical Aid'
+          : selected.paymentMethod === 'Cash'
+            ? 'Private / Cash'
+            : detailValue(selected.paymentMethod)}
+      </div>
+
+      {canManage && (
+        <button
+          type="button"
+          className="secondary-button ct-pv8-manage"
+          onClick={() => setManage(true)}
+        >
+          Manage record
+        </button>
+      )}
+    </header>
 
     {detailError && <p className="ct-patient-message ct-patient-error" role="alert">{detailError}</p>}
     {actionNotice && <p className="ct-patient-message" role="status">{actionNotice}</p>}
     {detailLoading && <p className="ct-patient-loading">Refreshing patient details…</p>}
     <div className="ct-patient-tabs" role="tablist" aria-label="Patient record sections">
-      {tabs.filter(item => item !== 'Medical Records' || isDentist).map(item => <button type="button" key={item} role="tab" aria-selected={item === tab} className={tab === item ? 'ct-patient-tab selected' : 'ct-patient-tab'} onClick={() => setTab(item)}>{item}</button>)}
+      {tabs.filter(item => (item !== 'Medical Records' && item !== 'Treatment') || isDentist).map(item => <button type="button" key={item} role="tab" aria-selected={item === tab} className={tab === item ? 'ct-patient-tab selected' : 'ct-patient-tab'} onClick={() => { if (item === 'Treatment') setTreatmentSection(null); setTab(item) }}>{item}</button>)}
     </div>
 
-    {tab === 'Overview' && <>
-      <div className="ct-patient-subheading"><div><h2>At a glance</h2><p>Patient information and next steps</p></div></div>
-      <div className="ct-patient-actions">
-        {appointmentToCheckIn && <button type="button" className="primary-button" disabled={actionBusy} onClick={() => void checkInPatient()}><CheckCircle2 size={17}/> {actionBusy ? 'Checking in…' : 'Check in to queue'}</button>}
-        {onOpenAppointments && <button type="button" className="primary-button" onClick={onOpenAppointments}><CalendarDays size={17}/> Book appointment</button>}
-        <button type="button" className="secondary-button" onClick={() => setTab('Visit')}><Clock3 size={17}/> View visits</button>
-        {isDentist && onOpenChart && <button type="button" className="secondary-button" onClick={() => onOpenChart(selected.id)}><Stethoscope size={17}/> Open dental chart</button>}
-        {isDentist && <button type="button" className="secondary-button" onClick={() => setTab('Medical Records')}><FileHeart size={17}/> Clinical record</button>}
+
+    {/* CT_PATIENT_OVERVIEW_V5 */}
+
+    {/* CT_PATIENT_TREATMENT_INTEGRATION_V1 */}
+    {tab === 'Treatment' && (
+      <section className="ct-patient-treatment">
+        {/* CT_TREATMENT_ROLE_FIX_V2 */}
+        {!isDentist ? (
+          <div className="ct-pt-role-message" role="status">
+            <strong>Treatment workspace</strong>
+            <p>
+              Clinical treatment and medical records are available
+              to authorised dentists.
+            </p>
+            <p>
+              Reception can manage patient registration,
+              appointments and administrative details.
+            </p>
+          </div>
+        ) : !treatmentSection ? (
+          /* CT_FLOATING_TREATMENT_CHOOSER_V6 */
+          <div className="ct-pt-chooser-backdrop">
+            <div
+              className="ct-pt-chooser-dialog"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="ct-pt-chooser-title"
+            >
+              
+              <button
+                type="button"
+                className="ct-pt-chooser-close"
+                aria-label="Back to patient overview"
+                onClick={(event) => {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  setTreatmentSection(null)
+                  setTab('Overview')
+                }}
+              >
+                ×
+              </button>
+
+            
+              {/* CT_TREATMENT_CHOOSER_ACTIONS_V7 */}
+              <div className="ct-pt-chooser-top-actions">
+                <button
+                  type="button"
+                  className="ct-pt-chooser-back-button"
+                  onClick={(event) => {
+                    event.preventDefault()
+                    event.stopPropagation()
+                    setTreatmentSection(null)
+                    setTab('Overview')
+                  }}
+                >
+                  ← Back to Patient
+                </button>
+              </div>
+<div className="ct-pt-heading">
+              <h2 id="ct-pt-chooser-title">Treatment</h2>
+              <p>Select the clinical section you want to open.</p>
+            </div>
+            <div className="ct-pt-menu">
+              {([
+                ['Dental Chart', 'Select a tooth and view its findings'],
+                ['Medical Records', 'Clinical history and allergies'],
+                ['Treatment Plan', 'Plan patient procedures'],
+                ['Clinical Notes & Encounters', 'Consultations and clinical notes'],
+                ['Clinical Images', 'Patient clinical images'],
+                ['Prescriptions', 'Review consultation prescription notes'],
+              ] as const).map(([name, description]) => (
+                <button
+                  key={name}
+                  type="button"
+                  className="ct-pt-option"
+                  onClick={() => setTreatmentSection(name)}
+                >
+                  <strong>{name}</strong>
+                  <span>{description}</span>
+                  <span aria-hidden="true">→</span>
+                </button>
+              ))}
+            </div>
+
+              <div className="ct-pt-chooser-footer">
+                <button
+                  type="button"
+                  className="ct-pt-cancel-button"
+                  onClick={(event) => {
+                    event.preventDefault()
+                    event.stopPropagation()
+                    setTreatmentSection(null)
+                    backToCards()
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <button
+              type="button"
+              className="secondary-button ct-pt-back"
+              onClick={() => setTreatmentSection(null)}
+            >
+              ← Treatment sections
+            </button>
+            {/* CT_TREATMENT_BREADCRUMB_V5 */}
+            <nav
+              className="ct-pt-breadcrumb"
+              aria-label="Clinical workspace location"
+            >
+              <span>Patients</span>
+              <span aria-hidden="true">/</span>
+              <span>Treatment</span>
+              <span aria-hidden="true">/</span>
+              <strong>{treatmentSection}</strong>
+            </nav>
+
+            {/* CT_TREATMENT_PRESCRIPTIONS_V1 */}
+            {treatmentSection === 'Prescriptions' ? (
+              <PatientPrescriptionNotes patientId={selected.id} />
+            ) : (
+              <DentalChartingPage
+                key={`${selected.id}-${treatmentSection}`}
+                initialPatientId={selected.id}
+                initialClinicalTab={treatmentSection}
+              />
+            )}
+          </>
+        )}
+      </section>
+    )}
+
+    {tab === 'Overview' && (
+      <div className="ct-pv5-overview">
+        <div className="ct-pv5-title">
+          <strong>Patient overview</strong>
+          <small>Current visit and next actions</small>
+        </div>
+
+        <div className="ct-pv5-grid">
+          <section className="ct-pv5-section">
+            <h3>Current visit</h3>
+            <MiniVisitCalendar visits={visits} />
+
+            {visitsLoading ? (
+              <p>Loading appointments…</p>
+            ) : visits.some(visit =>
+              new Date(visit.startUtc).toDateString() ===
+              new Date().toDateString()
+            ) ? (
+              visits.filter(visit =>
+                new Date(visit.startUtc).toDateString() ===
+                new Date().toDateString()
+              ).map(visit => (
+                <div className="ct-pv5-row" key={visit.id}>
+                  <span>
+                    {new Date(visit.startUtc).toLocaleTimeString(
+                      'en-ZA',
+                      {hour:'2-digit', minute:'2-digit'}
+                    )}
+                  </span>
+                  <strong>{visit.status}</strong>
+                </div>
+              ))
+            ) : (
+              <p>No appointment recorded for today.</p>
+            )}
+
+            {appointmentToCheckIn && (
+              <button
+                type="button"
+                className="primary-button"
+                disabled={actionBusy}
+                onClick={() => void checkInPatient()}
+              >
+                {actionBusy ? 'Checking in…' : 'Check in'}
+              </button>
+            )}
+
+            {onOpenAppointments && (
+              <button
+                type="button"
+                className="ct-pv5-link"
+                onClick={onOpenAppointments}
+              >
+                Open appointments
+              </button>
+            )}
+          </section>
+
+          <section className="ct-pv5-section">
+            <h3>Next action</h3>
+
+            <p>
+              {appointmentToCheckIn
+                ? 'Patient expected today — check in on arrival.'
+                : 'Review the appointment schedule or visit status.'}
+            </p>
+
+            <div className="ct-pv5-actions">
+              <button
+                type="button"
+                onClick={() => setTab('Visit')}
+              >
+                View visits
+              </button>
+
+              {isDentist && onOpenChart && (
+                <button
+                  type="button"
+                  onClick={() => { setTreatmentSection('Dental Chart'); setTab('Treatment') }}
+                >
+                  Dental chart
+                </button>
+              )}
+            </div>
+          </section>
+
+          <section className="ct-pv5-section">
+            <h3>Recent visits</h3>
+
+            {visitsLoading ? (
+              <p>Loading…</p>
+            ) : visits.length === 0 ? (
+              <p>No visit history available.</p>
+            ) : (
+              visits.slice(0, 3).map(visit => (
+                <div className="ct-pv5-row" key={visit.id}>
+                  <span>{formattedDate(visit.startUtc)}</span>
+                  <strong>{visit.status}</strong>
+                </div>
+              ))
+            )}
+
+            <button
+              type="button"
+              className="ct-pv5-link"
+              onClick={() => setTab('History')}
+            >
+              View history
+            </button>
+          </section>
+
+          <section className="ct-pv5-section">
+            <h3>Contact</h3>
+
+            <p>
+              <Phone size={14}/>
+              {detailValue(selected.phoneNumber)}
+            </p>
+
+            <p>
+              <Mail size={14}/>
+              {detailValue(selected.email)}
+            </p>
+
+            <button
+              type="button"
+              className="ct-pv5-link"
+              onClick={() => setTab('Details')}
+            >
+              Patient details
+            </button>
+          </section>
+        </div>
       </div>
-      <div className="ct-patient-overview-grid">
-        <section className="ct-patient-panel"><h3>Patient overview</h3><div className="ct-patient-field-list">
-          {patientField('Full name', patientName(selected))}
-          {patientField('Date of birth', formattedDate(selected.dateOfBirth))}
-          {patientField('Phone', selected.phoneNumber)}
-          {patientField('Payment method', selected.paymentMethod)}
-        </div></section>
-        <section className="ct-patient-panel"><h3>Contact</h3><div className="ct-patient-contact-stack">
-          <p><Phone size={17}/>{detailValue(selected.phoneNumber)}</p><p><Mail size={17}/>{detailValue(selected.email)}</p><p><MapPin size={17}/>{detailValue(selected.address)}</p>
-        </div></section>
-        <section className="ct-patient-panel"><h3>Recent and upcoming visits</h3>
-          {visitsLoading ? <p>Loading visits…</p> : visits.length === 0 ? <p>No visits found in the available date range.</p> : visits.slice(0,4).map(visit => <div className="ct-patient-visit" key={visit.id}><strong>{formattedDate(visit.startUtc)}</strong><span>{visit.status}</span></div>)}
-          <button type="button" className="ct-patient-link" onClick={() => setTab('Visit')}>See visit history <ArrowRight size={15}/></button>
-        </section>
-        <section className="ct-patient-panel"><h3>Quick actions</h3>
-          <button type="button" className="ct-patient-action" onClick={() => setTab('Details')}><UserRound size={17}/> View personal details <ChevronRight size={17}/></button>
-          <button type="button" className="ct-patient-action" onClick={() => setTab('History')}><History size={17}/> View visit history <ChevronRight size={17}/></button>
-          {isDentist && <button type="button" className="ct-patient-action" onClick={() => setTab('Medical Records')}><Stethoscope size={17}/> View medical history <ChevronRight size={17}/></button>}
-        </section>
-      </div>
-    </>}
+    )}
+
+
+    {/* CT_PATIENT_ACCOUNTS_LAYOUT_V4 */}
+    {tab === 'Accounts' && (
+      <section className="ct-pa-workspace ct-pa-v4-workspace">
+
+        <div className="ct-pa-v4-header">
+          <div>
+            <h2>Patient Accounts</h2>
+            <p>
+              Invoices, receipts and financial activity for
+              {' '}{patientName(selected)}
+            </p>
+          </div>
+        </div>
+
+        
+        {/* CT_PATIENT_ACCOUNTS_EXPANDABLE_V6 */}
+        <div className="ct-pa-v6-toolbar">
+          <div className="ct-pa-v6-dropdown">
+            <button
+              type="button"
+              className="ct-pa-v6-trigger"
+              aria-expanded={accountsMenuOpen}
+              aria-controls="ct-pa-v6-menu"
+              onClick={() => setAccountsMenuOpen(open => !open)}
+            >
+              <span aria-hidden="true">▦</span>
+              <span>All Accounts</span>
+              <span className="ct-pa-v6-chevron" aria-hidden="true">
+                {accountsMenuOpen ? '▴' : '▾'}
+              </span>
+            </button>
+
+            {accountsMenuOpen && (
+              <nav
+                id="ct-pa-v6-menu"
+                className="ct-pa-v6-menu"
+                aria-label="Choose patient account section"
+              >
+                <div className="ct-pa-v6-menu-heading">
+                  Account sections
+                </div>
+
+                {[
+                  'Transactions',
+                  'Invoices',
+                  'Payments',
+                  'Refunds',
+                  'Statement'
+                ].map(name => {
+                  const current =
+                    (accountSection === null ||
+                     accountSection === 'Overview'
+                      ? 'Transactions'
+                      : accountSection) === name
+
+                  return (
+                    <button
+                      key={name}
+                      type="button"
+                      className={
+                        'ct-pa-v6-menu-item' +
+                        (current ? ' active' : '')
+                      }
+                      aria-current={current ? 'page' : undefined}
+                      onClick={() => {
+                        setAccountSection(
+                          name === 'Transactions' ? null : name
+                        )
+                        setAccountsMenuOpen(false)
+                      }}
+                    >
+                      <span>
+                        {name === 'Transactions'
+                          ? 'All Transactions'
+                          : name}
+                      </span>
+                      {current && (
+                        <span
+                          className="ct-pa-v6-check"
+                          aria-hidden="true"
+                        >
+                          ✓
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </nav>
+            )}
+          </div>
+
+          <span className="ct-pa-v6-current">
+            {accountSection === null ||
+             accountSection === 'Transactions' ||
+             accountSection === 'Overview'
+              ? 'All Transactions'
+              : accountSection}
+          </span>
+        </div>
+
+
+        <div className="ct-pa-v4-content">
+
+          {(accountSection === null ||
+            accountSection === 'Transactions' ||
+            accountSection === 'Overview') && (
+            <PatientAccountActivityView
+              key={`${selected.id}-Transactions`}
+              patientId={selected.id}
+              role={role}
+              section="Transactions"
+            />
+          )}
+
+          {accountSection === 'Invoices' && (
+            <PatientAccountInvoiceView
+              key={`${selected.id}-Invoices`}
+              patientId={selected.id}
+              role={role}
+              section="Invoices"
+            />
+          )}
+
+          {accountSection === 'Payments' && (
+            <PatientAccountActivityView
+              key={`${selected.id}-Payments`}
+              patientId={selected.id}
+              role={role}
+              section="Payments"
+            />
+          )}
+
+          {accountSection === 'Refunds' && (
+            <div className="ct-pa-v4-pending" role="status">
+              Refund records and refund processing are not yet
+              connected to an authorised refund workflow.
+              No refund can be created from this screen.
+            </div>
+          )}
+
+          {accountSection === 'Statement' && (
+            <div className="ct-pa-v4-pending" role="status">
+              The patient statement will become available after
+              receipts, allocations, reversals and refunds
+              are fully reconciled.
+            </div>
+          )}
+
+        </div>
+      </section>
+    )}
 
     {tab === 'Details' && <section className="ct-patient-panel"><h2>Patient details</h2><div className="ct-patient-field-list ct-patient-two-cols">
       {patientField('Name', patientName(selected))}
@@ -360,5 +1085,6 @@ export default function PatientExperiencePage({ role, onOpenAppointments, onOpen
       <p className="ct-patient-subtext">Visits remain stored in PostgreSQL; this screen displays the appointments in the available date window.</p>
       {visitsLoading ? <p>Loading history…</p> : visits.length === 0 ? <p>No visits found in this date range.</p> : visits.map(visit => <div className="ct-patient-visit" key={visit.id}><div><strong>{formattedDate(visit.startUtc)}</strong><p>{visit.reason || 'Dental appointment'}</p></div><span>{visit.status}</span></div>)}
     </section>}
+    </section>
   </div>
 }

@@ -195,6 +195,8 @@ public sealed class PatientRegistrationRequest
     [EmailAddress, StringLength(256)] public string? ResponsibleEmail { get; set; }
     [StringLength(500)] public string? ResponsibleAddress { get; set; }
     [StringLength(40)] public string? ResponsibleIdNumber { get; set; }
+    [StringLength(4000)] public string? ProfileJson { get; set; }
+    public bool? GuardianConsent { get; set; }
     public bool DeclarationAccepted { get; set; }
     public bool InformationConsent { get; set; }
     [StringLength(200)] public string? SignerName { get; set; }

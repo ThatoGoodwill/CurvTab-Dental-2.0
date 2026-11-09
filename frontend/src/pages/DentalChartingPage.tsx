@@ -1,3 +1,4 @@
+import './TreatmentLanding.css'
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Activity, Plus, RefreshCw, Save } from 'lucide-react'
@@ -64,15 +65,19 @@ function findingColour(value?: string): string {
 
 export default function DentalChartingPage({
   initialPatientId,
+  initialClinicalTab = 'Dental Chart',
 }: {
   initialPatientId?: string | null
+  initialClinicalTab?: 'Dental Chart' | 'Treatment Plan' | 'Clinical Notes & Encounters' | 'Medical Records' | 'Clinical Images' | 'Tooth History'
 }) {
-  const [clinicalTab, setClinicalTab] = useState<'Dental Chart' | 'Treatment Plan' | 'Clinical Notes & Encounters' | 'Medical Records' | 'Clinical Images' | 'Tooth History'>('Dental Chart')
+  const [clinicalTab, setClinicalTab] = useState<'Treatment Home' | 'Dental Chart' | 'Treatment Plan' | 'Clinical Notes & Encounters' | 'Medical Records' | 'Clinical Images' | 'Tooth History'>(initialClinicalTab)
   const [patients, setPatients] = useState<ClinicalPatient[]>([])
   const [patientSearch, setPatientSearch] = useState('')
   const [patientId, setPatientId] = useState(initialPatientId ?? '')
   const [dentition, setDentition] = useState<'permanent' | 'primary'>('permanent')
   const [toothCode, setToothCode] = useState('11')
+  const [toothChosen, setToothChosen] = useState(false)
+  // CT_TREATMENT_LANDING_V1
   const [surface, setSurface] = useState('Whole Tooth')
   const [finding, setFinding] = useState('Healthy')
   const [notes, setNotes] = useState('')
@@ -82,6 +87,13 @@ export default function DentalChartingPage({
   const [reload, setReload] = useState(0)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+
+  useEffect(() => {
+    setToothChosen(false)
+    setClinicalTab(initialClinicalTab)
+  }, [patientId])
+
+
 
   useEffect(() => {
     let cancelled = false
@@ -139,7 +151,7 @@ export default function DentalChartingPage({
     return codes.map((code) => {
       const key = String(code)
       const last = latestByTooth.get(key)
-      const selected = toothCode === key
+      const selected = toothChosen && toothCode === key
 
       // FDI positions 1-3 are anterior teeth.
       const anterior = Number(key[1]) <= 3
@@ -149,6 +161,23 @@ export default function DentalChartingPage({
       // These positions describe the displayed chart, not a radiograph.
       const mesialOnRight = ['1', '4', '5', '8'].includes(key[0])
       const upperArch = ['1', '2', '5', '6'].includes(key[0])
+
+
+
+      // CT_CLIENT_TOOTH_REFERENCE_V2
+      // Crown faces upward in the lower arch and downward
+      // in the upper arch. These are illustrative shapes.
+      const toothPosition = Number(key[1])
+      const isPrimary = Number(key[0]) >= 5
+
+      const toothShape =
+        toothPosition <= 2
+          ? 'M7 10 C7 5 10 3 16 3 C22 3 25 5 25 10 C25 16 23 21 21 25 C20 31 19 39 18 45 C17 49 15 49 14 45 C13 39 12 31 11 25 C9 21 7 16 7 10 Z'
+          : toothPosition === 3
+            ? 'M7 12 C8 8 12 5 16 2 C20 5 24 8 25 12 C25 18 22 23 20 28 C19 34 19 43 17 48 C16 50 14 49 14 46 C13 39 13 33 11 28 C9 23 7 18 7 12 Z'
+            : toothPosition <= 5 && !isPrimary
+              ? 'M5 11 C5 6 8 4 12 5 C14 3 17 3 20 5 C25 4 28 7 27 12 C27 19 24 25 21 29 C20 34 21 42 19 47 C18 49 16 47 15 42 C14 39 13 39 13 43 C12 48 10 49 9 45 C8 40 10 34 10 29 C7 25 5 19 5 11 Z'
+              : 'M3 12 C3 7 6 4 10 5 C12 3 15 3 17 5 C20 3 24 4 27 6 C30 9 29 15 28 21 C27 26 25 29 24 32 C25 39 26 45 23 48 C21 49 19 44 17 39 C16 36 15 37 14 41 C12 47 10 49 8 47 C6 44 8 38 8 32 C5 27 3 20 3 12 Z'
 
       const surfacesForTooth = [
         { name: 'Buccal', position: upperArch ? 'top' : 'bottom' },
@@ -165,6 +194,7 @@ export default function DentalChartingPage({
       )
 
       function selectToothSurface(surfaceName: string) {
+        setToothChosen(true)
         setToothCode(key)
         setSurface(surfaceName)
         setSuccess('')
@@ -178,6 +208,24 @@ export default function DentalChartingPage({
           aria-label={`Tooth ${key}`}
         >
           <span className="ct-odonto-number">{key}</span>
+
+          
+          <svg
+            className={
+              upperArch
+                ? 'ct-real-tooth ct-real-tooth-upper'
+                : 'ct-real-tooth ct-real-tooth-lower'
+            }
+            viewBox="0 0 32 52"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path className="ct-real-tooth-body" d={toothShape}/>
+            <path
+              className="ct-real-tooth-shine"
+              d="M11 11 Q14 9 17 11"
+            />
+          </svg>
 
           <div className="ct-odonto-surfaces">
             {surfacesForTooth.map(item => {
@@ -256,7 +304,11 @@ export default function DentalChartingPage({
   return (
     <div className="specialty-page">
       <div className="page-heading">
-        <div><div className="eyebrow">DENTIST · CLINICAL RECORDS</div><h1>Dental Charting</h1>
+        <div><div className="eyebrow">DENTIST · CLINICAL RECORDS</div><h1>
+              {clinicalTab === 'Treatment Home'
+                ? 'Treatment'
+                : clinicalTab}
+            </h1>
           <p>Select a tooth, record a finding, and preserve previous observations.</p></div>
         {patientId && (
           <button
@@ -378,16 +430,96 @@ export default function DentalChartingPage({
 
       
       {patientId && <nav className="ct-recovered-tabs" aria-label="Patient treatment workspace">
-        {(['Dental Chart', 'Treatment Plan', 'Clinical Notes & Encounters', 'Medical Records', 'Clinical Images', 'Tooth History'] as const).map(name =>
+        <button
+          type="button"
+          aria-pressed={clinicalTab === 'Treatment Home'}
+          onClick={() => setClinicalTab(initialClinicalTab)}
+        >
+          Treatment Home
+        </button>
+
+        {(['Dental Chart', 'Treatment Plan', 'Clinical Notes & Encounters', 'Medical Records', 'Clinical Images'] as const).map(name =>
           <button key={name} type="button" aria-pressed={clinicalTab === name}
             onClick={() => setClinicalTab(name)}>{name}</button>
         )}
       </nav>}
-      {patientId && (clinicalTab === 'Treatment Plan' || clinicalTab === 'Clinical Notes & Encounters' || clinicalTab === 'Medical Records') &&
-        <RecoveredClinicalWorkspace key={`${patientId}-${clinicalTab}`} patientId={patientId} panel={clinicalTab} />}
+
+      {patientId && clinicalTab === 'Treatment Home' && (
+        <section
+          className="ct-treatment-home"
+          aria-label="Patient treatment sections"
+        >
+          <div className="ct-treatment-intro">
+            <h2>Treatment workspace</h2>
+            <p>Select a clinical section to begin.</p>
+          </div>
+
+          <div className="ct-treatment-menu">
+            {([
+              ['Dental Chart', 'Select teeth and record observations'],
+              ['Medical Records', 'Review patient medical information'],
+              ['Treatment Plan', 'Plan and manage procedures'],
+              ['Clinical Notes & Encounters', 'Clinical consultations and notes'],
+              ['Clinical Images', 'View patient clinical imaging'],
+
+            ] as const).map(([name, description]) => (
+              <button
+                type="button"
+                key={name}
+                className="ct-treatment-option"
+                onClick={() => {
+                  setToothChosen(false)
+                  setClinicalTab(name)
+                }}
+              >
+                <strong>{name}</strong>
+                <span>{description}</span>
+                <span className="ct-treatment-option-arrow">
+                  Open →
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+
+      {/* CT_TOOTH_HISTORY_INSIDE_MEDICAL_V1 */}
+      {patientId &&
+        (clinicalTab === 'Treatment Plan' ||
+         clinicalTab === 'Clinical Notes & Encounters' ||
+         clinicalTab === 'Medical Records') && (
+          <>
+            <RecoveredClinicalWorkspace
+              key={`${patientId}-${clinicalTab}`}
+              patientId={patientId}
+              panel={clinicalTab}
+            />
+
+            {clinicalTab === 'Medical Records' && (
+              <div className="ct-recovered-panel">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => setClinicalTab('Tooth History')}
+                >
+                  View Tooth History →
+                </button>
+              </div>
+            )}
+          </>
+        )}
 
       {patientId && clinicalTab === 'Tooth History' &&
-        <section className="ct-recovered-panel"><h2>Tooth History</h2>
+        <section className="ct-recovered-panel">
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => setClinicalTab('Medical Records')}
+          >
+            ← Back to Medical Records
+          </button>
+          <h2>Tooth History</h2>
           <p>Tooth {toothCode} · previous recorded observations</p>
           {toothHistory.length === 0 ? <p>No observations for this tooth.</p> :
             toothHistory.map(item => <article className="ct-recovered-card" key={item.id}>
@@ -402,7 +534,12 @@ export default function DentalChartingPage({
         />
       )}
 
-      {patientId && clinicalTab === 'Dental Chart' && <div className="specialty-columns">
+      {patientId && clinicalTab === 'Dental Chart' &&
+        <div className={
+          toothChosen
+            ? 'specialty-columns ct-treatment-chart'
+            : 'specialty-columns ct-treatment-chart ct-treatment-no-tooth'
+        }>
         <section className="panel specialty-chart-panel">
           <div className="panel-header"><div><h2>FDI Tooth Chart</h2><p>Adult and primary dentition</p></div><Activity size={20}/></div>
           <div className="specialty-switch">
@@ -428,10 +565,10 @@ export default function DentalChartingPage({
             </p>
           </div>
           <div className="specialty-jaws ct-clinical-arches">
-            <div><strong>Upper arch</strong><div className="specialty-tooth-grid">{toothButtons(dentition === 'permanent' ? permanentUpper : primaryUpper)}</div></div>
-            <div><strong>Lower arch</strong><div className="specialty-tooth-grid">{toothButtons(dentition === 'permanent' ? permanentLower : primaryLower)}</div></div>
+            <div><strong>Upper arch</strong><div className="specialty-tooth-grid" onClickCapture={(event) => { const target = event.target as HTMLElement; if (target.closest("button, [role=button]")) setToothChosen(true) }}>{toothButtons(dentition === 'permanent' ? permanentUpper : primaryUpper)}</div></div>
+            <div><strong>Lower arch</strong><div className="specialty-tooth-grid" onClickCapture={(event) => { const target = event.target as HTMLElement; if (target.closest("button, [role=button]")) setToothChosen(true) }}>{toothButtons(dentition === 'permanent' ? permanentLower : primaryLower)}</div></div>
           </div>
-          <div className="specialty-history">
+          <div className="specialty-history" hidden={!toothChosen}>
             <h3>Tooth {toothCode} · Clinical history</h3>
             <p className="ct-chart-history-help">
               Previous observations are retained for clinical review.
@@ -445,7 +582,7 @@ export default function DentalChartingPage({
               </article>)}
           </div>
         </section>
-        <section className="panel specialty-form-panel">
+        {toothChosen && <section className="panel specialty-form-panel">
           <div className="panel-header"><div><h2>Add Observation</h2><p>Patient tooth {toothCode}</p></div><Plus size={20}/></div>
           <form onSubmit={(event) => void saveEntry(event)} className="specialty-form">
             <label>Tooth code<input readOnly value={toothCode}/></label>
@@ -462,7 +599,7 @@ export default function DentalChartingPage({
               <Save size={17}/>{busy ? 'Saving...' : 'Save Tooth Observation'}
             </button>
           </form>
-        </section>
+        </section>}
       </div>}
     </div>
   )

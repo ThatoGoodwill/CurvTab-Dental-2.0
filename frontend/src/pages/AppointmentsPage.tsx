@@ -38,6 +38,7 @@ type Props = {
   onTabChange: (tab: AppointmentTab) => void
   onOpenPatients: () => void
   onOpenConsultation: (appointmentId: string) => void
+  onClose: () => void
   role: string
 }
 
@@ -100,6 +101,7 @@ export default function AppointmentsPage({
   onTabChange,
   onOpenPatients,
   onOpenConsultation,
+  onClose,
   role,
 }: Props) {
   const [selectedDate, setSelectedDate] = useState(
@@ -122,6 +124,11 @@ export default function AppointmentsPage({
   const [time, setTime] = useState('09:00')
   const [duration, setDuration] = useState('30')
   const [reason, setReason] = useState('')
+
+  // CT_APPOINTMENTS_COMPACT_V1
+  const [dateChosen, setDateChosen] = useState(false)
+  const [bookingOpen, setBookingOpen] = useState(false)
+
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -231,12 +238,15 @@ export default function AppointmentsPage({
   function changeMonth(direction: number) {
     setDisplayMonth(new Date(year, month + direction, 1))
     setSelectedDate(new Date(year, month + direction, 1))
+    setDateChosen(false)
+    setBookingOpen(false)
     setLoading(true)
   }
 
   function goToToday() {
     const today = new Date()
     setSelectedDate(today)
+    setDateChosen(true)
     setDisplayMonth(
       new Date(today.getFullYear(), today.getMonth(), 1)
     )
@@ -279,6 +289,8 @@ export default function AppointmentsPage({
       })
 
       setSuccess('Appointment booked successfully.')
+      setBookingOpen(false)
+      setDateChosen(true)
       setPatientId('')
       setReason('')
       refresh()
@@ -362,7 +374,28 @@ export default function AppointmentsPage({
   }
 
   return (
-    <div className="appointments-page">
+    /* CT_APPOINTMENTS_FLOATING_MODAL_V1 */
+    <div className="ct-appt-page-overlay">
+      <section
+        className={
+          'ct-appointments-modal ' +
+          (tab === 'Scheduling'
+            ? 'ct-appointments-modal-calendar'
+            : 'ct-appointments-modal-queue')
+        }
+        role="dialog"
+        aria-modal="true"
+        aria-label="Appointments"
+      >
+        <button
+          type="button"
+          className="ct-appointments-modal-close"
+          aria-label="Close Appointments"
+          onClick={onClose}
+        >
+          ×
+        </button>
+        <div className="appointments-page">
       <div className="page-heading">
         <div>
           <div className="eyebrow">{role === 'Dentist' ? 'CLINICAL WORKSPACE' : 'FRONT DESK'}</div>
@@ -427,9 +460,9 @@ export default function AppointmentsPage({
       )}
 
       {tab === 'Scheduling' && (
-        <div className="appointment-layout">
+        <div className="appointment-layout ct-appt-compact">
           {/* INTERACTIVE CALENDAR */}
-          <section className="panel">
+          <section className="panel ct-appt-calendar-panel">
             <div className="panel-header">
               <div>
                 <h2>Calendar</h2>
@@ -497,7 +530,12 @@ export default function AppointmentsPage({
                     aria-pressed={selected}
                     aria-label={`${day} ${displayMonth.toLocaleDateString('en-ZA', { month: 'long' })}: ${dayPatients.length} appointments`}
                     aria-describedby={dayPatients.length ? `ct-scheduling-hover-${key}` : undefined}
-                    onClick={() => setSelectedDate(date)}
+                    onClick={() => {
+                      setSelectedDate(date)
+                      setDateChosen(true)
+                      setBookingOpen(false)
+                      setError('')
+                    }}
                   >
                     <span>{day}</span>
                     {booked && (
@@ -515,6 +553,31 @@ export default function AppointmentsPage({
                       </span>
                     )}
                   </button>
+
+                  {/* CT_APPOINTMENT_DATE_ACTION_V2 */}
+                  {canBook && dateChosen && selected && !bookingOpen && (
+                    <div
+                      className={
+                        'ct-appt-date-action' +
+                        ((date.getDay() === 0 || date.getDay() >= 5)
+                          ? ' ct-appt-date-action-left'
+                          : '')
+                      }
+                    >
+                      <button
+                        type="button"
+                        className="ct-appt-date-action-button"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          setError('')
+                          setBookingOpen(true)
+                        }}
+                      >
+                        <CalendarPlus size={14}/>
+                        <span>Add Appointment</span>
+                      </button>
+                    </div>
+                  )}
                   {dayPatients.length > 0 && (
                     <div className="ct-hover-popover" role="tooltip" id={`ct-scheduling-hover-${key}`}>
                       <strong>{date.toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'long' })}</strong>
@@ -554,10 +617,29 @@ export default function AppointmentsPage({
             </p>
           </section>
 
+
           {/* BOOKING FORM AND SELECTED DAY */}
           <div className="appointment-right">
-            {canBook && (
-              <section className="panel">
+            {canBook && bookingOpen && (
+              <div className="ct-appt-booking-overlay">
+                <section
+                  className="panel ct-appt-booking-dialog"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label="Book Appointment"
+                >
+                  <button
+                    type="button"
+                    className="ct-appt-booking-close"
+                    aria-label="Close booking form"
+                    disabled={saving}
+                    onClick={() => {
+                      setBookingOpen(false)
+                      setError('')
+                    }}
+                  >
+                    ×
+                  </button>
                 <div className="panel-header">
                   <div>
                     <h2>Book Appointment</h2>
@@ -570,6 +652,12 @@ export default function AppointmentsPage({
                   className="appointment-form"
                   onSubmit={createAppointment}
                 >
+                  {error && (
+                    <p className="ct-appt-form-error" role="alert">
+                      {error}
+                    </p>
+                  )}
+
                   <label htmlFor="booking-patient">
                     Patient
                   </label>
@@ -649,10 +737,40 @@ export default function AppointmentsPage({
                     {saving ? 'Saving...' : 'Save Appointment'}
                   </button>
                 </form>
+
+                <button
+                  type="button"
+                  className="ct-appt-cancel"
+                  disabled={saving}
+                  onClick={() => {
+                    setBookingOpen(false)
+                    setError('')
+                  }}
+                >
+                  Cancel
+                </button>
               </section>
+              </div>
             )}
 
-            <section className="panel">
+            {!loading && selectedAppointments.length > 0 && (
+            <details
+              key={selectedKey}
+              className="panel ct-appt-daily ct-appt-daily-fold"
+            >
+              {/* CT_DAILY_APPOINTMENTS_EXPAND_V3 */}
+              <summary className="ct-appt-daily-trigger">
+                <span className="ct-appt-daily-trigger-icon">
+                  <CalendarDays size={16}/>
+                </span>
+                <span className="ct-appt-daily-trigger-text">
+                  <strong>Daily Appointments</strong>
+                  <small>{selectedAppointments.length} booked</small>
+                </span>
+                <span className="ct-appt-daily-chevron" aria-hidden="true">
+                  ›
+                </span>
+              </summary>
               <div className="panel-header">
                 <div>
                   <h2>Daily Appointments</h2>
@@ -711,7 +829,8 @@ export default function AppointmentsPage({
                   ))}
                 </div>
               )}
-            </section>
+            </details>
+            )}
           </div>
         </div>
       )}
@@ -797,6 +916,8 @@ export default function AppointmentsPage({
           </p>
         </section>
       )}
+    </div>
+      </section>
     </div>
   )
 }

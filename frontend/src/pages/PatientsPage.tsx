@@ -1,4 +1,7 @@
+import { getVerifiedPostalCode } from './RegistrationPostalCodes'
 import './PatientsPage.css'
+import { getLocality, getSuburbs, getCities } from './RegistrationLocality'
+import RegistrationOtherPicker from './RegistrationOtherPicker'
 import {
   initialRegistrationExtras, RegistrationMedicalScreen,
   RegistrationResponsibleScreen, RegistrationDeclarationScreen,
@@ -210,14 +213,32 @@ function calculateRegistrationAge(dob: string): number | null {
   return age
 }
 
-export default function PatientsPage() {
+type PatientsPageProps = {
+  autoOpenRegistration?: boolean
+  onRegistrationExit?: () => void
+  onExistingPatientSelect?: (patientId: string) => void
+}
+
+export default function PatientsPage({
+  autoOpenRegistration = false,
+  onRegistrationExit,
+  onExistingPatientSelect,
+}: PatientsPageProps) {
   const { user } = useAuth()
 
   const [patients, setPatients] = useState<Patient[]>([])
   const [search, setSearch] = useState('')
 
   const [showRegistration, setShowRegistration] =
-    useState(false)
+    useState(autoOpenRegistration)
+
+
+  // CT_DIRECT_QUICK_REGISTRATION_V1
+  useEffect(() => {
+    if (autoOpenRegistration && !showRegistration) {
+      onRegistrationExit?.()
+    }
+  }, [autoOpenRegistration, showRegistration, onRegistrationExit])
 
   const [selectedPatient, setSelectedPatient] =
     useState<Patient | null>(null)
@@ -328,80 +349,65 @@ export default function PatientsPage() {
   // =========================================
 
 
+  // CT_REGISTRATION_CLIENT_V3 — six compact stages per client review.
   const registrationSteps = [
+    'Find patient',
     'Personal details',
-    'Contact details',
-    'Responsible person',
-    'Medical history',
+    'Contact & emergency',
     'Payment & medical aid',
-    'Declaration & signatures',
-    'Review & save',
+    'Medical history',
+    'Review & declaration',
   ]
+  const [existingPatientSearch, setExistingPatientSearch] = useState('')
+  const [cityTown, setCityTown] = useState('')
+  const [suburb, setSuburb] = useState('')
+  const [showResponsible, setShowResponsible] = useState(false)
+  const locality = getLocality(cityTown, suburb)
+  const verifiedPostalCode = getVerifiedPostalCode(cityTown, suburb)
+  const suburbOptions = getSuburbs(cityTown)
+  function setLocation(city: string, area: string) {
+    setCityTown(city)
+    setSuburb(area)
+    const detail = getLocality(city, area)
+    updateField('address', [area.trim(), city.trim(), detail.province, 'South Africa'].filter(Boolean).join(', '))
+  }
 
   const patientAge = calculateRegistrationAge(form.dateOfBirth)
   const isMinor = patientAge !== null && patientAge < 18
 
   function nextRegistrationStep() {
     setError('')
-
-    if (registrationStep === 0) {
-      if (!form.firstName.trim() || !form.lastName.trim()) {
-        setError('First name and surname are required.')
-        return
-      }
-
-      if (patientAge === null) {
-        setError('Enter a valid date of birth.')
+    if (registrationStep === 1) {
+      if (!form.firstName.trim() || !form.lastName.trim() || patientAge === null) {
+        setError('A valid first name, surname and date of birth are required.')
         return
       }
     }
-
-    if (registrationStep === 1) {
-      if (
-        form.email.trim() &&
-        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())
-      ) {
+    if (registrationStep === 2) {
+      if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
         setError('Enter a valid email address.')
         return
       }
-    }
-
-    if (registrationStep === 2 && isMinor) {
-      if (
-        !form.emergencyContactName.trim() ||
-        !form.emergencyContactPhone.trim()
-      ) {
-        setError('A parent or guardian contact is required for a minor.')
+      if (!cityTown.trim() || !suburb.trim()) {
+        setError('Enter the city/town and suburb.')
+        return
+      }
+      if (isMinor && (!registrationExtras.responsibleName.trim() ||
+          !registrationExtras.responsibleRelationship.trim() ||
+          !registrationExtras.responsiblePhone.trim())) {
+        setError('A minor must have parent/guardian contact details.')
         return
       }
     }
-
-    if (registrationStep === 2 && isMinor &&
-      (!registrationExtras.responsibleName.trim() ||
-       !registrationExtras.responsibleRelationship.trim() ||
-       !registrationExtras.responsiblePhone.trim())) {
-      setError('Enter the parent/guardian name, relationship and phone.')
+    if (registrationStep === 3 && form.paymentMethod === 'MedicalAid' &&
+        (!form.medicalAidScheme.trim() || !form.medicalAidMemberNumber.trim())) {
+      setError('Medical aid scheme and membership number are required.')
       return
     }
-
-    if (registrationStep === 4 && form.paymentMethod === 'MedicalAid') {
-      if (
-        !form.medicalAidScheme.trim() ||
-        !form.medicalAidMemberNumber.trim()
-      ) {
-        setError('Medical aid scheme and membership number are required.')
-        return
-      }
+    if (registrationStep === 4 && isMinor) {
+      setRegistrationExtras(v => ({...v,signerCapacity:'ParentOrGuardian'}))
     }
-
-    if (registrationStep === 5 &&
-      (!registrationExtras.declarationAccepted || !registrationExtras.informationConsent ||
-       !registrationExtras.signerName.trim() || !registrationExtras.signatureDataUrl ||
-       (isMinor && registrationExtras.signerCapacity === 'Patient'))) {
-      setError('Complete the declaration, privacy acknowledgement and signature. A minor must have a guardian or representative sign.')
-      return
-    }
-    setRegistrationStep(current => Math.min(current + 1, 6))
+    setRegistrationStep(current => Math.min(current + 1, 5))
   }
 
   function previousRegistrationStep() {
@@ -430,10 +436,35 @@ export default function PatientsPage() {
       return
     }
 
-    if (!registrationExtras.declarationAccepted || !registrationExtras.informationConsent ||
-        !registrationExtras.signerName.trim() || !registrationExtras.signatureDataUrl ||
-        (isMinor && registrationExtras.signerCapacity === 'Patient')) {
-      setError('Signed declaration and privacy acknowledgement are required.')
+    // CT_REGISTRATION_VALIDATION_DIAGNOSTICS_V1
+    if (!registrationExtras.declarationAccepted) {
+      setError('Please tick the declaration confirming that the patient information is accurate.')
+      return
+    }
+
+    if (!registrationExtras.informationConsent) {
+      setError('Please acknowledge the privacy notice before completing registration.')
+      return
+    }
+
+    if (!registrationExtras.signerName.trim()) {
+      setError('Enter the full name of the patient or parent/guardian who is signing.')
+      return
+    }
+
+    if (!registrationExtras.signatureDataUrl ||
+        !registrationExtras.signatureDataUrl.startsWith('data:image/png;base64,')) {
+      setError('Please draw the patient or parent/guardian signature before completing registration.')
+      return
+    }
+
+    if (isMinor && !registrationExtras.guardianConsent) {
+      setError('Parent or guardian acknowledgement is required for a minor.')
+      return
+    }
+
+    if (isMinor && registrationExtras.signerCapacity !== 'ParentOrGuardian') {
+      setError('For a minor, the signature must be recorded as Parent or Guardian.')
       return
     }
     setSaving(true)
@@ -469,7 +500,21 @@ export default function PatientsPage() {
           responsiblePhone: registrationExtras.responsiblePhone.trim() || null,
           responsibleEmail: registrationExtras.responsibleEmail.trim() || null,
           responsibleAddress: registrationExtras.responsibleAddress.trim() || null,
-          responsibleIdNumber: registrationExtras.responsibleIdNumber.trim() || null,
+          responsibleIdNumber: null,
+          profileJson: JSON.stringify({
+            title: registrationExtras.title,
+            middleNames: registrationExtras.middleNames,
+            preferredName: registrationExtras.preferredName,
+            previousSurname: registrationExtras.previousSurname,
+            pronouns: registrationExtras.pronouns,
+            language: registrationExtras.language,
+            cityTown, suburb, province: locality.province,
+            postalCode: verifiedPostalCode,
+            country: 'South Africa',
+            preferredContact: registrationExtras.preferredContact,
+            guardianConsent: isMinor ? registrationExtras.guardianConsent : null,
+            orthodonticPatient: registrationExtras.orthodonticPatient,
+          }),
           declarationAccepted: registrationExtras.declarationAccepted,
           informationConsent: registrationExtras.informationConsent,
           signerName: registrationExtras.signerName.trim(),
@@ -482,6 +527,9 @@ export default function PatientsPage() {
           allergies: registrationExtras.allergies.trim() || null,
           currentMedications: registrationExtras.medications.trim() || null,
           medicalConditions: [registrationExtras.medicalConditions.trim(),
+            registrationExtras.extraConditions.length ? `Other selected conditions: ${registrationExtras.extraConditions.join(', ')}` : '',
+            registrationExtras.hypertension === 'Yes' ? `Hypertension details: medication=${registrationExtras.bpMedicine}; strength=${registrationExtras.bpDose}; frequency=${registrationExtras.bpFrequency}; controlled=${registrationExtras.bpControlled}; recent reading=${registrationExtras.bpRecent}` : '',
+            registrationExtras.diabetes === 'Yes' ? `Diabetes details: type=${registrationExtras.diabetesType}; management=${registrationExtras.diabetesManagement}; medication=${registrationExtras.diabetesMedicine}; strength=${registrationExtras.diabetesDose}; frequency=${registrationExtras.diabetesFrequency}; recent low sugar=${registrationExtras.diabetesLowSugar}` : '',
             `Diabetes: ${registrationExtras.diabetes}`,
             `High blood pressure: ${registrationExtras.hypertension}`,
             `Bleeding disorder: ${registrationExtras.bleedingDisorder}`,
@@ -507,6 +555,8 @@ export default function PatientsPage() {
       // Save succeeded.
       setSuccess('Patient registered successfully.')
       setForm(emptyForm)
+      setCityTown('')
+      setSuburb('')
       setRegistrationExtras(initialRegistrationExtras)
       setRegistrationStep(0)
       setDuplicateWarning(false)
@@ -635,6 +685,10 @@ export default function PatientsPage() {
             className="primary-button"
             onClick={() => {
               setRegistrationStep(0)
+              setExistingPatientSearch('')
+              setCityTown('')
+              setSuburb('')
+              setShowResponsible(false)
               setRegistrationExtras(initialRegistrationExtras)
               setShowRegistration(true)
               setSelectedPatient(null)
@@ -692,11 +746,11 @@ export default function PatientsPage() {
           ====================================== */}
 
       {showRegistration && (
-        <section className="panel">
+        <div className="ct-reg-v3-overlay"><section className="panel ct-reg-v3-modal" role="dialog" aria-modal="true" aria-label="New Patient Registration">
           <div className="panel-header">
             <div>
               <h2>Register New Patient</h2>
-              <p>Complete all seven sections, review the medical declaration and capture signatures.</p>
+              <p>Complete the six guided stages, including medical history and signed declaration.</p>
             </div>
 
             <UserPlus size={22} />
@@ -721,11 +775,36 @@ export default function PatientsPage() {
           </div>
 
           <form onSubmit={handleRegister} noValidate className="ct-wizard-form">
+          <div className="ct-reg-v3-content">
             {registrationStep === 0 && (
               <section className="ct-wizard-section">
-                <h3>Step 1 — Personal details</h3>
+                <h3>Find existing patient</h3>
+                <p>Search your authorised patient directory before creating a new record.</p>
+                <label className="ct-reg-label">Search by name<input value={existingPatientSearch} placeholder="Type patient name" onChange={event=>setExistingPatientSearch(event.target.value)}/></label>
+                {existingPatientSearch.trim().length >= 2 && (
+                  <div className="ct-reg-v3-existing">{patients.filter(x=>`${x.firstName} ${x.lastName}`.toLowerCase().includes(existingPatientSearch.trim().toLowerCase())).slice(0,6).map(x=><button key={x.id} type="button" className="secondary-button" onClick={()=>{setShowRegistration(false);
+                      if (autoOpenRegistration && onExistingPatientSelect) {
+                        onExistingPatientSelect(x.id)
+                      } else {
+                        void openPatient(x)
+                      }}}>{x.firstName} {x.lastName} — Open existing record</button>)}
+                    {patients.filter(x=>`${x.firstName} ${x.lastName}`.toLowerCase().includes(existingPatientSearch.trim().toLowerCase())).length===0 && <p>No matches in the currently loaded directory. Confirm before creating a new patient.</p>}
+                  </div>
+                )}
+                <p className="ct-wizard-notice">If no existing patient is found, continue to register a new patient. Duplicate detection also runs when saving.</p>
+              </section>
+            )}
+            {registrationStep === 1 && (
+              <section className="ct-wizard-section">
+                <h3>Personal details</h3>
                 <p>Enter the patient's information. An ID number is not required.</p>
 
+                <div className="ct-reg-v3-mini-grid">
+                  <label className="ct-reg-label">Title<select value={registrationExtras.title} onChange={event => setRegistrationExtras(v => ({...v,title:event.target.value}))}><option value="">Choose title</option>{['Mr','Mrs','Ms','Miss','Mx','Dr','Prof'].map(t=><option key={t}>{t}</option>)}</select></label>
+                  <label className="ct-reg-label">Middle name(s)<input value={registrationExtras.middleNames} onChange={event => setRegistrationExtras(v => ({...v,middleNames:event.target.value}))}/></label>
+
+                  <label className="ct-reg-label">Preferred pronouns<select value={registrationExtras.pronouns} onChange={event => setRegistrationExtras(v => ({...v,pronouns:event.target.value}))}>{['','He / Him','She / Her','They / Them','Other','Prefer not to say'].map(s=><option key={s} value={s}>{s || 'Not specified'}</option>)}</select></label>
+                </div>
                 <div className="ct-wizard-grid">
                   <label style={labelStyle}>
                     First name *
@@ -767,7 +846,7 @@ export default function PatientsPage() {
                       aria-live="polite"
                     >
                       <span className="ct-wizard-age-label">
-                        CALCULATED AGE
+                        Age:
                       </span>
 
                       {patientAge === null ? (
@@ -782,12 +861,16 @@ export default function PatientsPage() {
                               {patientAge === 1 ? ' year' : ' years'}
                             </small>
                           </strong>
-                          <span className="ct-wizard-age-category">
-                            {isMinor ? 'Minor patient' : 'Adult patient'}
-                          </span>
                         </>
                       )}
-                    </div>
+                    
+                      {/* CT_MINOR_GUARDIAN_STATUS_V1 */}
+                      {isMinor && (
+                        <span className="ct-minor-guardian-status">
+                          Minor — Guardian required
+                        </span>
+                      )}
+</div>
                   </div>
 
                   <label style={labelStyle}>
@@ -807,12 +890,16 @@ export default function PatientsPage() {
                 </div>
 
 
-              </section>
+              
+<div className="ct-reg-v3-mini-grid ct-reg-language-bottom">
+                  <label className="ct-reg-label">Communication language<select value={registrationExtras.language} onChange={event => setRegistrationExtras(v => ({...v,language:event.target.value}))}>{['English','Sesotho','Setswana','isiZulu','isiXhosa','Afrikaans','Sepedi','siSwati','Other'].map(s=><option key={s}>{s}</option>)}</select></label>
+</div>
+</section>
             )}
 
-            {registrationStep === 1 && (
+            {registrationStep === 2 && (
               <section className="ct-wizard-section">
-                <h3>Step 2 — Contact details</h3>
+                <h3>Contact & emergency</h3>
                 <div className="ct-wizard-grid">
                   <label style={labelStyle}>
                     Contact number
@@ -836,23 +923,38 @@ export default function PatientsPage() {
                     />
                   </label>
 
-                  <label style={labelStyle}>
-                    Residential address
-                    <textarea
-                      style={fieldStyle}
-                      maxLength={500}
-                      rows={3}
-                      value={form.address}
-                      onChange={event => updateField('address', event.target.value)}
-                    />
-                  </label>
+                  <div className="ct-reg-v3-location">
+                    {/* CT_SA_SMART_LOCATION_V1 */}
+    
+{/* CT_COMPACT_OTHER_V5 */}
+<RegistrationOtherPicker
+  kind="city"
+  value={cityTown}
+  choices={getCities()}
+  suggestions={getCities()}
+  onChange={value => setLocation(value, '')}
+/>
+
+                    
+<RegistrationOtherPicker
+  key={cityTown}
+  kind="suburb"
+  value={suburb}
+  choices={suburbOptions}
+  suggestions={suburbOptions}
+  onChange={value => setLocation(cityTown, value)}
+/>
+
+                    <small>Province, country and postal code are shown at review. When a postal code cannot be verified, it is left unconfirmed.</small>
+                  </div>
+                  <label className="ct-reg-label">Preferred contact method<select value={registrationExtras.preferredContact} onChange={event=>setRegistrationExtras(v=>({...v,preferredContact:event.target.value}))}>{['Phone call','SMS','WhatsApp','Email','Other'].map(x=><option key={x}>{x}</option>)}</select></label>
                 </div>
               </section>
             )}
 
             {registrationStep === 2 && (
               <section className="ct-wizard-section">
-                <h3>Step 3 — Next of kin / Emergency contact</h3>
+                <h3>Emergency contact</h3>
                 {isMinor && (
                   <p className="ct-wizard-notice">
                     This patient is {patientAge} years old.
@@ -886,17 +988,15 @@ export default function PatientsPage() {
               </section>
             )}
 
-            {registrationStep === 2 && (
+            {registrationStep === 2 && !isMinor && (
+              <label className="ct-reg-v3-toggle"><input type="checkbox" checked={showResponsible} onChange={event=>setShowResponsible(event.target.checked)}/>Add a responsible person / authorised representative (optional for adults)</label>
+            )}
+            {registrationStep === 2 && (isMinor || showResponsible) && (
               <RegistrationResponsibleScreen value={registrationExtras} onChange={setRegistrationExtras} isMinor={isMinor} />
             )}
-
             {registrationStep === 3 && (
-              <RegistrationMedicalScreen value={registrationExtras} onChange={setRegistrationExtras} />
-            )}
-
-            {registrationStep === 4 && (
               <section className="ct-wizard-section">
-                <h3>Step 4 — Payment & Medical Aid</h3>
+                <h3>Payment & medical aid</h3>
                 <div className="ct-wizard-grid">
                   <label style={labelStyle}>
                     Billing category
@@ -952,16 +1052,19 @@ export default function PatientsPage() {
               </section>
             )}
 
-            {registrationStep === 5 && (
-              <RegistrationDeclarationScreen value={registrationExtras} onChange={setRegistrationExtras} isMinor={isMinor} />
+            {registrationStep === 4 && (
+              <RegistrationMedicalScreen value={registrationExtras} onChange={setRegistrationExtras} />
             )}
 
-            {registrationStep === 6 && (
+            {registrationStep === 5 && (
               <section className="ct-wizard-section">
-                <h3>Step 7 — Review & Save</h3>
+                <h3>Review details</h3>
                 <p>Check the patient details before completing registration.</p>
 
-                <div className="ct-wizard-review">
+                {/* CT_COMPACT_MEDICAL_REVIEW_V1 */}
+<details className="ct-reg-review-fold">
+  <summary>Patient, contact and payment details</summary>
+<div className="ct-wizard-review">
                   <p><strong>Name:</strong> {form.firstName} {form.lastName}</p>
                   <p><strong>DOB:</strong> {form.dateOfBirth}</p>
                   <p><strong>Age:</strong> {patientAge ?? 'Invalid'}</p>
@@ -969,7 +1072,11 @@ export default function PatientsPage() {
                   <p><strong>Gender:</strong> {form.gender || 'Not specified'}</p>
                   <p><strong>Phone:</strong> {form.phoneNumber || 'Not supplied'}</p>
                   <p><strong>Email:</strong> {form.email || 'Not supplied'}</p>
-                  <p><strong>Address:</strong> {form.address || 'Not supplied'}</p>
+                  <p><strong>City/Town:</strong> {cityTown || 'Not supplied'}</p>
+                  <p><strong>Suburb:</strong> {suburb || 'Not supplied'}</p>
+                  <p><strong>Province:</strong> {locality.province || 'Not confirmed — verify before use'}</p>
+                  <p><strong>Postal code:</strong> {verifiedPostalCode || 'Not confirmed — verify manually'}</p>
+                  <p><strong>Country:</strong> South Africa</p>
                   <p><strong>Next of kin:</strong> {form.emergencyContactName || 'Not supplied'}</p>
                   <p><strong>Emergency phone:</strong> {form.emergencyContactPhone || 'Not supplied'}</p>
                   <p><strong>Payment:</strong> {form.paymentMethod}</p>
@@ -987,15 +1094,24 @@ export default function PatientsPage() {
                     {form.consentGiven ? 'Recorded' : 'Not recorded'}
                   </p>
                 </div>
+</details>
 
-                <RegistrationExtrasReview value={registrationExtras} />
+                <details className="ct-reg-review-fold">
+  <summary>Medical history and additional details</summary>
+  <RegistrationExtrasReview value={registrationExtras} />
+</details>
                 <p className="ct-wizard-notice">Review the registration carefully. The dentist must separately verify clinical history and obtain procedure-specific consent before treatment.</p>
               </section>
             )}
 
+            {registrationStep === 5 && (
+              <RegistrationDeclarationScreen value={{...registrationExtras,signerCapacity:isMinor && registrationExtras.signerCapacity === 'Patient' ? 'ParentOrGuardian' : registrationExtras.signerCapacity}} onChange={setRegistrationExtras} isMinor={isMinor} />
+            )}
+
+          </div>
             {error && <p role="alert" className="ct-wizard-error">{error}</p>}
 
-            {duplicateWarning && registrationStep === 6 && (
+            {duplicateWarning && registrationStep === 5 && (
               <div className="ct-wizard-notice" role="alert">
                 <strong>Possible duplicate patient found.</strong>
                 <p>
@@ -1026,7 +1142,7 @@ export default function PatientsPage() {
                 </button>
               )}
 
-              {registrationStep < 6 ? (
+              {registrationStep < 5 ? (
                 <button
                   type="button"
                   className="primary-button"
@@ -1062,7 +1178,7 @@ export default function PatientsPage() {
             </div>
           </form>
 
-        </section>
+        </section></div>
       )}
 
       {/* ======================================

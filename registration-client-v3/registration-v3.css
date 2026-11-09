@@ -1,0 +1,43 @@
+/* CT_REGISTRATION_CLIENT_V3 — compact, light-theme registration dialog */
+.ct-reg-v3-overlay{position:fixed;inset:0;z-index:1300;background:rgba(8,23,43,.57);display:grid;place-items:center;padding:12px;box-sizing:border-box}
+.ct-reg-v3-modal{width:min(1040px,calc(100vw - 24px));max-height:calc(100dvh - 24px);height:min(760px,calc(100dvh - 24px));display:flex;flex-direction:column;min-height:0;background:#fff!important;color:#18314e!important;border:1px solid #dce4ed;box-shadow:0 20px 60px rgba(4,16,37,.28);border-radius:15px;overflow:hidden;padding:0!important}
+.ct-reg-v3-modal .panel-header{flex:0 0 auto;padding:13px 20px 9px;border-bottom:1px solid #e6ecf3;background:#fff}
+.ct-reg-v3-modal .panel-header h2{font-size:18px!important;margin:0 0 2px}
+.ct-reg-v3-modal .panel-header p{font-size:12px!important;margin:0;color:#536985}
+.ct-reg-v3-modal .ct-wizard-progress{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:0!important;flex:0 0 auto;margin:0!important;padding:11px 12px 8px;background:#f7faff;border-bottom:1px solid #e5ebf2;overflow-x:auto}
+.ct-reg-v3-modal .ct-wizard-progress-item{background:transparent!important;border:0!important;box-shadow:none!important;min-width:0!important;min-height:57px!important;padding:0 3px!important;display:flex;flex-direction:column;align-items:center;gap:5px!important}
+.ct-reg-v3-modal .ct-wizard-progress-item small{font-size:11px;line-height:1.2;color:#4a617c;max-width:100px;text-align:center}
+.ct-reg-v3-modal .ct-wizard-number{width:29px!important;height:29px!important;min-height:29px!important;flex:0 0 29px!important;background:#fff;border:1.5px solid #a4b2c4;border-radius:50%!important;color:#415b78;display:grid;place-items:center;font-size:12px;font-weight:700}
+.ct-reg-v3-modal .ct-wizard-progress-item.active .ct-wizard-number{background:#1678d3;border-color:#1678d3;color:#fff;box-shadow:0 0 0 3px #dceeff}
+.ct-reg-v3-modal .ct-wizard-progress-item.completed .ct-wizard-number{background:#128478;border-color:#128478;color:#fff}
+.ct-reg-v3-modal .ct-wizard-progress-item:before{display:none!important}
+.ct-reg-v3-modal .ct-wizard-form{display:flex;flex:1;min-height:0;flex-direction:column;overflow:hidden;background:#fff}
+.ct-reg-v3-content{overflow:auto;flex:1;min-height:0;padding:17px 21px;scrollbar-width:thin}
+.ct-reg-v3-modal .ct-wizard-section,.ct-reg-v3-modal .ct-reg-section{background:#fff!important;color:#18314e!important;margin:0 0 10px!important;border:0!important;padding:0!important;box-shadow:none!important}
+.ct-reg-v3-modal .ct-wizard-section>h3{font-size:17px!important;line-height:1.4;margin:2px 0 5px!important;color:#132f50}
+.ct-reg-v3-modal .ct-wizard-section>p{font-size:12px;color:#536983;margin:4px 0 10px}
+.ct-reg-v3-modal .ct-wizard-grid,.ct-reg-v3-mini-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px 13px!important}
+.ct-reg-v3-modal label{font-size:12px!important;color:#294562!important;font-weight:600;min-width:0}
+.ct-reg-v3-modal :is(input:not([type=checkbox]):not([type=radio]),select,textarea){width:100%;min-height:34px!important;max-height:85px;padding:7px 10px!important;border-radius:8px!important;border:1px solid #c8d6e6!important;background:#fff!important;color:#203c5c!important;font-size:12px!important;box-sizing:border-box}
+.ct-reg-v3-modal input:focus,.ct-reg-v3-modal select:focus{outline:2px solid #80bdf0}
+.ct-reg-v3-modal .ct-wizard-actions{position:relative;flex:0 0 auto;margin:0!important;border-top:1px solid #dde7f1;background:#fff;padding:12px 20px!important;display:flex;justify-content:flex-end;gap:10px;z-index:2}
+.ct-reg-v3-modal .ct-wizard-actions button{min-height:35px;padding:7px 13px;font-size:12px}
+.ct-reg-v3-modal .ct-wizard-error{margin:0;padding:7px 20px;color:#8e1b26;background:#fff0f0;font-size:12px}
+.ct-reg-v3-location{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px 14px}
+.ct-reg-v3-location small{grid-column:1/-1;color:#65768a;font-size:11px}
+.ct-reg-v3-existing{display:grid;gap:6px;max-height:200px;overflow:auto;margin:11px 0}
+.ct-reg-v3-existing button{text-align:left;justify-content:flex-start}
+.ct-reg-v3-toggle{display:flex;align-items:center;gap:8px;padding:8px 0}
+.ct-reg-v3-chips{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0 14px}
+.ct-reg-v3-chips label{display:flex;gap:5px;align-items:center;border:1px solid #d9e4ef;border-radius:8px;background:#f7faff;padding:5px 8px;font-size:11px!important;cursor:pointer}
+.ct-reg-v3-chips label.selected{border-color:#2483c3;background:#e7f5ff}
+.ct-reg-v3-condition-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:10px 0}
+.ct-reg-v3-condition{padding:12px;border:1px solid #dce6f1;background:#f8fbff;border-radius:11px}
+.ct-reg-v3-question{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:5px 0 9px}
+.ct-reg-v3-question select{max-width:130px}
+.ct-reg-v3-condition .ct-reg-v3-mini-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.ct-reg-v3-medical .ct-reg-v3-mini-grid{margin-bottom:10px}
+.ct-reg-v3-modal .ct-reg-sign canvas{max-height:90px;touch-action:none}
+.ct-reg-v3-modal .ct-reg-declaration{font-size:12px;line-height:1.45;padding:9px;margin:8px 0}
+@media(max-width:720px){.ct-reg-v3-modal .ct-wizard-progress{grid-template-columns:repeat(6,100px)!important}.ct-reg-v3-modal .ct-wizard-grid,.ct-reg-v3-mini-grid,.ct-reg-v3-condition-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ct-reg-v3-condition .ct-reg-v3-mini-grid{grid-template-columns:1fr}}
+@media(max-width:510px){.ct-reg-v3-modal .ct-wizard-grid,.ct-reg-v3-mini-grid,.ct-reg-v3-condition-grid,.ct-reg-v3-location{grid-template-columns:1fr!important}}

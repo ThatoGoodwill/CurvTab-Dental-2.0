@@ -219,7 +219,7 @@ public sealed class LaboratoryController : ControllerBase
         var order = new LaboratoryOrder { DentalPracticeId = practice, PatientId = request.PatientId,
             LaboratoryPartnerId = request.LaboratoryPartnerId, TreatmentPlanId = request.TreatmentPlanId,
             Instructions = Trim(request.Instructions), PrescribedByUserId = actor,
-            Reference = "LAB-" + DateTime.UtcNow.ToString("yyMMdd") + "-" + Guid.NewGuid().ToString("N")[..6].ToUpperInvariant() };
+            Reference = "LAB-" + ((await _db.Set<LaboratoryOrder>().CountAsync(ct)) + 1).ToString("D5") };
         _db.Set<LaboratoryOrder>().Add(order);
         foreach (var i in request.Items)
             _db.Set<LaboratoryItem>().Add(new LaboratoryItem { DentalPracticeId = practice,
@@ -260,7 +260,8 @@ public sealed class LaboratoryController : ControllerBase
         }
         var manifest = new LaboratoryManifest { DentalPracticeId = practice,
             LaboratoryPartnerId = request.LaboratoryPartnerId, Direction = request.Direction,
-            Reference = (request.Direction == "ToLab" ? "PL-SEND-" : "PL-OUT-") + DateTime.UtcNow.ToString("yyMMdd") + "-" + Guid.NewGuid().ToString("N")[..6].ToUpperInvariant() };
+            Reference = (request.Direction == "ToLab" ? "PL-" : "PL-OUT-") +
+                ((await _db.Set<LaboratoryManifest>().CountAsync(x => x.Direction == request.Direction, ct)) + 1).ToString("D4") };
         _db.Set<LaboratoryManifest>().Add(manifest);
         foreach (var i in items)
         {
@@ -328,7 +329,13 @@ public sealed class LaboratoryController : ControllerBase
             line.ReceivedAtUtc = DateTime.UtcNow; item.ActiveManifestId = null;
             item.CustodyStatus = m.Direction == "ToLab" ? "AtLab" : "AtPractice";
             if (m.Direction == "ToLab") item.ManufacturingStatus = "AwaitingInspection";
-            else item.QaStatus = "Pending";
+            else
+            {
+                item.QaStatus = "Pending";
+                var openRedos = await _db.Set<LaboratoryCorrection>()
+                    .Where(c => c.LaboratoryItemId == item.Id && c.Kind == "Redo" && c.Status != "Resolved").ToListAsync(ct);
+                foreach (var redo in openRedos) { redo.Status = "Resolved"; redo.ResolvedAtUtc = DateTime.UtcNow; }
+            }
             var order = await Order(item.LaboratoryOrderId, ct);
             if (order is not null) Log(order, "PHYSICAL_RECEIPT", $"{m.Reference}; receiver {Trim(request.ReceiverName)}", item.Id, m.Id);
             changed++;

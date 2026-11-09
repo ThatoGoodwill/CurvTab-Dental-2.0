@@ -22,13 +22,23 @@ const fromPractice = (p: Practice): FormData => ({
   name: p.name, email: p.email ?? '', phoneNumber: p.phoneNumber ?? '', address: p.address ?? '',
 })
 
-export default function PracticeSettingsPage({ onOpenStaff }: { onOpenStaff: () => void }) {
+export default function PracticeSettingsPage({
+  onOpenStaff,
+  compact = false,
+}: {
+  onOpenStaff: () => void
+  compact?: boolean
+}) {
   const [form, setForm] = useState<FormData>({ name: '', email: '', phoneNumber: '', address: '' })
   const [initial, setInitial] = useState<FormData | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+
+  // CT_COMPACT_PRACTICE_PROFILE_V5
+  const [editing, setEditing] = useState(false)
+
 
   useEffect(() => {
     let cancelled = false
@@ -76,7 +86,93 @@ export default function PracticeSettingsPage({ onOpenStaff }: { onOpenStaff: () 
       </div>
       {error && <div className="ct-settings-alert ct-settings-error" role="alert">{error}</div>}
       {success && <div className="ct-settings-alert ct-settings-success" role="status"><CheckCircle2 size={18} /> {success}</div>}
-      <div className="ct-settings-grid">
+      
+      {compact && !editing && (
+        <div className="ct-practice-v5-summary">
+          <div className="ct-practice-v5-top">
+            <div>
+              <span className="ct-practice-v5-eyebrow">
+                PRACTICE PROFILE
+              </span>
+              <h2>
+                {loading ? 'Loading practice…' : form.name}
+              </h2>
+              <p>Registered practice contact information</p>
+            </div>
+
+            <button
+              type="button"
+              className="ct-practice-v5-edit"
+              disabled={loading}
+              onClick={() => setEditing(true)}
+            >
+              Edit Practice
+            </button>
+          </div>
+
+          <div className="ct-practice-v5-details">
+            <div>
+              <span>Contact email</span>
+              <strong>{form.email || 'Not provided'}</strong>
+            </div>
+
+            <div>
+              <span>Phone number</span>
+              <strong>{form.phoneNumber || 'Not provided'}</strong>
+            </div>
+
+            <div className="ct-practice-v5-address">
+              <span>Practice address</span>
+              <strong>{form.address || 'Not provided'}</strong>
+            </div>
+          </div>
+
+          <div className="ct-practice-v5-actions">
+            <div className="ct-practice-v5-small-card">
+              <strong>Team & Access</strong>
+              <span>Manage staff and their access</span>
+
+              <button type="button" onClick={onOpenStaff}>
+                Open Staff Management →
+              </button>
+            </div>
+
+            <div className="ct-practice-v5-small-card">
+              <strong>Security</strong>
+              <span>
+                Practice settings are restricted to
+                authorised administrators.
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {compact && editing && (
+        <div className="ct-practice-v5-editor-toolbar">
+          <strong>Edit Practice Profile</strong>
+
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => {
+              if (initial) setForm(initial)
+              setEditing(false)
+            }}
+          >
+            {dirty ? 'Discard changes & close' : 'Back to profile'}
+          </button>
+        </div>
+      )}
+
+
+      <div
+        className={
+          'ct-settings-grid' +
+          (compact && !editing ? ' ct-practice-v5-hidden' : '') +
+          (compact && editing ? ' ct-practice-v5-editing' : '')
+        }
+      >
         <form className="ct-settings-card" onSubmit={(event) => void save(event)}>
           <div className="ct-settings-card-head"><Building2 size={22} /><div><h2>Practice profile</h2><p>Changes save to your existing PostgreSQL practice record.</p></div></div>
           {loading ? <p className="ct-settings-loading"><LoaderCircle className="ct-settings-spin" size={18} /> Loading your practice...</p> : <>

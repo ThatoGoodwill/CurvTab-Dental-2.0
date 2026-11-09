@@ -19,6 +19,8 @@ public sealed class PatientRegistrationDetails : IPracticeOwned
     public string? ResponsibleEmail { get; set; }
     public string? ResponsibleAddress { get; set; }
     public string? ResponsibleIdNumber { get; set; }
+    public string? ProfileJson { get; set; } // CT_REGISTRATION_CLIENT_V3
+    public bool? GuardianConsent { get; set; }
     public bool DeclarationAccepted { get; set; }
     public bool InformationConsent { get; set; }
     public string SignerName { get; set; } = "";

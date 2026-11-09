@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { CSSProperties, FormEvent } from 'react'
-import {
+import {Settings2, 
   Palette,
   Save,
   CheckCircle2,
@@ -75,6 +75,10 @@ export default function AppearanceSettingsPage({
   )
   const [activeTab, setActiveTab] =
     useState<AppearanceTab>('branding')
+
+  // CT_APPEARANCE_DROPDOWN_V3
+  const [appearanceMenuOpen, setAppearanceMenuOpen] =
+    useState(false)
   const [dirty, setDirty] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -139,8 +143,75 @@ export default function AppearanceSettingsPage({
         </div>
       </header>
 
-      <nav
-        className="ct-appearance-tabs"
+      
+      {/* CT_APPEARANCE_DROPDOWN_V3 */}
+      <div className="ct-appearance-compact-nav">
+        <div className="ct-appearance-dropdown">
+
+          <button
+            type="button"
+            className="ct-appearance-dropdown-trigger"
+            aria-expanded={appearanceMenuOpen}
+            aria-controls="ct-appearance-dropdown-options"
+            onClick={() =>
+              setAppearanceMenuOpen(open => !open)
+            }
+          >
+            <Settings2 size={15} aria-hidden="true" />
+            <span>Appearance Settings</span>
+            <span aria-hidden="true">
+              {appearanceMenuOpen ? '▴' : '▾'}
+            </span>
+          </button>
+
+          {appearanceMenuOpen && (
+            <div
+              id="ct-appearance-dropdown-options"
+              className="ct-appearance-dropdown-menu"
+              role="group"
+              aria-label="Appearance settings sections"
+            >
+              <small>Choose a setting</small>
+
+              {TABS.map(({ id, label, Icon }) => (
+                <button
+                  key={id}
+                  type="button"
+                  className={
+                    'ct-appearance-dropdown-item' +
+                    (activeTab === id ? ' active' : '')
+                  }
+                  aria-current={
+                    activeTab === id ? 'page' : undefined
+                  }
+                  onClick={() => {
+                    setActiveTab(id)
+                    setAppearanceMenuOpen(false)
+                  }}
+                >
+                  <Icon size={15} aria-hidden="true" />
+                  <span>{label}</span>
+                  {activeTab === id && (
+                    <span
+                      className="ct-appearance-menu-check"
+                      aria-hidden="true"
+                    >
+                      ✓
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <span className="ct-appearance-current-tab">
+          {TABS.find(item => item.id === activeTab)?.label}
+        </span>
+      </div>
+
+<nav
+        className="ct-appearance-original-tabs-v3 ct-appearance-tabs"
         aria-label="Appearance sections"
       >
         {TABS.map(({ id, label, Icon }) => (
