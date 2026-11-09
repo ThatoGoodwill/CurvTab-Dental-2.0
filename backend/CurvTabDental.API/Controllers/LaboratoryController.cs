@@ -219,6 +219,7 @@ public sealed class LaboratoryController : ControllerBase
         var order = new LaboratoryOrder { DentalPracticeId = practice, PatientId = request.PatientId,
             LaboratoryPartnerId = request.LaboratoryPartnerId, TreatmentPlanId = request.TreatmentPlanId,
             Instructions = Trim(request.Instructions), PrescribedByUserId = actor,
+            // Sequential, human-friendly reference (LAB-00124) as in the guide; unique index guards races.
             Reference = "LAB-" + ((await _db.Set<LaboratoryOrder>().CountAsync(ct)) + 1).ToString("D5") };
         _db.Set<LaboratoryOrder>().Add(order);
         foreach (var i in request.Items)
@@ -260,6 +261,7 @@ public sealed class LaboratoryController : ControllerBase
         }
         var manifest = new LaboratoryManifest { DentalPracticeId = practice,
             LaboratoryPartnerId = request.LaboratoryPartnerId, Direction = request.Direction,
+            // PL-0627 for practice-to-lab, PL-OUT-0041 for lab-to-practice (numbered per direction).
             Reference = (request.Direction == "ToLab" ? "PL-" : "PL-OUT-") +
                 ((await _db.Set<LaboratoryManifest>().CountAsync(x => x.Direction == request.Direction, ct)) + 1).ToString("D4") };
         _db.Set<LaboratoryManifest>().Add(manifest);
@@ -332,6 +334,8 @@ public sealed class LaboratoryController : ControllerBase
             else
             {
                 item.QaStatus = "Pending";
+                // A redo that has physically come back is finished as a cycle (history is kept),
+                // so a later failure can start a new redo without being blocked.
                 var openRedos = await _db.Set<LaboratoryCorrection>()
                     .Where(c => c.LaboratoryItemId == item.Id && c.Kind == "Redo" && c.Status != "Resolved").ToListAsync(ct);
                 foreach (var redo in openRedos) { redo.Status = "Resolved"; redo.ResolvedAtUtc = DateTime.UtcNow; }
