@@ -1,0 +1,24 @@
+.ct-cfgp { width: 100%; min-width: 0; font-size: 12px; color: var(--text, #172033); }
+.ct-cfgp-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+.ct-cfgp-head h2 { margin: 0; font-size: 17px; }
+.ct-cfgp-head p { margin: 3px 0 0; color: #64748b; }
+.ct-cfgp-save { display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 9px; padding: 9px 15px; font-weight: 700; color: #fff; cursor: pointer; background: linear-gradient(90deg, #b3122b, #2a19c9); }
+.ct-cfgp-save:disabled { opacity: .55; cursor: not-allowed; }
+.ct-cfgp-error { margin: 0 0 10px; padding: 9px 11px; border: 1px solid #d9434f; border-radius: 8px; color: #8e1b27; background: #fff5f5; }
+.ct-cfgp-ok { margin: 0 0 10px; padding: 9px 11px; border: 1px solid #2f9e62; border-radius: 8px; color: #17633a; background: #f1fbf5; }
+.ct-cfgp-muted { color: #64748b; margin: 8px 0 0; }
+.ct-cfgp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 12px 0; }
+.ct-cfgp-field { display: flex; flex-direction: column; gap: 5px; font-weight: 600; }
+.ct-cfgp-field input, .ct-cfgp-field textarea { border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 10px; font: inherit; font-weight: 400; width: 100%; box-sizing: border-box; }
+.ct-cfgp-input-row { display: flex; align-items: center; gap: 7px; }
+.ct-cfgp-input-row em { font-style: normal; font-weight: 400; color: #64748b; white-space: nowrap; }
+.ct-cfgp-hours { display: grid; gap: 7px; margin-bottom: 8px; }
+.ct-cfgp-hours-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 9px; }
+.ct-cfgp-times { display: flex; align-items: center; gap: 7px; }
+.ct-cfgp-times input { border: 1px solid #cbd5e1; border-radius: 7px; padding: 6px 8px; font: inherit; }
+.ct-cfgp-check { display: inline-flex; align-items: center; gap: 8px; }
+.ct-cfgp-block { display: flex; margin: 9px 0; }
+.ct-cfgp-roles { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ct-cfgp-roles li { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 9px; }
+.ct-cfgp-roles li div { display: flex; flex-direction: column; gap: 2px; }
+.ct-cfgp-roles li span { color: #64748b; }

@@ -10,6 +10,13 @@ import AppearanceSettingsPage from './AppearanceSettingsPage'
 import PracticeSettingsPage from './PracticeSettingsPage'
 import ProcedurePricingPage from './ProcedurePricingPage'
 import WhatsAppPanel from './WhatsAppPanel'
+import LaboratoryAccountsPanel from './LaboratoryAccountsPanel'
+import {
+  BillingSettings,
+  ClinicalSettings,
+  SchedulingSettings,
+  StaffPermissionsSettings
+} from './PracticeConfigurationPanels'
 import './ConfigurationCenterPage.css'
 
 type AppearanceProps = ComponentProps<typeof AppearanceSettingsPage>
@@ -190,7 +197,9 @@ export default function ConfigurationCenterPage({
           <section
             className={
               'ct-config-detail-dialog' +
-              (section === 'appearance' || section === 'practice' || section === 'pricing'
+              (section === 'appearance' || section === 'practice' || section === 'pricing' ||
+                section === 'billing' || section === 'clinical' || section === 'scheduling' ||
+                section === 'laboratory' || section === 'security'
                 ? ' ct-config-detail-appearance'
                 : '')
             }
@@ -233,6 +242,16 @@ export default function ConfigurationCenterPage({
                 </div>
               ) : section === 'pricing' ? (
                 <ProcedurePricingPage />
+              ) : section === 'billing' ? (
+                <BillingSettings />
+              ) : section === 'clinical' ? (
+                <ClinicalSettings />
+              ) : section === 'scheduling' ? (
+                <SchedulingSettings />
+              ) : section === 'laboratory' ? (
+                <LaboratoryAccountsPanel />
+              ) : section === 'security' ? (
+                <StaffPermissionsSettings onOpenStaff={onOpenStaff} />
               ) : section === 'notifications' ? (
                 <div className="ct-config-existing-notifications">
                   <WhatsAppPanel />

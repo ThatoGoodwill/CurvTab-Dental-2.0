@@ -48,6 +48,9 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
     public DbSet<PatientRegistrationDetails> PatientRegistrationDetails => Set<PatientRegistrationDetails>();
 
     // CT_PROCEDURE_PRICING_V1
+    public DbSet<PracticeConfiguration> PracticeConfigurations
+        => Set<PracticeConfiguration>();
+
     public DbSet<ProcedurePrice> ProcedurePrices
         => Set<ProcedurePrice>();
 
@@ -71,6 +74,19 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
         base.OnModelCreating(modelBuilder);
 
         // CT_PROCEDURE_PRICING_V1
+        modelBuilder.Entity<PracticeConfiguration>(e =>
+        {
+            e.ToTable("PracticeConfigurations");
+            e.HasKey(x => x.Id);
+            e.HasQueryFilter(x =>
+                x.DentalPracticeId == CurrentPracticeId);
+            e.HasIndex(x => x.DentalPracticeId).IsUnique();
+            e.Property(x => x.OpeningHoursJson).HasMaxLength(1000).IsRequired();
+            e.Property(x => x.InvoicePrefix).HasMaxLength(10).IsRequired();
+            e.Property(x => x.InvoiceFooter).HasMaxLength(300).IsRequired();
+            e.Property(x => x.VatRatePercent).HasPrecision(5, 2);
+        });
+
         modelBuilder.Entity<ProcedurePrice>(e =>
         {
             e.ToTable("ProcedurePrices");
