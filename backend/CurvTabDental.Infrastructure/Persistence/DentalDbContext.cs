@@ -625,6 +625,20 @@ modelBuilder.Entity<Appointment>(entity =>
                 .HasForeignKey(x => x.SubmissionId).OnDelete(DeleteBehavior.Restrict);
         });
 
+        modelBuilder.Entity<CashDayCloseAdjustment>(entity =>
+        {
+            entity.ToTable("CashDayCloseAdjustments");
+            entity.HasKey(x => x.Id);
+            entity.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            entity.Property(x => x.RevisedCountedCash).HasPrecision(12,2);
+            entity.Property(x => x.Reason).IsRequired().HasMaxLength(1000);
+            entity.Property(x => x.EvidenceReference).IsRequired().HasMaxLength(300);
+            entity.HasIndex(x => new { x.DentalPracticeId, x.RequestId }).IsUnique();
+            entity.HasIndex(x => new { x.DentalPracticeId, x.SubmissionId, x.RecordedAtUtc });
+            entity.HasOne<CashDayCloseSubmission>().WithMany()
+                .HasForeignKey(x => x.SubmissionId).OnDelete(DeleteBehavior.Restrict);
+        });
+
         modelBuilder.Entity<MedicalAidDaySignoff>(entity =>
         {
             entity.ToTable("MedicalAidDaySignoffs");
