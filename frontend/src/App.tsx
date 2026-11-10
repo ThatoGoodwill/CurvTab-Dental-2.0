@@ -15,6 +15,7 @@ import BillingLedgerPanel from './pages/BillingLedgerPanel'
 import PlanAccountsPanel from './pages/PlanAccountsPanel'
 import FinanceWorkspaceTabs from './pages/FinanceWorkspaceTabs'
 import BillingWorkspaceTabs from './pages/BillingWorkspaceTabs'
+import BillingCashDayClosePage from './pages/BillingCashDayClosePage'
 import type { BillingSection } from './pages/BillingWorkspaceTabs'
 import MedicalAidPanel from './pages/MedicalAidPanel'
 import PatientBalancesPanel from './pages/PatientBalancesPanel'
@@ -1356,6 +1357,7 @@ export default function App() {
                   />
                 }
                 balances={<PatientBalancesPanel />}
+                cashReview={<BillingCashDayClosePage isManager={role === 'PracticeAdmin'} />}
               />
           )}
 
