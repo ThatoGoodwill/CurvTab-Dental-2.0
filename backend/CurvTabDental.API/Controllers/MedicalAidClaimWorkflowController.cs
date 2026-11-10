@@ -47,6 +47,13 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
         (from == "AcknowledgedReported" &&
          (to == "ApprovedReported" ||
           to == "PartiallyApprovedReported" ||
+          to == "RejectedReported")) ||
+        (from == "RejectedReported" && to == "CorrectionApproved") ||
+        (from == "CorrectionApproved" && to == "ResubmittedExternallyReported") ||
+        (from == "ResubmittedExternallyReported" &&
+         (to == "AcknowledgedReported" ||
+          to == "ApprovedReported" ||
+          to == "PartiallyApprovedReported" ||
           to == "RejectedReported"));
 
     private static bool ValidMoney(decimal value) =>
@@ -168,7 +175,7 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
                 previous.ToStatus == target &&
                 previous.ApprovedAmount == request.ApprovedAmount &&
                 previous.ExternalReference ==
-                    (target == "SubmittedExternallyReported"
+                    (target is "SubmittedExternallyReported" or "ResubmittedExternallyReported"
                         ? external
                         : claim.ExternalReference) &&
                 previous.EvidenceReference == evidence &&
@@ -204,18 +211,28 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
 
         decimal? approvedAmount = null;
 
-        if (target == "SubmittedExternallyReported")
+        if (target is "SubmittedExternallyReported" or "ResubmittedExternallyReported")
         {
             if (string.IsNullOrWhiteSpace(external))
                 return BadRequest(new
                 {
-                    message = "External submission reference is required."
+                    message = "A unique actual submission attempt reference is required."
                 });
 
             if (request.ApprovedAmount is not null)
                 return BadRequest(new
                 {
                     message = "Submission must not specify approval."
+                });
+
+            if (target == "ResubmittedExternallyReported" &&
+                (external == claim.ExternalReference ||
+                 await _db.Set<MedicalAidClaimEvent>().AsNoTracking()
+                     .AnyAsync(x => x.DentalPracticeId == practiceId &&
+                         x.ClaimId == claimId && x.ExternalReference == external, ct)))
+                return Conflict(new
+                {
+                    message = "Use a new external attempt reference; the original claim and invoice are preserved."
                 });
         }
         else if (!string.IsNullOrWhiteSpace(external) &&
@@ -314,8 +331,11 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
         claim.Status = target;
         claim.LastStatusAtUtc = now;
 
-        if (target == "SubmittedExternallyReported")
+        if (target is "SubmittedExternallyReported" or "ResubmittedExternallyReported")
             claim.ExternalReference = external;
+
+        if (target is "CorrectionApproved" or "ResubmittedExternallyReported")
+            claim.ApprovedAmount = null;
 
         if (isDecision)
             claim.ApprovedAmount = approvedAmount;
