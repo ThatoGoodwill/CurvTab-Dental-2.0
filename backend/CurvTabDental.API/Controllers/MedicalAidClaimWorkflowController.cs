@@ -1,3 +1,4 @@
+using System.Text.Json;
 using CurvTabDental.Application.Abstractions;
 using CurvTabDental.Domain.Entities;
 using CurvTabDental.Infrastructure.Persistence;
@@ -340,6 +341,12 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
         if (isDecision)
             claim.ApprovedAmount = approvedAmount;
 
+        var isSubmissionAttempt = target is "SubmittedExternallyReported" or "ResubmittedExternallyReported";
+        var attemptNumber = isSubmissionAttempt
+            ? await _db.Set<MedicalAidClaimEvent>().AsNoTracking()
+                .CountAsync(x => x.DentalPracticeId == practiceId && x.ClaimId == claimId &&
+                    (x.ToStatus == "SubmittedExternallyReported" || x.ToStatus == "ResubmittedExternallyReported"), ct) + 1
+            : 0;
         var historyEvent = new MedicalAidClaimEvent
         {
             DentalPracticeId = practiceId,
@@ -349,6 +356,14 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
             ToStatus = target,
             ApprovedAmount = approvedAmount,
             ExternalReference = claim.ExternalReference,
+            AttemptNumber = isSubmissionAttempt ? attemptNumber : null,
+            PayloadSnapshotJson = isSubmissionAttempt ? JsonSerializer.Serialize(new
+            {
+                claim.Id, claim.ClaimNumber, claim.PatientId, claim.InvoiceId,
+                claim.ClaimedAmount, claim.Currency, claim.Status,
+                attemptNumber, externalReference = external, evidence, reason,
+                recordedAtUtc = now
+            }) : null,
             EvidenceReference = evidence,
             Reason = reason,
             PerformedByUserId = actorId,
