@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import {
-  Activity, Banknote, CalendarCheck2, CheckCircle2, ClipboardCheck, CreditCard,
-  FileText, HeartPulse, History, Plus, RefreshCw, Search, ShieldCheck,
-  Stethoscope, Wallet, X, AlertTriangle
+  Banknote, ClipboardCheck, FileText, Plus, RefreshCw, Search,
+  ShieldCheck, Wallet, X
 } from 'lucide-react'
 import { apiRequest } from '../services/api'
 import ReceptionCheckoutPage from './ReceptionCheckoutPage'
