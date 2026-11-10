@@ -119,7 +119,7 @@ public sealed class BillingMedicalAidDaySignoffController : ControllerBase
         var submittedValue = rows.Sum(x => x.ClaimedAmount);
         var details = rows.OrderBy(x => x.ClaimNumber).Select(x => new
         {
-            x.Id, x.PatientId, x.ClaimNumber, x.InvoiceId, x.PatientName,
+            x.Id, x.PatientId, x.ClaimNumber, x.InvoiceId, x.patientName,
             x.SchemeName, x.Status, x.ClaimedAmount,
             attemptsOnDate = submissions.Count(s => s.ClaimId == x.Id)
         }).ToArray();
