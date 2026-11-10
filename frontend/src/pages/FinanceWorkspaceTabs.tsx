@@ -3,25 +3,27 @@ import type { ReactNode } from 'react'
 import { Receipt, FileText, Calculator, Users, Wallet } from 'lucide-react'
 import './BillingWorkspaceTabs.css'
 
-type FinanceTab = 'revenue' | 'expenses' | 'invoices' | 'balances'
+type FinanceTab = 'revenue' | 'expenses' | 'invoices' | 'balances' | 'cashReview'
 
 type Props = {
   revenue: ReactNode
   expenses: ReactNode
   invoices: ReactNode
   balances: ReactNode
+  cashReview: ReactNode
 }
 
 const tabs = [
   { id: 'revenue', label: 'Revenue', description: 'Real receipts and cash collections', Icon: Receipt },
-  { id: 'expenses', label: 'Expenses & Cash-Up', description: 'Audit expenses and reconcile cash', Icon: Calculator },
+  { id: 'expenses', label: 'Expenses & Controls', description: 'Review audited expenses', Icon: Calculator },
   { id: 'invoices', label: 'Invoices & Allocations', description: 'Manage issued invoice settlement', Icon: FileText },
   { id: 'balances', label: 'Patient Balances', description: 'Review outstanding accounts', Icon: Users },
+  { id: 'cashReview', label: 'Cash Exceptions', description: 'Review submitted physical cash counts', Icon: Calculator },
 ] as const
 
-export default function FinanceWorkspaceTabs({ revenue, expenses, invoices, balances }: Props) {
+export default function FinanceWorkspaceTabs({ revenue, expenses, invoices, balances, cashReview }: Props) {
   const [activeTab, setActiveTab] = useState<FinanceTab>('revenue')
-  const content: Record<FinanceTab, ReactNode> = { revenue, expenses, invoices, balances }
+  const content: Record<FinanceTab, ReactNode> = { revenue, expenses, invoices, balances, cashReview }
 
   return (
     <div className="ct-billing-workspace ct-financial-workspace ct-financial-finance">

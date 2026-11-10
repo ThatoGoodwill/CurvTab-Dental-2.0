@@ -1,3 +1,4 @@
+using System.Text.Json;
 using CurvTabDental.Application.Abstractions;
 using CurvTabDental.Domain.Entities;
 using CurvTabDental.Infrastructure.Persistence;
@@ -46,6 +47,13 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
 
         (from == "AcknowledgedReported" &&
          (to == "ApprovedReported" ||
+          to == "PartiallyApprovedReported" ||
+          to == "RejectedReported")) ||
+        (from == "RejectedReported" && to == "CorrectionApproved") ||
+        (from == "CorrectionApproved" && to == "ResubmittedExternallyReported") ||
+        (from == "ResubmittedExternallyReported" &&
+         (to == "AcknowledgedReported" ||
+          to == "ApprovedReported" ||
           to == "PartiallyApprovedReported" ||
           to == "RejectedReported"));
 
@@ -96,6 +104,8 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
                 x.ToStatus,
                 x.ApprovedAmount,
                 x.ExternalReference,
+                x.AttemptNumber,
+                x.PayloadSnapshotJson,
                 x.EvidenceReference,
                 x.Reason,
                 x.PerformedByUserId,
@@ -168,7 +178,7 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
                 previous.ToStatus == target &&
                 previous.ApprovedAmount == request.ApprovedAmount &&
                 previous.ExternalReference ==
-                    (target == "SubmittedExternallyReported"
+                    (target is "SubmittedExternallyReported" or "ResubmittedExternallyReported"
                         ? external
                         : claim.ExternalReference) &&
                 previous.EvidenceReference == evidence &&
@@ -204,18 +214,28 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
 
         decimal? approvedAmount = null;
 
-        if (target == "SubmittedExternallyReported")
+        if (target is "SubmittedExternallyReported" or "ResubmittedExternallyReported")
         {
             if (string.IsNullOrWhiteSpace(external))
                 return BadRequest(new
                 {
-                    message = "External submission reference is required."
+                    message = "A unique actual submission attempt reference is required."
                 });
 
             if (request.ApprovedAmount is not null)
                 return BadRequest(new
                 {
                     message = "Submission must not specify approval."
+                });
+
+            if (target == "ResubmittedExternallyReported" &&
+                (external == claim.ExternalReference ||
+                 await _db.Set<MedicalAidClaimEvent>().AsNoTracking()
+                     .AnyAsync(x => x.DentalPracticeId == practiceId &&
+                         x.ClaimId == claimId && x.ExternalReference == external, ct)))
+                return Conflict(new
+                {
+                    message = "Use a new external attempt reference; the original claim and invoice are preserved."
                 });
         }
         else if (!string.IsNullOrWhiteSpace(external) &&
@@ -314,12 +334,21 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
         claim.Status = target;
         claim.LastStatusAtUtc = now;
 
-        if (target == "SubmittedExternallyReported")
+        if (target is "SubmittedExternallyReported" or "ResubmittedExternallyReported")
             claim.ExternalReference = external;
+
+        if (target is "CorrectionApproved" or "ResubmittedExternallyReported")
+            claim.ApprovedAmount = null;
 
         if (isDecision)
             claim.ApprovedAmount = approvedAmount;
 
+        var isSubmissionAttempt = target is "SubmittedExternallyReported" or "ResubmittedExternallyReported";
+        var attemptNumber = isSubmissionAttempt
+            ? await _db.Set<MedicalAidClaimEvent>().AsNoTracking()
+                .CountAsync(x => x.DentalPracticeId == practiceId && x.ClaimId == claimId &&
+                    (x.ToStatus == "SubmittedExternallyReported" || x.ToStatus == "ResubmittedExternallyReported"), ct) + 1
+            : 0;
         var historyEvent = new MedicalAidClaimEvent
         {
             DentalPracticeId = practiceId,
@@ -329,6 +358,14 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
             ToStatus = target,
             ApprovedAmount = approvedAmount,
             ExternalReference = claim.ExternalReference,
+            AttemptNumber = isSubmissionAttempt ? attemptNumber : null,
+            PayloadSnapshotJson = isSubmissionAttempt ? JsonSerializer.Serialize(new
+            {
+                claim.Id, claim.ClaimNumber, claim.PatientId, claim.InvoiceId,
+                claim.ClaimedAmount, claim.Currency, claim.Status,
+                attemptNumber, externalReference = external, evidence, reason,
+                recordedAtUtc = now
+            }) : null,
             EvidenceReference = evidence,
             Reason = reason,
             PerformedByUserId = actorId,

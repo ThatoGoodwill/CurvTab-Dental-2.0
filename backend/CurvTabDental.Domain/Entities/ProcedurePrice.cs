@@ -15,6 +15,9 @@ public sealed class ProcedurePrice : IPracticeOwned
     public string Category { get; set; } = "General";
 
     public decimal Price { get; set; }
+    // Lab flags match the existing ProcedurePricing and TreatmentPlan API contracts.
+    public bool RequiresLab { get; set; }
+    public decimal SupplierEstimate { get; set; }
     public bool IsActive { get; set; } = true;
 
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
