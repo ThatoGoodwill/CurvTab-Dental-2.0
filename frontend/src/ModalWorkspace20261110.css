@@ -8,8 +8,10 @@ html body .app-shell .workspace > .ct-module-backdrop {
 }
 html body .app-shell .workspace > main.main-content.ct-module-popup-window {
   position: fixed !important;
-  inset: 4vh auto auto 50% !important;
-  transform: translateX(-50%) !important;
+  top: 4vh !important;
+  left: max(14px, calc((100vw - 1160px) / 2)) !important;
+  right: auto !important;
+  transform: none !important;
   z-index: 3900 !important;
   width: min(1160px, calc(100vw - 28px)) !important;
   max-width: 1160px !important;
@@ -51,7 +53,7 @@ html body .app-shell .workspace > main.main-content.ct-module-popup-window {
 .ct-module-popup-window .page-heading p { font-size: 12px; line-height: 1.45; }
 @media(max-width: 720px) {
   html body .app-shell .workspace > main.main-content.ct-module-popup-window {
-    top: 2vh !important; width: calc(100vw - 16px) !important;
+    top: 2vh !important; left: 8px !important; width: calc(100vw - 16px) !important;
     max-height: 96vh !important; padding: 9px 11px 13px !important;
   }
 }

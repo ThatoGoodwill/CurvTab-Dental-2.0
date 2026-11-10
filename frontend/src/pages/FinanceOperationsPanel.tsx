@@ -100,6 +100,8 @@ export default function FinanceOperationsPanel({
   const [countedCash, setCountedCash] = useState('')
   const [signoffNotes, setSignoffNotes] = useState('')
   const [confirmed, setConfirmed] = useState(false)
+  const [showExpenseForm, setShowExpenseForm] = useState(false)
+  const [showCashForm, setShowCashForm] = useState(false)
 
   const endpoint = '/api/finance/operations'
 
@@ -190,6 +192,7 @@ export default function FinanceOperationsPanel({
       setAmount('')
       setReference('')
       setNotice('Expense recorded in the financial audit history.')
+      setShowExpenseForm(false)
       setReload(value => value + 1)
     } catch (cause) {
       setError(cause instanceof Error
@@ -244,6 +247,7 @@ export default function FinanceOperationsPanel({
       if (!response.ok) throw new Error(await errorMessage(response))
 
       setNotice('Daily cash snapshot signed off and audited.')
+      setShowCashForm(false)
       setConfirmed(false)
       setReload(value => value + 1)
     } catch (cause) {
@@ -355,10 +359,27 @@ export default function FinanceOperationsPanel({
           )}
 
           {canManage && (
-            <form
-              className="ct-finance-form"
-              onSubmit={event => void recordExpense(event)}
-            >
+            <div className="ct-finance-actions">
+              <button type="button" className="primary-button" disabled={busy}
+                onClick={() => { setError(''); setShowExpenseForm(true) }}>
+                <Plus size={16}/> Record expense
+              </button>
+              {showExpenseForm && (
+                <div className="ct-finance-action-overlay" role="presentation"
+                  onMouseDown={event => {
+                    if (event.target === event.currentTarget && !busy) setShowExpenseForm(false)
+                  }}>
+                  <div className="ct-finance-action-dialog" role="dialog" aria-modal="true"
+                    aria-label="Record practice expense">
+                    <header className="ct-finance-action-header">
+                      <div><strong>Record expense</strong><small>Save an audited practice expense</small></div>
+                      <button type="button" className="secondary-button" disabled={busy}
+                        onClick={() => setShowExpenseForm(false)}>Close ×</button>
+                    </header>
+                    {error && <p role="alert" className="ct-finance-error">{error}</p>}
+                    <form className="ct-finance-form"
+                      onSubmit={event => void recordExpense(event)}>
+            
               <h3><Plus size={18}/> Record expense</h3>
 
               <label>
@@ -424,7 +445,11 @@ export default function FinanceOperationsPanel({
               <button type="submit" className="primary-button" disabled={busy}>
                 Record audited expense
               </button>
-            </form>
+                    </form>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
 
           <div className="ct-finance-signoff">
@@ -457,10 +482,27 @@ export default function FinanceOperationsPanel({
                 )}
               </>
             ) : canManage ? (
-              <form
-                className="ct-finance-form"
-                onSubmit={event => void signOff(event)}
-              >
+              <>
+                <button type="button" className="secondary-button" disabled={busy}
+                  onClick={() => { setError(''); setShowCashForm(true) }}>
+                  <ClipboardCheck size={16}/> Open cash sign-off
+                </button>
+                {showCashForm && (
+                  <div className="ct-finance-action-overlay" role="presentation"
+                    onMouseDown={event => {
+                      if (event.target === event.currentTarget && !busy) setShowCashForm(false)
+                    }}>
+                    <div className="ct-finance-action-dialog" role="dialog" aria-modal="true"
+                      aria-label="Daily cash sign-off">
+                      <header className="ct-finance-action-header">
+                        <div><strong>Daily cash reconciliation</strong><small>Review and sign the audited cash count</small></div>
+                        <button type="button" className="secondary-button" disabled={busy}
+                          onClick={() => setShowCashForm(false)}>Close ×</button>
+                      </header>
+                      {error && <p role="alert" className="ct-finance-error">{error}</p>}
+                      <form className="ct-finance-form"
+                        onSubmit={event => void signOff(event)}>
+              
                 <label>
                   Opening cash float (ZAR)
                   <input required value={openingFloat}
@@ -508,7 +550,11 @@ export default function FinanceOperationsPanel({
                 >
                   <ClipboardCheck size={17}/> Sign off cash count
                 </button>
-              </form>
+                      </form>
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
               <p>Cash sign-off is available to PracticeAdmins.</p>
             )}
