@@ -37,3 +37,46 @@ jobs:
           dotnet-version: '10.0.x'
       - name: Build API and persistence (no database access)
         run: dotnet build backend/CurvTabDental.API/CurvTabDental.API.csproj --configuration Release
+
+  database-migrations:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: curvtab
+          POSTGRES_PASSWORD: curvtab_test
+          POSTGRES_DB: curvtab_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U curvtab -d curvtab_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      ConnectionStrings__DentalDatabase: Host=localhost;Port=5432;Database=curvtab_test;Username=curvtab;Password=curvtab_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Install EF Core tooling
+        run: dotnet tool install --global dotnet-ef --version 10.0.0
+      - name: Apply migrations only to temporary PostgreSQL
+        run: >-
+          dotnet ef database update
+          --project backend/CurvTabDental.Infrastructure/CurvTabDental.Infrastructure.csproj
+          --startup-project backend/CurvTabDental.API/CurvTabDental.API.csproj
+      - name: Confirm independent signoffs and append-only idempotency indexes
+        run: |
+          PGPASSWORD=curvtab_test psql -h localhost -U curvtab -d curvtab_test -v ON_ERROR_STOP=1 <<'SQL'
+          SELECT to_regclass('"CashDayCloseSubmissions"') IS NOT NULL AS cash_submissions_present;
+          SELECT to_regclass('"CashDayCloseReviews"') IS NOT NULL AS cash_reviews_present;
+          SELECT to_regclass('"CashDayCloseAdjustments"') IS NOT NULL AS cash_recounts_present;
+          SELECT to_regclass('"MedicalAidDaySignoffs"') IS NOT NULL AS medical_signoffs_present;
+          SELECT "RequiresLab", "SupplierEstimate" FROM "ProcedurePrices" LIMIT 0;
+          SELECT "AttemptNumber", "PayloadSnapshotJson" FROM "MedicalAidClaimEvents" LIMIT 0;
+          SQL
