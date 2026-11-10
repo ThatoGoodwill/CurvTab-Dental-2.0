@@ -53,6 +53,7 @@ type CashData = {
   cashExpenses: number; cashRefunds: number; cardReceipts: number
   eftReceipts: number; schemeBankDeposits: number; cardExpenses: number
   eftExpenses: number; labPayoutsAlreadyRecordedAsExpenses: number
+  changedAfterSubmission: boolean
   counts: Count[]; events: CountEvent[]
 }
 type MedicalDay = {
@@ -380,6 +381,10 @@ function CashDayClose({ date, setDate, revision, refresh, manager }: {
           {!current && <><Status label="Not submitted" good={false}/>
             <p className="ct-day-muted">Blind count: the server will reveal its expected cash and variance only after you submit the denominations.</p></>}
           {current && <>
+            {data.changedAfterSubmission && <p role="alert" className="ct-day-notice ct-day-error">
+              Cash movements changed after submission. A manager must reject the original
+              count and request a new audited recount before approval.
+            </p>}
             <Status good={managerEvent?.action==='Approved'}
               label={managerEvent?.action || 'Submitted — manager review pending'}/>
             <div className="ct-day-stat-row"><span>Submitted drawer cash</span><strong>{money(current.countedCash)}</strong></div>
@@ -713,8 +718,11 @@ type ClaimEvent = {id:string;toStatus:string;fromStatus:string;performedAtUtc:st
   externalReference:string|null;reason:string;evidenceReference:string}
 type Correction = {id:string;version:number;previousCode:string;correctedCode:string
   reason:string;approvedAtUtc:string;evidenceReference:string}
+type SubmissionAttempt = {id:string;attemptNumber:number;externalReference:string
+  payloadJson:string;evidenceReference:string;recordedAtUtc:string}
 type ClaimHistory = {claim:{id:string;status:string;claimedAmount:number
-  externalReference:string|null};events:ClaimEvent[];corrections:Correction[]}
+  externalReference:string|null};events:ClaimEvent[];corrections:Correction[];
+  attempts?:SubmissionAttempt[]}
 type InvoiceLine = {id:string;description:string;amount:number}
 const allowedTransitions:Record<string,string[]> = {
   Draft:['SubmittedExternallyReported'],
@@ -861,6 +869,16 @@ function MedicalAidActivity({date,setDate,revision,refresh,manager}:{
           <strong>One logical claim · {history.events.filter(e=>e.toStatus==='SubmittedExternallyReported').length} transmission attempts</strong>
         </div>
         <h3>Submission, rejection and correction history</h3>
+        {!!history.attempts?.length && <section className="ct-day-subpanel">
+          <h3>Immutable submission snapshots</h3>
+          {history.attempts.map(attempt => <div className="ct-day-stat-row" key={attempt.id}>
+            <span><strong>Attempt {attempt.attemptNumber}</strong>
+              <small>{dateTime(attempt.recordedAtUtc)} · Evidence {attempt.evidenceReference}</small>
+              <small>The original invoice and approved claim-code correction are preserved.</small>
+            </span>
+            <strong>{attempt.externalReference}</strong>
+          </div>)}
+        </section>}
         <div className="ct-day-timeline">
           {history.events.map(x=><div key={x.id}>
             <small>{dateTime(x.performedAtUtc)}</small>
