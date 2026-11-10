@@ -13,6 +13,7 @@ import './CurvTabVisualUpgrade.css'
 import DentalChartingPage from './pages/DentalChartingPage'
 import OrthodonticsPage from './pages/OrthodonticsPage'
 import BillingLedgerPanel from './pages/BillingLedgerPanel'
+import FinanceWorkspaceTabs from './pages/FinanceWorkspaceTabs'
 import BillingWorkspaceTabs from './pages/BillingWorkspaceTabs'
 import MedicalAidPanel from './pages/MedicalAidPanel'
 import PatientBalancesPanel from './pages/PatientBalancesPanel'
@@ -20,6 +21,7 @@ import InvoicesPanel from './pages/InvoicesPanel'
 import FinanceOperationsPanel from './pages/FinanceOperationsPanel'
 import ReceptionCheckoutPage from './pages/ReceptionCheckoutPage'
 import { Receipt as CheckoutIcon } from 'lucide-react'
+import { Wallet } from 'lucide-react'
 import DentistDashboardPage from './pages/DentistDashboardPage'
 import OverviewDashboardPage from './pages/OverviewDashboardPage'
 import DentistConsultationsPage from './pages/DentistConsultationsPage'
@@ -81,7 +83,7 @@ import './PracticeBrandAlignment.css'
 import PracticeBrandMark from './auth/PracticeBrandMark'
 type Section =
   | 'Laboratory'
-  | 'Dashboard' | 'Daily Patients' | 'Consultations' | 'Patient Medical Records' | 'Checkout & Payments' | 'Dental Charting' | 'Clinical Imaging' | 'Orthodontics'
+  | 'Dashboard' | 'Daily Patients' | 'Consultations' | 'Patient Medical Records' | 'Checkout & Payments' | 'Finance' | 'Dental Charting' | 'Clinical Imaging' | 'Orthodontics'
   | 'Patients'
   | 'Appointments'
   | 'Practice Settings'
@@ -680,6 +682,7 @@ export default function App() {
   const canViewPatients =
     !isSuperAdmin &&
     role !== 'LabTechnician' &&
+    role !== 'Finance' &&
     Boolean(user?.practiceId)
 
   const canManageStaff = isPracticeAdmin
@@ -711,6 +714,7 @@ export default function App() {
             ]
           : []),
         ...(canManageStaff ? [{ name: 'Configuration Center' as Section, icon: CtAppearanceIcon }] : []),
+        ...(role === 'Finance' ? [{ name: 'Finance' as Section, icon: Wallet }] : []),
         // CT_LAB_TECH_NAV
         ...(role === 'LabTechnician' ? [{ name: 'Laboratory' as Section, icon: FlaskConical }] : []),
         { name: 'My Profile' as Section, icon: UserCircle },
@@ -933,6 +937,13 @@ export default function App() {
               className={section === 'Checkout & Payments' ? 'nav-item nav-active' : 'nav-item'}
               onClick={() => navigate('Checkout & Payments')}>
               <CheckoutIcon size={19} /> <span>Billing</span>
+            </button>
+          )}
+          {(role === 'PracticeAdmin') && (
+            <button type="button"
+              className={section === 'Finance' ? 'nav-item nav-active' : 'nav-item'}
+              onClick={() => navigate('Finance')}>
+              <Wallet size={19} /> <span>Finance</span>
             </button>
           )}
           {role === 'Dentist' && (
@@ -1281,26 +1292,31 @@ export default function App() {
           {/* PHASE 3: RECEPTIONIST CHECKOUT */}
           {section === 'Checkout & Payments' &&
             (role === 'Receptionist' || role === 'PracticeAdmin') && (
-              <>
-                <BillingWorkspaceTabs
-                  checkout={<ReceptionCheckoutPage />}
-                  medicalAid={<MedicalAidPanel
+              <BillingWorkspaceTabs
+                checkout={<ReceptionCheckoutPage />}
+                medicalAid={<MedicalAidPanel
+                  canManage={role === 'PracticeAdmin'}
+                />}
+                balances={<PatientBalancesPanel />}
+              />
+          )}
+
+          {/* FINANCE MODULE: revenue, expenses, invoices */}
+          {section === 'Finance' &&
+            (role === 'Finance' || role === 'PracticeAdmin') && (
+              <FinanceWorkspaceTabs
+                revenue={<BillingLedgerPanel />}
+                expenses={
+                  <FinanceOperationsPanel
                     canManage={role === 'PracticeAdmin'}
-                  />}
-                  ledger={<BillingLedgerPanel />}
-                  balances={<PatientBalancesPanel />}
-                  invoices={
-                    <InvoicesPanel
-                      canIssue={role === 'PracticeAdmin'}
-                    />
-                  }
-                  expenses={
-                    <FinanceOperationsPanel
-                      canManage={role === 'PracticeAdmin'}
-                    />
-                  }
-                />
-              </>
+                  />
+                }
+                invoices={
+                  <InvoicesPanel
+                    canIssue={role === 'PracticeAdmin'}
+                  />
+                }
+              />
           )}
 
           {/* PHASE 4/5: DENTIST SPECIALTIES */}

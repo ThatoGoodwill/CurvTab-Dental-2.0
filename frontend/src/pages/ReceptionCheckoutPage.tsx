@@ -40,13 +40,6 @@ type Details = {
   currency: string
   payments: Payment[]
 }
-type PaymentResult = {
-  paymentId: string
-  receiptNumber: string
-  amount: number
-  balance?: number
-  alreadyRecorded: boolean
-}
 type Receipt = {
   receiptNumber: string
   paymentId: string
@@ -90,9 +83,11 @@ export default function ReceptionCheckoutPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [detail, setDetail] = useState<Details | null>(null)
   const [receipt, setReceipt] = useState<Receipt | null>(null)
-  const [method, setMethod] = useState<'Cash' | 'Card' | 'EFT'>('Cash')
-  const [amount, setAmount] = useState('')
-  const [reference, setReference] = useState('')
+  const [cashAmt, setCashAmt] = useState('')
+  const [cardAmt, setCardAmt] = useState('')
+  const [eftAmt, setEftAmt] = useState('')
+  const [cardRef, setCardRef] = useState('')
+  const [eftRef, setEftRef] = useState('')
   const [busy, setBusy] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -129,7 +124,6 @@ export default function ReceptionCheckoutPage() {
       .then(result => {
         if (!active) return
         setDetail(result)
-        setAmount(result.balance > 0 ? result.balance.toFixed(2) : '')
       })
       .catch(cause => { if (active) setError(errorMessage(cause)) })
     return () => { active = false }
@@ -146,8 +140,8 @@ export default function ReceptionCheckoutPage() {
     setReceipt(null)
     setError('')
     setSuccess('')
-    setReference('')
-    setMethod('Cash')
+    setCashAmt(''); setCardAmt(''); setEftAmt('')
+    setCardRef(''); setEftRef('')
     paymentRequestId.current = null
   }
 
@@ -163,40 +157,64 @@ export default function ReceptionCheckoutPage() {
     }
   }
 
+  const cents = (v: string) => Math.round((Number(v) || 0) * 100)
+  const enteredCents = cents(cashAmt) + cents(cardAmt) + cents(eftAmt)
+  const balanceCents = detail ? Math.round(detail.balance * 100) : 0
+  const remainingCents = balanceCents - enteredCents
+
+  function resetBatch() { paymentRequestId.current = null }
+
   async function recordPayment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!detail || busy || detail.status !== 'AwaitingCheckout') return
-    const received = Number(amount)
-    if (!Number.isFinite(received) || received <= 0 || received > detail.balance ||
-        Math.abs(Math.round(received * 100) - received * 100) > 0.000001) {
-      setError('Enter a valid amount that does not exceed the outstanding balance.')
-      return
+    const rows = [
+      { method: 'Cash', amount: cashAmt, reference: '' },
+      { method: 'Card', amount: cardAmt, reference: cardRef },
+      { method: 'EFT', amount: eftAmt, reference: eftRef },
+    ].filter(row => cents(row.amount) > 0)
+    if (rows.length === 0) { setError('Enter at least one amount received.'); return }
+    if (rows.some(row => Number(row.amount) < 0 ||
+        Math.abs(Number(row.amount) * 100 - Math.round(Number(row.amount) * 100)) > 0.000001)) {
+      setError('Amounts must be positive and have at most 2 decimals.'); return
     }
-    if (method !== 'Cash' && !reference.trim()) {
-      setError('Enter the card terminal or EFT reference (not the card number).')
-      return
+    if (enteredCents > balanceCents) {
+      setError('The amounts entered exceed the outstanding balance.'); return
     }
+    const missing = rows.find(row => row.method !== 'Cash' && !row.reference.trim())
+    if (missing) {
+      setError(`Enter the ${missing.method} terminal/EFT reference (not the card number).`); return
+    }
+    const completeCheckout = enteredCents === balanceCents
     setBusy(true)
     setError('')
     setSuccess('')
     try {
       if (!paymentRequestId.current) paymentRequestId.current = crypto.randomUUID()
-      const result = await apiRequest<PaymentResult>(
-        `/frontdesk/checkouts/${encodeURIComponent(detail.appointmentId)}/payments`,
+      const result = await apiRequest<{ paymentIds: string[]; alreadyRecorded: boolean; checkedOut?: boolean }>(
+        `/frontdesk/checkouts/${encodeURIComponent(detail.appointmentId)}/payments/split`,
         'POST',
-        { requestId: paymentRequestId.current, amount: received, method,
-          reference: reference.trim() || null }
+        {
+          batchId: paymentRequestId.current,
+          completeCheckout,
+          lines: rows.map(row => ({
+            method: row.method,
+            amount: Number(row.amount),
+            reference: row.reference.trim() || null,
+          })),
+        }
       )
       paymentRequestId.current = null
       setSuccess(result.alreadyRecorded
         ? 'This payment was already recorded; no duplicate was created.'
-        : 'Payment recorded successfully. Receipt is ready.')
-      setReference('')
-      setMethod('Cash')
-      await showReceipt(result.paymentId)
+        : completeCheckout
+          ? 'Payment recorded and patient checked out.'
+          : 'Part payment recorded. Collect the remaining balance to check out.')
+      setCashAmt(''); setCardAmt(''); setEftAmt('')
+      setCardRef(''); setEftRef('')
+      if (result.paymentIds?.[0]) await showReceipt(result.paymentIds[0])
       refresh()
     } catch (cause) {
-      // Keep the request ID on errors so retries do not create duplicates.
+      // Keep the batch ID on errors so retries do not create duplicates.
       setError(errorMessage(cause))
     } finally {
       setBusy(false)
@@ -279,28 +297,46 @@ export default function ReceptionCheckoutPage() {
               {detail.status === 'AwaitingCheckout' && detail.balance > 0 && (
                 <form className="checkout-payment-form" onSubmit={recordPayment}>
                   <h3>Record payment received</h3>
-                  <label>Payment method
-                    <select value={method} onChange={event => {
-                      setMethod(event.target.value as 'Cash' | 'Card' | 'EFT')
-                      paymentRequestId.current = null
-                    }} disabled={busy}>
-                      <option value="Cash">Cash</option><option value="Card">Card terminal</option><option value="EFT">EFT</option>
-                    </select>
+                  <p className="checkout-hint">Enter what the patient paid in each way. Cash is recorded as Cash and card as Card. Split example: R200 cash + R150 card.</p>
+                  <label>Cash received (ZAR)
+                    <input type="number" min="0" step="0.01" inputMode="decimal" value={cashAmt} disabled={busy}
+                      onChange={e => { setCashAmt(e.target.value); resetBatch() }} />
                   </label>
-                  <label>Amount received (ZAR)
-                    <input type="number" min="0.01" step="0.01" max={detail.balance}
-                      value={amount} disabled={busy} required
-                      onChange={event => { setAmount(event.target.value); paymentRequestId.current = null }} />
+                  <label>Card received (ZAR)
+                    <input type="number" min="0" step="0.01" inputMode="decimal" value={cardAmt} disabled={busy}
+                      onChange={e => { setCardAmt(e.target.value); resetBatch() }} />
                   </label>
-                  <label>External payment reference {method !== 'Cash' ? '(required)' : '(optional)'}
-                    <input type="text" maxLength={100} value={reference} disabled={busy}
-                      placeholder={method === 'Cash' ? 'Optional cash reference' : 'Terminal/EFT transaction reference — no card numbers'}
-                      onChange={event => { setReference(event.target.value); paymentRequestId.current = null }} />
+                  {cents(cardAmt) > 0 && (
+                    <label>Card terminal reference (required)
+                      <input type="text" maxLength={100} value={cardRef} disabled={busy}
+                        placeholder="Terminal slip reference — no card numbers"
+                        onChange={e => { setCardRef(e.target.value); resetBatch() }} />
+                    </label>
+                  )}
+                  <label>EFT received (ZAR)
+                    <input type="number" min="0" step="0.01" inputMode="decimal" value={eftAmt} disabled={busy}
+                      onChange={e => { setEftAmt(e.target.value); resetBatch() }} />
                   </label>
-                  <button type="submit" className="primary-button" disabled={busy}>
-                    <Wallet size={17}/>{busy ? 'Recording...' : 'Record Payment & Generate Receipt'}
+                  {cents(eftAmt) > 0 && (
+                    <label>EFT reference (required)
+                      <input type="text" maxLength={100} value={eftRef} disabled={busy}
+                        placeholder="Bank/EFT reference"
+                        onChange={e => { setEftRef(e.target.value); resetBatch() }} />
+                    </label>
+                  )}
+                  <div className="checkout-amounts">
+                    <div><span>Total entered</span><strong>{money(enteredCents / 100)}</strong></div>
+                    <div><span>Balance due</span><strong>{money(detail.balance)}</strong></div>
+                    <div className="checkout-due"><span>{remainingCents < 0 ? 'Over by' : 'Still to collect'}</span>
+                      <strong>{money(Math.abs(remainingCents) / 100)}</strong></div>
+                  </div>
+                  <button type="submit" className="primary-button"
+                    disabled={busy || enteredCents <= 0 || remainingCents < 0}>
+                    <Wallet size={17}/>{busy ? 'Recording...'
+                      : remainingCents === 0 && enteredCents > 0 ? 'Record Payment & Check Out'
+                      : 'Record Part Payment'}
                   </button>
-                  <p className="checkout-hint">Partial payments are supported. Checkout is enabled only when the remaining balance is zero.</p>
+                  <p className="checkout-hint">Checkout completes automatically when the amounts equal the balance.</p>
                 </form>
               )}
               {detail.status === 'AwaitingCheckout' && detail.balance === 0 && (

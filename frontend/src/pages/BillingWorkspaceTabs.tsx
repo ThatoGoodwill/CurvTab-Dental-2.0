@@ -1,46 +1,22 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
-import {
-  ShieldCheck,
-  Wallet,
-  Receipt,
-  Users,
-  FileText,
-  Calculator,
-} from 'lucide-react'
+import { ShieldCheck, Wallet, Users } from 'lucide-react'
 import './BillingWorkspaceTabs.css'
 
 type BillingTab =
   | 'checkout'
-  | 'ledger'
   | 'balances'
-  | 'invoices'
-  | 'expenses'
   | 'medicalAid'
 
 type Props = {
   checkout: ReactNode
-  ledger: ReactNode
   balances: ReactNode
-  invoices: ReactNode
-  expenses: ReactNode
   medicalAid: ReactNode
 }
 
 const tabs = [
   { id: 'checkout', label: 'Checkout', Icon: Wallet },
-  { id: 'ledger', label: 'Cash Ledger', Icon: Receipt },
   { id: 'balances', label: 'Patient Balances', Icon: Users },
-  {
-    id: 'invoices',
-    label: 'Invoices & Payment Allocations',
-    Icon: FileText,
-  },
-  {
-    id: 'expenses',
-    label: 'Expenses & Cash Sign-Off',
-    Icon: Calculator,
-  },
   {
     id: 'medicalAid',
     label: 'Medical Aid',
@@ -50,10 +26,7 @@ const tabs = [
 
 export default function BillingWorkspaceTabs({
   checkout,
-  ledger,
   balances,
-  invoices,
-  expenses,
   medicalAid,
 }: Props) {
   const [activeTab, setActiveTab] =
@@ -61,27 +34,24 @@ export default function BillingWorkspaceTabs({
 
   const content: Record<BillingTab, ReactNode> = {
     checkout,
-    ledger,
     balances,
-    invoices,
-    expenses,
     medicalAid,
   }
 
   return (
     <div className="ct-billing-workspace">
       <div className="ct-billing-workspace-heading">
-        <span>FRONT DESK · FINANCE</span>
-        <h1>Checkout & Payments</h1>
+        <span>FRONT DESK · BILLING</span>
+        <h1>Billing</h1>
         <p>
-          Manage checkout, receipts, patient accounts,
-          invoices and practice expenses.
+          Check out patients by cash, card, split payment or
+          medical aid, and view patient balances.
         </p>
       </div>
 
       <nav
         className="ct-billing-tabs"
-        aria-label="Financial sections"
+        aria-label="Billing sections"
       >
         {tabs.map(({ id, label, Icon }) => (
           <button

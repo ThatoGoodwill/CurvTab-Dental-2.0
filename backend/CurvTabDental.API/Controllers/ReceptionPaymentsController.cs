@@ -30,6 +30,10 @@ public sealed class ReceptionPaymentsController : ControllerBase
     public record RecordPaymentRequest(
         Guid RequestId, decimal Amount, string Method, string? Reference);
 
+    public record SplitLine(decimal Amount, string Method, string? Reference);
+    public record SplitPaymentRequest(
+        Guid BatchId, List<SplitLine> Lines, bool CompleteCheckout);
+
     // GET /api/frontdesk/checkouts/{appointmentId}
     [HttpGet("{appointmentId:guid}")]
     public async Task<IActionResult> Details(Guid appointmentId, CancellationToken ct)
@@ -172,6 +176,127 @@ public sealed class ReceptionPaymentsController : ControllerBase
             payment.ReceiptNumber,
             amount = payment.Amount,
             balance = balance - payment.Amount,
+            alreadyRecorded = false
+        });
+    }
+
+    // POST /api/frontdesk/checkouts/{appointmentId}/payments/split
+    // Records several tenders (e.g. R200 Cash + R150 Card) atomically. Each
+    // line is stored as its own Payment row under its own method, so cash
+    // is always reported as Cash and card as Card. All-or-nothing.
+    [HttpPost("{appointmentId:guid}/payments/split")]
+    public async Task<IActionResult> RecordSplitPayment(
+        Guid appointmentId, [FromBody] SplitPaymentRequest request,
+        CancellationToken ct)
+    {
+        if (_current.PracticeId is not Guid practiceId) return Forbid();
+        if (_current.UserId is not Guid actorId) return Unauthorized();
+
+        if (request.BatchId == Guid.Empty || request.Lines is null ||
+            request.Lines.Count < 1 || request.Lines.Count > 3)
+            return BadRequest(new { message = "Supply a batch ID and 1 to 3 payment lines." });
+
+        var lines = new List<(decimal Amount, string Method, string? Reference, Guid RequestId)>();
+        for (var i = 0; i < request.Lines.Count; i++)
+        {
+            var line = request.Lines[i];
+            var method = line.Method?.Trim() ?? "";
+            var reference = line.Reference?.Trim();
+            if (method != "Cash" && method != "Card" && method != "EFT")
+                return BadRequest(new { message = "Payment method must be Cash, Card or EFT." });
+            if (line.Amount <= 0m || line.Amount > 10000000m ||
+                decimal.Round(line.Amount, 2) != line.Amount)
+                return BadRequest(new { message = "Every line needs a valid amount greater than zero." });
+            if (reference?.Length > 100 ||
+                ((method == "Card" || method == "EFT") && string.IsNullOrWhiteSpace(reference)))
+                return BadRequest(new { message = "Card and EFT lines require a terminal/EFT reference (never a card number)." });
+            if (lines.Any(l => l.Method == method))
+                return BadRequest(new { message = $"Use only one {method} line; combine the amounts." });
+            var key = System.Security.Cryptography.MD5.HashData(
+                System.Text.Encoding.UTF8.GetBytes($"{request.BatchId}:{i}"));
+            lines.Add((line.Amount, method,
+                string.IsNullOrWhiteSpace(reference) ? null : reference, new Guid(key)));
+        }
+        var total = lines.Sum(l => l.Amount);
+
+        await using var transaction = await _db.Database.BeginTransactionAsync(ct);
+        var appointment = await _db.Appointments
+            .FromSqlInterpolated($"SELECT * FROM \"Appointments\" WHERE \"Id\" = {appointmentId} AND \"DentalPracticeId\" = {practiceId} FOR UPDATE")
+            .SingleOrDefaultAsync(ct);
+        if (appointment is null) return NotFound();
+
+        var ids = lines.Select(l => l.RequestId).ToList();
+        var existing = await _db.Payments.AsNoTracking()
+            .Where(p => p.DentalPracticeId == practiceId && ids.Contains(p.RequestId))
+            .ToListAsync(ct);
+        if (existing.Count > 0)
+        {
+            if (existing.Count != lines.Count || existing.Any(e => e.AppointmentId != appointmentId))
+                return Conflict(new { message = "This split payment batch ID was already used." });
+            return Ok(new { paymentIds = existing.Select(e => e.Id), total, alreadyRecorded = true });
+        }
+
+        if (appointment.Status != "AwaitingCheckout")
+            return Conflict(new { message = "This visit is not awaiting checkout." });
+
+        var consultation = await _db.Consultations.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.DentalPracticeId == practiceId &&
+                                      c.AppointmentId == appointmentId && c.IsFinalized, ct);
+        if (consultation is null)
+            return Conflict(new { message = "The Dentist must finish the consultation first." });
+
+        var charged = await _db.ConsultationCharges
+            .Where(c => c.DentalPracticeId == practiceId && c.ConsultationId == consultation.Id)
+            .SumAsync(c => (decimal?)c.Amount, ct) ?? 0m;
+        var paid = await _db.Payments
+            .Where(p => p.DentalPracticeId == practiceId && p.AppointmentId == appointmentId)
+            .SumAsync(p => (decimal?)p.Amount, ct) ?? 0m;
+        var balance = charged - paid;
+        if (balance <= 0m || total > balance)
+            return Conflict(new { message = "The split total exceeds the outstanding balance.", balance });
+        if (request.CompleteCheckout && total != balance)
+            return Conflict(new { message = "To check out, the split total must equal the balance.", balance });
+
+        var receivedAt = DateTime.UtcNow;
+        var created = new List<Payment>();
+        foreach (var l in lines)
+        {
+            var id = Guid.NewGuid();
+            var payment = new Payment
+            {
+                Id = id,
+                DentalPracticeId = practiceId,
+                AppointmentId = appointmentId,
+                RequestId = l.RequestId,
+                Amount = l.Amount,
+                Method = l.Method,
+                Reference = l.Reference,
+                ReceivedAtUtc = receivedAt,
+                ReceivedByUserId = actorId,
+                ReceiptNumber = $"RCPT-{receivedAt:yyyyMMdd}-{id.ToString("N")[..12].ToUpperInvariant()}"
+            };
+            _db.Payments.Add(payment);
+            created.Add(payment);
+        }
+        if (request.CompleteCheckout)
+        {
+            appointment.Status = "CheckedOut";
+            appointment.CheckedOutAtUtc = receivedAt;
+        }
+        await _db.SaveChangesAsync(ct);
+        foreach (var payment in created)
+            await _audit.WriteAsync("PAYMENT_RECORDED", "Payment", payment.Id.ToString(), ct: ct);
+        if (request.CompleteCheckout)
+            await _audit.WriteAsync("PATIENT_CHECKED_OUT", "Appointment", appointmentId.ToString(), ct: ct);
+        await transaction.CommitAsync(ct);
+
+        return Created($"/api/frontdesk/checkouts/{appointmentId}", new
+        {
+            paymentIds = created.Select(c => c.Id),
+            receipts = created.Select(c => new { c.Id, c.ReceiptNumber, c.Method, c.Amount }),
+            total,
+            balance = balance - total,
+            checkedOut = request.CompleteCheckout,
             alreadyRecorded = false
         });
     }
