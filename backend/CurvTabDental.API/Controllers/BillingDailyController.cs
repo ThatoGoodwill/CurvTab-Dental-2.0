@@ -57,10 +57,10 @@ public sealed class BillingDailyController : ControllerBase
         int LaboratoryCashExpenses)
     {
         public decimal ActualReceived =>
-            CashReceipts + CardReceipts + EftReceipts + SchemeDeposits;
+            BillingFinancialMath.ReceivedMoney(CashReceipts, CardReceipts, EftReceipts, SchemeDeposits);
         public decimal ActualPayouts =>
-            CashExpenses + CardExpenses + EftExpenses +
-            CashRefunds + CardRefunds + EftRefunds;
+            BillingFinancialMath.PaidOutMoney(CashExpenses, CardExpenses, EftExpenses,
+                CashRefunds, CardRefunds, EftRefunds);
     }
 
     private async Task<Totals> ReadTotals(Guid practiceId, DateOnly date,
@@ -274,14 +274,15 @@ public sealed class BillingDailyController : ControllerBase
                 return Conflict(new { message = "The existing blind count is awaiting review or already closed. Only a rejected count can be recounted without overwriting history." });
         }
         var totals = await ReadTotals(id, req.BusinessDate, ct);
-        var expected = req.OpeningFloat + totals.CashReceipts - totals.CashExpenses - totals.CashRefunds;
+        var expected = BillingFinancialMath.ExpectedDrawer(
+            req.OpeningFloat, totals.CashReceipts, totals.CashExpenses, totals.CashRefunds);
         var count = new BillingCashCount {
             DentalPracticeId = id, RequestId = req.RequestId,
             BusinessDate = req.BusinessDate, Revision = (latest?.Revision ?? 0) + 1,
             OpeningFloat = req.OpeningFloat, CashReceipts = totals.CashReceipts,
             CashExpenses = totals.CashExpenses, CashRefunds = totals.CashRefunds,
             ExpectedCash = expected, CountedCash = counted,
-            Variance = counted - expected,
+            Variance = BillingFinancialMath.DrawerVariance(counted, expected),
             DenominationsJson = JsonSerializer.Serialize(req.Denominations),
             SubmittedByUserId = actor
         };
