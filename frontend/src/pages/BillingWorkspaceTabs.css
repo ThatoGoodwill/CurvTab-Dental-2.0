@@ -401,3 +401,54 @@
 @media(max-width: 380px) {
   .ct-financial-workspace .ct-financial-nav { grid-template-columns: 1fr !important; }
 }
+
+/* Client's Laboratory screenshot: compact inline icon tabs above softly grouped records. */
+.ct-financial-workspace .ct-financial-nav {
+  display: flex !important; flex-wrap: wrap !important;
+  align-items: center !important; gap: 5px !important;
+  border-bottom: 1px solid var(--border, #dce6f3) !important;
+  padding: 3px 0 8px !important;
+  border-radius: 0 !important;
+}
+.ct-financial-workspace .ct-financial-nav .ct-billing-tab {
+  flex: 0 1 auto !important; min-height: 36px !important;
+  padding: 5px 9px !important; border-radius: 7px !important;
+  gap: 5px !important; border-color: transparent !important;
+}
+.ct-financial-workspace .ct-financial-nav .ct-billing-tab.active {
+  border-color: var(--practice-primary, #2865db) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--practice-primary, #2865db) 20%, transparent) !important;
+}
+.ct-financial-workspace .ct-financial-nav .ct-billing-tab:not(.active) {
+  background: transparent !important;
+}
+.ct-financial-workspace .ct-financial-nav .ct-financial-tab-icon {
+  width: 22px; height: 24px; border-radius: 5px; background: transparent;
+}
+.ct-financial-workspace .ct-financial-nav .ct-financial-tab-icon svg { width: 15px; height: 15px; }
+.ct-financial-workspace .ct-financial-nav .ct-financial-tab-copy { display: block; }
+.ct-financial-workspace .ct-financial-nav .ct-financial-tab-copy strong { font-size: 11px; white-space: nowrap; }
+.ct-financial-workspace .ct-financial-nav .ct-financial-tab-copy small { display: none; }
+.ct-financial-workspace .ct-financial-detail {
+  border: 0 !important; padding: 4px 0 0 !important;
+  background: transparent !important;
+}
+.ct-financial-workspace .ct-financial-detail > :is(.panel, .checkout-page, .ct-finance-ops, .ct-invoices) {
+  border-radius: 10px;
+}
+.ct-financial-workspace .ct-financial-detail :is(.checkout-list, .checkout-detail, .ct-finance-cards article) {
+  background: color-mix(in srgb, var(--practice-primary, #2865db) 5%, var(--surface, white));
+  border: 1px solid var(--border, #dce6f3);
+}
+.ct-financial-workspace .ct-financial-detail :is(.checkout-patient, .ct-invoice-row, .ct-finance-table-wrap) {
+  background: var(--surface, white);
+}
+.ct-financial-workspace .ct-financial-detail .checkout-patient.checkout-selected {
+  border-color: var(--practice-primary, #2865db);
+  background: color-mix(in srgb, var(--practice-primary, #2865db) 8%, var(--surface, white));
+}
+@media (max-width: 550px) {
+  .ct-financial-workspace .ct-financial-nav { gap: 4px !important; }
+  .ct-financial-workspace .ct-financial-nav .ct-billing-tab { flex: 1 1 130px !important; justify-content: flex-start !important; }
+  .ct-financial-workspace .ct-financial-nav .ct-financial-tab-copy strong { white-space: normal; }
+}
