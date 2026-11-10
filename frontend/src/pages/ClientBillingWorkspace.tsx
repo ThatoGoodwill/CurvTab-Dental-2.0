@@ -10,16 +10,9 @@ import PlanAccountsPanel from './PlanAccountsPanel'
 import InvoicesPanel from './InvoicesPanel'
 import PatientBalancesPanel from './PatientBalancesPanel'
 import MedicalAidPanel from './MedicalAidPanel'
+import type { BillingSection } from './clientBillingNavigation'
 import './ClientBillingWorkspace.css'
 
-export type BillingSection = 'today' | 'cash-private' | 'medical-aid' | 'cash-close' | 'medical-signoff'
-export const billingSidebarSections: ReadonlyArray<{ id: BillingSection; label: string }> = [
-  { id: 'today', label: "Today's Billing" },
-  { id: 'cash-private', label: 'Cash & Private' },
-  { id: 'medical-aid', label: 'Medical Aid' },
-  { id: 'cash-close', label: 'Cash Day Close' },
-  { id: 'medical-signoff', label: 'Medical Aid Day Sign-Off' },
-]
 
 type ClaimAttempt = {
   claimId: string; patientId: string; claimNumber: string
@@ -184,7 +177,6 @@ function TodayBilling({ date, setDate, revision, refresh, onGo, onExpense }: {
   const [selectedExpense, setSelectedExpense] = useState<ExpenseRow | null>(null)
   useEffect(() => {
     let alive = true
-    setLoading(true)
     apiRequest<DailyData>('/billing/daily?date=' + encodeURIComponent(date))
       .then(x => { if (alive) { setDaily(x); setError('') } })
       .catch(x => { if (alive) { setDaily(null); setError(problem(x)) } })
@@ -314,7 +306,6 @@ function CashDayClose({ date, setDate, revision, refresh, manager }: {
 
   useEffect(() => {
     let alive = true
-    setLoading(true)
     apiRequest<CashData>('/billing/cash-day-close?date=' + encodeURIComponent(date))
       .then(x => { if (alive) { setData(x); setNote(null) } })
       .catch(x => { if (alive) { setData(null); setNote({kind:'error',text:problem(x)}) } })
@@ -461,7 +452,7 @@ function MedicalAidDaySignoff({date,setDate,revision,refresh}: {
   const [busy,setBusy]=useState(false)
   const requestId=useRef<string|null>(null)
   useEffect(()=>{
-    let alive=true;setLoading(true)
+    let alive=true
     apiRequest<MedicalDay>('/billing/medical-aid-day?date='+encodeURIComponent(date))
       .then(x=>{if(alive){setData(x);setNote(null)}})
       .catch(x=>{if(alive){setData(null);setNote({kind:'error',text:problem(x)})}})
@@ -758,7 +749,7 @@ function MedicalAidActivity({date,setDate,revision,refresh,manager}:{
   const [localRevision,localRefresh]=useState(0)
 
   useEffect(()=>{
-    let live=true;setLoading(true)
+    let live=true
     Promise.all([
       apiRequest<MedicalDay>('/billing/medical-aid-day?date='+encodeURIComponent(date)),
       apiRequest<ClaimRow[]>('/finance/medical-aid/claims')
