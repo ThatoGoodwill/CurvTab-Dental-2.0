@@ -225,6 +225,10 @@ public sealed class BillingDailyController : ControllerBase
             cardExpenses = totals.CardExpenses, eftExpenses = totals.EftExpenses,
             labPayoutsAlreadyRecordedAsExpenses = totals.LaboratoryCashExpenses,
             counts, events,
+            changedAfterSubmission = counts.Count > 0 &&
+                (counts[0].CashReceipts != totals.CashReceipts ||
+                 counts[0].CashExpenses != totals.CashExpenses ||
+                 counts[0].CashRefunds != totals.CashRefunds),
             note = "The expected drawer cash and variance are only returned after the blind count is submitted. Laboratory expenses already recorded in Finances are not counted twice."
         });
     }
@@ -328,6 +332,16 @@ public sealed class BillingDailyController : ControllerBase
             !await _db.Set<BillingCashCountEvent>().AsNoTracking().AnyAsync(
                 x => x.CashCountId == countId && x.Action == "Explanation", ct))
             return Conflict(new { message = "Require a separate documented explanation before reviewing a cash variance." });
+        if (action == "Approved")
+        {
+            var latestTotals = await ReadTotals(id, count.BusinessDate, ct);
+            if (latestTotals.CashReceipts != count.CashReceipts ||
+                latestTotals.CashExpenses != count.CashExpenses ||
+                latestTotals.CashRefunds != count.CashRefunds)
+                return Conflict(new {
+                    message = "Cash movements have changed since the blind count. Reject this count and request a fresh, audited recount."
+                });
+        }
         var evt = new BillingCashCountEvent {
             DentalPracticeId = id, CashCountId = countId, RequestId = req.RequestId,
             Action = action, Notes = notes, EvidenceReference = evidence, ActorUserId = actor
