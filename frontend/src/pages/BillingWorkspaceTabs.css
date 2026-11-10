@@ -303,3 +303,21 @@
     transparent
   );
 }
+
+
+/* Compact financial workspaces, using the practice palette in either theme. */
+.ct-billing-workspace { gap: 12px; }
+.ct-billing-workspace-heading { gap: 4px; }
+.ct-billing-workspace-heading h1 { font-size: clamp(20px, 2vw, 25px); letter-spacing: -.35px; color: inherit; }
+.ct-billing-workspace-heading p { font-size: 12px; line-height: 1.45; color: inherit; opacity: .76; }
+.ct-billing-workspace-heading > span { letter-spacing: 1px; color: var(--practice-primary, currentColor); }
+.ct-billing-workspace .ct-billing-tabs { padding: 7px; gap: 6px; border-radius: 10px; background: transparent; }
+.ct-billing-workspace .ct-billing-tab { min-height: 34px; padding: 7px 10px; gap: 6px; font-size: 12px; border-radius: 7px; box-shadow: none; }
+.ct-billing-workspace .ct-billing-tab svg { width: 15px; height: 15px; }
+[data-theme='dark'] .ct-billing-workspace .ct-billing-tabs { border-color: rgba(225,235,250,.20); }
+[data-theme='dark'] .ct-billing-workspace .ct-billing-tab:not(.active) { color: inherit; background: rgba(225,235,250,.06); border-color: rgba(225,235,250,.24); }
+[data-theme='dark'] .ct-billing-workspace .ct-billing-tab:not(.active):hover { color: #fff; }
+@media (max-width: 720px) {
+  .ct-billing-workspace .ct-billing-tabs { display: flex; flex-wrap: wrap; }
+  .ct-billing-workspace .ct-billing-tab { flex: 1 1 145px; }
+}

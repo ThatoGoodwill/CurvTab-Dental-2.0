@@ -1,16 +1,18 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
-import { ShieldCheck, Wallet, Users, ClipboardList } from 'lucide-react'
+import { ShieldCheck, Wallet, Users, ClipboardList, FileText } from 'lucide-react'
 import './BillingWorkspaceTabs.css'
 
 type BillingTab =
   | 'checkout'
+  | 'invoices'
   | 'plans'
   | 'balances'
   | 'medicalAid'
 
 type Props = {
   checkout: ReactNode
+  invoices: ReactNode
   plans: ReactNode
   balances: ReactNode
   medicalAid: ReactNode
@@ -18,6 +20,7 @@ type Props = {
 
 const tabs = [
   { id: 'checkout', label: 'Checkout', Icon: Wallet },
+  { id: 'invoices', label: 'Invoices & Allocations', Icon: FileText },
   { id: 'plans', label: 'Treatment Plan Accounts', Icon: ClipboardList },
   { id: 'balances', label: 'Patient Balances', Icon: Users },
   {
@@ -29,6 +32,7 @@ const tabs = [
 
 export default function BillingWorkspaceTabs({
   checkout,
+  invoices,
   plans,
   balances,
   medicalAid,
@@ -38,6 +42,7 @@ export default function BillingWorkspaceTabs({
 
   const content: Record<BillingTab, ReactNode> = {
     checkout,
+    invoices,
     plans,
     balances,
     medicalAid,
@@ -49,8 +54,8 @@ export default function BillingWorkspaceTabs({
         <span>FRONT DESK · BILLING</span>
         <h1>Billing</h1>
         <p>
-          Check out patients by cash, card, split payment or
-          medical aid, and view patient balances.
+          Record patient payments, manage invoices and allocations,
+          treatment accounts, medical aid and balances.
         </p>
       </div>
 
