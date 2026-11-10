@@ -202,7 +202,9 @@ public sealed class FinanceOperationsController : ControllerBase
 
     // POST /api/finance/operations/expenses
     [HttpPost("expenses")]
-    [Authorize(Roles = "PracticeAdmin")]
+    // Reception may capture a real verified payment/expense; manager-only cash
+    // variance review and accounting adjustments remain separately gated.
+    [Authorize(Roles = "Receptionist,PracticeAdmin")]
     public async Task<IActionResult> AddExpense(
         [FromBody] AddExpenseRequest request,
         CancellationToken ct)
@@ -308,100 +310,14 @@ public sealed class FinanceOperationsController : ControllerBase
             });
     }
 
-    // POST /api/finance/operations/signoff
+    // Superseded by the receptionist blind Cash Day Close and separate
+    // PracticeAdmin exception reviews. Historical CashDaySignoff records stay readable.
     [HttpPost("signoff")]
     [Authorize(Roles = "PracticeAdmin")]
-    public async Task<IActionResult> Signoff(
-        [FromBody] SignoffRequest request,
-        CancellationToken ct)
-    {
-        if (_current.PracticeId is not Guid practiceId)
-            return Forbid();
-
-        if (_current.UserId is not Guid actorId)
-            return Unauthorized();
-
-        if (request.BusinessDate == default ||
-            request.BusinessDate > TodaySA() ||
-            !ValidMoney(request.OpeningFloat) ||
-            !ValidMoney(request.CountedCash) ||
-            request.Notes?.Length > 1000)
+    public IActionResult LegacySignoffDisabled() =>
+        StatusCode(410, new
         {
-            return BadRequest(new
-            {
-                message = "Check the date, opening float, " +
-                          "counted cash and notes."
-            });
-        }
+            message = "Combined cash sign-off is retired. Use Billing > Cash Day Close. Existing snapshots remain immutable."
+        });
 
-        var previous = await _db.Set<CashDaySignoff>()
-            .AsNoTracking()
-            .AnyAsync(s =>
-                s.DentalPracticeId == practiceId &&
-                s.BusinessDate == request.BusinessDate, ct);
-
-        if (previous)
-            return Conflict(new
-            {
-                message = "This date already has a recorded sign-off."
-            });
-
-        var totals = await CashTotals(
-            practiceId, request.BusinessDate, ct);
-
-        var expected = request.OpeningFloat +
-                       totals.Receipts -
-                       totals.Expenses;
-
-        if (request.CountedCash != expected &&
-            string.IsNullOrWhiteSpace(request.Notes))
-        {
-            return BadRequest(new
-            {
-                message = "Explain the cash variance before signing off."
-            });
-        }
-
-        var signoff = new CashDaySignoff
-        {
-            DentalPracticeId = practiceId,
-            BusinessDate = request.BusinessDate,
-            OpeningFloat = request.OpeningFloat,
-            CashReceived = totals.Receipts,
-            CashExpenses = totals.Expenses,
-            ExpectedCash = expected,
-            CountedCash = request.CountedCash,
-            Variance = request.CountedCash - expected,
-            CashReceiptCount = totals.ReceiptCount,
-            CashExpenseCount = totals.ExpenseCount,
-            Notes = string.IsNullOrWhiteSpace(request.Notes)
-                ? null : request.Notes.Trim(),
-            SignedByUserId = actorId
-        };
-
-        await using var transaction =
-            await _db.Database.BeginTransactionAsync(ct);
-
-        _db.Set<CashDaySignoff>().Add(signoff);
-        await _db.SaveChangesAsync(ct);
-
-        await _audit.WriteAsync(
-            "CASH_DAY_SIGNED_OFF",
-            "CashDaySignoff",
-            signoff.Id.ToString(),
-            ct: ct);
-
-        await transaction.CommitAsync(ct);
-
-        return Created(
-            $"/api/finance/operations?date={signoff.BusinessDate:yyyy-MM-dd}",
-            new
-            {
-                signoff.Id,
-                signoff.ExpectedCash,
-                signoff.CountedCash,
-                signoff.Variance,
-                signoff.SignedAtUtc
-            });
-    }
 }

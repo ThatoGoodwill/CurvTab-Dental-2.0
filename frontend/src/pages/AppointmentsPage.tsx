@@ -15,7 +15,7 @@ import {
 import { apiRequest } from '../services/api'
 import './AppointmentsPage.css'
 
-export type AppointmentTab = 'Scheduling' | 'In Queue'
+export type AppointmentTab = 'Appointments' | 'In Queue'
 
 type PatientChoice = {
   id: string
@@ -379,18 +379,18 @@ export default function AppointmentsPage({
       <section
         className={
           'ct-appointments-modal ' +
-          (tab === 'Scheduling'
+          (tab === 'Appointments'
             ? 'ct-appointments-modal-calendar'
             : 'ct-appointments-modal-queue')
         }
         role="dialog"
         aria-modal="true"
-        aria-label="Appointments"
+        aria-label="Scheduling"
       >
         <button
           type="button"
           className="ct-appointments-modal-close"
-          aria-label="Close Appointments"
+          aria-label="Close Scheduling"
           onClick={onClose}
         >
           ×
@@ -399,7 +399,7 @@ export default function AppointmentsPage({
       <div className="page-heading">
         <div>
           <div className="eyebrow">{role === 'Dentist' ? 'CLINICAL WORKSPACE' : 'FRONT DESK'}</div>
-          <h1>Appointments</h1>
+          <h1>Scheduling</h1>
           <p>{role === 'Dentist'
             ? 'Call waiting patients and begin their consultations.'
             : 'Schedule visits, check patients in and manage the queue.'}</p>
@@ -420,13 +420,13 @@ export default function AppointmentsPage({
         <button
           type="button"
           className={
-            tab === 'Scheduling'
+            tab === 'Appointments'
               ? 'primary-button'
               : 'secondary-button'
           }
-          onClick={() => onTabChange('Scheduling')}
+          onClick={() => onTabChange('Appointments')}
         >
-          <CalendarPlus size={18} /> Scheduling
+          <CalendarPlus size={18} /> Appointments
         </button>
 
         <button
@@ -459,7 +459,7 @@ export default function AppointmentsPage({
         </div>
       )}
 
-      {tab === 'Scheduling' && (
+      {tab === 'Appointments' && (
         <div className="appointment-layout ct-appt-compact">
           {/* INTERACTIVE CALENDAR */}
           <section className="panel ct-appt-calendar-panel">
@@ -856,9 +856,9 @@ export default function AppointmentsPage({
               <button
                 type="button"
                 className="secondary-button"
-                onClick={() => onTabChange('Scheduling')}
+                onClick={() => onTabChange('Appointments')}
               >
-                Open Scheduling
+                Open Appointments
               </button>
             </div>
           ) : (
