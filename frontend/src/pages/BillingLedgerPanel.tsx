@@ -190,9 +190,14 @@ export default function BillingLedgerPanel() {
         <>
           <div className="ct-billing-kpis">
             <article>
-              <Receipt size={21}/>
-              <span>Total received</span>
-              <strong>{money(ledger.totalReceived)}</strong>
+              <Banknote size={21}/>
+              <span>Actual cash &amp; card receipts</span>
+              <strong>{money(ledger.cashReceived + ledger.cardReceived)}</strong>
+            </article>
+            <article>
+              <Landmark size={21}/>
+              <span>Other EFT receipts</span>
+              <strong>{money(ledger.eftReceived)}</strong>
             </article>
             <article>
               <Banknote size={21}/>
@@ -205,9 +210,9 @@ export default function BillingLedgerPanel() {
               <strong>{money(ledger.cardReceived)}</strong>
             </article>
             <article>
-              <Landmark size={21}/>
-              <span>EFT received</span>
-              <strong>{money(ledger.eftReceived)}</strong>
+              <Receipt size={21}/>
+              <span>Total received</span>
+              <strong>{money(ledger.totalReceived)}</strong>
             </article>
           </div>
 

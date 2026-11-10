@@ -29,3 +29,37 @@ html[data-surface="blue"]:not([data-theme="dark"]) .primary-button{
 html:not([data-practice-theme]):not([data-theme="dark"]) .primary-button{
   background:#1769d1;border-color:#1769d1;
 }
+
+/* ---- Finance tabs (Revenues | Expenses) ---- */
+.ct-finance-workspace{display:grid;gap:20px}
+.ct-finance-tabs{display:flex;gap:28px;border-bottom:1px solid var(--border,#dbe4ee)}
+.ct-finance-tab{background:none;border:0;padding:14px 4px;font:inherit;font-weight:700;font-size:17px;
+  color:var(--muted,#5b6b7f);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px}
+.ct-finance-tab.active{color:#1769d1;border-bottom-color:#2f8be6}
+.ct-billing-kpis{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))!important;gap:20px!important}
+.ct-billing-kpis article{border-radius:22px!important;padding:24px!important}
+.ct-billing-kpis article strong{font-size:34px!important}
+
+/* ---- Blue & White (client reference): deep-blue sidebar, white top bar, soft blue page ---- */
+html[data-surface="blue"]:not([data-theme="dark"]) .app-shell .sidebar{
+  background:#0d3f7c!important;background-image:none!important;
+}
+html[data-surface="blue"]:not([data-theme="dark"]) .app-shell .sidebar .nav-item.nav-active{
+  background:#1769d1!important;
+}
+html[data-surface="blue"]:not([data-theme="dark"]) .app-shell .sidebar .nav-item.nav-active *{
+  color:#fff!important;
+}
+html[data-surface="blue"]:not([data-theme="dark"]) .app-shell .workspace{background:#f3f6fb!important}
+html[data-surface="blue"]:not([data-theme="dark"]) .app-shell .topbar{background:#fff!important}
+html[data-surface="blue"]:not([data-theme="dark"]){--bg:#f3f6fb;--primary:#1769d1;--primary-dark:#0f4fb0;--text:#13294b}
+
+/* ---- Dark Blue (client reference): navy page, lighter navy cards, bright-blue accents ---- */
+html[data-surface="dark"][data-theme="dark"]{
+  --bg:#081a30;--surface:#0f2a4a;--surface-soft:#143458;--text:#eaf2ff;--muted:#9fb6d3;
+  --border:#1d3f66;--primary:#2f8be6;--primary-dark:#1769d1;--sidebar:#0a1d36;
+}
+html[data-surface="dark"][data-theme="dark"] .app-shell .sidebar{background:#0a1d36!important;background-image:none!important}
+html[data-surface="dark"][data-theme="dark"] .app-shell .sidebar .nav-item.nav-active{background:#1b4a7a!important}
+html[data-surface="dark"][data-theme="dark"] .app-shell .workspace{background:#081a30!important}
+html[data-surface="dark"][data-theme="dark"] .ct-finance-tab.active{color:#4aa3ff;border-bottom-color:#2f8be6}

@@ -1,45 +1,35 @@
-import { useState } from 'react'
 import type { ReactNode } from 'react'
-import { Receipt, FileText, Calculator } from 'lucide-react'
-import './BillingWorkspaceTabs.css'
 
-type FinanceTab = 'revenue' | 'expenses' | 'invoices'
+export type FinanceTab = 'revenues' | 'expenses'
 
 type Props = {
-  revenue: ReactNode
+  tab: FinanceTab
+  onTab: (tab: FinanceTab) => void
+  revenues: ReactNode
   expenses: ReactNode
-  invoices: ReactNode
 }
 
-const tabs = [
-  { id: 'revenue', label: 'Revenue', Icon: Receipt },
-  { id: 'expenses', label: 'Expenses & Cash Sign-Off', Icon: Calculator },
-  { id: 'invoices', label: 'Invoices & Payment Allocations', Icon: FileText },
-] as const
+const tabs: { id: FinanceTab; label: string }[] = [
+  { id: 'revenues', label: 'Revenues' },
+  { id: 'expenses', label: 'Expenses' },
+]
 
-export default function FinanceWorkspaceTabs({ revenue, expenses, invoices }: Props) {
-  const [activeTab, setActiveTab] = useState<FinanceTab>('revenue')
-  const content: Record<FinanceTab, ReactNode> = { revenue, expenses, invoices }
-
+export default function FinanceWorkspaceTabs({ tab, onTab, revenues, expenses }: Props) {
   return (
-    <div className="ct-billing-workspace">
-      <div className="ct-billing-workspace-heading">
-        <span>PRACTICE · FINANCE</span>
-        <h1>Finance</h1>
-        <p>Revenue received by cash, card and EFT, practice expenses, cash sign-off and invoices.</p>
-      </div>
-      <nav className="ct-billing-tabs" aria-label="Finance sections">
-        {tabs.map(({ id, label, Icon }) => (
-          <button key={id} type="button"
-            aria-current={activeTab === id ? 'page' : undefined}
-            className={'ct-billing-tab' + (activeTab === id ? ' active' : '')}
-            onClick={() => setActiveTab(id)}>
-            <Icon size={18} aria-hidden="true" />
-            <span>{label}</span>
+    <div className="ct-finance-workspace">
+      <nav className="ct-finance-tabs" role="tablist" aria-label="Finances">
+        {tabs.map(item => (
+          <button key={item.id} type="button" role="tab"
+            aria-selected={tab === item.id}
+            className={'ct-finance-tab' + (tab === item.id ? ' active' : '')}
+            onClick={() => onTab(item.id)}>
+            {item.label}
           </button>
         ))}
       </nav>
-      <div className="ct-billing-tab-content" key={activeTab}>{content[activeTab]}</div>
+      <div className="ct-finance-content" key={tab}>
+        {tab === 'revenues' ? revenues : expenses}
+      </div>
     </div>
   )
 }
