@@ -19,6 +19,8 @@ type ClaimEvent = {
   toStatus: string
   approvedAmount: number | null
   externalReference: string | null
+  attemptNumber?: number | null
+  payloadSnapshotJson?: string | null
   evidenceReference: string
   reason: string
   performedByUserId: string
@@ -500,7 +502,8 @@ export default function MedicalAidClaimProcessingPanel({
 
                 <p>{entry.reason}</p>
                 <small>Evidence: {entry.evidenceReference}</small>
-                {entry.externalReference && <small>Submission attempt reference: {entry.externalReference}</small>}
+                {entry.externalReference && <small>Submission attempt {entry.attemptNumber ?? '—'} · Reference: {entry.externalReference}</small>}
+                {entry.payloadSnapshotJson && <small>Original submission payload preserved for audit.</small>}
 
                 {entry.approvedAmount !== null && (
                   <small>
