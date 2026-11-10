@@ -161,10 +161,17 @@ public sealed class BillingCashDayCloseController : ControllerBase
 
         // Do not overwrite an earlier count. Uniqueness is also enforced in PostgreSQL.
         var existing = await _db.Set<CashDayCloseSubmission>().AsNoTracking()
-            .AnyAsync(x => x.DentalPracticeId == practiceId &&
+            .FirstOrDefaultAsync(x => x.DentalPracticeId == practiceId &&
                 x.BusinessDate == request.BusinessDate, ct);
-        if (existing)
+        if (existing is not null)
+        {
+            if (existing.OpeningFloat == request.OpeningFloat &&
+                existing.CountedCash == request.CountedCash &&
+                existing.Explanation == request.Explanation?.Trim() &&
+                existing.EvidenceReference == request.EvidenceReference?.Trim())
+                return Ok(await ResultFor(practiceId, request.BusinessDate, ct));
             return Conflict(new { message = "The first blind cash count is immutable. A manager must review any discrepancy." });
+        }
 
         var (start, end) = Range(request.BusinessDate);
         var paymentCash = await _db.Payments.AsNoTracking()
