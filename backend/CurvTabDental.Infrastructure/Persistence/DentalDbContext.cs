@@ -78,6 +78,7 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
 
         // CLIENT BILLING: immutable, tenant-scoped sign-offs and audit decisions.
         modelBuilder.Entity<BillingCashCount>(e => {
+            e.ToTable("BillingCashCounts");
             e.HasKey(x => x.Id);
             e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
             e.Property(x => x.OpeningFloat).HasPrecision(12, 2);
@@ -92,6 +93,7 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
             e.HasIndex(x => new { x.DentalPracticeId, x.BusinessDate, x.Revision }).IsUnique();
         });
         modelBuilder.Entity<BillingCashCountEvent>(e => {
+            e.ToTable("BillingCashCountEvents");
             e.HasKey(x => x.Id);
             e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
             e.Property(x => x.Action).HasMaxLength(25).IsRequired();
@@ -102,6 +104,7 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
             e.HasOne<BillingCashCount>().WithMany().HasForeignKey(x => x.CashCountId).OnDelete(DeleteBehavior.Restrict);
         });
         modelBuilder.Entity<BillingMedicalAidDaySignoff>(e => {
+            e.ToTable("BillingMedicalAidDaySignoffs");
             e.HasKey(x => x.Id);
             e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
             e.Property(x => x.SubmittedValue).HasPrecision(12, 2);
@@ -111,6 +114,7 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
             e.HasIndex(x => new { x.DentalPracticeId, x.BusinessDate }).IsUnique();
         });
         modelBuilder.Entity<BillingClaimCorrection>(e => {
+            e.ToTable("BillingClaimCorrections");
             e.HasKey(x => x.Id);
             e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
             e.Property(x => x.PreviousCode).HasMaxLength(40).IsRequired();
@@ -123,6 +127,7 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
             e.HasOne<InvoiceLine>().WithMany().HasForeignKey(x => x.InvoiceLineId).OnDelete(DeleteBehavior.Restrict);
         });
         modelBuilder.Entity<BillingPaymentRefund>(e => {
+            e.ToTable("BillingPaymentRefunds");
             e.HasKey(x => x.Id);
             e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
             e.Property(x => x.Method).HasMaxLength(16).IsRequired();
@@ -134,6 +139,7 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
             e.HasOne<Payment>().WithMany().HasForeignKey(x => x.PaymentId).OnDelete(DeleteBehavior.Restrict);
         });
         modelBuilder.Entity<BillingExpenseApprovalRequest>(e => {
+            e.ToTable("BillingExpenseApprovalRequests");
             e.HasKey(x => x.Id);
             e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
             e.Property(x => x.Supplier).HasMaxLength(120).IsRequired();
@@ -147,6 +153,7 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
             e.HasIndex(x => new { x.DentalPracticeId, x.ExpenseDate });
         });
         modelBuilder.Entity<BillingExpenseDecision>(e => {
+            e.ToTable("BillingExpenseDecisions");
             e.HasKey(x => x.Id);
             e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
             e.Property(x => x.Decision).HasMaxLength(20).IsRequired();
