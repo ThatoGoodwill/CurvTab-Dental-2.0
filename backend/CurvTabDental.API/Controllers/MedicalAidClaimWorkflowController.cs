@@ -47,7 +47,11 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
         (from == "AcknowledgedReported" &&
          (to == "ApprovedReported" ||
           to == "PartiallyApprovedReported" ||
-          to == "RejectedReported"));
+          to == "RejectedReported")) ||
+
+        // A rejection may be resubmitted only after an audited, approved correction.
+        (from == "CorrectedPendingResubmission" &&
+         to == "SubmittedExternallyReported");
 
     private static bool ValidMoney(decimal value) =>
         value >= 0m &&
@@ -103,12 +107,23 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
             })
             .ToListAsync(ct);
 
+        var corrections = await _db.Set<BillingClaimCorrection>()
+            .AsNoTracking()
+            .Where(x => x.DentalPracticeId == practiceId && x.ClaimId == claimId)
+            .OrderBy(x => x.Version)
+            .Select(x => new {
+                x.Id, x.Version, x.InvoiceLineId,
+                x.PreviousCode, x.CorrectedCode, x.Reason,
+                x.EvidenceReference, x.ApprovedByUserId, x.ApprovedAtUtc
+            }).ToListAsync(ct);
+
         Response.Headers.CacheControl = "private, no-store";
 
         return Ok(new
         {
             claim,
             events,
+            corrections,
             notice = "All scheme updates are staff-recorded, " +
                      "not independently verified."
         });
@@ -217,6 +232,25 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
                 {
                     message = "Submission must not specify approval."
                 });
+
+            if (claim.Status == "CorrectedPendingResubmission")
+            {
+                var correction = await _db.Set<BillingClaimCorrection>()
+                    .AsNoTracking()
+                    .Where(x => x.DentalPracticeId == practiceId && x.ClaimId == claim.Id)
+                    .OrderByDescending(x => x.Version).FirstOrDefaultAsync(ct);
+                if (correction is null)
+                    return Conflict(new { message = "Approve a versioned clinical code correction before resubmitting." });
+                if (string.Equals(external, claim.ExternalReference, StringComparison.Ordinal))
+                    return Conflict(new { message = "Resubmission needs a NEW transmission reference; keep the earlier reference in history." });
+                var submittedReferences = await _db.Set<MedicalAidClaimEvent>()
+                    .AsNoTracking()
+                    .Where(x => x.DentalPracticeId == practiceId && x.ClaimId == claim.Id &&
+                        x.ToStatus == "SubmittedExternallyReported")
+                    .Select(x => x.ExternalReference).ToListAsync(ct);
+                if (submittedReferences.Contains(external))
+                    return Conflict(new { message = "That transmission reference is already used by an earlier attempt." });
+            }
         }
         else if (!string.IsNullOrWhiteSpace(external) &&
                  external != claim.ExternalReference)
