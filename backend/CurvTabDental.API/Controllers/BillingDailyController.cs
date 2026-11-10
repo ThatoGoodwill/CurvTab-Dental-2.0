@@ -163,6 +163,66 @@ public sealed class BillingDailyController : ControllerBase
         };
     }
 
+    private sealed record Movement(
+        Guid Id, string Type, string Category, string Description,
+        string Method, string? Reference, decimal Amount,
+        string Direction, DateTime OccurredAtUtc, string? PatientName);
+
+    // Read-only union of actual payments, scheme bank deposits and outflows.
+    // Claim submission events are intentionally NOT included.
+    private async Task<List<Movement>> ReadMovements(Guid practiceId, DateOnly date,
+        CancellationToken ct)
+    {
+        var (start, end) = UtcRange(date);
+        var patientReceipts = await (
+            from pay in _db.Payments.AsNoTracking()
+            join appointment in _db.Appointments.AsNoTracking()
+                on pay.AppointmentId equals appointment.Id
+            join patient in _db.Patients.AsNoTracking()
+                on appointment.PatientId equals patient.Id
+            where pay.DentalPracticeId == practiceId &&
+                  appointment.DentalPracticeId == practiceId &&
+                  patient.DentalPracticeId == practiceId &&
+                  pay.ReceivedAtUtc >= start && pay.ReceivedAtUtc < end
+            select new Movement(pay.Id, "Patient receipt", "Patient payment",
+                pay.ReceiptNumber, pay.Method, pay.Reference, pay.Amount,
+                "In", pay.ReceivedAtUtc, patient.FirstName + " " + patient.LastName)
+        ).Take(350).ToListAsync(ct);
+        var planReceipts = await (
+            from pay in _db.PlanPayments.AsNoTracking()
+            join patient in _db.Patients.AsNoTracking()
+                on pay.PatientId equals patient.Id
+            where pay.DentalPracticeId == practiceId &&
+                  patient.DentalPracticeId == practiceId &&
+                  pay.ReceivedAtUtc >= start && pay.ReceivedAtUtc < end
+            select new Movement(pay.Id, "Plan receipt", "Treatment plan",
+                pay.ReceiptNumber, pay.Method, pay.Reference, pay.Amount,
+                "In", pay.ReceivedAtUtc, patient.FirstName + " " + patient.LastName)
+        ).Take(350).ToListAsync(ct);
+        var expenses = await _db.Set<PracticeExpense>().AsNoTracking()
+            .Where(x => x.DentalPracticeId == practiceId && x.ExpenseDate == date)
+            .OrderByDescending(x => x.RecordedAtUtc)
+            .Select(x => new Movement(x.Id, "Expense", x.Category,
+                x.Description, x.Method, x.Reference, x.Amount,
+                "Out", x.RecordedAtUtc, null)).Take(350).ToListAsync(ct);
+        var refunds = await _db.Set<BillingPaymentRefund>().AsNoTracking()
+            .Where(x => x.DentalPracticeId == practiceId && x.RefundedOn == date)
+            .OrderByDescending(x => x.RecordedAtUtc)
+            .Select(x => new Movement(x.Id, "Refund", "Returned funds",
+                x.Reason, x.Method, x.EvidenceReference, x.Amount,
+                "Out", x.RecordedAtUtc, null)).Take(350).ToListAsync(ct);
+        var scheme = await _db.Set<MedicalAidBankReceipt>().AsNoTracking()
+            .Where(x => x.DentalPracticeId == practiceId && x.ReceivedOn == date)
+            .OrderByDescending(x => x.RecordedAtUtc)
+            .Select(x => new Movement(x.Id, "Scheme bank receipt", "Actual scheme deposit",
+                x.SchemeName, "EFT", x.BankReference, x.Amount,
+                "In", x.RecordedAtUtc, null)).Take(350).ToListAsync(ct);
+        return patientReceipts.Concat(planReceipts).Concat(expenses)
+            .Concat(refunds).Concat(scheme)
+            .OrderByDescending(x => x.OccurredAtUtc)
+            .ThenBy(x => x.Id).Take(500).ToList();
+    }
+
     [HttpGet("daily")]
     public async Task<IActionResult> Daily([FromQuery] DateOnly date, CancellationToken ct)
     {
@@ -179,6 +239,7 @@ public sealed class BillingDailyController : ControllerBase
             .Where(x => x.DentalPracticeId == id && x.BusinessDate == date)
             .Select(x => new { x.Id, x.SignedAtUtc, x.UniqueClaims, x.SubmittedValue })
             .FirstOrDefaultAsync(ct);
+        var movements = await ReadMovements(id, date, ct);
         var expenseRows = await _db.Set<PracticeExpense>().AsNoTracking()
             .Where(x => x.DentalPracticeId == id && x.ExpenseDate == date)
             .OrderByDescending(x => x.RecordedAtUtc).Take(100)
@@ -198,7 +259,8 @@ public sealed class BillingDailyController : ControllerBase
             claimsSubmittedValue = claims.Rows.GroupBy(x => x.ClaimId)
                 .Select(g => g.OrderBy(x => x.SubmittedAtUtc).First().Amount).Sum(),
             claimActivity = DescribeClaims(claims.Rows, claims.PatientsTreated, claims.Pending),
-            expenses = expenseRows, cashDayClose = cashCount, medicalAidDaySignoff = medical,
+            expenses = expenseRows, transactions = movements,
+            cashDayClose = cashCount, medicalAidDaySignoff = medical,
             note = "Medical aid claims submitted are excluded from all money figures; scheme deposits are counted on receipt date."
         });
     }
