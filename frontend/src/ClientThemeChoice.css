@@ -1,0 +1,31 @@
+/* Theme choice matching the client's blueprint: White Only, Blue & White, Dark Blue. */
+.ct-theme-select{
+  height:40px;padding:0 12px;border-radius:12px;border:1px solid var(--border,#d7e2ee);
+  background:var(--surface,#fff);color:var(--text,#182e38);font:inherit;font-size:14px;cursor:pointer;
+}
+
+/* Blue & White: white workspace, blue navigation and brand-blue buttons. */
+html[data-surface="blue"]:not([data-theme="dark"]) .app-shell .sidebar{
+  background:linear-gradient(180deg,#0f4fb0 0%,#1769d1 100%)!important;
+  color:#fff!important;border-right:none!important;
+}
+html[data-surface="blue"]:not([data-theme="dark"]) .app-shell .sidebar *{
+  color:#eaf2ff!important;
+}
+html[data-surface="blue"]:not([data-theme="dark"]) .app-shell .sidebar .nav-item:hover{
+  background:rgba(255,255,255,.14)!important;
+}
+html[data-surface="blue"]:not([data-theme="dark"]) .app-shell .sidebar .nav-item.nav-active{
+  background:#fff!important;
+}
+html[data-surface="blue"]:not([data-theme="dark"]) .app-shell .sidebar .nav-item.nav-active *{
+  color:#0f4fb0!important;
+}
+html[data-surface="blue"]:not([data-theme="dark"]) .primary-button{
+  background:#1769d1!important;border-color:#1769d1!important;color:#fff!important;
+}
+
+/* Client brand blue for buttons when the practice has not set its own colours. */
+html:not([data-practice-theme]):not([data-theme="dark"]) .primary-button{
+  background:#1769d1;border-color:#1769d1;
+}
