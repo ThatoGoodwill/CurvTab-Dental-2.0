@@ -10,7 +10,6 @@ import WhatsAppPanel from './pages/WhatsAppPanel'
 import LiveClinicNotifications from './components/LiveClinicNotifications'
 import ClinicDashboardEnhancements from './components/ClinicDashboardEnhancements'
 import './CurvTabVisualUpgrade.css'
-import DentalChartingPage from './pages/DentalChartingPage'
 import OrthodonticsPage from './pages/OrthodonticsPage'
 import BillingLedgerPanel from './pages/BillingLedgerPanel'
 import './ClientThemeChoice.css'
@@ -19,6 +18,8 @@ import PlanAccountsPanel from './pages/PlanAccountsPanel'
 import FinanceWorkspaceTabs from './pages/FinanceWorkspaceTabs'
 import type { FinanceTab } from './pages/FinanceWorkspaceTabs'
 import BillingWorkspaceTabs from './pages/BillingWorkspaceTabs'
+import BillingCashDayClosePage from './pages/BillingCashDayClosePage'
+import type { BillingSection } from './pages/BillingWorkspaceTabs'
 import MedicalAidPanel from './pages/MedicalAidPanel'
 import PatientBalancesPanel from './pages/PatientBalancesPanel'
 import InvoicesPanel from './pages/InvoicesPanel'
@@ -28,8 +29,6 @@ import { Receipt as CheckoutIcon } from 'lucide-react'
 import { Wallet } from 'lucide-react'
 import DentistDashboardPage from './pages/DentistDashboardPage'
 import OverviewDashboardPage from './pages/OverviewDashboardPage'
-import DentistConsultationsPage from './pages/DentistConsultationsPage'
-import DentistMedicalRecordsPage from './pages/DentistMedicalRecordsPage'
 import DailyPatientsPage from './pages/DailyPatientsPage'
 import { ClipboardList as DailyPatientsIcon } from 'lucide-react'
 
@@ -83,11 +82,13 @@ import './PracticeSlideshowSizeFix.css'
 import './PracticeLogoFit.css'
 import './PracticeBrandAlignment.css'
 import PracticeBrandMark from './auth/PracticeBrandMark'
+import './ModalWorkspace20261110.css'
 type Section =
   | 'Laboratory'
   | 'Dashboard' | 'Daily Patients' | 'Consultations' | 'Patient Medical Records' | 'Checkout & Payments' | 'Finance' | 'Audit Log' | 'Dental Charting' | 'Clinical Imaging' | 'Orthodontics'
+  | 'Dashboard' | 'Daily Patients' | 'Billing' | 'Finance' | 'Clinical Imaging' | 'Orthodontics'
   | 'Patients'
-  | 'Appointments'
+  | 'Scheduling'
   | 'Practice Settings'
   | 'Management'
   | 'Dental Practices'
@@ -621,9 +622,11 @@ export default function App() {
   const { user, logout } = useAuth()
   const { appearance, setAppearance } = usePracticeAppearance(user?.practiceId)
   const isModuleVisible = (name: string) => !appearance || ![
-    'Patients','Appointments','Daily Patients','Consultations',
-    'Checkout & Payments','Dental Charting','Clinical Imaging','Orthodontics'
-  ].includes(name) || appearance.enabledModules.includes(name)
+    'Patients','Scheduling','Daily Patients',
+    'Billing','Clinical Imaging','Orthodontics'
+  ].includes(name) || appearance.enabledModules.includes(name) ||
+    (name === 'Billing' && appearance.enabledModules.includes('Checkout & Payments')) ||
+    (name === 'Scheduling' && appearance.enabledModules.includes('Appointments'))
 
   // Share the authenticated practice theme with notification portals.
   useEffect(() => {
@@ -652,18 +655,19 @@ export default function App() {
 
   const [section, setSection] = useState<Section>('Dashboard')
   const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null)
-  const [medicalRecordPatientId, setMedicalRecordPatientId] = useState<string | null>(null)
-  const [chartPatientId, setChartPatientId] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
 
   // Sidebar Appointments submenu.
   const [financeTab, setFinanceTab] = useState<FinanceTab>('revenues')
   const [financeExpanded, setFinanceExpanded] = useState(true)
+  // Sidebar Scheduling submenu.
+  const [billingExpanded, setBillingExpanded] = useState(true)
+  const [billingSection, setBillingSection] = useState<BillingSection>('today')
   const [appointmentsExpanded, setAppointmentsExpanded] =
     useState(false)
 
   const [appointmentTab, setAppointmentTab] =
-    useState<AppointmentTab>('Scheduling')
+    useState<AppointmentTab>('Appointments')
 
   type ThemeChoice = 'white' | 'blue' | 'dark'
   const [themeChoice, setThemeChoice] = useState<ThemeChoice>(() => {
@@ -708,8 +712,8 @@ export default function App() {
         { name: 'Dashboard' as Section, icon: LayoutDashboard },
         ...(canViewPatients
           ? [
+              { name: 'Scheduling' as Section, icon: CalendarDays },
               { name: 'Patients' as Section, icon: Users },
-              { name: 'Appointments' as Section, icon: CalendarDays },
               { name: 'Laboratory' as Section, icon: FlaskConical },
             ]
           : []),
@@ -734,6 +738,9 @@ export default function App() {
   const dashboardTitle =
     dashboardTitles[role] ?? 'CurvTab Dental Workspace'
 
+  // Existing Patients, Scheduling, Laboratory and Configuration screens already own their dialogs.
+  const useModulePopup = !['Dashboard', 'Patients', 'Scheduling', 'Laboratory', 'Configuration Center'].includes(section)
+
   const initials =
     user?.fullName
       ?.split(' ')
@@ -744,9 +751,10 @@ export default function App() {
 
   function navigate(target: Section) {
     setSection(target)
+    if (target !== 'Patients') setSelectedConsultationId(null)
     setMenuOpen(false)
 
-    if (target === 'Appointments') {
+    if (target === 'Scheduling') {
       setAppointmentsExpanded(true)
     }
   }
@@ -754,7 +762,7 @@ export default function App() {
   function openAppointmentTab(tab: AppointmentTab) {
     setAppointmentTab(tab)
     setAppointmentsExpanded(true)
-    navigate('Appointments')
+    navigate('Scheduling')
   }
 
   return (
@@ -811,29 +819,31 @@ export default function App() {
           className="side-nav"
           aria-label="Main navigation"
          style={{ display: 'flex', flexDirection: 'column' }}>
-          {navigation.filter(item => isModuleVisible(item.name)).map((item) => {
+          {navigation.filter(item => isModuleVisible(item.name) &&
+             !((role === 'Receptionist' || role === 'PracticeAdmin') &&
+               ['Laboratory','Management','Configuration Center'].includes(item.name))).map((item) => {
             const Icon = item.icon
 
-            if (item.name === 'Appointments') {
+            if (item.name === 'Scheduling') {
               return (
                 <div key="Appointments">
-                  {/* Expand/collapse the Appointments submenu */}
+                  {/* Expand/collapse the Scheduling submenu */}
                   <button
                     type="button"
                     className={
-                      section === 'Appointments'
+                      section === 'Scheduling'
                         ? 'nav-item nav-active'
                         : 'nav-item'
                     }
                     onClick={() => {
-                      setSection('Appointments')
+                      setSection('Scheduling')
                       setAppointmentsExpanded((value) => !value)
                       setMenuOpen(false)
                     }}
                     aria-expanded={appointmentsExpanded}
                   >
                     <Icon size={19} />
-                    <span>Appointments</span>
+                    <span>Scheduling</span>
                     {appointmentsExpanded
                       ? <ChevronDown size={16} />
                       : <ChevronRight size={16} />
@@ -852,7 +862,7 @@ export default function App() {
                     >
                       {([
                         {
-                          name: 'Scheduling' as AppointmentTab,
+                          name: 'Appointments' as AppointmentTab,
                           icon: CalendarPlus,
                         },
                         {
@@ -862,7 +872,7 @@ export default function App() {
                       ]).map((subItem) => {
                         const SubIcon = subItem.icon
                         const selected =
-                          section === 'Appointments' &&
+                          section === 'Scheduling' &&
                           appointmentTab === subItem.name
 
                         return (
@@ -906,7 +916,7 @@ export default function App() {
                 onClick={() => navigate(item.name)}
               >
                 <Icon size={19} />
-                <span>{item.name}</span>
+                <span>{item.name === 'Finance' ? 'Finances' : item.name}</span>
               </button>
             )
           })}
@@ -923,12 +933,38 @@ export default function App() {
           
 {/* Consultations are opened from Daily Patients */}
 
-          {(role === 'Receptionist' || role === 'PracticeAdmin') && isModuleVisible('Checkout & Payments') && (
-            <button type="button"
-              className={section === 'Checkout & Payments' ? 'nav-item nav-active' : 'nav-item'}
-              onClick={() => navigate('Checkout & Payments')}>
-              <CheckoutIcon size={19} /> <span>Billing</span>
-            </button>
+          {/* Client guide: one Billing parent, exactly five named children. */}
+          {(role === 'Receptionist' || role === 'PracticeAdmin') && isModuleVisible('Billing') && (
+            <div className="ct-guide-sidebar-group">
+              <button type="button"
+                className={section === 'Billing' ? 'nav-item nav-active' : 'nav-item'}
+                aria-expanded={billingExpanded}
+                onClick={() => {
+                  setBillingExpanded(open => !open)
+                  navigate('Billing')
+                }}>
+                <CheckoutIcon size={19}/><span>Billing</span>
+                {billingExpanded ? <ChevronDown size={16}/> : <ChevronRight size={16}/>}
+              </button>
+              {billingExpanded && (
+                <div className="ct-guide-sidebar-items">
+                  {([
+                    ['today', "Today's Billing"],
+                    ['cashPrivate', 'Cash & Private'],
+                    ['medicalAid', 'Medical Aid'],
+                    ['cashClose', 'Cash Day Close'],
+                    ['aidClose', 'Medical Aid Day Sign-Off'],
+                  ] as const).map(([id, name]) => (
+                    <button key={id} type="button"
+                      className={section === 'Billing' && billingSection === id ? 'nav-item nav-active' : 'nav-item'}
+                      aria-current={section === 'Billing' && billingSection === id ? 'page' : undefined}
+                      onClick={() => { setBillingSection(id);navigate('Billing');setBillingExpanded(true) }}>
+                      <span>{name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
           {(role === 'PracticeAdmin' || role === 'Finance') && (
             <div>
@@ -956,6 +992,21 @@ export default function App() {
                 </div>
               )}
             </div>
+          {(role === 'Receptionist' || role === 'PracticeAdmin') && (
+            <button type="button" className={section === 'Laboratory' ? 'nav-item nav-active' : 'nav-item'}
+              onClick={() => navigate('Laboratory')}><FlaskConical size={19}/><span>Lab</span></button>
+          )}
+          {role === 'PracticeAdmin' && (
+            <button type="button" className={section === 'Management' ? 'nav-item nav-active' : 'nav-item'}
+              onClick={() => navigate('Management')}><CtManagementIcon size={19}/><span>Staff Management</span></button>
+          )}
+          {role === 'PracticeAdmin' && (
+            <button type="button" className={section === 'Finance' ? 'nav-item nav-active' : 'nav-item'}
+              onClick={() => navigate('Finance')}><Wallet size={19}/><span>Finances</span></button>
+          )}
+          {role === 'PracticeAdmin' && (
+            <button type="button" className={section === 'Configuration Center' ? 'nav-item nav-active' : 'nav-item'}
+              onClick={() => navigate('Configuration Center')}><CtAppearanceIcon size={19}/><span>Settings</span></button>
           )}
           {role === 'PracticeAdmin' && (
             <button type="button"
@@ -1042,7 +1093,7 @@ export default function App() {
               role={role}
               onOpen={() => {
                 if (role === 'Dentist') openAppointmentTab('In Queue')
-                else navigate('Checkout & Payments')
+                else navigate('Billing')
               }}
             />
 
@@ -1063,14 +1114,39 @@ export default function App() {
           </div>
         </header>
 
-        <main className="main-content">
+        {useModulePopup && (
+          <button
+            type="button"
+            className="ct-module-backdrop"
+            aria-label={`Close ${section} workspace`}
+            onClick={() => navigate('Dashboard')}
+          />
+        )}
+        <main
+          className={`main-content${useModulePopup ? ' ct-module-popup-window' : ''}`}
+          role={useModulePopup ? 'dialog' : undefined}
+          aria-modal={useModulePopup ? true : undefined}
+          aria-label={useModulePopup ? `${section} workspace` : undefined}
+        >
+          {useModulePopup && (
+            <header className="ct-module-popup-toolbar">
+              <div>
+                <span className="ct-module-popup-eyebrow">CURVTAB DENTAL · WORKSPACE</span>
+                <strong>{section}</strong>
+              </div>
+              <button type="button" className="ct-module-popup-close"
+                onClick={() => navigate('Dashboard')} aria-label={`Close ${section}`}>
+                <span aria-hidden="true">×</span> Close
+              </button>
+            </header>
+          )}
           {/* Visual upgrade: slideshow and real-data appointment analytics. */}
           {section === 'Dashboard' && (
             <ClinicDashboardEnhancements
               role={role}
               onPrimaryAction={() => {
                 if (role === 'SuperAdmin') navigate('Dental Practices')
-                else openAppointmentTab('Scheduling')
+                else openAppointmentTab('Appointments')
               }}
             />
           )}
@@ -1089,9 +1165,9 @@ export default function App() {
             <OverviewDashboardPage
               fullName={user?.fullName ?? ''}
               practiceName={user?.practiceName ?? null}
-              onNewAppointment={() => openAppointmentTab('Scheduling')}
+              onNewAppointment={() => openAppointmentTab('Appointments')}
               onOpenQueue={() => openAppointmentTab('In Queue')}
-              onOpenCheckout={() => navigate('Checkout & Payments')}
+              onOpenCheckout={() => navigate('Billing')}
               onOpenPatients={() => navigate('Patients')}
             />
           )}
@@ -1174,7 +1250,7 @@ export default function App() {
                         <button
                           type="button"
                           className="secondary-button"
-                          onClick={() => openAppointmentTab('Scheduling')}
+                          onClick={() => openAppointmentTab('Appointments')}
                         >
                           Open Calendar
                           <ArrowRight size={16} />
@@ -1237,45 +1313,31 @@ export default function App() {
             </>
           )}
 
-          {/* PHASE 2: DENTIST CLINICAL RECORDS */}
-          {section === 'Consultations' && role === 'Dentist' && (
-            <DentistConsultationsPage
-              selectedAppointmentId={selectedConsultationId}
-              onSelectAppointment={setSelectedConsultationId}
-              onOpenMedicalHistory={(patientId) => {
-                setMedicalRecordPatientId(patientId)
-                navigate('Patient Medical Records')
-              }}
-            />
-          )}
-          {section === 'Patient Medical Records' && role === 'Dentist' && (
-            <DentistMedicalRecordsPage
-              selectedPatientId={medicalRecordPatientId}
-              onSelectPatient={setMedicalRecordPatientId}
-            />
-          )}
-
           {/* DENTIST DAILY PATIENTS */}
           {section === 'Daily Patients' && role === 'Dentist' && (
             <DailyPatientsPage
               onOpenPatients={() => navigate('Patients')}
               onOpenConsultation={(appointmentId) => {
                 setSelectedConsultationId(appointmentId)
-                navigate('Consultations')
+                navigate('Patients')
               }}
             />
           )}
 
           {/* PATIENTS */}
+          {/* CT_PATIENT_SCOPED_CONSULTATIONS_20261110 */}
           {section === 'Patients' && canViewPatients && (
-            <PatientExperiencePage role={role} onClose={() => navigate('Dashboard')} onOpenAppointments={() => openAppointmentTab('Scheduling')} onOpenChart={(patientId) => {
-              setChartPatientId(patientId)
-              navigate('Dental Charting')
-            }} />
+            <PatientExperiencePage
+              role={role}
+              onClose={() => navigate('Dashboard')}
+              onOpenAppointments={() => openAppointmentTab('Appointments')}
+              initialConsultationAppointmentId={selectedConsultationId}
+              onConsultationOpened={() => setSelectedConsultationId(null)}
+            />
           )}
 
           {/* APPOINTMENTS + EXPANDABLE WORKSPACE */}
-          {section === 'Appointments' && canViewPatients && (
+          {section === 'Scheduling' && canViewPatients && (
             <AppointmentsPage
               onClose={() => navigate('Dashboard')}
               tab={appointmentTab}
@@ -1283,7 +1345,7 @@ export default function App() {
               onOpenPatients={() => navigate('Patients')}
               onOpenConsultation={(appointmentId) => {
                 setSelectedConsultationId(appointmentId)
-                navigate('Consultations')
+                navigate('Patients')
               }}
               role={role}
             />
@@ -1303,14 +1365,16 @@ export default function App() {
           )}
 
           {/* PHASE 3: RECEPTIONIST CHECKOUT */}
-          {section === 'Checkout & Payments' &&
+          {section === 'Billing' &&
             (role === 'Receptionist' || role === 'PracticeAdmin') && (
               <BillingWorkspaceTabs
+                section={billingSection}
+                onSectionChange={setBillingSection}
+                isManager={role === 'PracticeAdmin'}
                 checkout={<ReceptionCheckoutPage />}
+                ledger={<BillingLedgerPanel />}
                 plans={<PlanAccountsPanel />}
-                medicalAid={<MedicalAidPanel
-                  canManage={role === 'PracticeAdmin'}
-                />}
+                medicalAid={<MedicalAidPanel canManage={role === 'PracticeAdmin'} />}
                 balances={<PatientBalancesPanel />}
                 invoices={<InvoicesPanel canIssue={role === 'PracticeAdmin'} />}
               />
@@ -1330,6 +1394,13 @@ export default function App() {
                     canManage={role === 'PracticeAdmin'}
                   />
                 }
+                invoices={
+                  <InvoicesPanel
+                    canIssue={role === 'PracticeAdmin'}
+                  />
+                }
+                balances={<PatientBalancesPanel />}
+                cashReview={<BillingCashDayClosePage isManager={role === 'PracticeAdmin'} />}
               />
           )}
 
@@ -1373,7 +1444,6 @@ export default function App() {
     </section>
   </div>
 )}
-          {section === 'Dental Charting' && role === 'Dentist' && <DentalChartingPage initialPatientId={chartPatientId} />}
           {section === 'Clinical Imaging' && role === 'Dentist' && (
             <ClinicalImagingPage />
           )}
@@ -1404,15 +1474,13 @@ export default function App() {
 
           {/* DENIED SECTIONS */}
           {(
-            (section === 'Consultations' && role !== 'Dentist') ||
-            (section === 'Patient Medical Records' && role !== 'Dentist') ||
-            (section === 'Dental Charting' && role !== 'Dentist') ||
             (section === 'Clinical Imaging' && role !== 'Dentist') ||
             (section === 'Orthodontics' && role !== 'Dentist') ||
-            (section === 'Checkout & Payments' && role !== 'Receptionist' && role !== 'PracticeAdmin') ||
+            (section === 'Billing' && role !== 'Receptionist' && role !== 'PracticeAdmin') ||
+            (section === 'Finance' && role !== 'Finance' && role !== 'PracticeAdmin') ||
             (section === 'Daily Patients' && role !== 'Dentist') ||
             (section === 'Patients' && !canViewPatients) ||
-            (section === 'Appointments' && !canViewPatients) ||
+            (section === 'Scheduling' && !canViewPatients) ||
             (section === 'Management' && !canManageStaff) ||
             (section === 'Practice Settings' && !canManageStaff) ||
             (section === 'Configuration Center' && !isPracticeAdmin) ||

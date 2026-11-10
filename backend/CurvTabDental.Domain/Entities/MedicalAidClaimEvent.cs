@@ -16,6 +16,9 @@ public sealed class MedicalAidClaimEvent : IPracticeOwned
     public decimal? ApprovedAmount { get; set; }
 
     public string? ExternalReference { get; set; }
+    // Attempts are immutable versions of ONE logical claim, never another invoice.
+    public int? AttemptNumber { get; set; }
+    public string? PayloadSnapshotJson { get; set; }
     public string EvidenceReference { get; set; } = "";
     public string Reason { get; set; } = "";
 

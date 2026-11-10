@@ -2,6 +2,7 @@ import PatientPrescriptionNotes from './PatientPrescriptionNotes'
 import PatientAccountActivityView from './PatientAccountActivityView'
 import PatientAccountInvoiceView from './PatientAccountInvoiceView'
 import DentalChartingPage from './DentalChartingPage'
+import DentistConsultationsPage from './DentistConsultationsPage'
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, ArrowRight, ChevronRight, Mail, Phone, Plus, RefreshCw, Search, ShieldCheck, Users } from 'lucide-react'
 import { apiRequest } from '../services/api'
@@ -47,9 +48,9 @@ type HistoryRecord = {
   additionalNotes?: string | null
 }
 
-type PatientTab = 'Overview' | 'Treatment' | 'Medical Records' | 'Accounts' | 'Details' | 'Visit' | 'History'
-type Props = { role: string; onClose?: () => void; onOpenAppointments?: () => void; onOpenChart?: (patientId: string) => void }
-const tabs: PatientTab[] = ['Overview', 'Treatment', 'Accounts', 'Details', 'Visit', 'History']
+type PatientTab = 'Overview' | 'Treatment' | 'Consultations' | 'Medical Records' | 'Accounts' | 'Details' | 'Visit' | 'History'
+type Props = { role: string; onClose?: () => void; onOpenAppointments?: () => void; initialConsultationAppointmentId?: string | null; onConsultationOpened?: () => void }
+const tabs: PatientTab[] = ['Overview', 'Treatment', 'Consultations', 'Accounts', 'Details', 'Visit', 'History']
 
 function record(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -231,11 +232,12 @@ function MiniVisitCalendar({
   )
 }
 
-export default function PatientExperiencePage({ role, onClose, onOpenAppointments, onOpenChart }: Props) {
+export default function PatientExperiencePage({ role, onClose, onOpenAppointments, initialConsultationAppointmentId, onConsultationOpened }: Props) {
   const [patients, setPatients] = useState<Patient[]>([])
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<Patient | null>(null)
   const [tab, setTab] = useState<PatientTab>('Overview')
+  const [consultationAppointmentId, setConsultationAppointmentId] = useState<string | null>(null)
   const [treatmentSection, setTreatmentSection] = useState<'Dental Chart' | 'Treatment Plan' | 'Clinical Notes & Encounters' | 'Medical Records' | 'Clinical Images' | 'Tooth History' | 'Prescriptions' | null>(null)
   const [manage, setManage] = useState(false)
   // CT_PATIENT_ACCOUNTS_V1
@@ -353,6 +355,41 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
     return () => { cancelled = true }
   }, [reload])
 
+  // Resolve queue actions through the dentist-only consultation API.
+  useEffect(() => {
+    if (!initialConsultationAppointmentId || !isDentist || loading) return
+    let cancelled = false
+    const appointmentId = initialConsultationAppointmentId
+    apiRequest<{ patientId: string }>(`/dentist/consultations/by-appointment/${encodeURIComponent(appointmentId)}`)
+      .then(async result => {
+        if (!result.patientId) throw new Error('The consultation has no linked patient.')
+        const existing = patients.find(patient => patient.id === result.patientId)
+        if (existing) return existing
+        return parsePatient(await apiRequest<unknown>(`/patients/${encodeURIComponent(result.patientId)}`))
+      })
+      .then(patient => {
+        if (cancelled) return
+        if (!patient) throw new Error('The patient record could not be opened.')
+        setSelected(patient)
+        setTab('Consultations')
+        setConsultationAppointmentId(appointmentId)
+        setManage(false)
+        setDetailError('')
+        setActionNotice('')
+        setVisits([])
+        setVisitsLoading(true)
+        setDetailLoading(true)
+        setMedical(null)
+        onConsultationOpened?.()
+      })
+      .catch(cause => {
+        if (cancelled) return
+        setError(cause instanceof Error ? cause.message : 'Unable to open the consultation under Patients.')
+        onConsultationOpened?.()
+      })
+    return () => { cancelled = true }
+  }, [initialConsultationAppointmentId, isDentist, loading, patients, onConsultationOpened])
+
   useEffect(() => {
     if (!selected) return
     let cancelled = false
@@ -439,6 +476,7 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
     setAccountSection(null)
     setSelected(patient)
     setTab('Overview')
+    setConsultationAppointmentId(null)
     setManage(false)
     setDetailError('')
     setActionNotice('')
@@ -618,9 +656,22 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
     {actionNotice && <p className="ct-patient-message" role="status">{actionNotice}</p>}
     {detailLoading && <p className="ct-patient-loading">Refreshing patient details…</p>}
     <div className="ct-patient-tabs" role="tablist" aria-label="Patient record sections">
-      {tabs.filter(item => (item !== 'Medical Records' && item !== 'Treatment') || isDentist).map(item => <button type="button" key={item} role="tab" aria-selected={item === tab} className={tab === item ? 'ct-patient-tab selected' : 'ct-patient-tab'} onClick={() => { if (item === 'Treatment') setTreatmentSection(null); setTab(item) }}>{item}</button>)}
+      {tabs.filter(item => (item !== 'Medical Records' && item !== 'Treatment' && item !== 'Consultations') || isDentist).map(item => <button type="button" key={item} role="tab" aria-selected={item === tab} className={tab === item ? 'ct-patient-tab selected' : 'ct-patient-tab'} onClick={() => { if (item === 'Treatment') setTreatmentSection(null); setTab(item) }}>{item}</button>)}
     </div>
 
+
+    {/* Patient-scoped secure consultation history and editor */}
+    {tab === 'Consultations' && isDentist && (
+      <div className="ct-patient-consultations">
+        <DentistConsultationsPage
+          key={selected.id}
+          patientId={selected.id}
+          selectedAppointmentId={consultationAppointmentId}
+          onSelectAppointment={setConsultationAppointmentId}
+          onOpenMedicalHistory={() => { setTreatmentSection('Medical Records'); setTab('Treatment') }}
+        />
+      </div>
+    )}
 
     {/* CT_PATIENT_OVERVIEW_V5 */}
 
@@ -689,7 +740,8 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
                 ['Dental Chart', 'Select a tooth and view its findings'],
                 ['Medical Records', 'Clinical history and allergies'],
                 ['Treatment Plan', 'Plan patient procedures'],
-                ['Clinical Notes & Encounters', 'Consultations and clinical notes'],
+                ['Clinical Notes & Encounters', 'Treatment notes and encounters'],
+                ['Consultations', 'Open this patient’s visits and clinical consultation editor'],
                 ['Clinical Images', 'Patient clinical images'],
                 ['Prescriptions', 'Review consultation prescription notes'],
               ] as const).map(([name, description]) => (
@@ -697,7 +749,10 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
                   key={name}
                   type="button"
                   className="ct-pt-option"
-                  onClick={() => setTreatmentSection(name)}
+                  onClick={() => {
+                    if (name === 'Consultations') { setTreatmentSection(null); setTab('Consultations') }
+                    else setTreatmentSection(name)
+                  }}
                 >
                   <strong>{name}</strong>
                   <span>{description}</span>
@@ -833,7 +888,7 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
                 View visits
               </button>
 
-              {isDentist && onOpenChart && (
+              {isDentist && (
                 <button
                   type="button"
                   onClick={() => { setTreatmentSection('Dental Chart'); setTab('Treatment') }}

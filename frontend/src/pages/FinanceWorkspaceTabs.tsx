@@ -1,35 +1,55 @@
 import type { ReactNode } from 'react'
+import { Receipt, FileText, Calculator, Users, Wallet } from 'lucide-react'
+import './BillingWorkspaceTabs.css'
 
-export type FinanceTab = 'revenues' | 'expenses'
+type FinanceTab = 'revenue' | 'expenses' | 'invoices' | 'balances' | 'cashReview'
 
 type Props = {
   tab: FinanceTab
   onTab: (tab: FinanceTab) => void
   revenues: ReactNode
   expenses: ReactNode
+  invoices: ReactNode
+  balances: ReactNode
+  cashReview: ReactNode
 }
 
-const tabs: { id: FinanceTab; label: string }[] = [
-  { id: 'revenues', label: 'Revenues' },
-  { id: 'expenses', label: 'Expenses' },
-]
+const tabs = [
+  { id: 'revenue', label: 'Revenue', description: 'Real receipts and cash collections', Icon: Receipt },
+  { id: 'expenses', label: 'Expenses & Controls', description: 'Review audited expenses', Icon: Calculator },
+  { id: 'invoices', label: 'Invoices & Allocations', description: 'Manage issued invoice settlement', Icon: FileText },
+  { id: 'balances', label: 'Patient Balances', description: 'Review outstanding accounts', Icon: Users },
+  { id: 'cashReview', label: 'Cash Exceptions', description: 'Review submitted physical cash counts', Icon: Calculator },
+] as const
+
+export default function FinanceWorkspaceTabs({ revenue, expenses, invoices, balances, cashReview }: Props) {
+  const [activeTab, setActiveTab] = useState<FinanceTab>('revenue')
+  const content: Record<FinanceTab, ReactNode> = { revenue, expenses, invoices, balances, cashReview }
 
 export default function FinanceWorkspaceTabs({ tab, onTab, revenues, expenses }: Props) {
   return (
-    <div className="ct-finance-workspace">
-      <nav className="ct-finance-tabs" role="tablist" aria-label="Finances">
-        {tabs.map(item => (
-          <button key={item.id} type="button" role="tab"
-            aria-selected={tab === item.id}
-            className={'ct-finance-tab' + (tab === item.id ? ' active' : '')}
-            onClick={() => onTab(item.id)}>
-            {item.label}
+    <div className="ct-billing-workspace ct-financial-workspace ct-financial-finance">
+      <header className="ct-billing-workspace-heading ct-financial-hero">
+        <div>
+          <span>PRACTICE · FINANCIAL CONTROL</span>
+          <h1>Finance</h1>
+          <p>Track receipts, expenses, invoice allocations and daily reconciliation.</p>
+        </div>
+        <div className="ct-financial-hero-mark" aria-hidden="true"><Wallet size={22}/></div>
+      </header>
+      <nav className="ct-billing-tabs ct-financial-nav" aria-label="Finance sections" role="tablist">
+        {tabs.map(({ id, label, description, Icon }) => (
+          <button key={id} type="button"
+            role="tab" aria-selected={activeTab === id}
+            className={'ct-billing-tab' + (activeTab === id ? ' active' : '')}
+            onClick={() => setActiveTab(id)}>
+            <span className="ct-financial-tab-icon"><Icon size={17} aria-hidden="true" /></span>
+            <span className="ct-financial-tab-copy"><strong>{label}</strong><small>{description}</small></span>
           </button>
         ))}
       </nav>
-      <div className="ct-finance-content" key={tab}>
-        {tab === 'revenues' ? revenues : expenses}
-      </div>
+      <section className="ct-billing-tab-content ct-financial-detail" key={activeTab} role="tabpanel"
+        aria-label={tabs.find(tab => tab.id === activeTab)?.label}>{content[activeTab]}</section>
     </div>
   )
 }

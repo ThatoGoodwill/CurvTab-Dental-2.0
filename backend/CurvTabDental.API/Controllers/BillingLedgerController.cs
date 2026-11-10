@@ -133,7 +133,57 @@ public sealed class BillingLedgerController : ControllerBase
                 "Treatment plan")
         ).Take(500).ToListAsync(ct);
 
-        var rows = visitRows.Concat(planRows)
+        // Only MATCHED real bank deposits are counted as scheme receipts:
+        // draft/submitted/approved claims and remittance advice are not money.
+        // One match is one allocation of an existing bank receipt, not a second receipt.
+        var fromLocalDay = DateOnly.FromDateTime(from.AddHours(2));
+        var toLocalDay = DateOnly.FromDateTime(to.AddHours(2));
+
+        var schemeMatches = await (
+            from match in _db.Set<CurvTabDental.Domain.Entities.MedicalAidRemittanceMatch>()
+                .AsNoTracking()
+            join bank in _db.Set<CurvTabDental.Domain.Entities.MedicalAidBankReceipt>()
+                .AsNoTracking()
+                on match.BankReceiptId equals bank.Id
+            join advice in _db.Set<CurvTabDental.Domain.Entities.MedicalAidRemittanceAdvice>()
+                .AsNoTracking()
+                on match.RemittanceAdviceId equals advice.Id
+            join claim in _db.Set<CurvTabDental.Domain.Entities.MedicalAidClaim>()
+                .AsNoTracking()
+                on advice.ClaimId equals claim.Id
+            join patient in _db.Patients.AsNoTracking()
+                on claim.PatientId equals patient.Id
+            where match.DentalPracticeId == practiceId &&
+                  bank.DentalPracticeId == practiceId &&
+                  advice.DentalPracticeId == practiceId &&
+                  claim.DentalPracticeId == practiceId &&
+                  patient.DentalPracticeId == practiceId &&
+                  bank.ReceivedOn >= fromLocalDay &&
+                  bank.ReceivedOn < toLocalDay
+            select new
+            {
+                match.Id, match.MatchedAmount,
+                bank.BankReference, bank.ReceivedOn, bank.RecordedByUserId,
+                patientId = patient.Id, patient.FirstName, patient.LastName
+            }
+        ).ToListAsync(ct);
+
+        var schemeReceived = schemeMatches.Sum(x => x.MatchedAmount);
+        var schemeRows = schemeMatches.Select(x => new LedgerRow(
+            x.Id,
+            x.BankReference,
+            x.MatchedAmount,
+            "EFT",
+            x.BankReference,
+            x.ReceivedOn.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc).AddHours(-2),
+            x.RecordedByUserId,
+            null,
+            x.patientId,
+            x.FirstName + " " + x.LastName,
+            "Medical aid reconciled bank receipt"
+        ));
+
+        var rows = visitRows.Concat(planRows).Concat(schemeRows)
             .OrderByDescending(r => r.ReceivedAtUtc)
             .Take(500)
             .ToList();
@@ -145,9 +195,10 @@ public sealed class BillingLedgerController : ControllerBase
             currency = "ZAR",
             fromUtc = from,
             toUtc = to,
-            transactionCount,
+            transactionCount = transactionCount + schemeMatches.Count,
             displayedCount = rows.Count,
-            totalReceived = totals.Sum(x => x.Amount),
+            totalReceived = totals.Sum(x => x.Amount) + schemeReceived,
+            schemeReconciledReceived = schemeReceived,
             cashReceived = totals
                 .Where(x => x.Method == "Cash")
                 .Sum(x => x.Amount),
@@ -156,7 +207,7 @@ public sealed class BillingLedgerController : ControllerBase
                 .Sum(x => x.Amount),
             eftReceived = totals
                 .Where(x => x.Method == "EFT")
-                .Sum(x => x.Amount),
+                .Sum(x => x.Amount) + schemeReceived,
             byMethod = totals,
             transactions = rows
         });
