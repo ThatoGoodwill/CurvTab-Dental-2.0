@@ -96,12 +96,7 @@ export default function FinanceOperationsPanel({
   const [reference, setReference] = useState('')
   const expenseRequestId = useRef<string | null>(null)
 
-  const [openingFloat, setOpeningFloat] = useState('0.00')
-  const [countedCash, setCountedCash] = useState('')
-  const [signoffNotes, setSignoffNotes] = useState('')
-  const [confirmed, setConfirmed] = useState(false)
   const [showExpenseForm, setShowExpenseForm] = useState(false)
-  const [showCashForm, setShowCashForm] = useState(false)
 
   const endpoint = '/api/finance/operations'
 
@@ -202,76 +197,12 @@ export default function FinanceOperationsPanel({
     }
   }
 
-  async function signOff(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (busy || !canManage || !confirmed) return
-
-    if (!validMoney(openingFloat) || !validMoney(countedCash)) {
-      setError('Enter valid opening and counted cash amounts.')
-      return
-    }
-
-    if (!summary) return
-
-    const expected =
-      Number(openingFloat) +
-      summary.cashReceived -
-      summary.cashExpenses
-
-    if (Math.abs(Number(countedCash) - expected) >= 0.005 &&
-        !signoffNotes.trim()) {
-      setError('Explain the cash variance before signing off.')
-      return
-    }
-
-    setBusy(true)
-    setError('')
-    setNotice('')
-
-    try {
-      const response = await fetch(`${endpoint}/signoff`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        body: JSON.stringify({
-          businessDate: date,
-          openingFloat: Number(openingFloat),
-          countedCash: Number(countedCash),
-          notes: signoffNotes.trim() || null,
-        }),
-      })
-
-      if (!response.ok) throw new Error(await errorMessage(response))
-
-      setNotice('Daily cash snapshot signed off and audited.')
-      setShowCashForm(false)
-      setConfirmed(false)
-      setReload(value => value + 1)
-    } catch (cause) {
-      setError(cause instanceof Error
-        ? cause.message : 'Unable to sign off cash.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const expectedCash = summary
-    ? Number(openingFloat) +
-      summary.cashReceived -
-      summary.cashExpenses
-    : 0
-
-  const variance = Number(countedCash) - expectedCash
-
   return (
     <section className="panel ct-finance-ops">
       <header className="ct-finance-ops-header">
         <div>
           <div className="eyebrow">FINANCE · DAILY CONTROL</div>
-          <h2>Expenses & Cash Sign-Off</h2>
+          <h2>Expenses & Financial Controls</h2>
           <p>Practice expenses and daily cash reconciliation</p>
         </div>
         <button
@@ -453,111 +384,9 @@ export default function FinanceOperationsPanel({
           )}
 
           <div className="ct-finance-signoff">
-            <h3><ClipboardCheck size={19}/> Daily cash reconciliation</h3>
-
-            {summary.signoff ? (
-              <>
-                <p><strong>Status:</strong> Snapshot signed off</p>
-                <div className="ct-finance-cards">
-                  <article>
-                    <span>Expected at sign-off</span>
-                    <strong>{money(summary.signoff.expectedCash)}</strong>
-                  </article>
-                  <article>
-                    <span>Physically counted</span>
-                    <strong>{money(summary.signoff.countedCash)}</strong>
-                  </article>
-                  <article>
-                    <span>Variance</span>
-                    <strong>{money(summary.signoff.variance)}</strong>
-                  </article>
-                </div>
-                <p>
-                  Signed: {new Date(
-                    summary.signoff.signedAtUtc
-                  ).toLocaleString('en-ZA')}
-                </p>
-                {summary.signoff.notes && (
-                  <p>Notes: {summary.signoff.notes}</p>
-                )}
-              </>
-            ) : canManage ? (
-              <>
-                <button type="button" className="secondary-button" disabled={busy}
-                  onClick={() => { setError(''); setShowCashForm(true) }}>
-                  <ClipboardCheck size={16}/> Open cash sign-off
-                </button>
-                {showCashForm && (
-                  <div className="ct-finance-action-overlay" role="presentation"
-                    onMouseDown={event => {
-                      if (event.target === event.currentTarget && !busy) setShowCashForm(false)
-                    }}>
-                    <div className="ct-finance-action-dialog" role="dialog" aria-modal="true"
-                      aria-label="Daily cash sign-off">
-                      <header className="ct-finance-action-header">
-                        <div><strong>Daily cash reconciliation</strong><small>Review and sign the audited cash count</small></div>
-                        <button type="button" className="secondary-button" disabled={busy}
-                          onClick={() => setShowCashForm(false)}>Close ×</button>
-                      </header>
-                      {error && <p role="alert" className="ct-finance-error">{error}</p>}
-                      <form className="ct-finance-form"
-                        onSubmit={event => void signOff(event)}>
-              
-                <label>
-                  Opening cash float (ZAR)
-                  <input required value={openingFloat}
-                    onChange={event => setOpeningFloat(event.target.value)}/>
-                </label>
-
-                <label>
-                  Actual counted cash (ZAR)
-                  <input required value={countedCash}
-                    onChange={event => setCountedCash(event.target.value)}
-                    placeholder="0.00"/>
-                </label>
-
-                <div className="ct-finance-wide ct-finance-calc">
-                  <span>Expected closing cash</span>
-                  <strong>{money(expectedCash)}</strong>
-                  <span>Difference (counted − expected)</span>
-                  <strong>
-                    {validMoney(countedCash) ? money(variance) : '—'}
-                  </strong>
-                </div>
-
-                <label className="ct-finance-wide">
-                  Reconciliation notes
-                  <textarea rows={3} maxLength={1000}
-                    value={signoffNotes}
-                    onChange={event => setSignoffNotes(event.target.value)}
-                    placeholder="Explain any variance or cash-up exception"/>
-                </label>
-
-                <label className="ct-finance-confirm ct-finance-wide">
-                  <input
-                    type="checkbox"
-                    checked={confirmed}
-                    onChange={event => setConfirmed(event.target.checked)}
-                  />
-                  I have physically checked the cash and understand
-                  that this sign-off is retained as an audit snapshot.
-                </label>
-
-                <button
-                  type="submit"
-                  className="primary-button"
-                  disabled={busy || !confirmed}
-                >
-                  <ClipboardCheck size={17}/> Sign off cash count
-                </button>
-                      </form>
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <p>Cash sign-off is available to PracticeAdmins.</p>
-            )}
+            <h3><ClipboardCheck size={18}/> Separate Cash Day Close</h3>
+            <p>Original daily cash sign-offs are historical read-only records. All new blind cash counts and manager decisions belong to Billing → Cash Day Close, with no combined medical-aid reconciliation.</p>
+            {summary.signoff && <p><strong>Legacy record:</strong> Signed {new Date(summary.signoff.signedAtUtc).toLocaleString('en-ZA')}. Snapshot preserved; do not submit again here.</p>}
           </div>
 
           <p className="ct-finance-footnote">
