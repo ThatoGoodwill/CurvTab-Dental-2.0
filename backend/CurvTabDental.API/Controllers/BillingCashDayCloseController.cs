@@ -38,6 +38,8 @@ public sealed class BillingCashDayCloseController : ControllerBase
         string? EvidenceReference);
 
     public sealed record ReviewRequest(Guid RequestId, string Decision, string Reason);
+    public sealed record RecountRequest(
+        Guid RequestId, decimal RevisedCountedCash, string Reason, string EvidenceReference);
 
     private static DateOnly TodaySa() => DateOnly.FromDateTime(DateTime.UtcNow.AddHours(2));
 
@@ -96,6 +98,15 @@ public sealed class BillingCashDayCloseController : ControllerBase
                 x.Id, x.Decision, x.Reason, x.ReviewedByUserId, x.ReviewedAtUtc
             }).ToListAsync(ct);
 
+        var recounts = await _db.Set<CashDayCloseAdjustment>().AsNoTracking()
+            .Where(x => x.DentalPracticeId == practiceId && x.SubmissionId == saved.Id)
+            .OrderBy(x => x.RecordedAtUtc).ThenBy(x => x.Id)
+            .Select(x => new
+            {
+                x.Id, x.RevisedCountedCash, x.Reason,
+                x.EvidenceReference, x.RecordedByUserId, x.RecordedAtUtc
+            }).ToListAsync(ct);
+        var lastRecount = recounts.LastOrDefault();
         var lastDecision = decisions.LastOrDefault();
         return new
         {
@@ -112,7 +123,9 @@ public sealed class BillingCashDayCloseController : ControllerBase
                 saved.Explanation, saved.EvidenceReference,
                 saved.SubmittedAtUtc, saved.SubmittedByUserId
             },
-            decisions,
+            decisions, recounts,
+            latestCountedCash = lastRecount?.RevisedCountedCash ?? saved.CountedCash,
+            latestVariance = (lastRecount?.RevisedCountedCash ?? saved.CountedCash) - saved.ExpectedCash,
             nonCash = new
             {
                 cardReceived,
@@ -231,6 +244,13 @@ public sealed class BillingCashDayCloseController : ControllerBase
 
         if (request.Decision == "Approve")
         {
+            if (last?.Decision == "Reject" &&
+                !await _db.Set<CashDayCloseAdjustment>().AsNoTracking()
+                    .AnyAsync(x => x.DentalPracticeId == practiceId &&
+                        x.SubmissionId == submissionId &&
+                        x.RecordedAtUtc > last.ReviewedAtUtc, ct))
+                return Conflict(new { message = "The manager rejected this count. An append-only recount with evidence is required before approval." });
+
             var (from, to) = Range(submission.BusinessDate);
             var liveReceipts =
                 (await _db.Payments.AsNoTracking()
@@ -270,4 +290,68 @@ public sealed class BillingCashDayCloseController : ControllerBase
         await tx.CommitAsync(ct);
         return Ok(new { review.Id, review.Decision, review.Reason, alreadyRecorded = false });
     }
+    // A rejected count may be corrected, but the ORIGINAL count stays fixed.
+    [HttpPost("{submissionId:guid}/recount")]
+    [Authorize(Roles = "Receptionist,PracticeAdmin")]
+    public async Task<IActionResult> Recount(Guid submissionId,
+        [FromBody] RecountRequest request, CancellationToken ct)
+    {
+        if (_current.PracticeId is not Guid practiceId) return Forbid();
+        if (_current.UserId is not Guid actorId) return Unauthorized();
+        if (request.RequestId == Guid.Empty || !Money(request.RevisedCountedCash) ||
+            string.IsNullOrWhiteSpace(request.Reason) || request.Reason.Trim().Length is < 5 or > 1000 ||
+            string.IsNullOrWhiteSpace(request.EvidenceReference) ||
+            request.EvidenceReference.Trim().Length > 300)
+            return BadRequest(new { message = "Provide a valid recount amount, explanation and evidence reference." });
+
+        var submission = await _db.Set<CashDayCloseSubmission>().AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == submissionId && x.DentalPracticeId == practiceId, ct);
+        if (submission is null) return NotFound();
+
+        var lastReview = await _db.Set<CashDayCloseReview>().AsNoTracking()
+            .Where(x => x.DentalPracticeId == practiceId && x.SubmissionId == submissionId)
+            .OrderByDescending(x => x.ReviewedAtUtc).ThenByDescending(x => x.Id)
+            .FirstOrDefaultAsync(ct);
+        if (lastReview?.Decision != "Reject")
+            return Conflict(new { message = "Only a manager-rejected cash count may be recounted." });
+
+        var retry = await _db.Set<CashDayCloseAdjustment>().AsNoTracking()
+            .FirstOrDefaultAsync(x => x.DentalPracticeId == practiceId &&
+                x.RequestId == request.RequestId, ct);
+        if (retry is not null)
+            return retry.SubmissionId == submissionId &&
+                retry.RevisedCountedCash == request.RevisedCountedCash &&
+                retry.Reason == request.Reason.Trim() &&
+                retry.EvidenceReference == request.EvidenceReference.Trim()
+                ? Ok(new { retry.Id, alreadyRecorded = true })
+                : Conflict(new { message = "Request ID was used for a different recount." });
+
+        // The manager must review each distinct recount before another correction.
+        var existingRecount = await _db.Set<CashDayCloseAdjustment>().AsNoTracking()
+            .AnyAsync(x => x.DentalPracticeId == practiceId && x.SubmissionId == submissionId &&
+                x.RecordedAtUtc > lastReview.ReviewedAtUtc, ct);
+        if (existingRecount)
+            return Conflict(new { message = "A recount already awaits manager review." });
+
+        var recount = new CashDayCloseAdjustment
+        {
+            DentalPracticeId = practiceId, SubmissionId = submissionId,
+            RequestId = request.RequestId,
+            RevisedCountedCash = request.RevisedCountedCash,
+            Reason = request.Reason.Trim(),
+            EvidenceReference = request.EvidenceReference.Trim(),
+            RecordedByUserId = actorId
+        };
+        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+        _db.Set<CashDayCloseAdjustment>().Add(recount);
+        await _db.SaveChangesAsync(ct);
+        await _audit.WriteAsync("BILLING_CASH_RECOUNT_RECORDED",
+            "CashDayCloseAdjustment", recount.Id.ToString(), ct: ct);
+        await tx.CommitAsync(ct);
+        return Created($"/api/billing/cash-day-close?date={submission.BusinessDate:yyyy-MM-dd}",
+            new { recount.Id, recount.RevisedCountedCash,
+                variance = recount.RevisedCountedCash - submission.ExpectedCash,
+                originalCountedCash = submission.CountedCash });
+    }
+
 }
