@@ -12,6 +12,7 @@ type Decision = { id:string; decision:string; reason:string; reviewedAtUtc:strin
 type Close = {
   submitted: boolean; status: string; businessDate:string
   cash?: Cash; decisions?: Decision[]; note?:string
+  nonCash?: { cardReceived:number; cardExpenses:number; eftReceived:number; eftExpenses:number; notice:string }
 }
 const today = () => new Intl.DateTimeFormat('en-CA', {
   timeZone:'Africa/Johannesburg',year:'numeric',month:'2-digit',day:'2-digit',
@@ -129,6 +130,12 @@ export default function BillingCashDayClosePage({ isManager }: { isManager:boole
         <p><strong>Cash receipts:</strong> {money(data.cash.cashReceived)} · <strong>Cash expense outflows:</strong> {money(data.cash.cashExpenses)}</p>
         <p>Submitted {new Date(data.cash.submittedAtUtc).toLocaleString('en-ZA')} · by {data.cash.submittedByUserId}</p>
         {data.cash.explanation&&<p>Explanation: {data.cash.explanation}</p>}
+        {data.nonCash && <section className="ct-guide-panel" aria-label="Independent card and EFT movements">
+          <h3>Card and EFT · separate reconciliation</h3>
+          <p>Card received: {money(data.nonCash.cardReceived)} · Card outflows: {money(data.nonCash.cardExpenses)}</p>
+          <p>EFT received: {money(data.nonCash.eftReceived)} · EFT outflows: {money(data.nonCash.eftExpenses)}</p>
+          <p>{data.nonCash.notice}</p>
+        </section>}
         <p className="ct-guide-warning">{data.note}</p>
       </section>
       <section className="ct-guide-panel">
