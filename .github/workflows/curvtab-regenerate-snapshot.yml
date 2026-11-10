@@ -5,7 +5,7 @@ on:
       - feature/client-billing-separate-day-signoffs-20261110
 jobs:
   snapshot:
-    if: contains(github.event.head_commit.message, 'ci: regenerate EF snapshot')
+    if: "contains(github.event.head_commit.message, 'ci: regenerate EF snapshot')"
     runs-on: ubuntu-latest
     permissions:
       contents: write
