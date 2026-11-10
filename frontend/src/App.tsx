@@ -79,11 +79,12 @@ import './PracticeSlideshowSizeFix.css'
 import './PracticeLogoFit.css'
 import './PracticeBrandAlignment.css'
 import PracticeBrandMark from './auth/PracticeBrandMark'
+import './ModalWorkspace20261110.css'
 type Section =
   | 'Laboratory'
   | 'Dashboard' | 'Daily Patients' | 'Billing' | 'Finance' | 'Clinical Imaging' | 'Orthodontics'
   | 'Patients'
-  | 'Appointments'
+  | 'Scheduling'
   | 'Practice Settings'
   | 'Management'
   | 'Dental Practices'
@@ -617,10 +618,11 @@ export default function App() {
   const { user, logout } = useAuth()
   const { appearance, setAppearance } = usePracticeAppearance(user?.practiceId)
   const isModuleVisible = (name: string) => !appearance || ![
-    'Patients','Appointments','Daily Patients',
+    'Patients','Scheduling','Daily Patients',
     'Billing','Clinical Imaging','Orthodontics'
   ].includes(name) || appearance.enabledModules.includes(name) ||
-    (name === 'Billing' && appearance.enabledModules.includes('Checkout & Payments'))
+    (name === 'Billing' && appearance.enabledModules.includes('Checkout & Payments')) ||
+    (name === 'Scheduling' && appearance.enabledModules.includes('Appointments'))
 
   // Share the authenticated practice theme with notification portals.
   useEffect(() => {
@@ -651,12 +653,12 @@ export default function App() {
   const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
 
-  // Sidebar Appointments submenu.
+  // Sidebar Scheduling submenu.
   const [appointmentsExpanded, setAppointmentsExpanded] =
     useState(false)
 
   const [appointmentTab, setAppointmentTab] =
-    useState<AppointmentTab>('Scheduling')
+    useState<AppointmentTab>('Appointments')
 
   const [darkMode, setDarkMode] = useState(
     () => localStorage.getItem('curvtab-theme') === 'dark'
@@ -701,7 +703,7 @@ export default function App() {
         ...(canViewPatients
           ? [
               { name: 'Patients' as Section, icon: Users },
-              { name: 'Appointments' as Section, icon: CalendarDays },
+              { name: 'Scheduling' as Section, icon: CalendarDays },
               { name: 'Laboratory' as Section, icon: FlaskConical },
             ]
           : []),
@@ -727,6 +729,9 @@ export default function App() {
   const dashboardTitle =
     dashboardTitles[role] ?? 'CurvTab Dental Workspace'
 
+  // Existing Patients, Scheduling, Laboratory and Configuration screens already own their dialogs.
+  const useModulePopup = !['Dashboard', 'Patients', 'Scheduling', 'Laboratory', 'Configuration Center'].includes(section)
+
   const initials =
     user?.fullName
       ?.split(' ')
@@ -740,7 +745,7 @@ export default function App() {
     if (target !== 'Patients') setSelectedConsultationId(null)
     setMenuOpen(false)
 
-    if (target === 'Appointments') {
+    if (target === 'Scheduling') {
       setAppointmentsExpanded(true)
     }
   }
@@ -748,7 +753,7 @@ export default function App() {
   function openAppointmentTab(tab: AppointmentTab) {
     setAppointmentTab(tab)
     setAppointmentsExpanded(true)
-    navigate('Appointments')
+    navigate('Scheduling')
   }
 
   return (
@@ -808,26 +813,26 @@ export default function App() {
           {navigation.filter(item => isModuleVisible(item.name)).map((item) => {
             const Icon = item.icon
 
-            if (item.name === 'Appointments') {
+            if (item.name === 'Scheduling') {
               return (
                 <div key="Appointments">
-                  {/* Expand/collapse the Appointments submenu */}
+                  {/* Expand/collapse the Scheduling submenu */}
                   <button
                     type="button"
                     className={
-                      section === 'Appointments'
+                      section === 'Scheduling'
                         ? 'nav-item nav-active'
                         : 'nav-item'
                     }
                     onClick={() => {
-                      setSection('Appointments')
+                      setSection('Scheduling')
                       setAppointmentsExpanded((value) => !value)
                       setMenuOpen(false)
                     }}
                     aria-expanded={appointmentsExpanded}
                   >
                     <Icon size={19} />
-                    <span>Appointments</span>
+                    <span>Scheduling</span>
                     {appointmentsExpanded
                       ? <ChevronDown size={16} />
                       : <ChevronRight size={16} />
@@ -846,7 +851,7 @@ export default function App() {
                     >
                       {([
                         {
-                          name: 'Scheduling' as AppointmentTab,
+                          name: 'Appointments' as AppointmentTab,
                           icon: CalendarPlus,
                         },
                         {
@@ -856,7 +861,7 @@ export default function App() {
                       ]).map((subItem) => {
                         const SubIcon = subItem.icon
                         const selected =
-                          section === 'Appointments' &&
+                          section === 'Scheduling' &&
                           appointmentTab === subItem.name
 
                         return (
@@ -1029,14 +1034,39 @@ export default function App() {
           </div>
         </header>
 
-        <main className="main-content">
+        {useModulePopup && (
+          <button
+            type="button"
+            className="ct-module-backdrop"
+            aria-label={`Close ${section} workspace`}
+            onClick={() => navigate('Dashboard')}
+          />
+        )}
+        <main
+          className={`main-content${useModulePopup ? ' ct-module-popup-window' : ''}`}
+          role={useModulePopup ? 'dialog' : undefined}
+          aria-modal={useModulePopup ? true : undefined}
+          aria-label={useModulePopup ? `${section} workspace` : undefined}
+        >
+          {useModulePopup && (
+            <header className="ct-module-popup-toolbar">
+              <div>
+                <span className="ct-module-popup-eyebrow">CURVTAB DENTAL · WORKSPACE</span>
+                <strong>{section}</strong>
+              </div>
+              <button type="button" className="ct-module-popup-close"
+                onClick={() => navigate('Dashboard')} aria-label={`Close ${section}`}>
+                <span aria-hidden="true">×</span> Close
+              </button>
+            </header>
+          )}
           {/* Visual upgrade: slideshow and real-data appointment analytics. */}
           {section === 'Dashboard' && (
             <ClinicDashboardEnhancements
               role={role}
               onPrimaryAction={() => {
                 if (role === 'SuperAdmin') navigate('Dental Practices')
-                else openAppointmentTab('Scheduling')
+                else openAppointmentTab('Appointments')
               }}
             />
           )}
@@ -1055,7 +1085,7 @@ export default function App() {
             <OverviewDashboardPage
               fullName={user?.fullName ?? ''}
               practiceName={user?.practiceName ?? null}
-              onNewAppointment={() => openAppointmentTab('Scheduling')}
+              onNewAppointment={() => openAppointmentTab('Appointments')}
               onOpenQueue={() => openAppointmentTab('In Queue')}
               onOpenCheckout={() => navigate('Billing')}
               onOpenPatients={() => navigate('Patients')}
@@ -1140,7 +1170,7 @@ export default function App() {
                         <button
                           type="button"
                           className="secondary-button"
-                          onClick={() => openAppointmentTab('Scheduling')}
+                          onClick={() => openAppointmentTab('Appointments')}
                         >
                           Open Calendar
                           <ArrowRight size={16} />
@@ -1220,14 +1250,14 @@ export default function App() {
             <PatientExperiencePage
               role={role}
               onClose={() => navigate('Dashboard')}
-              onOpenAppointments={() => openAppointmentTab('Scheduling')}
+              onOpenAppointments={() => openAppointmentTab('Appointments')}
               initialConsultationAppointmentId={selectedConsultationId}
               onConsultationOpened={() => setSelectedConsultationId(null)}
             />
           )}
 
           {/* APPOINTMENTS + EXPANDABLE WORKSPACE */}
-          {section === 'Appointments' && canViewPatients && (
+          {section === 'Scheduling' && canViewPatients && (
             <AppointmentsPage
               onClose={() => navigate('Dashboard')}
               tab={appointmentTab}
@@ -1363,7 +1393,7 @@ export default function App() {
             (section === 'Finance' && role !== 'Finance' && role !== 'PracticeAdmin') ||
             (section === 'Daily Patients' && role !== 'Dentist') ||
             (section === 'Patients' && !canViewPatients) ||
-            (section === 'Appointments' && !canViewPatients) ||
+            (section === 'Scheduling' && !canViewPatients) ||
             (section === 'Management' && !canManageStaff) ||
             (section === 'Practice Settings' && !canManageStaff) ||
             (section === 'Configuration Center' && !isPracticeAdmin) ||

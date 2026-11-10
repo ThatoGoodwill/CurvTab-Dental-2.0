@@ -1,0 +1,62 @@
+/* CT_MODULE_COMPACT_POPUPS_20261110
+   Shared modal shell for all workspaces without an existing custom dialog.
+   Respect practice branding and system light/dark appearance. */
+html body .app-shell .workspace > .ct-module-backdrop {
+  position: fixed; inset: 0; z-index: 3800; display: block; width: 100%;
+  border: none; border-radius: 0; background: rgba(8, 20, 38, .53);
+  backdrop-filter: blur(2px); cursor: default;
+}
+html body .app-shell .workspace > main.main-content.ct-module-popup-window {
+  position: fixed !important;
+  top: 4vh !important;
+  left: max(14px, calc((100vw - 1160px) / 2)) !important;
+  right: auto !important;
+  transform: none !important;
+  z-index: 3900 !important;
+  width: min(1160px, calc(100vw - 28px)) !important;
+  max-width: 1160px !important;
+  max-height: 92vh !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 11px 16px 18px !important;
+  background: var(--surface, var(--card-bg, #fff)) !important;
+  color: var(--text, inherit);
+  border: 1px solid var(--border, rgba(150,175,200,.37));
+  border-radius: 13px !important;
+  box-shadow: 0 23px 90px rgba(3,15,35,.32) !important;
+  overscroll-behavior: contain;
+}
+.ct-module-popup-toolbar {
+  position: sticky; top: -11px; z-index: 4; display: flex;
+  justify-content: space-between; align-items: center; gap: 10px;
+  padding: 8px 0 11px; margin-bottom: 11px;
+  background: var(--surface, var(--card-bg, #fff));
+  border-bottom: 1px solid var(--border, rgba(150,175,200,.32));
+}
+.ct-module-popup-toolbar > div { display: grid; gap: 1px; min-width: 0; }
+.ct-module-popup-toolbar strong { font-size: 15px; letter-spacing: -.1px; }
+.ct-module-popup-eyebrow { font-size: 9px; letter-spacing: 1.1px; font-weight: 800; color: var(--practice-primary, currentColor); }
+.ct-module-popup-close {
+  cursor: pointer; border: 1px solid var(--border, rgba(150,175,200,.32));
+  border-radius: 8px; min-height: 31px; padding: 5px 9px;
+  background: transparent; color: inherit; display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 700; flex: none;
+}
+.ct-module-popup-close span { font-size: 22px; font-weight: 400; line-height: 14px; }
+.ct-module-popup-close:hover { background: color-mix(in srgb, var(--practice-primary, #326bd6) 9%, transparent); }
+.ct-module-popup-close:focus-visible { outline: 2px solid var(--practice-primary, currentColor); outline-offset: 2px; }
+.ct-module-popup-window > :is(.page-heading, .panel) { margin-top: 0; }
+.ct-module-popup-window :is(.page-heading, .panel-header) { margin-bottom: 10px; gap: 10px; }
+.ct-module-popup-window .page-heading h1 { font-size: 23px; margin: 4px 0; }
+.ct-module-popup-window .page-heading p { font-size: 12px; line-height: 1.45; }
+@media(max-width: 720px) {
+  html body .app-shell .workspace > main.main-content.ct-module-popup-window {
+    top: 2vh !important; left: 8px !important; width: calc(100vw - 16px) !important;
+    max-height: 96vh !important; padding: 9px 11px 13px !important;
+  }
+}
+@media(prefers-reduced-motion: reduce) {
+  .ct-module-popup-window, .ct-module-popup-backdrop { animation: none !important; }
+}
