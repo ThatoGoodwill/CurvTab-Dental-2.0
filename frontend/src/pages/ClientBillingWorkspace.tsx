@@ -29,12 +29,17 @@ type ExpenseRow = {
   amount: number; reference?: string | null; recordedAtUtc: string
   recordedByUserId: string
 }
+type Transaction = {
+  id:string;type:string;category:string;description:string;method:string;
+  reference:string|null;amount:number;direction:'In'|'Out';
+  occurredAtUtc:string;patientName:string|null
+}
 type DailyData = {
   businessDate: string; actualReceipts: number; actualPayouts: number
   cashReceived: number; cardReceived: number; eftReceived: number
   schemeBankDeposits: number; cashExpenses: number; nonCashExpenses: number
   refunds: number; netActualMovements: number; claimsSubmittedValue: number
-  claimActivity: ClaimActivity; expenses: ExpenseRow[]
+  claimActivity: ClaimActivity; expenses: ExpenseRow[]; transactions: Transaction[]
   cashDayClose: { id: string; revision: number; countedCash: number; variance: number } | null
   medicalAidDaySignoff: { id: string; signedAtUtc: string } | null
 }
@@ -175,7 +180,7 @@ function TodayBilling({ date, setDate, revision, refresh, onGo, onExpense }: {
   const [daily, setDaily] = useState<DailyData | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
-  const [selectedExpense, setSelectedExpense] = useState<ExpenseRow | null>(null)
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
   useEffect(() => {
     let alive = true
     apiRequest<DailyData>('/billing/daily?date=' + encodeURIComponent(date))
@@ -219,17 +224,17 @@ function TodayBilling({ date, setDate, revision, refresh, onGo, onExpense }: {
         <section className="ct-day-panel">
           <h2>Today's transactions</h2>
           <div className="ct-day-table-scroll"><table><thead><tr>
-            <th>Transaction</th><th>Method</th><th>Amount</th><th>Details</th>
+            <th>Transaction</th><th>Category</th><th>Method</th><th>Amount</th><th>Details</th>
           </tr></thead><tbody>
-            {daily.expenses.map(e => <tr key={e.id}>
-              <td>{e.description}</td><td>{e.method}</td>
-              <td className="ct-negative">−{money(e.amount)}</td>
-              <td><button type="button" className="ct-day-link"
-                onClick={() => setSelectedExpense(e)}>Inspect</button></td>
+            {daily.transactions.map(t => <tr key={t.type+'-'+t.id}>
+              <td><strong>{t.patientName||t.description}</strong><small className="ct-day-muted"> {t.type}</small></td>
+              <td>{t.category}</td><td>{t.method}</td>
+              <td className={t.direction==='Out'?'ct-negative':''}>{t.direction==='Out'?'−':'+'}{money(t.amount)}</td>
+              <td><button type="button" className="ct-day-link" onClick={()=>setSelectedTransaction(t)}>Inspect</button></td>
             </tr>)}
-            {!daily.expenses.length && <tr><td colSpan={4}>No posted expenses on this date.</td></tr>}
+            {!daily.transactions.length && <tr><td colSpan={5}>No recorded financial movements on this date.</td></tr>}
           </tbody></table></div>
-          <small className="ct-day-muted">Receipts are recorded in Cash & Private. Expense rows are read from the existing Finances ledger.</small>
+          <small className="ct-day-muted">These are real posted receipts, scheme bank deposits, refunds and expenses. Submitted claims are excluded. Entries cannot be silently edited.</small>
         </section>
         <aside className="ct-day-panel">
           <h2>Today at a glance</h2>
@@ -246,17 +251,19 @@ function TodayBilling({ date, setDate, revision, refresh, onGo, onExpense }: {
               label={daily.medicalAidDaySignoff ? 'Signed' : 'Not signed'}/></div>
         </aside>
       </div>
-      {selectedExpense && <Popup title="Expense transaction details" subtitle="Existing financial record — no duplicate posting"
-        onClose={() => setSelectedExpense(null)}>
+      {selectedTransaction && <Popup title="Financial transaction details"
+        subtitle="One existing financial source record — this view never creates a second posting"
+        onClose={() => setSelectedTransaction(null)}>
         <div className="ct-day-detail">
-          <div><span>Description</span><strong>{selectedExpense.description}</strong></div>
-          <div><span>Category</span><strong>{selectedExpense.category}</strong></div>
-          <div><span>Payment method</span><strong>{selectedExpense.method}</strong></div>
-          <div><span>Amount paid</span><strong>{money(selectedExpense.amount)}</strong></div>
-          <div><span>Reference</span><strong>{selectedExpense.reference || 'Not recorded'}</strong></div>
-          <div><span>Operator ID</span><strong>{selectedExpense.recordedByUserId}</strong></div>
-          <div><span>Posted at</span><strong>{dateTime(selectedExpense.recordedAtUtc)}</strong></div>
-          <p className="ct-day-muted">To correct a posted expense, use an audited reversal/adjustment process; do not silently edit it.</p>
+          <div><span>Transaction type</span><strong>{selectedTransaction.type}</strong></div>
+          <div><span>Patient / source</span><strong>{selectedTransaction.patientName || selectedTransaction.description}</strong></div>
+          <div><span>Category</span><strong>{selectedTransaction.category}</strong></div>
+          <div><span>Payment method</span><strong>{selectedTransaction.method}</strong></div>
+          <div><span>Actual amount</span><strong>{selectedTransaction.direction==='Out'?'−':'+'}{money(selectedTransaction.amount)}</strong></div>
+          <div><span>Reference</span><strong>{selectedTransaction.reference || 'Not recorded'}</strong></div>
+          <div><span>Financial record ID</span><strong>{selectedTransaction.id}</strong></div>
+          <div><span>Recorded at</span><strong>{dateTime(selectedTransaction.occurredAtUtc)}</strong></div>
+          <p className="ct-day-muted">Corrections require a controlled reversal or adjustment. Original records remain in the audit history.</p>
         </div>
       </Popup>}
     </>}
