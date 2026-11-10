@@ -45,3 +45,19 @@
 .ct-guide-status {font-size:11px;font-weight:800;color:var(--practice-accent,#63aafa)}
 @media(max-width:950px){.ct-guide-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.ct-guide-columns{grid-template-columns:1fr}}
 @media(max-width:600px){.ct-guide-kpis{grid-template-columns:1fr 1fr;gap:6px}.ct-guide-kpis article{padding:8px}.ct-guide-kpis strong{font-size:16px}.ct-guide-panel{padding:9px}.ct-guide-actions button{flex:1}}
+
+/* Exact five-item Billing child navigation from the approved client guide. */
+.ct-guide-sidebar-group { display:grid; gap:3px; width:100%; min-width:0; }
+.ct-guide-sidebar-group > .nav-item { width:100%; }
+.ct-guide-sidebar-group > .nav-item > svg:last-child { margin-left:auto; }
+.ct-guide-sidebar-items { display:grid; gap:3px; padding-left:18px; }
+.ct-guide-sidebar-items .nav-item {
+  min-height:29px; padding:6px 9px; border-radius:7px;
+  font-size:12px; text-align:left; line-height:1.25;
+}
+.ct-guide-sidebar-items .nav-active {
+  background:color-mix(in srgb,var(--practice-primary,#2467d5) 22%,transparent);
+  border-left:2px solid var(--practice-accent,#61a5ff);
+}
+.ct-guide-sidebar-items .nav-item span { white-space:normal; }
+@media(max-width:850px){ .ct-guide-sidebar-items { padding-left:11px; } }
