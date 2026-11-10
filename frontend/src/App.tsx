@@ -18,7 +18,6 @@ import PlanAccountsPanel from './pages/PlanAccountsPanel'
 import FinanceWorkspaceTabs from './pages/FinanceWorkspaceTabs'
 import type { FinanceTab } from './pages/FinanceWorkspaceTabs'
 import BillingWorkspaceTabs from './pages/BillingWorkspaceTabs'
-import BillingCashDayClosePage from './pages/BillingCashDayClosePage'
 import type { BillingSection } from './pages/BillingWorkspaceTabs'
 import MedicalAidPanel from './pages/MedicalAidPanel'
 import PatientBalancesPanel from './pages/PatientBalancesPanel'
@@ -992,6 +991,7 @@ export default function App() {
                 </div>
               )}
             </div>
+          )}
           {(role === 'Receptionist' || role === 'PracticeAdmin') && (
             <button type="button" className={section === 'Laboratory' ? 'nav-item nav-active' : 'nav-item'}
               onClick={() => navigate('Laboratory')}><FlaskConical size={19}/><span>Lab</span></button>
@@ -999,10 +999,6 @@ export default function App() {
           {role === 'PracticeAdmin' && (
             <button type="button" className={section === 'Management' ? 'nav-item nav-active' : 'nav-item'}
               onClick={() => navigate('Management')}><CtManagementIcon size={19}/><span>Staff Management</span></button>
-          )}
-          {role === 'PracticeAdmin' && (
-            <button type="button" className={section === 'Finance' ? 'nav-item nav-active' : 'nav-item'}
-              onClick={() => navigate('Finance')}><Wallet size={19}/><span>Finances</span></button>
           )}
           {role === 'PracticeAdmin' && (
             <button type="button" className={section === 'Configuration Center' ? 'nav-item nav-active' : 'nav-item'}
@@ -1394,13 +1390,6 @@ export default function App() {
                     canManage={role === 'PracticeAdmin'}
                   />
                 }
-                invoices={
-                  <InvoicesPanel
-                    canIssue={role === 'PracticeAdmin'}
-                  />
-                }
-                balances={<PatientBalancesPanel />}
-                cashReview={<BillingCashDayClosePage isManager={role === 'PracticeAdmin'} />}
               />
           )}
 
