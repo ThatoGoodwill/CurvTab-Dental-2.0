@@ -1,0 +1,32 @@
+.pa-wrap{display:grid;gap:18px;min-width:0}
+.pa-grid{display:grid;grid-template-columns:minmax(260px,.9fr) minmax(0,1.7fr);gap:18px;align-items:start}
+@media(max-width:900px){.pa-grid{grid-template-columns:1fr}}
+.pa-card{background:var(--panel-bg,#fff);border:1px solid #dce5ec;border-radius:14px;padding:16px;display:grid;gap:12px;min-width:0}
+.pa-list{display:grid;gap:8px}
+.pa-item{text-align:left;border:1px solid #dce5ec;border-radius:12px;padding:10px 12px;background:transparent;cursor:pointer;display:grid;gap:3px;color:inherit}
+.pa-item.active{border-color:#07877d;box-shadow:0 0 0 2px rgba(7,135,125,.18)}
+.pa-item small{opacity:.75}
+.pa-pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:#e8f1f6;color:#245}
+.pa-pill.ok{background:#dff5e8;color:#0a6b3a}.pa-pill.warn{background:#fff1d6;color:#8a5a00}
+.pa-table{width:100%;border-collapse:collapse;font-size:14px}
+.pa-table th,.pa-table td{padding:7px 8px;border-bottom:1px solid #e3ebf1;text-align:left}
+.pa-table td.num,.pa-table th.num{text-align:right}
+.pa-totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.pa-totals div{border:1px solid #dce5ec;border-radius:12px;padding:10px;display:grid;gap:2px}
+.pa-totals span{font-size:12px;opacity:.75}.pa-totals strong{font-size:18px}
+.pa-form{display:grid;gap:10px}
+.pa-form label{display:grid;gap:4px;font-size:13px;font-weight:600}
+.pa-form input{padding:8px;border:1px solid #c9d6df;border-radius:8px;font:inherit}
+.pa-row2{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.pa-alert{padding:9px 12px;border-radius:10px;font-size:14px}
+.pa-err{background:#fde8e8;color:#8a1c1c}.pa-ok{background:#dff5e8;color:#0a6b3a}.pa-warn{background:#fff1d6;color:#8a5a00}
+.pa-actions{display:flex;gap:8px;flex-wrap:wrap}
+.pa-print{display:none}
+@media print{
+  body *{visibility:hidden}
+  .pa-print,.pa-print *{visibility:visible}
+  .pa-print{display:block;position:absolute;left:0;top:0;width:100%;padding:24px;color:#000;background:#fff}
+}
+.pa-print table{width:100%;border-collapse:collapse}
+.pa-print th,.pa-print td{border-bottom:1px solid #999;padding:5px;text-align:left}
+.pa-print .num{text-align:right}

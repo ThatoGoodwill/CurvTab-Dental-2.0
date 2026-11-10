@@ -8,6 +8,8 @@ type Plan = { id: string; title: string; clinicalRationale: string | null; statu
 type Encounter = { id: string; appointmentId: string; chiefComplaint?: string | null; examinationFindings?: string | null; diagnosis?: string | null; treatmentPerformed?: string | null; treatmentPlan?: string | null; followUpAdvice?: string | null; createdAtUtc: string; finalizedAtUtc: string | null; isFinalized: boolean }
 type History = { allergies: string | null; currentMedications: string | null; medicalConditions: string | null; dentalHistory: string | null; additionalNotes: string | null }
 
+type CataloguePrice = { id: string; name: string; price: number; isActive: boolean }
+
 type Panel = 'Treatment Plan' | 'Clinical Notes & Encounters' | 'Medical Records'
 
 const date = (v?: string | null) => v ? new Date(v).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
@@ -31,6 +33,7 @@ export default function RecoveredClinicalWorkspace({ patientId, panel }: { patie
   const [cost, setCost] = useState('')
   const [consentName, setConsentName] = useState('')
   const [acknowledged, setAcknowledged] = useState(false)
+  const [prices, setPrices] = useState<CataloguePrice[]>([])
   const path = `/dentist/patients/${encodeURIComponent(patientId)}/treatment-plans`
 
   useEffect(() => {
@@ -47,6 +50,24 @@ export default function RecoveredClinicalWorkspace({ patientId, panel }: { patie
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [patientId, panel, reload])
+
+  useEffect(() => {
+    apiRequest<CataloguePrice[]>('/practice/procedure-prices')
+      .then(rows => setPrices(rows.filter(row => row.isActive)))
+      .catch(() => setPrices([]))
+  }, [])
+
+  async function completeProcedure(planId: string, procedureId: string) {
+    if (busy) return
+    setBusy(true); setError(''); setNotice('')
+    try {
+      await apiRequest(`${path}/${planId}/procedures/${procedureId}/complete`, 'POST')
+      setNotice('Procedure marked as completed.')
+      setReload(n => n + 1)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to update procedure.')
+    } finally { setBusy(false) }
+  }
 
   function openModal(type: 'new' | 'procedure' | 'revise' | 'acknowledge', plan?: Plan) {
     setError('')
@@ -95,7 +116,7 @@ export default function RecoveredClinicalWorkspace({ patientId, panel }: { patie
         <p>{details(plan.clinicalRationale)}</p>
         <h4>Planned procedures</h4>
         {plan.procedures.length ? <div className="ct-recovered-table-wrap"><table><thead><tr><th>Procedure</th><th>Tooth</th><th>Estimated cost</th><th>Status</th></tr></thead><tbody>
-          {plan.procedures.map(p => <tr key={p.id}><td>{p.description}</td><td>{p.toothCode || '—'}</td><td>{p.estimatedCost === null ? '—' : `R ${p.estimatedCost.toFixed(2)}`}</td><td>{p.status}</td></tr>)}
+          {plan.procedures.map(p => <tr key={p.id}><td>{p.description}</td><td>{p.toothCode || '—'}</td><td>{p.estimatedCost === null ? '—' : `R ${p.estimatedCost.toFixed(2)}`}</td><td>{p.status}{plan.consentRecordedAtUtc && p.status !== 'Completed' && p.status !== 'Cancelled' && <> <button type="button" disabled={busy} onClick={() => void completeProcedure(plan.id, p.id)}>Mark completed</button></>}</td></tr>)}
         </tbody></table></div> : <p>No procedures added.</p>}
         {plan.consentRecordedAtUtc && <p className="ct-recovered-notice">Acknowledgement recorded for {plan.consentName} on {date(plan.consentRecordedAtUtc)}. This is a recorded acknowledgement, not a digital signature.</p>}
         {!plan.consentRecordedAtUtc && <div className="ct-recovered-actions">
@@ -124,7 +145,7 @@ export default function RecoveredClinicalWorkspace({ patientId, panel }: { patie
         <div className="ct-recovered-card-head"><h3>{modal === 'new' ? 'New Treatment Plan' : modal === 'procedure' ? 'Add Procedure' : modal === 'revise' ? 'Revise Treatment Plan' : 'Record Acknowledgement'}</h3><button type="button" onClick={() => setModal(null)} disabled={busy} aria-label="Close">×</button></div>
         <form onSubmit={e => void submit(e)}>
           {(modal === 'new' || modal === 'revise') && <><label>Plan title<input required maxLength={200} value={title} onChange={e => setTitle(e.target.value)} /></label><label>Clinical rationale<textarea maxLength={4000} rows={4} value={rationale} onChange={e => setRationale(e.target.value)} /></label></>}
-          {modal === 'procedure' && <><label>Procedure description<input required maxLength={1000} value={description} onChange={e => setDescription(e.target.value)} /></label><label>FDI tooth code (optional)<input maxLength={2} value={tooth} onChange={e => setTooth(e.target.value)} placeholder="e.g. 11" /></label><label>Estimated cost (ZAR, optional)<input type="number" min="0" max="10000000" step="0.01" value={cost} onChange={e => setCost(e.target.value)} /></label></>}
+          {modal === 'procedure' && <><label>Pick from practice price list<select value="" onChange={e => { const f = prices.find(x => x.id === e.target.value); if (f) { setDescription(f.name); setCost(f.price.toFixed(2)) } }}><option value="">{prices.length ? 'Choose procedure…' : 'No price list configured'}</option>{prices.map(x => <option key={x.id} value={x.id}>{x.name} — R{x.price.toFixed(2)}</option>)}</select></label><label>Procedure description<input required maxLength={1000} value={description} onChange={e => setDescription(e.target.value)} /></label><label>FDI tooth code (optional)<input maxLength={2} value={tooth} onChange={e => setTooth(e.target.value)} placeholder="e.g. 11" /></label><label>Estimated cost (ZAR, optional)<input type="number" min="0" max="10000000" step="0.01" value={cost} onChange={e => setCost(e.target.value)} /></label></>}
           {modal === 'acknowledge' && <><p>This records that the treatment plan was discussed and acknowledged. It does not replace a signed consent form or the dentist's clinical consent process.</p><label>Patient or representative name<input required maxLength={200} value={consentName} onChange={e => setConsentName(e.target.value)} /></label><label className="ct-recovered-check"><input type="checkbox" required checked={acknowledged} onChange={e => setAcknowledged(e.target.checked)} /> I confirm acknowledgement was obtained from the named person.</label></>}
           <div className="ct-recovered-actions"><button type="button" onClick={() => setModal(null)} disabled={busy}>Cancel</button><button type="submit" className="ct-recovered-primary" disabled={busy}>{busy ? 'Saving...' : 'Save'}</button></div>
         </form>

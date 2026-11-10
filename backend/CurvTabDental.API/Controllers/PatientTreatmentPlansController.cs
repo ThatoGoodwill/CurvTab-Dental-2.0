@@ -120,6 +120,33 @@ public sealed class PatientTreatmentPlansController : ControllerBase
         return Created($"/api/dentist/patients/{patientId}/treatment-plans/{planId}/procedures", new { procedure.Id });
     }
 
+    // Marks a planned procedure as performed. Allowed only after the patient agreed to the plan.
+    [HttpPost("{planId:guid}/procedures/{procedureId:guid}/complete")]
+    public async Task<IActionResult> CompleteProcedure(Guid patientId, Guid planId, Guid procedureId, CancellationToken ct)
+    {
+        if (_current.PracticeId is not Guid practiceId) return Forbid();
+        var plan = await _db.PatientTreatmentPlans.FirstOrDefaultAsync(p =>
+            p.Id == planId && p.PatientId == patientId && p.DentalPracticeId == practiceId, ct);
+        if (plan is null) return NotFound();
+        if (plan.ConsentRecordedAtUtc == null)
+            return Conflict(new { message = "Record the patient's agreement to the plan before treatment." });
+        var procedure = await _db.PatientTreatmentProcedures.FirstOrDefaultAsync(p =>
+            p.Id == procedureId && p.TreatmentPlanId == planId && p.DentalPracticeId == practiceId, ct);
+        if (procedure is null) return NotFound();
+        if (procedure.Status == "Completed") return NoContent();
+        procedure.Status = "Completed";
+        procedure.CompletedAtUtc = DateTime.UtcNow;
+        var all = await _db.PatientTreatmentProcedures
+            .Where(p => p.TreatmentPlanId == planId && p.DentalPracticeId == practiceId)
+            .ToListAsync(ct);
+        if (all.Where(p => p.Status != "Cancelled" && p.Status != "Declined").All(p => p.Status == "Completed"))
+            plan.Status = "Completed";
+        plan.UpdatedAtUtc = DateTime.UtcNow;
+        await _db.SaveChangesAsync(ct);
+        await _audit.WriteAsync("TREATMENT_PROCEDURE_COMPLETED", "PatientTreatmentProcedure", procedure.Id.ToString(), ct: ct);
+        return NoContent();
+    }
+
     [HttpPost("{planId:guid}/consent")]
     public async Task<IActionResult> RecordAcknowledgement(Guid patientId, Guid planId, [FromBody] RecordConsentRequest req, CancellationToken ct)
     {

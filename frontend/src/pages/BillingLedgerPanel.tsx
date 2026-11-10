@@ -10,7 +10,7 @@ type PaymentRow = {
   reference: string | null
   receivedAtUtc: string
   receivedByUserId: string
-  appointmentId: string
+  appointmentId: string | null
   patientId: string
   patientName: string
 }

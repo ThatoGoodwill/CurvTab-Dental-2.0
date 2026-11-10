@@ -13,6 +13,7 @@ import './CurvTabVisualUpgrade.css'
 import DentalChartingPage from './pages/DentalChartingPage'
 import OrthodonticsPage from './pages/OrthodonticsPage'
 import BillingLedgerPanel from './pages/BillingLedgerPanel'
+import PlanAccountsPanel from './pages/PlanAccountsPanel'
 import FinanceWorkspaceTabs from './pages/FinanceWorkspaceTabs'
 import BillingWorkspaceTabs from './pages/BillingWorkspaceTabs'
 import MedicalAidPanel from './pages/MedicalAidPanel'
@@ -1294,6 +1295,7 @@ export default function App() {
             (role === 'Receptionist' || role === 'PracticeAdmin') && (
               <BillingWorkspaceTabs
                 checkout={<ReceptionCheckoutPage />}
+                plans={<PlanAccountsPanel />}
                 medicalAid={<MedicalAidPanel
                   canManage={role === 'PracticeAdmin'}
                 />}
