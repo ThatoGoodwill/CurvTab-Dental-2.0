@@ -11,7 +11,7 @@ namespace CurvTabDental.API.Controllers;
 // No clinical notes or card details are returned.
 [ApiController]
 [Route("api/finance/patients")]
-[Authorize(Roles = "Receptionist,PracticeAdmin")]
+[Authorize(Roles = "Receptionist,PracticeAdmin,Finance")]
 public sealed class PatientAccountPaymentsController : ControllerBase
 {
     private readonly DentalDbContext _db;

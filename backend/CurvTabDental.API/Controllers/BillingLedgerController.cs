@@ -8,7 +8,7 @@ namespace CurvTabDental.API.Controllers;
 
 [ApiController]
 [Route("api/finance/ledger")]
-[Authorize(Roles = "Receptionist,PracticeAdmin")]
+[Authorize(Roles = "Receptionist,PracticeAdmin,Finance")]
 public sealed class BillingLedgerController : ControllerBase
 {
     private readonly DentalDbContext _db;

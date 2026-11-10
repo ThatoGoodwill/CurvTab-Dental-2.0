@@ -9,7 +9,7 @@ namespace CurvTabDental.API.Controllers;
 
 [ApiController]
 [Route("api/finance/medical-aid/authorisations")]
-[Authorize(Roles = "Receptionist,PracticeAdmin")]
+[Authorize(Roles = "Receptionist,PracticeAdmin,Finance")]
 public sealed class MedicalAidAuthorisationsController : ControllerBase
 {
     private readonly DentalDbContext _db;

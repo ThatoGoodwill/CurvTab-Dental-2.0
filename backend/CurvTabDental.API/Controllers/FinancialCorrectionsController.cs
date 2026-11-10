@@ -10,7 +10,7 @@ namespace CurvTabDental.API.Controllers;
 
 [ApiController]
 [Route("api/finance/invoices/{invoiceId:guid}/corrections")]
-[Authorize(Roles = "Receptionist,PracticeAdmin")]
+[Authorize(Roles = "Receptionist,PracticeAdmin,Finance")]
 public sealed class FinancialCorrectionsController : ControllerBase
 {
     private readonly DentalDbContext _db;
@@ -42,7 +42,7 @@ public sealed class FinancialCorrectionsController : ControllerBase
 
     // GET: correction history for this invoice.
     [HttpGet]
-    [Authorize(Roles = "Receptionist,PracticeAdmin")]
+    [Authorize(Roles = "Receptionist,PracticeAdmin,Finance")]
     public async Task<IActionResult> History(
         Guid invoiceId, CancellationToken ct)
     {
