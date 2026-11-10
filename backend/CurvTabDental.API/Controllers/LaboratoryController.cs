@@ -96,7 +96,7 @@ public sealed class LaboratoryController : ControllerBase
     [HttpGet("lab-required")]
     public async Task<IActionResult> LabRequired(CancellationToken ct)
     {
-        if (_current.PracticeId is not Guid practiceId) return Forbid();
+        if (Practice is not Guid practiceId) return Forbid();
         var rows = await (
             from proc in _db.PatientTreatmentProcedures.AsNoTracking()
             join plan in _db.PatientTreatmentPlans.AsNoTracking() on proc.TreatmentPlanId equals plan.Id
