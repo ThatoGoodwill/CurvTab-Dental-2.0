@@ -223,7 +223,6 @@ export default function FinanceOperationsPanel({
           max={todaySA()}
           onChange={event => {
             setDate(event.target.value)
-            setConfirmed(false)
             setNotice('')
             expenseRequestId.current = null
           }}
