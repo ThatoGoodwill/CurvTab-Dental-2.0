@@ -54,7 +54,9 @@ const statusLabels: Record<string, string> = {
   AcknowledgedReported: 'Acknowledged (reported)',
   ApprovedReported: 'Approved (reported)',
   PartiallyApprovedReported: 'Partially approved (reported)',
-  RejectedReported: 'Rejected (reported)',
+  RejectedReported: 'Rejected — needs correction',
+  CorrectionApproved: 'Correction authorised',
+  ResubmittedExternallyReported: 'Resubmitted (reported)',
 }
 
 const transitions: Record<string, string[]> = {
@@ -69,6 +71,12 @@ const transitions: Record<string, string[]> = {
     'ApprovedReported',
     'PartiallyApprovedReported',
     'RejectedReported',
+  ],
+  RejectedReported: ['CorrectionApproved'],
+  CorrectionApproved: ['ResubmittedExternallyReported'],
+  ResubmittedExternallyReported: [
+    'AcknowledgedReported','ApprovedReported',
+    'PartiallyApprovedReported','RejectedReported',
   ],
 }
 
@@ -91,6 +99,8 @@ export default function MedicalAidClaimProcessingPanel({
   const { confirm, confirmationDialog } = useConfirmDialog()
 
   const [claims, setClaims] = useState<ClaimRow[]>([])
+  const [claimSearch, setClaimSearch] = useState('')
+  const [onlyExceptions, setOnlyExceptions] = useState(false)
   const [selectedId, setSelectedId] = useState('')
   const [history, setHistory] = useState<ClaimHistory | null>(null)
   const [reload, setReload] = useState(0)
@@ -211,7 +221,7 @@ export default function MedicalAidClaimProcessingPanel({
     if (
       reason.trim().length < 5 ||
       evidenceReference.trim().length < 3 ||
-      (targetStatus === 'SubmittedExternallyReported' &&
+      (['SubmittedExternallyReported','ResubmittedExternallyReported'].includes(targetStatus) &&
         !externalReference.trim()) ||
       (requiresAmount && (
         !/^\d+(\.\d{1,2})?$/.test(approvedAmount) ||
@@ -259,7 +269,7 @@ export default function MedicalAidClaimProcessingPanel({
             requestId: requestId.current,
             targetStatus,
             externalReference:
-              targetStatus === 'SubmittedExternallyReported'
+              ['SubmittedExternallyReported','ResubmittedExternallyReported'].includes(targetStatus)
                 ? externalReference.trim()
                 : null,
             approvedAmount: amount,
@@ -314,8 +324,20 @@ export default function MedicalAidClaimProcessingPanel({
         <p>No claims found. Create a draft in Claims Ledger first.</p>
       )}
 
+      <div className="ct-guide-actions">
+        <label>Search claims
+          <input type="search" value={claimSearch} onChange={e=>setClaimSearch(e.target.value)}
+            placeholder="Patient, claim, scheme or status"/>
+        </label>
+        <label><input type="checkbox" checked={onlyExceptions}
+          onChange={e=>setOnlyExceptions(e.target.checked)}/> Rejected / needs correction only</label>
+      </div>
       <div className="ct-claims-register">
-        {claims.map(claim => (
+        {claims.filter(claim => (!onlyExceptions ||
+            ['RejectedReported','CorrectionApproved'].includes(claim.status)) &&
+          [claim.patientName,claim.claimNumber,claim.schemeName,claim.status]
+            .some(value=>value.toLowerCase().includes(claimSearch.toLowerCase().trim())))
+          .map(claim => (
           <button
             key={claim.id}
             type="button"
@@ -373,6 +395,9 @@ export default function MedicalAidClaimProcessingPanel({
             </p>
           )}
 
+          {selected.status === 'RejectedReported' && <p className="ct-claims-info">
+            Rejection → verify the clinical source with the dentist, document the corrected code and evidence, obtain approval, then resubmit using a new attempt reference. No new claim or patient charge is created.
+          </p>}
           {canManage && nextStatuses.length > 0 && (
             <form className="ct-claims-form"
               onSubmit={event => void submit(event)}>
@@ -395,9 +420,9 @@ export default function MedicalAidClaimProcessingPanel({
                 </select>
               </label>
 
-              {targetStatus === 'SubmittedExternallyReported' && (
+              {['SubmittedExternallyReported','ResubmittedExternallyReported'].includes(targetStatus) && (
                 <label>
-                  External submission reference
+                  {targetStatus === 'ResubmittedExternallyReported' ? 'New distinct resubmission reference' : 'External submission reference'}
                   <input required maxLength={120}
                     value={externalReference}
                     onChange={event => {
@@ -475,6 +500,7 @@ export default function MedicalAidClaimProcessingPanel({
 
                 <p>{entry.reason}</p>
                 <small>Evidence: {entry.evidenceReference}</small>
+                {entry.externalReference && <small>Submission attempt reference: {entry.externalReference}</small>}
 
                 {entry.approvedAmount !== null && (
                   <small>
