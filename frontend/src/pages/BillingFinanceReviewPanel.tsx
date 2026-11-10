@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ClipboardCheck, RefreshCw, ShieldCheck, Wallet } from 'lucide-react'
+import { ClipboardCheck, RefreshCw, ShieldCheck } from 'lucide-react'
 import { apiRequest } from '../services/api'
 import './ClientBillingWorkspace.css'
 
