@@ -204,6 +204,8 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
         modelBuilder.Entity<ProcedurePrice>(e =>
         {
             e.ToTable("ProcedurePrices");
+            e.Property(x => x.RequiresLab).HasDefaultValue(false);
+            e.Property(x => x.SupplierEstimate).HasPrecision(12, 2).HasDefaultValue(0m);
             e.HasKey(x => x.Id);
             e.HasQueryFilter(x =>
                 x.DentalPracticeId == CurrentPracticeId);
