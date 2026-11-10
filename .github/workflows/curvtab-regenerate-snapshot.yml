@@ -23,12 +23,12 @@ jobs:
       - name: Generate snapshot using EF provider model instead of manual edits
         run: |
           dotnet ef migrations add ClientGuideSnapshotTemporary --project backend/CurvTabDental.Infrastructure/CurvTabDental.Infrastructure.csproj --startup-project backend/CurvTabDental.API/CurvTabDental.API.csproj --output-dir Persistence/Migrations
-          test -s backend/CurvTabDental.Infrastructure/Persistence/Migrations/DentalDbContextModelSnapshot.cs
+          test -s backend/CurvTabDental.Infrastructure/Migrations/DentalDbContextModelSnapshot.cs
       - name: Commit generated snapshot only (manual migrations are already versioned)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add backend/CurvTabDental.Infrastructure/Persistence/Migrations/DentalDbContextModelSnapshot.cs
+          git add backend/CurvTabDental.Infrastructure/Migrations/DentalDbContextModelSnapshot.cs
           git diff --cached --quiet && exit 0
           git commit -m "chore(ef): regenerate model snapshot for manual client signoff migrations"
           git push origin "HEAD:feature/client-billing-separate-day-signoffs-20261110"
