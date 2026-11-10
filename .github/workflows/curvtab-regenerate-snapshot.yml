@@ -1,0 +1,34 @@
+name: Regenerate Client Billing EF Model Snapshot
+on:
+  push:
+    branches:
+      - feature/client-billing-separate-day-signoffs-20261110
+jobs:
+  snapshot:
+    if: contains(github.event.head_commit.message, 'ci: regenerate EF snapshot')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Install EF Core CLI and restore
+        run: |
+          dotnet tool install --global dotnet-ef --version 10.0.0
+          dotnet restore backend/CurvTabDental.API/CurvTabDental.API.csproj
+      - name: Generate snapshot using EF provider model instead of manual edits
+        run: |
+          dotnet ef migrations add ClientGuideSnapshotTemporary --project backend/CurvTabDental.Infrastructure/CurvTabDental.Infrastructure.csproj --startup-project backend/CurvTabDental.API/CurvTabDental.API.csproj --output-dir Persistence/Migrations
+          test -s backend/CurvTabDental.Infrastructure/Persistence/Migrations/DentalDbContextModelSnapshot.cs
+      - name: Commit generated snapshot only (manual migrations are already versioned)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/CurvTabDental.Infrastructure/Persistence/Migrations/DentalDbContextModelSnapshot.cs
+          git diff --cached --quiet && exit 0
+          git commit -m "chore(ef): regenerate model snapshot for manual client signoff migrations"
+          git push origin "HEAD:feature/client-billing-separate-day-signoffs-20261110"
