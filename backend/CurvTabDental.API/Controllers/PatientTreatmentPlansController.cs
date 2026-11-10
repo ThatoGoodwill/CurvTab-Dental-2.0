@@ -24,7 +24,7 @@ public sealed class PatientTreatmentPlansController : ControllerBase
     }
 
     public record CreatePlanRequest(string? Title, string? ClinicalRationale);
-    public record AddProcedureRequest(string? Description, string? ToothCode, decimal? EstimatedCost);
+    public record AddProcedureRequest(string? Description, string? ToothCode, decimal? EstimatedCost, Guid? ProcedurePriceId = null);
     public record UpdatePlanRequest(string? Title, string? ClinicalRationale);
     public record RecordConsentRequest(string? PatientOrRepresentativeName, bool Acknowledged);
 
@@ -54,7 +54,7 @@ public sealed class PatientTreatmentPlansController : ControllerBase
             p.Id, p.Title, p.ClinicalRationale, p.Status, p.Revision,
             p.ConsentName, p.ConsentRecordedAtUtc, p.CreatedAtUtc, p.UpdatedAtUtc,
             Procedures = procedures.Where(x => x.TreatmentPlanId == p.Id).Select(x => new {
-                x.Id, x.ToothCode, x.Description, x.Status, x.EstimatedCost, x.CreatedAtUtc, x.CompletedAtUtc
+                x.Id, x.ToothCode, x.Description, x.Status, x.EstimatedCost, x.RequiresLab, x.CreatedAtUtc, x.CompletedAtUtc
             }).ToList()
         }));
     }
@@ -108,7 +108,13 @@ public sealed class PatientTreatmentPlansController : ControllerBase
         if (string.IsNullOrWhiteSpace(req.Description) || req.Description.Length > 1000 ||
             !ValidTooth(req.ToothCode) || req.EstimatedCost is < 0 or > 10000000)
             return BadRequest(new { message = "Invalid description, tooth or amount." });
+        var requiresLab = false;
+        if (req.ProcedurePriceId is Guid priceId)
+            requiresLab = await _db.ProcedurePrices.AsNoTracking()
+                .Where(x => x.Id == priceId && x.DentalPracticeId == practiceId)
+                .Select(x => x.RequiresLab).FirstOrDefaultAsync(ct);
         var procedure = new PatientTreatmentProcedure {
+            RequiresLab = requiresLab,
             DentalPracticeId = practiceId, PatientId = patientId, TreatmentPlanId = plan.Id,
             Description = req.Description.Trim(), ToothCode = string.IsNullOrEmpty(req.ToothCode) ? null : req.ToothCode,
             EstimatedCost = req.EstimatedCost

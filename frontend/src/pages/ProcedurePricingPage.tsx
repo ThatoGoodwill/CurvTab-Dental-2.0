@@ -11,6 +11,8 @@ type ProcedurePrice = {
   category: string
   price: number
   isActive: boolean
+  requiresLab: boolean
+  supplierEstimate: number
   createdAtUtc: string
   updatedAtUtc: string
 }
@@ -31,6 +33,8 @@ type Draft = {
   category: string
   price: string
   isActive: boolean
+  requiresLab: boolean
+  supplierEstimate: string
 }
 
 const emptyDraft: Draft = {
@@ -38,7 +42,9 @@ const emptyDraft: Draft = {
   name: '',
   category: 'General',
   price: '',
-  isActive: true
+  isActive: true,
+  requiresLab: false,
+  supplierEstimate: ''
 }
 
 const money = (value: number) =>
@@ -102,7 +108,9 @@ export default function ProcedurePricingPage() {
       name: item.name,
       category: item.category,
       price: item.price.toFixed(2),
-      isActive: item.isActive
+      isActive: item.isActive,
+      requiresLab: item.requiresLab,
+      supplierEstimate: item.supplierEstimate ? item.supplierEstimate.toFixed(2) : ''
     })
     setShowEditor(true)
     setNotice('')
@@ -138,6 +146,8 @@ export default function ProcedurePricingPage() {
         category: draft.category.trim() || 'General',
         price: Number(price),
         isActive: draft.isActive,
+        requiresLab: draft.requiresLab,
+        supplierEstimate: draft.requiresLab ? Number(draft.supplierEstimate || 0) : 0,
         expectedUpdatedAtUtc: editing?.updatedAtUtc ?? null
       }
 
@@ -231,6 +241,7 @@ export default function ProcedurePricingPage() {
                 <td>{item.code}</td>
                 <td>
                   <strong>{item.name}</strong>
+                  {item.requiresLab && <small>Requires lab · supplier est. {money(item.supplierEstimate)}</small>}
                   <small>{item.category}</small>
                 </td>
                 <td>{money(item.price)}</td>
@@ -323,6 +334,23 @@ export default function ProcedurePricingPage() {
                     ...prev, price: event.target.value
                   }))} placeholder="0.00" />
               </label>
+
+              <label className="ct-pricing-checkbox">
+                <input type="checkbox" checked={draft.requiresLab}
+                  onChange={event => setDraft(prev => ({
+                    ...prev, requiresLab: event.target.checked
+                  }))} />
+                Requires lab work (patient will be flagged for the laboratory)
+              </label>
+
+              {draft.requiresLab && (
+                <label>Supplier estimate (ZAR)
+                  <input inputMode="decimal" value={draft.supplierEstimate}
+                    onChange={event => setDraft(prev => ({
+                      ...prev, supplierEstimate: event.target.value
+                    }))} placeholder="0.00" />
+                </label>
+              )}
 
               <label className="ct-pricing-checkbox">
                 <input type="checkbox" checked={draft.isActive}

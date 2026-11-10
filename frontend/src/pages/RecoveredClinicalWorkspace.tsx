@@ -3,12 +3,12 @@ import type { FormEvent } from 'react'
 import { apiRequest } from '../services/api'
 import './RecoveredClinicalWorkspace.css'
 
-type Procedure = { id: string; toothCode: string | null; description: string; status: string; estimatedCost: number | null; createdAtUtc: string }
+type Procedure = { id: string; toothCode: string | null; description: string; status: string; estimatedCost: number | null; requiresLab?: boolean; createdAtUtc: string }
 type Plan = { id: string; title: string; clinicalRationale: string | null; status: string; revision: number; consentName: string | null; consentRecordedAtUtc: string | null; createdAtUtc: string; procedures: Procedure[] }
 type Encounter = { id: string; appointmentId: string; chiefComplaint?: string | null; examinationFindings?: string | null; diagnosis?: string | null; treatmentPerformed?: string | null; treatmentPlan?: string | null; followUpAdvice?: string | null; createdAtUtc: string; finalizedAtUtc: string | null; isFinalized: boolean }
 type History = { allergies: string | null; currentMedications: string | null; medicalConditions: string | null; dentalHistory: string | null; additionalNotes: string | null }
 
-type CataloguePrice = { id: string; name: string; price: number; isActive: boolean }
+type CataloguePrice = { id: string; name: string; price: number; isActive: boolean; requiresLab?: boolean }
 
 type Panel = 'Treatment Plan' | 'Clinical Notes & Encounters' | 'Medical Records'
 
@@ -31,6 +31,7 @@ export default function RecoveredClinicalWorkspace({ patientId, panel }: { patie
   const [description, setDescription] = useState('')
   const [tooth, setTooth] = useState('')
   const [cost, setCost] = useState('')
+  const [priceId, setPriceId] = useState('')
   const [consentName, setConsentName] = useState('')
   const [acknowledged, setAcknowledged] = useState(false)
   const [prices, setPrices] = useState<CataloguePrice[]>([])
@@ -78,6 +79,7 @@ export default function RecoveredClinicalWorkspace({ patientId, panel }: { patie
     setDescription('')
     setTooth('')
     setCost('')
+    setPriceId('')
     setConsentName('')
     setAcknowledged(false)
     setModal(type)
@@ -91,7 +93,7 @@ export default function RecoveredClinicalWorkspace({ patientId, panel }: { patie
     try {
       if (modal === 'new') await apiRequest(path, 'POST', { title, clinicalRationale: rationale })
       if (modal === 'revise' && activePlan) await apiRequest(`${path}/${activePlan.id}`, 'PUT', { title, clinicalRationale: rationale })
-      if (modal === 'procedure' && activePlan) await apiRequest(`${path}/${activePlan.id}/procedures`, 'POST', { description, toothCode: tooth || null, estimatedCost: cost.trim() === '' ? null : Number(cost) })
+      if (modal === 'procedure' && activePlan) await apiRequest(`${path}/${activePlan.id}/procedures`, 'POST', { description, toothCode: tooth || null, estimatedCost: cost.trim() === '' ? null : Number(cost), procedurePriceId: priceId || null })
       if (modal === 'acknowledge' && activePlan) await apiRequest(`${path}/${activePlan.id}/consent`, 'POST', { patientOrRepresentativeName: consentName, acknowledged })
       setNotice('Saved successfully. The clinical record has been updated.')
       setModal(null)
@@ -116,7 +118,7 @@ export default function RecoveredClinicalWorkspace({ patientId, panel }: { patie
         <p>{details(plan.clinicalRationale)}</p>
         <h4>Planned procedures</h4>
         {plan.procedures.length ? <div className="ct-recovered-table-wrap"><table><thead><tr><th>Procedure</th><th>Tooth</th><th>Estimated cost</th><th>Status</th></tr></thead><tbody>
-          {plan.procedures.map(p => <tr key={p.id}><td>{p.description}</td><td>{p.toothCode || '—'}</td><td>{p.estimatedCost === null ? '—' : `R ${p.estimatedCost.toFixed(2)}`}</td><td>{p.status}{plan.consentRecordedAtUtc && p.status !== 'Completed' && p.status !== 'Cancelled' && <> <button type="button" disabled={busy} onClick={() => void completeProcedure(plan.id, p.id)}>Mark completed</button></>}</td></tr>)}
+          {plan.procedures.map(p => <tr key={p.id}><td>{p.description}{p.requiresLab && <> <strong title="Needs a laboratory order">· LAB REQUIRED</strong></>}</td><td>{p.toothCode || '—'}</td><td>{p.estimatedCost === null ? '—' : `R ${p.estimatedCost.toFixed(2)}`}</td><td>{p.status}{plan.consentRecordedAtUtc && p.status !== 'Completed' && p.status !== 'Cancelled' && <> <button type="button" disabled={busy} onClick={() => void completeProcedure(plan.id, p.id)}>Mark completed</button></>}</td></tr>)}
         </tbody></table></div> : <p>No procedures added.</p>}
         {plan.consentRecordedAtUtc && <p className="ct-recovered-notice">Acknowledgement recorded for {plan.consentName} on {date(plan.consentRecordedAtUtc)}. This is a recorded acknowledgement, not a digital signature.</p>}
         {!plan.consentRecordedAtUtc && <div className="ct-recovered-actions">
@@ -145,7 +147,7 @@ export default function RecoveredClinicalWorkspace({ patientId, panel }: { patie
         <div className="ct-recovered-card-head"><h3>{modal === 'new' ? 'New Treatment Plan' : modal === 'procedure' ? 'Add Procedure' : modal === 'revise' ? 'Revise Treatment Plan' : 'Record Acknowledgement'}</h3><button type="button" onClick={() => setModal(null)} disabled={busy} aria-label="Close">×</button></div>
         <form onSubmit={e => void submit(e)}>
           {(modal === 'new' || modal === 'revise') && <><label>Plan title<input required maxLength={200} value={title} onChange={e => setTitle(e.target.value)} /></label><label>Clinical rationale<textarea maxLength={4000} rows={4} value={rationale} onChange={e => setRationale(e.target.value)} /></label></>}
-          {modal === 'procedure' && <><label>Pick from practice price list<select value="" onChange={e => { const f = prices.find(x => x.id === e.target.value); if (f) { setDescription(f.name); setCost(f.price.toFixed(2)) } }}><option value="">{prices.length ? 'Choose procedure…' : 'No price list configured'}</option>{prices.map(x => <option key={x.id} value={x.id}>{x.name} — R{x.price.toFixed(2)}</option>)}</select></label><label>Procedure description<input required maxLength={1000} value={description} onChange={e => setDescription(e.target.value)} /></label><label>FDI tooth code (optional)<input maxLength={2} value={tooth} onChange={e => setTooth(e.target.value)} placeholder="e.g. 11" /></label><label>Estimated cost (ZAR, optional)<input type="number" min="0" max="10000000" step="0.01" value={cost} onChange={e => setCost(e.target.value)} /></label></>}
+          {modal === 'procedure' && <><label>Pick from practice price list<select value="" onChange={e => { const f = prices.find(x => x.id === e.target.value); if (f) { setDescription(f.name); setCost(f.price.toFixed(2)); setPriceId(f.id) } }}><option value="">{prices.length ? 'Choose procedure…' : 'No price list configured'}</option>{prices.map(x => <option key={x.id} value={x.id}>{x.name} — R{x.price.toFixed(2)}{x.requiresLab ? ' (lab)' : ''}</option>)}</select></label><label>Procedure description<input required maxLength={1000} value={description} onChange={e => setDescription(e.target.value)} /></label><label>FDI tooth code (optional)<input maxLength={2} value={tooth} onChange={e => setTooth(e.target.value)} placeholder="e.g. 11" /></label><label>Estimated cost (ZAR, optional)<input type="number" min="0" max="10000000" step="0.01" value={cost} onChange={e => setCost(e.target.value)} /></label></>}
           {modal === 'acknowledge' && <><p>This records that the treatment plan was discussed and acknowledged. It does not replace a signed consent form or the dentist's clinical consent process.</p><label>Patient or representative name<input required maxLength={200} value={consentName} onChange={e => setConsentName(e.target.value)} /></label><label className="ct-recovered-check"><input type="checkbox" required checked={acknowledged} onChange={e => setAcknowledged(e.target.checked)} /> I confirm acknowledgement was obtained from the named person.</label></>}
           <div className="ct-recovered-actions"><button type="button" onClick={() => setModal(null)} disabled={busy}>Cancel</button><button type="submit" className="ct-recovered-primary" disabled={busy}>{busy ? 'Saving...' : 'Save'}</button></div>
         </form>

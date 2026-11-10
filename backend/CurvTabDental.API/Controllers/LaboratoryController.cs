@@ -90,6 +90,33 @@ public sealed class LaboratoryController : ControllerBase
     public record PatientHandoverRequest(string ReceivedByName, string Notes);
 
     // Partner views use a pseudonymous patient reference — never demographics or medical history.
+    // Agreed plan procedures that need lab work and are not finished yet,
+    // so the practice knows which patients need a laboratory order.
+    [Authorize(Roles = "PracticeAdmin,Receptionist,Dentist")]
+    [HttpGet("lab-required")]
+    public async Task<IActionResult> LabRequired(CancellationToken ct)
+    {
+        if (_current.PracticeId is not Guid practiceId) return Forbid();
+        var rows = await (
+            from proc in _db.PatientTreatmentProcedures.AsNoTracking()
+            join plan in _db.PatientTreatmentPlans.AsNoTracking() on proc.TreatmentPlanId equals plan.Id
+            join patient in _db.Patients.AsNoTracking() on proc.PatientId equals patient.Id
+            where proc.DentalPracticeId == practiceId && proc.RequiresLab &&
+                  proc.Status != "Completed" && proc.Status != "Cancelled" &&
+                  proc.Status != "Declined" && plan.ConsentRecordedAtUtc != null
+            orderby plan.UpdatedAtUtc descending
+            select new
+            {
+                procedureId = proc.Id,
+                patientId = patient.Id,
+                patientName = patient.FirstName + " " + patient.LastName,
+                planTitle = plan.Title,
+                description = proc.Description,
+                toothCode = proc.ToothCode
+            }).Take(100).ToListAsync(ct);
+        return Ok(rows);
+    }
+
     [HttpGet("dashboard")]
     public async Task<IActionResult> Dashboard(CancellationToken ct)
     {

@@ -30,6 +30,7 @@ public sealed class PatientTreatmentProcedure : IPracticeOwned
     public string? ToothCode { get; set; }
     public string Status { get; set; } = "Proposed";
     public decimal? EstimatedCost { get; set; }
+    public bool RequiresLab { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime? CompletedAtUtc { get; set; }
 }
