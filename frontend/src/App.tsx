@@ -16,6 +16,7 @@ import './ClientThemeChoice.css'
 import AuditLogPage from './pages/AuditLogPage'
 import PlanAccountsPanel from './pages/PlanAccountsPanel'
 import FinanceWorkspaceTabs from './pages/FinanceWorkspaceTabs'
+import type { FinanceTab } from './pages/FinanceWorkspaceTabs'
 import BillingWorkspaceTabs from './pages/BillingWorkspaceTabs'
 import BillingCashDayClosePage from './pages/BillingCashDayClosePage'
 import type { BillingSection } from './pages/BillingWorkspaceTabs'
@@ -656,6 +657,9 @@ export default function App() {
   const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
 
+  // Sidebar Appointments submenu.
+  const [financeTab, setFinanceTab] = useState<FinanceTab>('revenues')
+  const [financeExpanded, setFinanceExpanded] = useState(true)
   // Sidebar Scheduling submenu.
   const [billingExpanded, setBillingExpanded] = useState(true)
   const [billingSection, setBillingSection] = useState<BillingSection>('today')
@@ -719,7 +723,6 @@ export default function App() {
             ]
           : []),
         ...(canManageStaff ? [{ name: 'Configuration Center' as Section, icon: CtAppearanceIcon }] : []),
-        ...(role === 'Finance' ? [{ name: 'Finance' as Section, icon: Wallet }] : []),
         // CT_LAB_TECH_NAV
         ...(role === 'LabTechnician' ? [{ name: 'Laboratory' as Section, icon: FlaskConical }] : []),
         { name: 'My Profile' as Section, icon: UserCircle },
@@ -963,6 +966,32 @@ export default function App() {
               )}
             </div>
           )}
+          {(role === 'PracticeAdmin' || role === 'Finance') && (
+            <div>
+              <button type="button"
+                className={section === 'Finance' ? 'nav-item nav-active' : 'nav-item'}
+                aria-expanded={financeExpanded}
+                onClick={() => {
+                  setSection('Finance')
+                  setFinanceExpanded(value => section === 'Finance' ? !value : true)
+                  setMenuOpen(false)
+                }}>
+                <Wallet size={19} /> <span>Finances</span>
+                {financeExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              </button>
+              {financeExpanded && (
+                <div style={{ paddingLeft: 21, display: 'flex', flexDirection: 'column', gap: 4, margin: '5px 0 12px' }}>
+                  {([['revenues', 'Revenues'], ['expenses', 'Expenses']] as const).map(([id, label]) => (
+                    <button type="button" key={id}
+                      className={section === 'Finance' && financeTab === id ? 'nav-item nav-active' : 'nav-item'}
+                      aria-current={section === 'Finance' && financeTab === id ? 'page' : undefined}
+                      onClick={() => { setFinanceTab(id); setSection('Finance'); setMenuOpen(false) }}>
+                      <span>{label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           {(role === 'Receptionist' || role === 'PracticeAdmin') && (
             <button type="button" className={section === 'Laboratory' ? 'nav-item nav-active' : 'nav-item'}
               onClick={() => navigate('Laboratory')}><FlaskConical size={19}/><span>Lab</span></button>
@@ -1353,11 +1382,13 @@ export default function App() {
 
           {section === 'Audit Log' && role === 'PracticeAdmin' && <AuditLogPage />}
 
-          {/* FINANCE MODULE: revenue, expenses, invoices */}
+          {/* FINANCE MODULE: revenues and expenses */}
           {section === 'Finance' &&
             (role === 'Finance' || role === 'PracticeAdmin') && (
               <FinanceWorkspaceTabs
-                revenue={<BillingLedgerPanel />}
+                tab={financeTab}
+                onTab={setFinanceTab}
+                revenues={<BillingLedgerPanel />}
                 expenses={
                   <FinanceOperationsPanel
                     canManage={role === 'PracticeAdmin'}

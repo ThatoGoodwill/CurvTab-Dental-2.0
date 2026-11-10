@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Receipt, FileText, Calculator, Users, Wallet } from 'lucide-react'
 import './BillingWorkspaceTabs.css'
@@ -6,7 +5,9 @@ import './BillingWorkspaceTabs.css'
 type FinanceTab = 'revenue' | 'expenses' | 'invoices' | 'balances' | 'cashReview'
 
 type Props = {
-  revenue: ReactNode
+  tab: FinanceTab
+  onTab: (tab: FinanceTab) => void
+  revenues: ReactNode
   expenses: ReactNode
   invoices: ReactNode
   balances: ReactNode
@@ -25,6 +26,7 @@ export default function FinanceWorkspaceTabs({ revenue, expenses, invoices, bala
   const [activeTab, setActiveTab] = useState<FinanceTab>('revenue')
   const content: Record<FinanceTab, ReactNode> = { revenue, expenses, invoices, balances, cashReview }
 
+export default function FinanceWorkspaceTabs({ tab, onTab, revenues, expenses }: Props) {
   return (
     <div className="ct-billing-workspace ct-financial-workspace ct-financial-finance">
       <header className="ct-billing-workspace-heading ct-financial-hero">

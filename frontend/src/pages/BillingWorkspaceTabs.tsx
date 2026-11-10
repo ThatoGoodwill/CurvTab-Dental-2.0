@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
+import { ShieldCheck, Wallet, Users, ClipboardList, FileText } from 'lucide-react'
 import { FileText, RefreshCw, ShieldCheck, Wallet } from 'lucide-react'
 import BillingTodayPage from './BillingTodayPage'
 import BillingCashDayClosePage from './BillingCashDayClosePage'
@@ -8,6 +9,12 @@ import BillingExpenseDrawer from './BillingExpenseDrawer'
 import './BillingWorkspaceTabs.css'
 import './BillingClientGuide.css'
 
+type BillingTab =
+  | 'checkout'
+  | 'plans'
+  | 'balances'
+  | 'invoices'
+  | 'medicalAid'
 export type BillingSection = 'today' | 'cashPrivate' | 'medicalAid' | 'cashClose' | 'aidClose'
 type CashPrivateTab = 'checkout' | 'invoices' | 'plans' | 'balances' | 'ledger'
 
@@ -19,10 +26,39 @@ type Props = {
   invoices: ReactNode
   plans: ReactNode
   balances: ReactNode
+  invoices: ReactNode
   medicalAid: ReactNode
   ledger: ReactNode
 }
 
+const tabs = [
+  { id: 'checkout', label: 'Checkout', Icon: Wallet },
+  { id: 'plans', label: 'Treatment Plan Accounts', Icon: ClipboardList },
+  { id: 'balances', label: 'Patient Balances', Icon: Users },
+  { id: 'invoices', label: 'Invoices & Payment Allocations', Icon: FileText },
+  {
+    id: 'medicalAid',
+    label: 'Medical Aid',
+    Icon: ShieldCheck,
+  },
+] as const
+
+export default function BillingWorkspaceTabs({
+  checkout,
+  plans,
+  balances,
+  invoices,
+  medicalAid,
+}: Props) {
+  const [activeTab, setActiveTab] =
+    useState<BillingTab>('checkout')
+
+  const content: Record<BillingTab, ReactNode> = {
+    checkout,
+    plans,
+    balances,
+    invoices,
+    medicalAid,
 const cashTabs = [
   { id:'checkout',label:'Patient Checkout', Icon:Wallet },
   { id:'invoices',label:'Invoices & Allocations',Icon:FileText },
