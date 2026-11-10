@@ -64,6 +64,30 @@ public sealed class BillingCashDayCloseController : ControllerBase
                 message = "Enter the physical cash count before the server reveals the expected balance. Claim submissions are not cash."
             };
 
+        var (start, end) = Range(date);
+        var cardReceived = (await _db.Payments.AsNoTracking()
+            .Where(x => x.DentalPracticeId == practiceId && x.Method == "Card" &&
+                x.ReceivedAtUtc >= start && x.ReceivedAtUtc < end)
+            .SumAsync(x => (decimal?)x.Amount, ct) ?? 0m) +
+            (await _db.PlanPayments.AsNoTracking()
+            .Where(x => x.DentalPracticeId == practiceId && x.Method == "Card" &&
+                x.ReceivedAtUtc >= start && x.ReceivedAtUtc < end)
+            .SumAsync(x => (decimal?)x.Amount, ct) ?? 0m);
+        var eftReceived = (await _db.Payments.AsNoTracking()
+            .Where(x => x.DentalPracticeId == practiceId && x.Method == "EFT" &&
+                x.ReceivedAtUtc >= start && x.ReceivedAtUtc < end)
+            .SumAsync(x => (decimal?)x.Amount, ct) ?? 0m) +
+            (await _db.PlanPayments.AsNoTracking()
+            .Where(x => x.DentalPracticeId == practiceId && x.Method == "EFT" &&
+                x.ReceivedAtUtc >= start && x.ReceivedAtUtc < end)
+            .SumAsync(x => (decimal?)x.Amount, ct) ?? 0m);
+        var nonCashOutflows = await _db.Set<PracticeExpense>().AsNoTracking()
+            .Where(x => x.DentalPracticeId == practiceId && x.ExpenseDate == date &&
+                (x.Method == "Card" || x.Method == "EFT"))
+            .GroupBy(x => x.Method)
+            .Select(g => new { Method = g.Key, Total = g.Sum(x => x.Amount) })
+            .ToListAsync(ct);
+
         var decisions = await _db.Set<CashDayCloseReview>().AsNoTracking()
             .Where(x => x.DentalPracticeId == practiceId && x.SubmissionId == saved.Id)
             .OrderBy(x => x.ReviewedAtUtc).ThenBy(x => x.Id)
@@ -89,6 +113,14 @@ public sealed class BillingCashDayCloseController : ControllerBase
                 saved.SubmittedAtUtc, saved.SubmittedByUserId
             },
             decisions,
+            nonCash = new
+            {
+                cardReceived,
+                cardExpenses = nonCashOutflows.Where(x => x.Method == "Card").Sum(x => x.Total),
+                eftReceived,
+                eftExpenses = nonCashOutflows.Where(x => x.Method == "EFT").Sum(x => x.Total),
+                notice = "Card and EFT are reconciled separately and never added to physical cash."
+            },
             note = "Immutable original count. The cash expense figure includes only posted Cash PracticeExpense records; verify refunds and laboratory payouts are already represented in authoritative movements before approving."
         };
     }
@@ -196,6 +228,30 @@ public sealed class BillingCashDayCloseController : ControllerBase
             .FirstOrDefaultAsync(ct);
         if (last?.Decision == "Approve")
             return Conflict(new { message = "The cash close is approved. It cannot be modified or reapproved." });
+
+        if (request.Decision == "Approve")
+        {
+            var (from, to) = Range(submission.BusinessDate);
+            var liveReceipts =
+                (await _db.Payments.AsNoTracking()
+                    .Where(x => x.DentalPracticeId == practiceId && x.Method == "Cash" &&
+                        x.ReceivedAtUtc >= from && x.ReceivedAtUtc < to)
+                    .SumAsync(x => (decimal?)x.Amount, ct) ?? 0m) +
+                (await _db.PlanPayments.AsNoTracking()
+                    .Where(x => x.DentalPracticeId == practiceId && x.Method == "Cash" &&
+                        x.ReceivedAtUtc >= from && x.ReceivedAtUtc < to)
+                    .SumAsync(x => (decimal?)x.Amount, ct) ?? 0m);
+            var liveExpenses = await _db.Set<PracticeExpense>().AsNoTracking()
+                .Where(x => x.DentalPracticeId == practiceId &&
+                    x.ExpenseDate == submission.BusinessDate && x.Method == "Cash")
+                .SumAsync(x => (decimal?)x.Amount, ct) ?? 0m;
+            if (liveReceipts != submission.CashReceived ||
+                liveExpenses != submission.CashExpenses)
+                return Conflict(new
+                {
+                    message = "Cash movements changed after the blind count. Escalate and record a controlled adjustment before approval."
+                });
+        }
 
         var review = new CashDayCloseReview
         {
