@@ -15,10 +15,11 @@ import BillingLedgerPanel from './pages/BillingLedgerPanel'
 import FinanceWorkspaceTabs from './pages/FinanceWorkspaceTabs'
 import PatientBalancesPanel from './pages/PatientBalancesPanel'
 import InvoicesPanel from './pages/InvoicesPanel'
-import FinanceOperationsPanel from './pages/FinanceOperationsPanel'
+import BillingFinanceReviewPanel from './pages/BillingFinanceReviewPanel'
 import { Receipt as CheckoutIcon } from 'lucide-react'
-import ClientBillingWorkspace, { billingSidebarSections } from './pages/ClientBillingWorkspace'
-import type { BillingSection } from './pages/ClientBillingWorkspace'
+import ClientBillingWorkspace from './pages/ClientBillingWorkspace'
+import { billingSidebarSections } from './pages/clientBillingNavigation'
+import type { BillingSection } from './pages/clientBillingNavigation'
 import { Wallet } from 'lucide-react'
 import DentistDashboardPage from './pages/DentistDashboardPage'
 import OverviewDashboardPage from './pages/OverviewDashboardPage'
@@ -1333,11 +1334,7 @@ export default function App() {
             (role === 'Finance' || role === 'PracticeAdmin') && (
               <FinanceWorkspaceTabs
                 revenue={<BillingLedgerPanel />}
-                expenses={
-                  <FinanceOperationsPanel
-                    canManage={role === 'PracticeAdmin'}
-                  />
-                }
+                review={<BillingFinanceReviewPanel canApprove={role === 'PracticeAdmin'} />}
                 invoices={
                   <InvoicesPanel
                     canIssue={role === 'PracticeAdmin'}
