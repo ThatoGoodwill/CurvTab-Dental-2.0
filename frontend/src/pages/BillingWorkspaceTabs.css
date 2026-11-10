@@ -321,3 +321,83 @@
   .ct-billing-workspace .ct-billing-tabs { display: flex; flex-wrap: wrap; }
   .ct-billing-workspace .ct-billing-tab { flex: 1 1 145px; }
 }
+
+
+
+/* CT_FINANCIAL_CLIENT_COMPACT_20261110
+   Billing and Finance share one dense, theme-aware financial workspace. */
+.ct-financial-workspace { gap: 12px; min-width: 0; }
+.ct-financial-workspace .ct-financial-hero {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 16px; border: 1px solid var(--border, #dfe6ec);
+  border-radius: 12px; background: color-mix(in srgb, var(--practice-primary, #275bd5) 7%, var(--surface, white));
+}
+.ct-financial-hero > div:first-child { display: grid; gap: 3px; min-width: 0; }
+.ct-financial-hero h1 { font-size: clamp(21px, 2.3vw, 26px); margin: 0; color: inherit; }
+.ct-financial-hero p { margin: 0; max-width: 650px; opacity: .78; font-size: 12px; line-height: 1.45; }
+.ct-financial-hero > div:first-child > span { font-size: 10px; font-weight: 800; letter-spacing: 1.2px; color: var(--practice-primary, currentColor); }
+.ct-financial-hero-mark {
+  width: 42px; height: 42px; border-radius: 11px; flex: none; display: grid; place-items: center;
+  background: linear-gradient(125deg, var(--practice-primary, #275bd5), var(--practice-accent, #18a89c));
+  color: white;
+}
+.ct-financial-workspace .ct-financial-nav {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(152px, 1fr)) !important;
+  gap: 7px !important; padding: 0 !important; border: 0 !important; background: transparent !important;
+}
+.ct-financial-workspace .ct-financial-nav .ct-billing-tab {
+  min-width: 0; min-height: 69px; display: flex !important; align-items: center !important;
+  justify-content: flex-start !important; text-align: left !important; gap: 9px !important;
+  padding: 10px 11px !important; border-radius: 10px !important;
+  background: var(--surface, #fff) !important;
+  color: inherit !important; border: 1px solid var(--border, #dfe6ec) !important;
+  box-shadow: none !important; transform: none !important;
+}
+.ct-financial-workspace .ct-financial-nav .ct-billing-tab.active {
+  background: color-mix(in srgb, var(--practice-primary, #275bd5) 9%, var(--surface, #fff)) !important;
+  border: 1px solid var(--practice-primary, #275bd5) !important;
+  box-shadow: inset 0 2px 0 var(--practice-primary, #275bd5) !important;
+}
+.ct-financial-workspace .ct-financial-nav .ct-billing-tab:hover {
+  border-color: var(--practice-primary, #275bd5) !important;
+  background: color-mix(in srgb, var(--practice-primary, #275bd5) 5%, var(--surface, #fff)) !important;
+}
+.ct-financial-tab-icon {
+  width: 33px; height: 33px; flex: none; display: grid; place-items: center;
+  border-radius: 9px; background: color-mix(in srgb, var(--practice-primary, #275bd5) 14%, transparent);
+  color: var(--practice-primary, currentColor);
+}
+.ct-financial-tab-copy { display: grid; gap: 3px; min-width: 0; }
+.ct-financial-tab-copy strong { font-size: 12px; line-height: 1.2; font-weight: 750; }
+.ct-financial-tab-copy small { font-size: 10px; line-height: 1.3; font-weight: 450; opacity: .72; white-space: normal; }
+.ct-financial-workspace .ct-financial-detail {
+  min-width: 0; display: block; padding: 10px;
+  border: 1px solid var(--border, #dfe6ec);
+  border-radius: 11px; background: var(--surface, transparent);
+}
+.ct-financial-detail :is(.page-heading, .ct-finance-ops-header) { margin-bottom: 9px; }
+.ct-financial-detail :is(.page-heading h1, .ct-finance-ops-header h2) { font-size: 19px; }
+.ct-financial-detail :is(.panel, .ct-finance-ops) { margin-top: 0; margin-bottom: 0; padding: 13px; border-radius: 9px; }
+.ct-financial-detail :is(.checkout-page, .ct-finance-ops) { gap: 10px; }
+.ct-financial-detail .checkout-grid { gap: 10px; }
+.ct-financial-detail :is(.checkout-patient, .ct-invoice-row) { padding: 9px; }
+.ct-financial-detail :is(.ct-finance-cards article, .checkout-amounts) { padding: 11px; }
+[data-theme='dark'] .ct-financial-workspace .ct-financial-nav .ct-billing-tab {
+  color: inherit !important;
+  background: var(--surface, #1b2b41) !important;
+}
+[data-theme='dark'] .ct-financial-workspace .ct-financial-nav .ct-billing-tab.active {
+  background: color-mix(in srgb, var(--practice-primary, #275bd5) 20%, var(--surface, #1b2b41)) !important;
+}
+@media(max-width: 600px) {
+  .ct-financial-workspace .ct-financial-nav { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+  .ct-financial-workspace .ct-financial-nav .ct-billing-tab { min-height: 64px; padding: 8px !important; }
+  .ct-financial-tab-icon { width: 28px; height: 28px; }
+  .ct-financial-tab-copy small { font-size: 9px; }
+  .ct-financial-workspace .ct-financial-detail { padding: 5px; }
+  .ct-financial-detail .checkout-grid { grid-template-columns: 1fr; }
+}
+@media(max-width: 380px) {
+  .ct-financial-workspace .ct-financial-nav { grid-template-columns: 1fr !important; }
+}

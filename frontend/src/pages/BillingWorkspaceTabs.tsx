@@ -19,13 +19,14 @@ type Props = {
 }
 
 const tabs = [
-  { id: 'checkout', label: 'Checkout', Icon: Wallet },
-  { id: 'invoices', label: 'Invoices & Allocations', Icon: FileText },
-  { id: 'plans', label: 'Treatment Plan Accounts', Icon: ClipboardList },
-  { id: 'balances', label: 'Patient Balances', Icon: Users },
+  { id: 'checkout', label: 'Checkout & Payments', description: 'Receive patient payments', Icon: Wallet },
+  { id: 'invoices', label: 'Invoices', description: 'Issue and allocate invoices', Icon: FileText },
+  { id: 'plans', label: 'Treatment Plans', description: 'Manage plan accounts', Icon: ClipboardList },
+  { id: 'balances', label: 'Patient Balances', description: 'View outstanding balances', Icon: Users },
   {
     id: 'medicalAid',
     label: 'Medical Aid',
+    description: 'Claims and settlements',
     Icon: ShieldCheck,
   },
 ] as const
@@ -49,43 +50,39 @@ export default function BillingWorkspaceTabs({
   }
 
   return (
-    <div className="ct-billing-workspace">
-      <div className="ct-billing-workspace-heading">
-        <span>FRONT DESK · BILLING</span>
-        <h1>Billing</h1>
-        <p>
-          Record patient payments, manage invoices and allocations,
-          treatment accounts, medical aid and balances.
-        </p>
-      </div>
+    <div className="ct-billing-workspace ct-financial-workspace ct-financial-billing">
+      <header className="ct-billing-workspace-heading ct-financial-hero">
+        <div>
+          <span>FRONT DESK · REVENUE CYCLE</span>
+          <h1>Billing</h1>
+          <p>Patient checkout, invoices, medical aid, treatment accounts and payments.</p>
+        </div>
+        <div className="ct-financial-hero-mark" aria-hidden="true"><Wallet size={22}/></div>
+      </header>
 
-      <nav
-        className="ct-billing-tabs"
-        aria-label="Billing sections"
-      >
-        {tabs.map(({ id, label, Icon }) => (
+      <nav className="ct-billing-tabs ct-financial-nav" aria-label="Billing sections" role="tablist">
+        {tabs.map(({ id, label, description, Icon }) => (
           <button
             key={id}
             type="button"
-            aria-current={activeTab === id ? 'page' : undefined}
+            role="tab"
+            aria-selected={activeTab === id}
             className={
               'ct-billing-tab' +
               (activeTab === id ? ' active' : '')
             }
             onClick={() => setActiveTab(id)}
           >
-            <Icon size={18} aria-hidden="true" />
-            <span>{label}</span>
+            <span className="ct-financial-tab-icon"><Icon size={17} aria-hidden="true" /></span>
+            <span className="ct-financial-tab-copy"><strong>{label}</strong><small>{description}</small></span>
           </button>
         ))}
       </nav>
 
-      <div
-        className="ct-billing-tab-content"
-        key={activeTab}
-      >
+      <section className="ct-billing-tab-content ct-financial-detail" key={activeTab} role="tabpanel"
+        aria-label={tabs.find(tab => tab.id === activeTab)?.label}>
         {content[activeTab]}
-      </div>
+      </section>
     </div>
   )
 }
