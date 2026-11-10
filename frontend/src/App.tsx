@@ -15,6 +15,7 @@ import BillingLedgerPanel from './pages/BillingLedgerPanel'
 import PlanAccountsPanel from './pages/PlanAccountsPanel'
 import FinanceWorkspaceTabs from './pages/FinanceWorkspaceTabs'
 import BillingWorkspaceTabs from './pages/BillingWorkspaceTabs'
+import type { BillingSection } from './pages/BillingWorkspaceTabs'
 import MedicalAidPanel from './pages/MedicalAidPanel'
 import PatientBalancesPanel from './pages/PatientBalancesPanel'
 import InvoicesPanel from './pages/InvoicesPanel'
@@ -654,6 +655,8 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   // Sidebar Scheduling submenu.
+  const [billingExpanded, setBillingExpanded] = useState(true)
+  const [billingSection, setBillingSection] = useState<BillingSection>('today')
   const [appointmentsExpanded, setAppointmentsExpanded] =
     useState(false)
 
@@ -702,8 +705,8 @@ export default function App() {
         { name: 'Dashboard' as Section, icon: LayoutDashboard },
         ...(canViewPatients
           ? [
-              { name: 'Patients' as Section, icon: Users },
               { name: 'Scheduling' as Section, icon: CalendarDays },
+              { name: 'Patients' as Section, icon: Users },
               { name: 'Laboratory' as Section, icon: FlaskConical },
             ]
           : []),
@@ -810,7 +813,9 @@ export default function App() {
           className="side-nav"
           aria-label="Main navigation"
          style={{ display: 'flex', flexDirection: 'column' }}>
-          {navigation.filter(item => isModuleVisible(item.name)).map((item) => {
+          {navigation.filter(item => isModuleVisible(item.name) &&
+             !((role === 'Receptionist' || role === 'PracticeAdmin') &&
+               ['Laboratory','Management','Configuration Center'].includes(item.name))).map((item) => {
             const Icon = item.icon
 
             if (item.name === 'Scheduling') {
@@ -905,7 +910,7 @@ export default function App() {
                 onClick={() => navigate(item.name)}
               >
                 <Icon size={19} />
-                <span>{item.name}</span>
+                <span>{item.name === 'Finance' ? 'Finances' : item.name}</span>
               </button>
             )
           })}
@@ -921,19 +926,54 @@ export default function App() {
           )}
           
 
+          {/* Client guide: one Billing parent, exactly five named children. */}
           {(role === 'Receptionist' || role === 'PracticeAdmin') && isModuleVisible('Billing') && (
-            <button type="button"
-              className={section === 'Billing' ? 'nav-item nav-active' : 'nav-item'}
-              onClick={() => navigate('Billing')}>
-              <CheckoutIcon size={19} /> <span>Billing</span>
-            </button>
+            <div className="ct-guide-sidebar-group">
+              <button type="button"
+                className={section === 'Billing' ? 'nav-item nav-active' : 'nav-item'}
+                aria-expanded={billingExpanded}
+                onClick={() => {
+                  setBillingExpanded(open => !open)
+                  navigate('Billing')
+                }}>
+                <CheckoutIcon size={19}/><span>Billing</span>
+                {billingExpanded ? <ChevronDown size={16}/> : <ChevronRight size={16}/>}
+              </button>
+              {billingExpanded && (
+                <div className="ct-guide-sidebar-items">
+                  {([
+                    ['today', "Today's Billing"],
+                    ['cashPrivate', 'Cash & Private'],
+                    ['medicalAid', 'Medical Aid'],
+                    ['cashClose', 'Cash Day Close'],
+                    ['aidClose', 'Medical Aid Day Sign-Off'],
+                  ] as const).map(([id, name]) => (
+                    <button key={id} type="button"
+                      className={section === 'Billing' && billingSection === id ? 'nav-item nav-active' : 'nav-item'}
+                      aria-current={section === 'Billing' && billingSection === id ? 'page' : undefined}
+                      onClick={() => { setBillingSection(id);navigate('Billing');setBillingExpanded(true) }}>
+                      <span>{name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
-          {(role === 'PracticeAdmin') && (
-            <button type="button"
-              className={section === 'Finance' ? 'nav-item nav-active' : 'nav-item'}
-              onClick={() => navigate('Finance')}>
-              <Wallet size={19} /> <span>Finance</span>
-            </button>
+          {(role === 'Receptionist' || role === 'PracticeAdmin') && (
+            <button type="button" className={section === 'Laboratory' ? 'nav-item nav-active' : 'nav-item'}
+              onClick={() => navigate('Laboratory')}><FlaskConical size={19}/><span>Lab</span></button>
+          )}
+          {role === 'PracticeAdmin' && (
+            <button type="button" className={section === 'Management' ? 'nav-item nav-active' : 'nav-item'}
+              onClick={() => navigate('Management')}><CtManagementIcon size={19}/><span>Staff Management</span></button>
+          )}
+          {role === 'PracticeAdmin' && (
+            <button type="button" className={section === 'Finance' ? 'nav-item nav-active' : 'nav-item'}
+              onClick={() => navigate('Finance')}><Wallet size={19}/><span>Finances</span></button>
+          )}
+          {role === 'PracticeAdmin' && (
+            <button type="button" className={section === 'Configuration Center' ? 'nav-item nav-active' : 'nav-item'}
+              onClick={() => navigate('Configuration Center')}><CtAppearanceIcon size={19}/><span>Settings</span></button>
           )}
           {role === 'Dentist' && (
             <>
@@ -1288,11 +1328,13 @@ export default function App() {
           {section === 'Billing' &&
             (role === 'Receptionist' || role === 'PracticeAdmin') && (
               <BillingWorkspaceTabs
+                section={billingSection}
+                onSectionChange={setBillingSection}
+                isManager={role === 'PracticeAdmin'}
                 checkout={<ReceptionCheckoutPage />}
+                ledger={<BillingLedgerPanel />}
                 plans={<PlanAccountsPanel />}
-                medicalAid={<MedicalAidPanel
-                  canManage={role === 'PracticeAdmin'}
-                />}
+                medicalAid={<MedicalAidPanel canManage={role === 'PracticeAdmin'} />}
                 balances={<PatientBalancesPanel />}
                 invoices={<InvoicesPanel canIssue={role === 'PracticeAdmin'} />}
               />
