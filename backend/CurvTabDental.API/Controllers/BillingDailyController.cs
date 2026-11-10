@@ -195,7 +195,8 @@ public sealed class BillingDailyController : ControllerBase
             cashExpenses = totals.CashExpenses, nonCashExpenses = totals.CardExpenses + totals.EftExpenses,
             refunds = totals.CashRefunds + totals.CardRefunds + totals.EftRefunds,
             netActualMovements = totals.ActualReceived - totals.ActualPayouts,
-            claimsSubmittedValue = ((dynamic)DescribeClaims(claims.Rows, claims.PatientsTreated, claims.Pending)).submittedValue,
+            claimsSubmittedValue = claims.Rows.GroupBy(x => x.ClaimId)
+                .Select(g => g.OrderBy(x => x.SubmittedAtUtc).First().Amount).Sum(),
             claimActivity = DescribeClaims(claims.Rows, claims.PatientsTreated, claims.Pending),
             expenses = expenseRows, cashDayClose = cashCount, medicalAidDaySignoff = medical,
             note = "Medical aid claims submitted are excluded from all money figures; scheme deposits are counted on receipt date."
