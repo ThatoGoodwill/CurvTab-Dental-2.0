@@ -53,7 +53,7 @@ public sealed class MedicalAidClaimCorrectionsController : ControllerBase
         if (req.RequestId == Guid.Empty || req.InvoiceLineId == Guid.Empty ||
             oldCode.Length is < 1 or > 40 || code.Length is < 1 or > 40 ||
             oldCode.Equals(code, StringComparison.OrdinalIgnoreCase) ||
-            reason.Length is < 10 or > 1000 || evidence.Length is < 3 or > 300)
+            reason.Length is < 10 or > 800 || evidence.Length is < 3 or > 300)
             return BadRequest(new { message = "Provide the original code, corrected code, clinical source and authorisation evidence." });
 
         await using var tx = await _db.Database.BeginTransactionAsync(ct);
