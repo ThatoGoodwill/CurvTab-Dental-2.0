@@ -57,7 +57,7 @@ export async function apiRequest<T>(
 
     throw new ApiError(
       response.status,
-      problem?.title || problem?.detail || `Request failed: ${response.status}`
+      problem?.message || problem?.title || problem?.detail || `Request failed: ${response.status}`
     )
   }
 

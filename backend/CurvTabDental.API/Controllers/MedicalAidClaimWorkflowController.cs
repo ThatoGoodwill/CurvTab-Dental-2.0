@@ -1,3 +1,4 @@
+using System.Text.Json;
 using CurvTabDental.Application.Abstractions;
 using CurvTabDental.Domain.Entities;
 using CurvTabDental.Infrastructure.Persistence;
@@ -47,7 +48,11 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
         (from == "AcknowledgedReported" &&
          (to == "ApprovedReported" ||
           to == "PartiallyApprovedReported" ||
-          to == "RejectedReported"));
+          to == "RejectedReported")) ||
+
+        // A rejection may be resubmitted only after an audited, approved correction.
+        (from == "CorrectedPendingResubmission" &&
+         to == "SubmittedExternallyReported");
 
     private static bool ValidMoney(decimal value) =>
         value >= 0m &&
@@ -103,12 +108,33 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
             })
             .ToListAsync(ct);
 
+        var corrections = await _db.Set<BillingClaimCorrection>()
+            .AsNoTracking()
+            .Where(x => x.DentalPracticeId == practiceId && x.ClaimId == claimId)
+            .OrderBy(x => x.Version)
+            .Select(x => new {
+                x.Id, x.Version, x.InvoiceLineId,
+                x.PreviousCode, x.CorrectedCode, x.Reason,
+                x.EvidenceReference, x.ApprovedByUserId, x.ApprovedAtUtc
+            }).ToListAsync(ct);
+
+        var attempts = await _db.Set<BillingClaimSubmissionAttempt>()
+            .AsNoTracking()
+            .Where(x => x.DentalPracticeId == practiceId && x.ClaimId == claimId)
+            .OrderBy(x => x.AttemptNumber)
+            .Select(x => new {
+                x.Id, x.AttemptNumber, x.ExternalReference,
+                x.EvidenceReference, x.PayloadJson,
+                x.RecordedByUserId, x.RecordedAtUtc
+            }).ToListAsync(ct);
         Response.Headers.CacheControl = "private, no-store";
 
         return Ok(new
         {
             claim,
             events,
+            attempts,
+            corrections,
             notice = "All scheme updates are staff-recorded, " +
                      "not independently verified."
         });
@@ -217,6 +243,25 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
                 {
                     message = "Submission must not specify approval."
                 });
+
+            if (claim.Status == "CorrectedPendingResubmission")
+            {
+                var correction = await _db.Set<BillingClaimCorrection>()
+                    .AsNoTracking()
+                    .Where(x => x.DentalPracticeId == practiceId && x.ClaimId == claim.Id)
+                    .OrderByDescending(x => x.Version).FirstOrDefaultAsync(ct);
+                if (correction is null)
+                    return Conflict(new { message = "Approve a versioned clinical code correction before resubmitting." });
+                if (string.Equals(external, claim.ExternalReference, StringComparison.Ordinal))
+                    return Conflict(new { message = "Resubmission needs a NEW transmission reference; keep the earlier reference in history." });
+                var submittedReferences = await _db.Set<MedicalAidClaimEvent>()
+                    .AsNoTracking()
+                    .Where(x => x.DentalPracticeId == practiceId && x.ClaimId == claim.Id &&
+                        x.ToStatus == "SubmittedExternallyReported")
+                    .Select(x => x.ExternalReference).ToListAsync(ct);
+                if (submittedReferences.Contains(external))
+                    return Conflict(new { message = "That transmission reference is already used by an earlier attempt." });
+            }
         }
         else if (!string.IsNullOrWhiteSpace(external) &&
                  external != claim.ExternalReference)
@@ -336,6 +381,58 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
         };
 
         _db.Set<MedicalAidClaimEvent>().Add(historyEvent);
+
+        if (target == "SubmittedExternallyReported")
+        {
+            // No new claim, invoice, payment or patient charge is created.
+            // The payload snapshot reflects the original posted invoice and
+            // the latest manager-approved code correction, if there is one.
+            // Count historical transmission events too: claims created before
+            // this snapshot feature still retain their correct attempt numbers.
+            var priorAttempts = await _db.Set<MedicalAidClaimEvent>()
+                .AsNoTracking()
+                .CountAsync(x => x.DentalPracticeId == practiceId &&
+                    x.ClaimId == claim.Id &&
+                    x.ToStatus == "SubmittedExternallyReported", ct);
+            var invoiceLines = await _db.Set<InvoiceLine>().AsNoTracking()
+                .Where(x => x.DentalPracticeId == practiceId &&
+                    x.InvoiceId == claim.InvoiceId)
+                .OrderBy(x => x.Id)
+                .Select(x => new {
+                    x.Id, x.Description, x.Amount
+                }).ToListAsync(ct);
+            var correction = await _db.Set<BillingClaimCorrection>().AsNoTracking()
+                .Where(x => x.DentalPracticeId == practiceId &&
+                    x.ClaimId == claim.Id)
+                .OrderByDescending(x => x.Version)
+                .Select(x => new {
+                    x.Version, x.InvoiceLineId,
+                    x.PreviousCode, x.CorrectedCode, x.EvidenceReference
+                }).FirstOrDefaultAsync(ct);
+            var snapshot = JsonSerializer.Serialize(new {
+                claimId = claim.Id,
+                invoiceId = claim.InvoiceId,
+                membershipId = claim.MembershipId,
+                claimedAmount = claim.ClaimedAmount,
+                currency = claim.Currency,
+                invoiceLines,
+                latestApprovedCorrection = correction,
+                submittedExternalReference = external,
+                eventEvidenceReference = evidence,
+                eventReason = reason
+            });
+            _db.Set<BillingClaimSubmissionAttempt>().Add(
+                new BillingClaimSubmissionAttempt {
+                    DentalPracticeId = practiceId, ClaimId = claim.Id,
+                    RequestId = request.RequestId,
+                    AttemptNumber = priorAttempts + 1,
+                    ExternalReference = external!,
+                    EvidenceReference = evidence,
+                    PayloadJson = snapshot,
+                    RecordedByUserId = actorId,
+                    RecordedAtUtc = now
+                });
+        }
 
         await _db.SaveChangesAsync(ct);
 

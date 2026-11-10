@@ -16,6 +16,9 @@ public sealed class ProcedurePrice : IPracticeOwned
 
     public decimal Price { get; set; }
     public bool IsActive { get; set; } = true;
+    // Procedure pricing metadata used by the laboratory workflow.
+    public bool RequiresLab { get; set; }
+    public decimal SupplierEstimate { get; set; }
 
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;

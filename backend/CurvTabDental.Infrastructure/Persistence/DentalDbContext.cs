@@ -75,6 +75,107 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
     {
         base.OnModelCreating(modelBuilder);
 
+
+        modelBuilder.Entity<BillingClaimSubmissionAttempt>(e => {
+            e.ToTable("BillingClaimSubmissionAttempts");
+            e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.Property(x => x.ExternalReference).HasMaxLength(120).IsRequired();
+            e.Property(x => x.EvidenceReference).HasMaxLength(300).IsRequired();
+            e.Property(x => x.PayloadJson).HasColumnType("jsonb");
+            e.HasIndex(x => new { x.DentalPracticeId, x.RequestId }).IsUnique();
+            e.HasIndex(x => new { x.DentalPracticeId, x.ClaimId, x.AttemptNumber }).IsUnique();
+            e.HasOne<MedicalAidClaim>().WithMany()
+                .HasForeignKey(x => x.ClaimId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // CLIENT BILLING: immutable, tenant-scoped sign-offs and audit decisions.
+        modelBuilder.Entity<BillingCashCount>(e => {
+            e.ToTable("BillingCashCounts");
+            e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.Property(x => x.OpeningFloat).HasPrecision(12, 2);
+            e.Property(x => x.CashReceipts).HasPrecision(12, 2);
+            e.Property(x => x.CashExpenses).HasPrecision(12, 2);
+            e.Property(x => x.CashRefunds).HasPrecision(12, 2);
+            e.Property(x => x.ExpectedCash).HasPrecision(12, 2);
+            e.Property(x => x.CountedCash).HasPrecision(12, 2);
+            e.Property(x => x.Variance).HasPrecision(12, 2);
+            e.Property(x => x.DenominationsJson).HasColumnType("jsonb");
+            e.HasIndex(x => new { x.DentalPracticeId, x.RequestId }).IsUnique();
+            e.HasIndex(x => new { x.DentalPracticeId, x.BusinessDate, x.Revision }).IsUnique();
+        });
+        modelBuilder.Entity<BillingCashCountEvent>(e => {
+            e.ToTable("BillingCashCountEvents");
+            e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.Property(x => x.Action).HasMaxLength(25).IsRequired();
+            e.Property(x => x.Notes).HasMaxLength(1500).IsRequired();
+            e.Property(x => x.EvidenceReference).HasMaxLength(300);
+            e.HasIndex(x => new { x.DentalPracticeId, x.RequestId }).IsUnique();
+            e.HasIndex(x => new { x.DentalPracticeId, x.CashCountId, x.AtUtc });
+            e.HasOne<BillingCashCount>().WithMany().HasForeignKey(x => x.CashCountId).OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<BillingMedicalAidDaySignoff>(e => {
+            e.ToTable("BillingMedicalAidDaySignoffs");
+            e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.Property(x => x.SubmittedValue).HasPrecision(12, 2);
+            e.Property(x => x.SnapshotJson).HasColumnType("jsonb");
+            e.Property(x => x.Notes).HasMaxLength(1500);
+            e.HasIndex(x => new { x.DentalPracticeId, x.RequestId }).IsUnique();
+            e.HasIndex(x => new { x.DentalPracticeId, x.BusinessDate }).IsUnique();
+        });
+        modelBuilder.Entity<BillingClaimCorrection>(e => {
+            e.ToTable("BillingClaimCorrections");
+            e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.Property(x => x.PreviousCode).HasMaxLength(40).IsRequired();
+            e.Property(x => x.CorrectedCode).HasMaxLength(40).IsRequired();
+            e.Property(x => x.Reason).HasMaxLength(1000).IsRequired();
+            e.Property(x => x.EvidenceReference).HasMaxLength(300).IsRequired();
+            e.HasIndex(x => new { x.DentalPracticeId, x.RequestId }).IsUnique();
+            e.HasIndex(x => new { x.DentalPracticeId, x.ClaimId, x.Version }).IsUnique();
+            e.HasOne<MedicalAidClaim>().WithMany().HasForeignKey(x => x.ClaimId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<InvoiceLine>().WithMany().HasForeignKey(x => x.InvoiceLineId).OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<BillingPaymentRefund>(e => {
+            e.ToTable("BillingPaymentRefunds");
+            e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.Property(x => x.Method).HasMaxLength(16).IsRequired();
+            e.Property(x => x.Amount).HasPrecision(12, 2);
+            e.Property(x => x.Reason).HasMaxLength(1000).IsRequired();
+            e.Property(x => x.EvidenceReference).HasMaxLength(300).IsRequired();
+            e.HasIndex(x => new { x.DentalPracticeId, x.RequestId }).IsUnique();
+            e.HasIndex(x => new { x.DentalPracticeId, x.RefundedOn });
+            e.HasOne<Payment>().WithMany().HasForeignKey(x => x.PaymentId).OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<BillingExpenseApprovalRequest>(e => {
+            e.ToTable("BillingExpenseApprovalRequests");
+            e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.Property(x => x.Supplier).HasMaxLength(120).IsRequired();
+            e.Property(x => x.Category).HasMaxLength(60).IsRequired();
+            e.Property(x => x.Description).HasMaxLength(250).IsRequired();
+            e.Property(x => x.Method).HasMaxLength(16).IsRequired();
+            e.Property(x => x.Reference).HasMaxLength(100);
+            e.Property(x => x.ReceiptReference).HasMaxLength(300).IsRequired();
+            e.Property(x => x.Amount).HasPrecision(12, 2);
+            e.HasIndex(x => new { x.DentalPracticeId, x.RequestId }).IsUnique();
+            e.HasIndex(x => new { x.DentalPracticeId, x.ExpenseDate });
+        });
+        modelBuilder.Entity<BillingExpenseDecision>(e => {
+            e.ToTable("BillingExpenseDecisions");
+            e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.Property(x => x.Decision).HasMaxLength(20).IsRequired();
+            e.Property(x => x.Notes).HasMaxLength(1000);
+            e.HasIndex(x => new { x.DentalPracticeId, x.RequestId }).IsUnique();
+            e.HasIndex(x => new { x.DentalPracticeId, x.ExpenseRequestId }).IsUnique();
+            e.HasOne<BillingExpenseApprovalRequest>().WithMany().HasForeignKey(x => x.ExpenseRequestId).OnDelete(DeleteBehavior.Restrict);
+        });
+
         // CT_PLAN_ACCOUNT_V1
         modelBuilder.Entity<PlanPayment>(e =>
         {
@@ -116,6 +217,8 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
         modelBuilder.Entity<ProcedurePrice>(e =>
         {
             e.ToTable("ProcedurePrices");
+            e.Property(x => x.RequiresLab).HasDefaultValue(false);
+            e.Property(x => x.SupplierEstimate).HasPrecision(12, 2).HasDefaultValue(0m);
             e.HasKey(x => x.Id);
             e.HasQueryFilter(x =>
                 x.DentalPracticeId == CurrentPracticeId);

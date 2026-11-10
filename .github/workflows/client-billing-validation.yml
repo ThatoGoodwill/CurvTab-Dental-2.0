@@ -1,0 +1,40 @@
+name: Client Billing compliance checks
+
+on:
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
+      - '.github/workflows/client-billing-validation.yml'
+  push:
+    branches:
+      - feature/client-billing-separate-signoffs-20261110
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      # Full-repository ESLint has pre-existing React Hooks violations unrelated to Billing.
+      # TypeScript + Vite build gates remain required; repo-wide lint clean-up is separate.
+
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet build backend/CurvTabDental.slnx --configuration Release
+      - name: Verify client cash arithmetic and claim/receipt separation
+        run: dotnet run --project backend/CurvTabDental.BillingVerification/CurvTabDental.BillingVerification.csproj --configuration Release
