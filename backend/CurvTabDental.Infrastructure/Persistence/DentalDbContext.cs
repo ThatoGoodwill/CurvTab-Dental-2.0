@@ -59,6 +59,8 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
 
     public DbSet<ConsultationCharge> ConsultationCharges => Set<ConsultationCharge>();
     public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<PlanPayment> PlanPayments => Set<PlanPayment>();
+    public DbSet<PlanPaymentAllocation> PlanPaymentAllocations => Set<PlanPaymentAllocation>();
     public DbSet<OrthodonticFinancialAgreement> OrthodonticFinancialAgreements => Set<OrthodonticFinancialAgreement>();
     public DbSet<OrthodonticInstallment> OrthodonticInstallments => Set<OrthodonticInstallment>();
     public DbSet<DentalChartEntry> DentalChartEntries => Set<DentalChartEntry>();
@@ -72,6 +74,30 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // CT_PLAN_ACCOUNT_V1
+        modelBuilder.Entity<PlanPayment>(e =>
+        {
+            e.ToTable("PlanPayments");
+            e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.Property(x => x.Amount).HasPrecision(12, 2);
+            e.Property(x => x.Method).IsRequired().HasMaxLength(10);
+            e.Property(x => x.Reference).HasMaxLength(100);
+            e.Property(x => x.ReceiptNumber).IsRequired().HasMaxLength(60);
+            e.HasIndex(x => new { x.DentalPracticeId, x.RequestId }).IsUnique();
+            e.HasIndex(x => new { x.DentalPracticeId, x.TreatmentPlanId });
+            e.HasIndex(x => new { x.DentalPracticeId, x.ReceivedAtUtc });
+        });
+        modelBuilder.Entity<PlanPaymentAllocation>(e =>
+        {
+            e.ToTable("PlanPaymentAllocations");
+            e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.Property(x => x.Amount).HasPrecision(12, 2);
+            e.HasIndex(x => new { x.DentalPracticeId, x.TreatmentPlanId });
+            e.HasIndex(x => new { x.DentalPracticeId, x.ProcedureId });
+        });
 
         // CT_PROCEDURE_PRICING_V1
         modelBuilder.Entity<PracticeConfiguration>(e =>

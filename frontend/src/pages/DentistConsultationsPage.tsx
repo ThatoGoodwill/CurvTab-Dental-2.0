@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { ClipboardList, Plus, RefreshCw, Save, Stethoscope, Trash2 } from 'lucide-react'
 import { apiRequest } from '../services/api'
@@ -18,6 +18,7 @@ type FieldName =
   | 'treatmentPerformed' | 'treatmentPlan' | 'prescriptionNotes' | 'followUpAdvice'
 type ClinicalForm = Record<FieldName, string>
 type Charge = { description: string; amount: string }
+type CataloguePrice = { id: string; code: string; name: string; category: string; price: number; isActive: boolean }
 type StoredCharge = { id: string; description: string; amount: number }
 type ConsultationRecord = Partial<ClinicalForm> & {
   isFinalized: boolean
@@ -186,6 +187,31 @@ export default function DentistConsultationsPage({
   const [charges, setCharges] = useState<Charge[]>([])
   const [chargesConfirmed, setChargesConfirmed] = useState(false)
   const [detailRevision, setDetailRevision] = useState(0)
+  const [prices, setPrices] = useState<CataloguePrice[]>([])
+  const [rxDrug, setRxDrug] = useState('')
+  const [rxDose, setRxDose] = useState('')
+  const [rxDays, setRxDays] = useState('7')
+
+  // Practice price list from Configuration Center > Procedure Pricing.
+  useEffect(() => {
+    apiRequest<CataloguePrice[]>('/practice/procedure-prices')
+      .then(rows => setPrices(rows.filter(row => row.isActive)))
+      .catch(() => setPrices([]))
+  }, [])
+
+  function addPrescriptionLine() {
+    const drug = rxDrug.trim()
+    if (!drug) return
+    const dose = rxDose.trim()
+    const days = rxDays.trim()
+    const line = `${drug}${dose ? ' ' + dose : ''}${days ? ' — ' + days + ' days' : ''}`
+    setForm(previous => ({
+      ...previous,
+      prescriptionNotes: previous.prescriptionNotes.trim()
+        ? previous.prescriptionNotes.trim() + '\n' + line : line,
+    }))
+    setRxDrug(''); setRxDose('')
+  }
 
   useEffect(() => {
     if (!day) return
@@ -347,7 +373,8 @@ export default function DentistConsultationsPage({
                 </p>
                 <div className="clinical-field-grid">
                   {fields.map(field => (
-                    <label className="clinical-label" key={field.key}>
+                    <Fragment key={field.key}>
+                    <label className="clinical-label">
                       {field.label}{field.required && <span aria-hidden="true"> *</span>}
                       <select
                         defaultValue=""
@@ -369,6 +396,20 @@ export default function DentistConsultationsPage({
                         value={form[field.key]} disabled={!editable || saving}
                         onChange={event => setForm(previous => ({ ...previous, [field.key]: event.target.value }))}/>
                     </label>
+                    {field.key === 'prescriptionNotes' && editable && (
+                      <div className="clinical-label" role="group" aria-label="Prescription builder">
+                        <span>Add prescription line</span>
+                        <input value={rxDrug} maxLength={80} placeholder="Medicine, e.g. Amoxil 500 mg"
+                          disabled={saving} onChange={event => setRxDrug(event.target.value)} />
+                        <input value={rxDose} maxLength={80} placeholder="Dose, e.g. 1 capsule 3 times daily"
+                          disabled={saving} onChange={event => setRxDose(event.target.value)} />
+                        <input value={rxDays} inputMode="numeric" maxLength={3} placeholder="Days"
+                          disabled={saving} onChange={event => setRxDays(event.target.value.replace(/\D/g, ''))} />
+                        <button type="button" className="secondary-button" disabled={saving || !rxDrug.trim()}
+                          onClick={addPrescriptionLine}><Plus size={16}/> Add to prescription</button>
+                      </div>
+                    )}
+                    </Fragment>
                   ))}
                 </div>
                 <div className="clinical-charge-heading"><div><h3>Treatment Charges</h3>
@@ -387,7 +428,14 @@ export default function DentistConsultationsPage({
                         disabled={!editable || saving}
                         onChange={event => {
                           const selected = event.currentTarget.value
-                          if (selected) {
+                          if (selected.startsWith('price:')) {
+                            const found = prices.find(price => price.id === selected.slice(6))
+                            if (found) {
+                              setCharges(prev => prev.map((item, i) =>
+                                i === index ? { description: found.name, amount: found.price.toFixed(2) } : item))
+                              setChargesConfirmed(false)
+                            }
+                          } else if (selected) {
                             setCharges(prev => prev.map((item, i) =>
                               i === index ? { ...item, description: selected } : item))
                             setChargesConfirmed(false)
@@ -395,8 +443,13 @@ export default function DentistConsultationsPage({
                           event.currentTarget.value = ''
                         }}
                       >
-                        <option value="">Choose common service (optional)</option>
-                        {commonTreatments.map(treatment => (
+                        <option value="">{prices.length ? 'Choose from practice price list' : 'Choose common service (optional)'}</option>
+                        {prices.map(price => (
+                          <option key={price.id} value={`price:${price.id}`}>
+                            {price.name} — R{price.price.toFixed(2)}
+                          </option>
+                        ))}
+                        {prices.length === 0 && commonTreatments.map(treatment => (
                           <option key={treatment} value={treatment}>{treatment}</option>
                         ))}
                       </select>

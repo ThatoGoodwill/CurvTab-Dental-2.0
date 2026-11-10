@@ -1,21 +1,24 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
-import { ShieldCheck, Wallet, Users } from 'lucide-react'
+import { ShieldCheck, Wallet, Users, ClipboardList } from 'lucide-react'
 import './BillingWorkspaceTabs.css'
 
 type BillingTab =
   | 'checkout'
+  | 'plans'
   | 'balances'
   | 'medicalAid'
 
 type Props = {
   checkout: ReactNode
+  plans: ReactNode
   balances: ReactNode
   medicalAid: ReactNode
 }
 
 const tabs = [
   { id: 'checkout', label: 'Checkout', Icon: Wallet },
+  { id: 'plans', label: 'Treatment Plan Accounts', Icon: ClipboardList },
   { id: 'balances', label: 'Patient Balances', Icon: Users },
   {
     id: 'medicalAid',
@@ -26,6 +29,7 @@ const tabs = [
 
 export default function BillingWorkspaceTabs({
   checkout,
+  plans,
   balances,
   medicalAid,
 }: Props) {
@@ -34,6 +38,7 @@ export default function BillingWorkspaceTabs({
 
   const content: Record<BillingTab, ReactNode> = {
     checkout,
+    plans,
     balances,
     medicalAid,
   }

@@ -51,8 +51,24 @@ public sealed class BillingLedgerController : ControllerBase
                 p.ReceivedAtUtc >= from &&
                 p.ReceivedAtUtc < to);
 
+        var planPayments = _db.PlanPayments
+            .AsNoTracking()
+            .Where(p =>
+                p.DentalPracticeId == practiceId &&
+                p.ReceivedAtUtc >= from &&
+                p.ReceivedAtUtc < to);
+
         // Calculate complete period totals before limiting displayed rows.
-        var totals = await payments
+        var visitTotals = await payments
+            .GroupBy(p => p.Method)
+            .Select(g => new
+            {
+                Method = g.Key,
+                Count = g.Count(),
+                Amount = g.Sum(p => p.Amount)
+            })
+            .ToListAsync(ct);
+        var planTotals = await planPayments
             .GroupBy(p => p.Method)
             .Select(g => new
             {
@@ -62,10 +78,19 @@ public sealed class BillingLedgerController : ControllerBase
             })
             .ToListAsync(ct);
 
-        var transactionCount =
-            await payments.CountAsync(ct);
+        var totals = visitTotals.Concat(planTotals)
+            .GroupBy(x => x.Method)
+            .Select(g => new
+            {
+                Method = g.Key,
+                Count = g.Sum(x => x.Count),
+                Amount = g.Sum(x => x.Amount)
+            })
+            .ToList();
 
-        var rows = await (
+        var transactionCount = totals.Sum(x => x.Count);
+
+        var visitRows = await (
             from payment in payments
             join appointment in _db.Appointments.AsNoTracking()
                 on payment.AppointmentId equals appointment.Id
@@ -74,20 +99,44 @@ public sealed class BillingLedgerController : ControllerBase
             where appointment.DentalPracticeId == practiceId
                && patient.DentalPracticeId == practiceId
             orderby payment.ReceivedAtUtc descending, payment.Id
-            select new
-            {
-                paymentId = payment.Id,
+            select new LedgerRow(
+                payment.Id,
                 payment.ReceiptNumber,
                 payment.Amount,
                 payment.Method,
                 payment.Reference,
                 payment.ReceivedAtUtc,
                 payment.ReceivedByUserId,
-                payment.AppointmentId,
-                patientId = patient.Id,
-                patientName = patient.FirstName + " " + patient.LastName
-            }
+                (Guid?)payment.AppointmentId,
+                patient.Id,
+                patient.FirstName + " " + patient.LastName,
+                "Visit checkout")
         ).Take(500).ToListAsync(ct);
+
+        var planRows = await (
+            from payment in planPayments
+            join patient in _db.Patients.AsNoTracking()
+                on payment.PatientId equals patient.Id
+            where patient.DentalPracticeId == practiceId
+            orderby payment.ReceivedAtUtc descending, payment.Id
+            select new LedgerRow(
+                payment.Id,
+                payment.ReceiptNumber,
+                payment.Amount,
+                payment.Method,
+                payment.Reference,
+                payment.ReceivedAtUtc,
+                payment.ReceivedByUserId,
+                (Guid?)null,
+                patient.Id,
+                patient.FirstName + " " + patient.LastName,
+                "Treatment plan")
+        ).Take(500).ToListAsync(ct);
+
+        var rows = visitRows.Concat(planRows)
+            .OrderByDescending(r => r.ReceivedAtUtc)
+            .Take(500)
+            .ToList();
 
         Response.Headers.CacheControl = "private, no-store";
 
@@ -112,4 +161,9 @@ public sealed class BillingLedgerController : ControllerBase
             transactions = rows
         });
     }
+
+    public sealed record LedgerRow(
+        Guid PaymentId, string ReceiptNumber, decimal Amount, string Method,
+        string? Reference, DateTime ReceivedAtUtc, Guid ReceivedByUserId,
+        Guid? AppointmentId, Guid PatientId, string PatientName, string Source);
 }

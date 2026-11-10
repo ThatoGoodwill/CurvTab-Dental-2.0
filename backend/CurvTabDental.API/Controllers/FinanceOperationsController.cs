@@ -99,9 +99,18 @@ public sealed class FinanceOperationsController : ControllerBase
                 e.ExpenseDate == date &&
                 e.Method == "Cash");
 
+        var planReceipts = _db.PlanPayments.AsNoTracking()
+            .Where(p =>
+                p.DentalPracticeId == practiceId &&
+                p.Method == "Cash" &&
+                p.ReceivedAtUtc >= start &&
+                p.ReceivedAtUtc < end);
+
         var cashReceived =
-            await receipts.SumAsync(p => (decimal?)p.Amount, ct) ?? 0m;
-        var receiptCount = await receipts.CountAsync(ct);
+            (await receipts.SumAsync(p => (decimal?)p.Amount, ct) ?? 0m) +
+            (await planReceipts.SumAsync(p => (decimal?)p.Amount, ct) ?? 0m);
+        var receiptCount =
+            await receipts.CountAsync(ct) + await planReceipts.CountAsync(ct);
 
         var cashExpenses =
             await expenses.SumAsync(e => (decimal?)e.Amount, ct) ?? 0m;
