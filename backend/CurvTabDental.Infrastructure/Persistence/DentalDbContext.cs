@@ -130,6 +130,7 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
                 .HasMaxLength(80).IsRequired();
 
             e.Property(x => x.Price).HasPrecision(12, 2);
+            e.Property(x => x.SupplierEstimate).HasPrecision(12, 2);
 
             e.HasIndex(x => new {
                 x.DentalPracticeId, x.Code
