@@ -12,6 +12,8 @@ import ClinicDashboardEnhancements from './components/ClinicDashboardEnhancement
 import './CurvTabVisualUpgrade.css'
 import OrthodonticsPage from './pages/OrthodonticsPage'
 import BillingLedgerPanel from './pages/BillingLedgerPanel'
+import './ClientThemeChoice.css'
+import AuditLogPage from './pages/AuditLogPage'
 import PlanAccountsPanel from './pages/PlanAccountsPanel'
 import FinanceWorkspaceTabs from './pages/FinanceWorkspaceTabs'
 import BillingWorkspaceTabs from './pages/BillingWorkspaceTabs'
@@ -60,8 +62,6 @@ import {
   ChevronDown,
   ChevronRight,
   ArrowRight,
-  Sun,
-  Moon,
   Menu,
   RefreshCw,
 } from 'lucide-react'
@@ -84,6 +84,7 @@ import PracticeBrandMark from './auth/PracticeBrandMark'
 import './ModalWorkspace20261110.css'
 type Section =
   | 'Laboratory'
+  | 'Dashboard' | 'Daily Patients' | 'Consultations' | 'Patient Medical Records' | 'Checkout & Payments' | 'Finance' | 'Audit Log' | 'Dental Charting' | 'Clinical Imaging' | 'Orthodontics'
   | 'Dashboard' | 'Daily Patients' | 'Billing' | 'Finance' | 'Clinical Imaging' | 'Orthodontics'
   | 'Patients'
   | 'Scheduling'
@@ -664,19 +665,20 @@ export default function App() {
   const [appointmentTab, setAppointmentTab] =
     useState<AppointmentTab>('Appointments')
 
-  const [darkMode, setDarkMode] = useState(
-    () => localStorage.getItem('curvtab-theme') === 'dark'
-  )
+  type ThemeChoice = 'white' | 'blue' | 'dark'
+  const [themeChoice, setThemeChoice] = useState<ThemeChoice>(() => {
+    const saved = localStorage.getItem('curvtab-theme-choice')
+    if (saved === 'white' || saved === 'blue' || saved === 'dark') return saved
+    return localStorage.getItem('curvtab-theme') === 'dark' ? 'dark' : 'white'
+  })
+  const darkMode = themeChoice === 'dark'
 
   useEffect(() => {
-    document.documentElement.dataset.theme =
-      darkMode ? 'dark' : 'light'
-
-    localStorage.setItem(
-      'curvtab-theme',
-      darkMode ? 'dark' : 'light'
-    )
-  }, [darkMode])
+    document.documentElement.dataset.theme = darkMode ? 'dark' : 'light'
+    document.documentElement.dataset.surface = themeChoice
+    localStorage.setItem('curvtab-theme', darkMode ? 'dark' : 'light')
+    localStorage.setItem('curvtab-theme-choice', themeChoice)
+  }, [darkMode, themeChoice])
 
   const role = user?.role ?? ''
   const isSuperAdmin = role === 'SuperAdmin'
@@ -926,6 +928,7 @@ export default function App() {
             </button>
           )}
           
+{/* Consultations are opened from Daily Patients */}
 
           {/* Client guide: one Billing parent, exactly five named children. */}
           {(role === 'Receptionist' || role === 'PracticeAdmin') && isModuleVisible('Billing') && (
@@ -976,8 +979,16 @@ export default function App() {
             <button type="button" className={section === 'Configuration Center' ? 'nav-item nav-active' : 'nav-item'}
               onClick={() => navigate('Configuration Center')}><CtAppearanceIcon size={19}/><span>Settings</span></button>
           )}
+          {role === 'PracticeAdmin' && (
+            <button type="button"
+              className={section === 'Audit Log' ? 'nav-item nav-active' : 'nav-item'}
+              onClick={() => navigate('Audit Log')}>
+              <DailyPatientsIcon size={19} /> <span>Audit Log</span>
+            </button>
+          )}
           {role === 'Dentist' && (
             <>
+              {/* Dental Charting is opened from a patient's record */}
               {isModuleVisible('Clinical Imaging') && (
                 <button
                   type="button"
@@ -1038,17 +1049,16 @@ export default function App() {
           </div>
 
           <div className="topbar-actions">
-            <button
-              type="button"
-              className="icon-button"
-              onClick={() => setDarkMode((value) => !value)}
-              aria-label="Toggle dark mode"
+            <select
+              aria-label="Theme"
+              className="ct-theme-select"
+              value={themeChoice}
+              onChange={event => setThemeChoice(event.target.value as ThemeChoice)}
             >
-              {darkMode
-                ? <Sun size={20} />
-                : <Moon size={20} />
-              }
-            </button>
+              <option value="white">White Only</option>
+              <option value="blue">Blue &amp; White</option>
+              <option value="dark">Dark Blue</option>
+            </select>
 
             <LiveClinicNotifications
               role={role}
@@ -1340,6 +1350,8 @@ export default function App() {
                 invoices={<InvoicesPanel canIssue={role === 'PracticeAdmin'} />}
               />
           )}
+
+          {section === 'Audit Log' && role === 'PracticeAdmin' && <AuditLogPage />}
 
           {/* FINANCE MODULE: revenue, expenses, invoices */}
           {section === 'Finance' &&
