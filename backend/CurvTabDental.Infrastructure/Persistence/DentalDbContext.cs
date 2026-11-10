@@ -1009,6 +1009,7 @@ modelBuilder.Entity<Appointment>(entity =>
                 .HasMaxLength(120);
             entity.Property(x => x.EvidenceReference)
                 .IsRequired().HasMaxLength(300);
+            entity.Property(x => x.PayloadSnapshotJson);
             entity.Property(x => x.Reason)
                 .IsRequired().HasMaxLength(1000);
 
