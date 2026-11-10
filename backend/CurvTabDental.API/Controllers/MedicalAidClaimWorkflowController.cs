@@ -104,6 +104,8 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
                 x.ToStatus,
                 x.ApprovedAmount,
                 x.ExternalReference,
+                x.AttemptNumber,
+                x.PayloadSnapshotJson,
                 x.EvidenceReference,
                 x.Reason,
                 x.PerformedByUserId,
