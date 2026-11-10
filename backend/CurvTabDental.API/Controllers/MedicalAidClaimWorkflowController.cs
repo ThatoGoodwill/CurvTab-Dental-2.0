@@ -387,10 +387,13 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
             // No new claim, invoice, payment or patient charge is created.
             // The payload snapshot reflects the original posted invoice and
             // the latest manager-approved code correction, if there is one.
-            var priorAttempts = await _db.Set<BillingClaimSubmissionAttempt>()
+            // Count historical transmission events too: claims created before
+            // this snapshot feature still retain their correct attempt numbers.
+            var priorAttempts = await _db.Set<MedicalAidClaimEvent>()
                 .AsNoTracking()
                 .CountAsync(x => x.DentalPracticeId == practiceId &&
-                    x.ClaimId == claim.Id, ct);
+                    x.ClaimId == claim.Id &&
+                    x.ToStatus == "SubmittedExternallyReported", ct);
             var invoiceLines = await _db.Set<InvoiceLine>().AsNoTracking()
                 .Where(x => x.DentalPracticeId == practiceId &&
                     x.InvoiceId == claim.InvoiceId)
