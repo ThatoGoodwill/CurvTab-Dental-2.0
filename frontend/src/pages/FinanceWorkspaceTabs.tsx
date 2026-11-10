@@ -1,32 +1,34 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
-import { Receipt, FileText, Calculator } from 'lucide-react'
+import { Receipt, FileText, Calculator, Users } from 'lucide-react'
 import './BillingWorkspaceTabs.css'
 
-type FinanceTab = 'revenue' | 'expenses' | 'invoices'
+type FinanceTab = 'revenue' | 'expenses' | 'invoices' | 'balances'
 
 type Props = {
   revenue: ReactNode
   expenses: ReactNode
   invoices: ReactNode
+  balances: ReactNode
 }
 
 const tabs = [
   { id: 'revenue', label: 'Revenue', Icon: Receipt },
   { id: 'expenses', label: 'Expenses & Cash Sign-Off', Icon: Calculator },
   { id: 'invoices', label: 'Invoices & Payment Allocations', Icon: FileText },
+  { id: 'balances', label: 'Patient Balances', Icon: Users },
 ] as const
 
-export default function FinanceWorkspaceTabs({ revenue, expenses, invoices }: Props) {
+export default function FinanceWorkspaceTabs({ revenue, expenses, invoices, balances }: Props) {
   const [activeTab, setActiveTab] = useState<FinanceTab>('revenue')
-  const content: Record<FinanceTab, ReactNode> = { revenue, expenses, invoices }
+  const content: Record<FinanceTab, ReactNode> = { revenue, expenses, invoices, balances }
 
   return (
     <div className="ct-billing-workspace">
       <div className="ct-billing-workspace-heading">
         <span>PRACTICE · FINANCE</span>
         <h1>Finance</h1>
-        <p>Revenue received by cash, card and EFT, practice expenses, cash sign-off and invoices.</p>
+        <p>Review revenue, expenses, cash sign-off, invoice allocations and outstanding patient balances.</p>
       </div>
       <nav className="ct-billing-tabs" aria-label="Finance sections">
         {tabs.map(({ id, label, Icon }) => (

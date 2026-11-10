@@ -54,3 +54,29 @@
   line-height: 1.5;
   font-size: 13px;
 }
+
+
+/* Compact secure clinical editor embedded inside an individual patient record. */
+.ct-patient-consultations .clinical-page { gap: 10px; min-width: 0; }
+.ct-patient-consultations .clinical-page .page-heading h1 { font-size: 22px; }
+.ct-patient-consultations .clinical-page .page-heading p { font-size: 12px; }
+.ct-patient-consultations .clinical-columns { grid-template-columns: minmax(180px, .65fr) minmax(0, 2fr); gap: 10px; }
+.ct-patient-consultations .clinical-visit-list,
+.ct-patient-consultations .clinical-editor,
+.ct-patient-consultations .clinical-form { gap: 10px; }
+.ct-patient-consultations .clinical-visit { padding: 8px 10px; border-radius: 7px; }
+.ct-patient-consultations .clinical-visits { max-height: 280px; gap: 5px; }
+.ct-patient-consultations .clinical-field-grid { gap: 8px; }
+.ct-patient-consultations .clinical-form h3 { font-size: 15px; }
+.ct-patient-consultations .clinical-label textarea { min-height: 68px; }
+.ct-patient-consultations .clinical-label input,
+.ct-patient-consultations .clinical-label select,
+.ct-patient-consultations .clinical-label textarea { font-size: 12px; padding: 7px 9px; }
+@media(max-width: 1000px) {
+  .ct-patient-consultations .clinical-columns { grid-template-columns: 1fr; }
+  .ct-patient-consultations .clinical-visits { max-height: 150px; }
+}
+@media(max-width: 650px) {
+  .ct-patient-consultations .clinical-field-grid,
+  .ct-patient-consultations .clinical-charge { grid-template-columns: 1fr; }
+}

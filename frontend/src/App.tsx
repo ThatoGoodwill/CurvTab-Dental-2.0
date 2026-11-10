@@ -10,7 +10,6 @@ import WhatsAppPanel from './pages/WhatsAppPanel'
 import LiveClinicNotifications from './components/LiveClinicNotifications'
 import ClinicDashboardEnhancements from './components/ClinicDashboardEnhancements'
 import './CurvTabVisualUpgrade.css'
-import DentalChartingPage from './pages/DentalChartingPage'
 import OrthodonticsPage from './pages/OrthodonticsPage'
 import BillingLedgerPanel from './pages/BillingLedgerPanel'
 import PlanAccountsPanel from './pages/PlanAccountsPanel'
@@ -25,8 +24,6 @@ import { Receipt as CheckoutIcon } from 'lucide-react'
 import { Wallet } from 'lucide-react'
 import DentistDashboardPage from './pages/DentistDashboardPage'
 import OverviewDashboardPage from './pages/OverviewDashboardPage'
-import DentistConsultationsPage from './pages/DentistConsultationsPage'
-import DentistMedicalRecordsPage from './pages/DentistMedicalRecordsPage'
 import DailyPatientsPage from './pages/DailyPatientsPage'
 import { ClipboardList as DailyPatientsIcon } from 'lucide-react'
 
@@ -84,7 +81,7 @@ import './PracticeBrandAlignment.css'
 import PracticeBrandMark from './auth/PracticeBrandMark'
 type Section =
   | 'Laboratory'
-  | 'Dashboard' | 'Daily Patients' | 'Consultations' | 'Patient Medical Records' | 'Checkout & Payments' | 'Finance' | 'Dental Charting' | 'Clinical Imaging' | 'Orthodontics'
+  | 'Dashboard' | 'Daily Patients' | 'Billing' | 'Finance' | 'Clinical Imaging' | 'Orthodontics'
   | 'Patients'
   | 'Appointments'
   | 'Practice Settings'
@@ -620,9 +617,10 @@ export default function App() {
   const { user, logout } = useAuth()
   const { appearance, setAppearance } = usePracticeAppearance(user?.practiceId)
   const isModuleVisible = (name: string) => !appearance || ![
-    'Patients','Appointments','Daily Patients','Consultations',
-    'Checkout & Payments','Dental Charting','Clinical Imaging','Orthodontics'
-  ].includes(name) || appearance.enabledModules.includes(name)
+    'Patients','Appointments','Daily Patients',
+    'Billing','Clinical Imaging','Orthodontics'
+  ].includes(name) || appearance.enabledModules.includes(name) ||
+    (name === 'Billing' && appearance.enabledModules.includes('Checkout & Payments'))
 
   // Share the authenticated practice theme with notification portals.
   useEffect(() => {
@@ -651,8 +649,6 @@ export default function App() {
 
   const [section, setSection] = useState<Section>('Dashboard')
   const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null)
-  const [medicalRecordPatientId, setMedicalRecordPatientId] = useState<string | null>(null)
-  const [chartPatientId, setChartPatientId] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
 
   // Sidebar Appointments submenu.
@@ -741,6 +737,7 @@ export default function App() {
 
   function navigate(target: Section) {
     setSection(target)
+    if (target !== 'Patients') setSelectedConsultationId(null)
     setMenuOpen(false)
 
     if (target === 'Appointments') {
@@ -918,25 +915,11 @@ export default function App() {
             </button>
           )}
           
-{role === 'Dentist' && isModuleVisible('Consultations') && (
-  <button
-    type="button"
-    className={
-      section === 'Consultations'
-        ? 'nav-item nav-active'
-        : 'nav-item'
-    }
-    onClick={() => navigate('Consultations')}
-  >
-    <Stethoscope size={19} />
-    <span>Consultations</span>
-  </button>
-)}
 
-          {(role === 'Receptionist' || role === 'PracticeAdmin') && isModuleVisible('Checkout & Payments') && (
+          {(role === 'Receptionist' || role === 'PracticeAdmin') && isModuleVisible('Billing') && (
             <button type="button"
-              className={section === 'Checkout & Payments' ? 'nav-item nav-active' : 'nav-item'}
-              onClick={() => navigate('Checkout & Payments')}>
+              className={section === 'Billing' ? 'nav-item nav-active' : 'nav-item'}
+              onClick={() => navigate('Billing')}>
               <CheckoutIcon size={19} /> <span>Billing</span>
             </button>
           )}
@@ -949,11 +932,6 @@ export default function App() {
           )}
           {role === 'Dentist' && (
             <>
-              {isModuleVisible('Dental Charting') && <button type="button"
-                className={section === 'Dental Charting' ? 'nav-item nav-active' : 'nav-item'}
-                onClick={() => navigate('Dental Charting')}>
-                <Activity size={19} /><span>Dental Charting</span>
-              </button>}
               {isModuleVisible('Clinical Imaging') && (
                 <button
                   type="button"
@@ -1030,7 +1008,7 @@ export default function App() {
               role={role}
               onOpen={() => {
                 if (role === 'Dentist') openAppointmentTab('In Queue')
-                else navigate('Checkout & Payments')
+                else navigate('Billing')
               }}
             />
 
@@ -1079,7 +1057,7 @@ export default function App() {
               practiceName={user?.practiceName ?? null}
               onNewAppointment={() => openAppointmentTab('Scheduling')}
               onOpenQueue={() => openAppointmentTab('In Queue')}
-              onOpenCheckout={() => navigate('Checkout & Payments')}
+              onOpenCheckout={() => navigate('Billing')}
               onOpenPatients={() => navigate('Patients')}
             />
           )}
@@ -1225,41 +1203,27 @@ export default function App() {
             </>
           )}
 
-          {/* PHASE 2: DENTIST CLINICAL RECORDS */}
-          {section === 'Consultations' && role === 'Dentist' && (
-            <DentistConsultationsPage
-              selectedAppointmentId={selectedConsultationId}
-              onSelectAppointment={setSelectedConsultationId}
-              onOpenMedicalHistory={(patientId) => {
-                setMedicalRecordPatientId(patientId)
-                navigate('Patient Medical Records')
-              }}
-            />
-          )}
-          {section === 'Patient Medical Records' && role === 'Dentist' && (
-            <DentistMedicalRecordsPage
-              selectedPatientId={medicalRecordPatientId}
-              onSelectPatient={setMedicalRecordPatientId}
-            />
-          )}
-
           {/* DENTIST DAILY PATIENTS */}
           {section === 'Daily Patients' && role === 'Dentist' && (
             <DailyPatientsPage
               onOpenPatients={() => navigate('Patients')}
               onOpenConsultation={(appointmentId) => {
                 setSelectedConsultationId(appointmentId)
-                navigate('Consultations')
+                navigate('Patients')
               }}
             />
           )}
 
           {/* PATIENTS */}
+          {/* CT_PATIENT_SCOPED_CONSULTATIONS_20261110 */}
           {section === 'Patients' && canViewPatients && (
-            <PatientExperiencePage role={role} onClose={() => navigate('Dashboard')} onOpenAppointments={() => openAppointmentTab('Scheduling')} onOpenChart={(patientId) => {
-              setChartPatientId(patientId)
-              navigate('Dental Charting')
-            }} />
+            <PatientExperiencePage
+              role={role}
+              onClose={() => navigate('Dashboard')}
+              onOpenAppointments={() => openAppointmentTab('Scheduling')}
+              initialConsultationAppointmentId={selectedConsultationId}
+              onConsultationOpened={() => setSelectedConsultationId(null)}
+            />
           )}
 
           {/* APPOINTMENTS + EXPANDABLE WORKSPACE */}
@@ -1271,7 +1235,7 @@ export default function App() {
               onOpenPatients={() => navigate('Patients')}
               onOpenConsultation={(appointmentId) => {
                 setSelectedConsultationId(appointmentId)
-                navigate('Consultations')
+                navigate('Patients')
               }}
               role={role}
             />
@@ -1291,7 +1255,7 @@ export default function App() {
           )}
 
           {/* PHASE 3: RECEPTIONIST CHECKOUT */}
-          {section === 'Checkout & Payments' &&
+          {section === 'Billing' &&
             (role === 'Receptionist' || role === 'PracticeAdmin') && (
               <BillingWorkspaceTabs
                 checkout={<ReceptionCheckoutPage />}
@@ -1300,6 +1264,7 @@ export default function App() {
                   canManage={role === 'PracticeAdmin'}
                 />}
                 balances={<PatientBalancesPanel />}
+                invoices={<InvoicesPanel canIssue={role === 'PracticeAdmin'} />}
               />
           )}
 
@@ -1318,6 +1283,7 @@ export default function App() {
                     canIssue={role === 'PracticeAdmin'}
                   />
                 }
+                balances={<PatientBalancesPanel />}
               />
           )}
 
@@ -1361,7 +1327,6 @@ export default function App() {
     </section>
   </div>
 )}
-          {section === 'Dental Charting' && role === 'Dentist' && <DentalChartingPage initialPatientId={chartPatientId} />}
           {section === 'Clinical Imaging' && role === 'Dentist' && (
             <ClinicalImagingPage />
           )}
@@ -1392,12 +1357,10 @@ export default function App() {
 
           {/* DENIED SECTIONS */}
           {(
-            (section === 'Consultations' && role !== 'Dentist') ||
-            (section === 'Patient Medical Records' && role !== 'Dentist') ||
-            (section === 'Dental Charting' && role !== 'Dentist') ||
             (section === 'Clinical Imaging' && role !== 'Dentist') ||
             (section === 'Orthodontics' && role !== 'Dentist') ||
-            (section === 'Checkout & Payments' && role !== 'Receptionist' && role !== 'PracticeAdmin') ||
+            (section === 'Billing' && role !== 'Receptionist' && role !== 'PracticeAdmin') ||
+            (section === 'Finance' && role !== 'Finance' && role !== 'PracticeAdmin') ||
             (section === 'Daily Patients' && role !== 'Dentist') ||
             (section === 'Patients' && !canViewPatients) ||
             (section === 'Appointments' && !canViewPatients) ||

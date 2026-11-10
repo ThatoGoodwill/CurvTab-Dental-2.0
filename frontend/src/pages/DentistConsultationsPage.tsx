@@ -25,6 +25,8 @@ type ConsultationRecord = Partial<ClinicalForm> & {
   chargesConfirmed: boolean
   finalizedAtUtc: string | null
 }
+type PatientConsultationSummary = { appointmentId: string; chiefComplaint?: string | null; createdAtUtc: string; isFinalized: boolean }
+
 type Detail = {
   appointmentId: string
   patientId: string
@@ -36,6 +38,7 @@ type Detail = {
 }
 
 type Props = {
+  patientId?: string
   selectedAppointmentId: string | null
   onSelectAppointment: (id: string) => void
   onOpenMedicalHistory: (patientId: string) => void
@@ -172,7 +175,7 @@ function errorText(error: unknown): string {
 }
 
 export default function DentistConsultationsPage({
-  selectedAppointmentId, onSelectAppointment, onOpenMedicalHistory,
+  patientId, selectedAppointmentId, onSelectAppointment, onOpenMedicalHistory,
 }: Props) {
   const [day, setDay] = useState(() => localDate(new Date()))
   const [visits, setVisits] = useState<Visit[]>([])
@@ -214,14 +217,25 @@ export default function DentistConsultationsPage({
   }
 
   useEffect(() => {
-    if (!day) return
+    if (!patientId && !day) return
     let cancelled = false
-    apiRequest<Visit[]>(`/dentist/daily-patients?${dateRange(day)}`)
-      .then(rows => { if (!cancelled) setVisits(rows) })
+    const request = patientId
+      ? apiRequest<PatientConsultationSummary[]>(`/dentist/patients/${encodeURIComponent(patientId)}/consultations`)
+          .then(rows => rows.map(row => ({
+            appointmentId: row.appointmentId,
+            patientId,
+            patientName: '',
+            status: row.isFinalized ? 'Finalized' : 'InConsultation',
+            reason: row.chiefComplaint || null,
+            consultationStartedAtUtc: row.createdAtUtc,
+          } satisfies Visit)))
+      : apiRequest<Visit[]>(`/dentist/daily-patients?${dateRange(day)}`)
+    request
+      .then(rows => { if (!cancelled) { setVisits(rows); setError('') } })
       .catch(cause => { if (!cancelled) setError(errorText(cause)) })
       .finally(() => { if (!cancelled) setListLoading(false) })
     return () => { cancelled = true }
-  }, [day, listRevision])
+  }, [patientId, day, listRevision])
 
   useEffect(() => {
     if (!selectedAppointmentId) return
@@ -229,6 +243,11 @@ export default function DentistConsultationsPage({
     apiRequest<Detail>(`/dentist/consultations/by-appointment/${encodeURIComponent(selectedAppointmentId)}`)
       .then(result => {
         if (cancelled) return
+        if (patientId && result.patientId !== patientId) {
+          setDetail(null)
+          setDetailsError('This consultation does not belong to the selected patient.')
+          return
+        }
         setDetail(result)
         setForm(Object.fromEntries(fields.map(({ key }) => [key, result.consultation?.[key] ?? ''])) as ClinicalForm)
         setCharges(result.charges.map(charge => ({ description: charge.description, amount: String(charge.amount) })))
@@ -237,7 +256,7 @@ export default function DentistConsultationsPage({
       })
       .catch(cause => { if (!cancelled) setDetailsError(errorText(cause)) })
     return () => { cancelled = true }
-  }, [selectedAppointmentId, detailRevision])
+  }, [selectedAppointmentId, detailRevision, patientId])
 
   const detailsLoading = Boolean(selectedAppointmentId && detail?.appointmentId !== selectedAppointmentId)
   const editable = Boolean(detail && detail.appointmentStatus === 'InConsultation' && !detail.consultation?.isFinalized)
@@ -311,8 +330,8 @@ export default function DentistConsultationsPage({
       <div className="page-heading">
         <div>
           <div className="eyebrow">CLINICAL WORKSPACE</div>
-          <h1>Consultations</h1>
-          <p>Document the encounter, save a draft, and confirm treatment charges before completion.</p>
+          <h1>{patientId ? 'Patient Consultations' : 'Consultations'}</h1>
+          <p>Review saved visits, document the encounter, and confirm treatment charges before completion.</p>
         </div>
         <button type="button" className="secondary-button"
           onClick={() => { setListLoading(true); setListRevision(v => v + 1) }}>
@@ -322,20 +341,20 @@ export default function DentistConsultationsPage({
 
       <div className="clinical-columns">
         <aside className="panel clinical-visit-list">
-          <div className="panel-header"><div><h2>Daily Visits</h2><p>Patients with started consultations</p></div><ClipboardList size={20}/></div>
-          <label className="clinical-label">Visit date
+          <div className="panel-header"><div><h2>{patientId ? 'Visit history' : 'Daily Visits'}</h2><p>{patientId ? 'Only this patient’s recorded consultations' : 'Patients with started consultations'}</p></div><ClipboardList size={20}/></div>
+          {!patientId && <label className="clinical-label">Visit date
             <input type="date" value={day} onChange={event => {
               setDay(event.target.value)
               setListLoading(true)
             }} />
-          </label>
+          </label>}
           {listLoading ? <p>Loading visits...</p> : visits.length === 0
-            ? <p className="clinical-muted">No consultations started on this date.</p>
+            ? <p className="clinical-muted">{patientId ? 'No consultation records for this patient yet.' : 'No consultations started on this date.'}</p>
             : <div className="clinical-visits">{visits.map(visit => (
               <button type="button" key={visit.appointmentId}
                 className={`clinical-visit ${selectedAppointmentId === visit.appointmentId ? 'clinical-visit-active' : ''}`}
                 onClick={() => chooseAppointment(visit.appointmentId)}>
-                <strong>{visit.patientName}</strong>
+                <strong>{patientId && visit.consultationStartedAtUtc ? new Date(visit.consultationStartedAtUtc).toLocaleDateString('en-ZA') : visit.patientName}</strong>
                 <span>{visit.reason || 'Dental visit'}</span>
                 <small>{visit.status.replace(/([a-z])([A-Z])/g, '$1 $2')}</small>
               </button>
@@ -346,7 +365,7 @@ export default function DentistConsultationsPage({
           {!selectedAppointmentId ? (
             <div className="clinical-empty"><Stethoscope size={30}/>
               <h2>Select a consultation</h2>
-              <p>Start a consultation from Appointments, then select the patient here or in Daily Patients.</p>
+              <p>{patientId ? 'Select a recorded visit above, or start a new consultation from the Appointments queue.' : 'Start a consultation from Appointments, then select the patient here or in Daily Patients.'}</p>
             </div>
           ) : detailsError ? (
             <div role="alert" className="clinical-error">{detailsError}</div>
