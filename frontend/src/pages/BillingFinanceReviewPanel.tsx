@@ -17,6 +17,7 @@ type CashData = {
   counts: CashCount[]; events: CashEvent[]; actualCashReceipts: number
   cardReceipts: number; eftReceipts: number; cashExpenses: number
   schemeBankDeposits: number
+  changedAfterSubmission: boolean
 }
 type ExpenseRequest = {
   id: string; supplier: string; category: string; expenseDate: string
@@ -132,6 +133,9 @@ export default function BillingFinanceReviewPanel({ canApprove }: { canApprove: 
           <div className="ct-day-stat-row"><span>Expected drawer</span><strong>{money(cashCount.expectedCash)}</strong></div>
           <div className="ct-day-stat-row"><span>Submitted count</span><strong>{money(cashCount.countedCash)}</strong></div>
           <div className="ct-day-stat-row"><span>Variance</span><strong>{money(cashCount.variance)}</strong></div>
+          {cash?.changedAfterSubmission && <p role="alert" className="ct-day-notice ct-day-error">
+            Cash movements changed after the original count. Reject it and request a new blind count.
+          </p>}
           {cashEvents.map(e=><div className="ct-day-event" key={e.id}><strong>{e.action}</strong>
             <p>{e.notes}</p><small>{new Date(e.atUtc).toLocaleString('en-ZA')} · {e.evidenceReference}</small></div>)}
           {!countDecision && canApprove && (cashCount.variance===0||explanation) &&
