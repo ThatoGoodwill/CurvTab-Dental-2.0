@@ -12,15 +12,13 @@ import ClinicDashboardEnhancements from './components/ClinicDashboardEnhancement
 import './CurvTabVisualUpgrade.css'
 import OrthodonticsPage from './pages/OrthodonticsPage'
 import BillingLedgerPanel from './pages/BillingLedgerPanel'
-import PlanAccountsPanel from './pages/PlanAccountsPanel'
 import FinanceWorkspaceTabs from './pages/FinanceWorkspaceTabs'
-import BillingWorkspaceTabs from './pages/BillingWorkspaceTabs'
-import MedicalAidPanel from './pages/MedicalAidPanel'
 import PatientBalancesPanel from './pages/PatientBalancesPanel'
 import InvoicesPanel from './pages/InvoicesPanel'
 import FinanceOperationsPanel from './pages/FinanceOperationsPanel'
-import ReceptionCheckoutPage from './pages/ReceptionCheckoutPage'
 import { Receipt as CheckoutIcon } from 'lucide-react'
+import ClientBillingWorkspace, { billingSidebarSections } from './pages/ClientBillingWorkspace'
+import type { BillingSection } from './pages/ClientBillingWorkspace'
 import { Wallet } from 'lucide-react'
 import DentistDashboardPage from './pages/DentistDashboardPage'
 import OverviewDashboardPage from './pages/OverviewDashboardPage'
@@ -660,6 +658,10 @@ export default function App() {
   const [appointmentTab, setAppointmentTab] =
     useState<AppointmentTab>('Appointments')
 
+  // Client-approved five Billing subpages; one Billing sidebar parent.
+  const [billingExpanded, setBillingExpanded] = useState(true)
+  const [billingSection, setBillingSection] = useState<BillingSection>('today')
+
   const [darkMode, setDarkMode] = useState(
     () => localStorage.getItem('curvtab-theme') === 'dark'
   )
@@ -702,18 +704,17 @@ export default function App() {
         { name: 'Dashboard' as Section, icon: LayoutDashboard },
         ...(canViewPatients
           ? [
-              { name: 'Patients' as Section, icon: Users },
               { name: 'Scheduling' as Section, icon: CalendarDays },
+              { name: 'Patients' as Section, icon: Users },
+              ...(role === 'Receptionist' || role === 'PracticeAdmin'
+                ? [{ name: 'Billing' as Section, icon: CheckoutIcon }] : []),
               { name: 'Laboratory' as Section, icon: FlaskConical },
             ]
           : []),
-        ...(canManageStaff
-          ? [
-              { name: 'Management' as Section, icon: CtManagementIcon },
-            ]
-          : []),
+        ...(canManageStaff ? [{ name: 'Management' as Section, icon: CtManagementIcon }] : []),
+        ...((role === 'Finance' || role === 'PracticeAdmin')
+          ? [{ name: 'Finance' as Section, icon: Wallet }] : []),
         ...(canManageStaff ? [{ name: 'Configuration Center' as Section, icon: CtAppearanceIcon }] : []),
-        ...(role === 'Finance' ? [{ name: 'Finance' as Section, icon: Wallet }] : []),
         // CT_LAB_TECH_NAV
         ...(role === 'LabTechnician' ? [{ name: 'Laboratory' as Section, icon: FlaskConical }] : []),
         { name: 'My Profile' as Section, icon: UserCircle },
@@ -747,6 +748,9 @@ export default function App() {
 
     if (target === 'Scheduling') {
       setAppointmentsExpanded(true)
+    }
+    if (target === 'Billing') {
+      setBillingExpanded(true)
     }
   }
 
@@ -812,6 +816,45 @@ export default function App() {
          style={{ display: 'flex', flexDirection: 'column' }}>
           {navigation.filter(item => isModuleVisible(item.name)).map((item) => {
             const Icon = item.icon
+
+            if (item.name === 'Billing') {
+              return (
+                <div key="billing-workspace" className="ct-billing-sidebar-group">
+                  <button type="button"
+                    className={section === 'Billing' ? 'nav-item nav-active' : 'nav-item'}
+                    aria-expanded={billingExpanded}
+                    aria-controls="ct-client-billing-nav"
+                    onClick={() => {
+                      if (section !== 'Billing') {
+                        setBillingSection('today')
+                        navigate('Billing')
+                        setBillingExpanded(true)
+                      } else setBillingExpanded(open => !open)
+                    }}>
+                    <CheckoutIcon size={19}/><span>Billing</span>
+                    {billingExpanded ? <ChevronDown size={16}/> : <ChevronRight size={16}/>}
+                  </button>
+                  {billingExpanded && (
+                    <div id="ct-client-billing-nav" className="ct-billing-sidebar-subnav"
+                      aria-label="Client-approved Billing workspaces">
+                      {billingSidebarSections.map(entry => (
+                        <button type="button" key={entry.id}
+                          className={section === 'Billing' && billingSection === entry.id
+                            ? 'nav-item nav-active ct-billing-sidebar-sub-active'
+                            : 'nav-item'}
+                          aria-current={section === 'Billing' && billingSection === entry.id ? 'page' : undefined}
+                          onClick={() => {
+                            setBillingSection(entry.id)
+                            navigate('Billing')
+                          }}>
+                          <span>{entry.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            }
 
             if (item.name === 'Scheduling') {
               return (
@@ -905,7 +948,12 @@ export default function App() {
                 onClick={() => navigate(item.name)}
               >
                 <Icon size={19} />
-                <span>{item.name}</span>
+                <span>{item.name === 'Laboratory' ? 'Lab'
+                  : item.name === 'Management' ? 'Staff Management'
+                  : item.name === 'Finance' ? 'Finances'
+                  : item.name === 'Configuration Center' ? 'Settings'
+                  : item.name === 'My Profile' ? 'Profile'
+                  : item.name}</span>
               </button>
             )
           })}
@@ -921,20 +969,7 @@ export default function App() {
           )}
           
 
-          {(role === 'Receptionist' || role === 'PracticeAdmin') && isModuleVisible('Billing') && (
-            <button type="button"
-              className={section === 'Billing' ? 'nav-item nav-active' : 'nav-item'}
-              onClick={() => navigate('Billing')}>
-              <CheckoutIcon size={19} /> <span>Billing</span>
-            </button>
-          )}
-          {(role === 'PracticeAdmin') && (
-            <button type="button"
-              className={section === 'Finance' ? 'nav-item nav-active' : 'nav-item'}
-              onClick={() => navigate('Finance')}>
-              <Wallet size={19} /> <span>Finance</span>
-            </button>
-          )}
+
           {role === 'Dentist' && (
             <>
               {isModuleVisible('Clinical Imaging') && (
@@ -1284,17 +1319,12 @@ export default function App() {
             <DentalPracticesPage />
           )}
 
-          {/* PHASE 3: RECEPTIONIST CHECKOUT */}
+          {/* CLIENT BILLING: independent operational signoffs, single financial ledger. */}
           {section === 'Billing' &&
             (role === 'Receptionist' || role === 'PracticeAdmin') && (
-              <BillingWorkspaceTabs
-                checkout={<ReceptionCheckoutPage />}
-                plans={<PlanAccountsPanel />}
-                medicalAid={<MedicalAidPanel
-                  canManage={role === 'PracticeAdmin'}
-                />}
-                balances={<PatientBalancesPanel />}
-                invoices={<InvoicesPanel canIssue={role === 'PracticeAdmin'} />}
+              <ClientBillingWorkspace
+                role={role} section={billingSection}
+                onSectionChange={setBillingSection}
               />
           )}
 
