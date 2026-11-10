@@ -168,7 +168,7 @@ public sealed class BillingMedicalAidDaySignoffController : ControllerBase
             .AnyAsync(x => x.DentalPracticeId == practiceId &&
                 x.BusinessDate == request.BusinessDate, ct);
         if (existing)
-            return Conflict(new { message = "This business date already has a frozen medical-aid sign-off. It cannot be overwritten." });
+            return Ok(await Day(practiceId, request.BusinessDate, ct)); // safe retry, never a second snapshot
 
         // Snapshot the exact computed representation and preserve it regardless
         // of later scheme rejections, corrections or remittance activity.
