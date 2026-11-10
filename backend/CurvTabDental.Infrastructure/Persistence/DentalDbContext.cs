@@ -76,6 +76,19 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
         base.OnModelCreating(modelBuilder);
 
 
+        modelBuilder.Entity<BillingClaimSubmissionAttempt>(e => {
+            e.ToTable("BillingClaimSubmissionAttempts");
+            e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.Property(x => x.ExternalReference).HasMaxLength(120).IsRequired();
+            e.Property(x => x.EvidenceReference).HasMaxLength(300).IsRequired();
+            e.Property(x => x.PayloadJson).HasColumnType("jsonb");
+            e.HasIndex(x => new { x.DentalPracticeId, x.RequestId }).IsUnique();
+            e.HasIndex(x => new { x.DentalPracticeId, x.ClaimId, x.AttemptNumber }).IsUnique();
+            e.HasOne<MedicalAidClaim>().WithMany()
+                .HasForeignKey(x => x.ClaimId).OnDelete(DeleteBehavior.Restrict);
+        });
+
         // CLIENT BILLING: immutable, tenant-scoped sign-offs and audit decisions.
         modelBuilder.Entity<BillingCashCount>(e => {
             e.ToTable("BillingCashCounts");
