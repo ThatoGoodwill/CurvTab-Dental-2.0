@@ -12,6 +12,8 @@ type Decision = { id:string; decision:string; reason:string; reviewedAtUtc:strin
 type Close = {
   submitted: boolean; status: string; businessDate:string
   cash?: Cash; decisions?: Decision[]; note?:string
+  latestCountedCash?:number; latestVariance?:number
+  recounts?: Array<{id:string;revisedCountedCash:number;reason:string;evidenceReference:string;recordedAtUtc:string}>
   nonCash?: { cardReceived:number; cardExpenses:number; eftReceived:number; eftExpenses:number; notice:string }
 }
 const today = () => new Intl.DateTimeFormat('en-CA', {
@@ -40,6 +42,10 @@ export default function BillingCashDayClosePage({ isManager }: { isManager:boole
   const requestId=useRef<string|null>(null)
   const [countVisible,setCountVisible]=useState(false)
   const [reviewVisible,setReviewVisible]=useState(false)
+  const [recountVisible,setRecountVisible]=useState(false)
+  const [recountAmount,setRecountAmount]=useState('')
+  const [recountReason,setRecountReason]=useState('')
+  const [recountEvidence,setRecountEvidence]=useState('')
 
   useEffect(()=>{
     let active=true;setLoading(true);setError('')
@@ -88,6 +94,27 @@ export default function BillingCashDayClosePage({ isManager }: { isManager:boole
     }catch(cause){setError(cause instanceof Error?cause.message:'Unable to record review')}
     finally{setBusy(false)}
   }
+  async function submitRecount(event:FormEvent<HTMLFormElement>){
+    event.preventDefault()
+    if(busy||!data?.cash)return
+    setBusy(true);setError('');setNotice('')
+    requestId.current ??= crypto.randomUUID()
+    try{
+      const res=await fetch(`/api/billing/cash-day-close/${encodeURIComponent(data.cash.id)}/recount`,{
+        method:'POST',credentials:'include',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
+        body:JSON.stringify({
+          requestId:requestId.current,revisedCountedCash:Number(recountAmount),
+          reason:recountReason.trim(),evidenceReference:recountEvidence.trim()
+        })
+      })
+      if(!res.ok)throw new Error(await errorOf(res))
+      requestId.current=null;setRecountVisible(false);setRecountAmount('')
+      setNotice('Recount recorded without changing the original. Manager must review the new amount.')
+      setReload(v=>v+1)
+    }catch(cause){setError(cause instanceof Error?cause.message:'Unable to record recount')}
+    finally{setBusy(false)}
+  }
+
   return <section className="ct-guide-page">
     <header className="ct-guide-heading"><div><small>BILLING / RECEPTION</small><h2>Cash Day Close</h2>
       <p>Physical cash reconciliation and independent manager exception review.</p></div>
@@ -129,6 +156,15 @@ export default function BillingCashDayClosePage({ isManager }: { isManager:boole
         </div>
         <p><strong>Cash receipts:</strong> {money(data.cash.cashReceived)} · <strong>Cash expense outflows:</strong> {money(data.cash.cashExpenses)}</p>
         <p>Submitted {new Date(data.cash.submittedAtUtc).toLocaleString('en-ZA')} · by {data.cash.submittedByUserId}</p>
+        {data.recounts?.length ? <div>
+          <h3>Controlled recount history · original unchanged</h3>
+          {data.recounts.map(c=><p key={c.id}>Recount: {money(c.revisedCountedCash)} · {c.reason}
+            <small>{new Date(c.recordedAtUtc).toLocaleString('en-ZA')} · Evidence: {c.evidenceReference}</small></p>)}
+          <strong>Latest counted: {money(data.latestCountedCash ?? data.cash.countedCash)} ·
+            Variance: {money(data.latestVariance ?? data.cash.variance)}</strong>
+        </div> : null}
+        {data.status === 'CorrectionRequired' && <button type="button" className="secondary-button"
+          onClick={()=>setRecountVisible(true)}>Record controlled recount</button>}
         {data.cash.explanation&&<p>Explanation: {data.cash.explanation}</p>}
         {data.nonCash && <section className="ct-guide-panel" aria-label="Independent card and EFT movements">
           <h3>Card and EFT · separate reconciliation</h3>
@@ -147,10 +183,23 @@ export default function BillingCashDayClosePage({ isManager }: { isManager:boole
         {!isManager&&<p>Only a Practice Manager can approve, reject or escalate the cash exception.</p>}
       </section>
     </div>}
+    {recountVisible&&data?.cash&&<div className="ct-guide-drawer-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)setRecountVisible(false)}}>
+      <aside className="ct-guide-drawer" role="dialog" aria-modal="true" aria-label="Corrected cash recount">
+        <header><h3>Controlled cash recount</h3>
+          <button type="button" className="secondary-button" disabled={busy} onClick={()=>setRecountVisible(false)}>Close ×</button></header>
+        <p>The first physical count stays immutable. Record a new count only after manager rejection.</p>
+        <form className="ct-guide-form" onSubmit={e=>void submitRecount(e)}>
+          <label>New counted cash<input required inputMode="decimal" value={recountAmount} onChange={e=>{setRecountAmount(e.target.value);requestId.current=null}}/></label>
+          <label>Reason<textarea required minLength={5} maxLength={1000} value={recountReason} onChange={e=>{setRecountReason(e.target.value);requestId.current=null}}/></label>
+          <label>Count sheet / evidence reference<input required maxLength={300} value={recountEvidence} onChange={e=>{setRecountEvidence(e.target.value);requestId.current=null}}/></label>
+          <button type="submit" className="primary-button" disabled={busy}>{busy?'Saving…':'Submit recount for review'}</button>
+        </form>
+      </aside>
+    </div>}
     {reviewVisible&&data?.cash&&<div className="ct-guide-drawer-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)setReviewVisible(false)}}>
       <aside className="ct-guide-drawer" role="dialog" aria-modal="true" aria-label="Manager cash review">
         <header><h3>Manager cash review</h3><button className="secondary-button" type="button" disabled={busy} onClick={()=>setReviewVisible(false)}>Close ×</button></header>
-        <p>Expected: {money(data.cash.expectedCash)} · Counted: {money(data.cash.countedCash)} · Variance: {money(data.cash.variance)}</p>
+        <p>Expected: {money(data.cash.expectedCash)} · Latest counted: {money(data.latestCountedCash ?? data.cash.countedCash)} · Latest variance: {money(data.latestVariance ?? data.cash.variance)}</p>
         <form className="ct-guide-form" onSubmit={e=>void submitReview(e)}>
           <label>Decision<select value={reviewDecision} onChange={e=>{setReviewDecision(e.target.value as typeof reviewDecision);requestId.current=null}}>
             <option value="Approve">Approve</option><option value="Reject">Reject / recount needed</option>
