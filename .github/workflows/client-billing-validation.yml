@@ -65,6 +65,8 @@ jobs:
           dotnet-version: '10.0.x'
       - name: Install EF Core tooling
         run: dotnet tool install --global dotnet-ef --version 10.0.0
+      - name: Restore application and infrastructure dependencies
+        run: dotnet restore backend/CurvTabDental.API/CurvTabDental.API.csproj
       - name: Apply migrations only to temporary PostgreSQL
         run: >-
           dotnet ef database update
