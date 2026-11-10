@@ -36,3 +36,5 @@ jobs:
         with:
           dotnet-version: '10.0.x'
       - run: dotnet build backend/CurvTabDental.slnx --configuration Release
+      - name: Verify client cash arithmetic and claim/receipt separation
+        run: dotnet run --project backend/CurvTabDental.BillingVerification/CurvTabDental.BillingVerification.csproj --configuration Release
