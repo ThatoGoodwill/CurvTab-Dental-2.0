@@ -594,6 +594,46 @@ modelBuilder.Entity<Appointment>(entity =>
         });
 
 
+        // CT_CLIENT_SEPARATE_DAILY_SIGNOFFS
+        modelBuilder.Entity<CashDayCloseSubmission>(entity =>
+        {
+            entity.ToTable("CashDayCloseSubmissions");
+            entity.HasKey(x => x.Id);
+            entity.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            entity.Property(x => x.OpeningFloat).HasPrecision(12, 2);
+            entity.Property(x => x.CountedCash).HasPrecision(12, 2);
+            entity.Property(x => x.CashReceived).HasPrecision(12, 2);
+            entity.Property(x => x.CashExpenses).HasPrecision(12, 2);
+            entity.Property(x => x.ExpectedCash).HasPrecision(12, 2);
+            entity.Property(x => x.Variance).HasPrecision(12, 2);
+            entity.Property(x => x.Explanation).HasMaxLength(1000);
+            entity.Property(x => x.EvidenceReference).HasMaxLength(300);
+            entity.HasIndex(x => new { x.DentalPracticeId, x.BusinessDate }).IsUnique();
+        });
+
+        modelBuilder.Entity<CashDayCloseReview>(entity =>
+        {
+            entity.ToTable("CashDayCloseReviews");
+            entity.HasKey(x => x.Id);
+            entity.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            entity.Property(x => x.Decision).IsRequired().HasMaxLength(20);
+            entity.Property(x => x.Reason).IsRequired().HasMaxLength(1000);
+            entity.HasIndex(x => new { x.DentalPracticeId, x.RequestId }).IsUnique();
+            entity.HasIndex(x => new { x.DentalPracticeId, x.SubmissionId, x.ReviewedAtUtc });
+            entity.HasOne<CashDayCloseSubmission>().WithMany()
+                .HasForeignKey(x => x.SubmissionId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<MedicalAidDaySignoff>(entity =>
+        {
+            entity.ToTable("MedicalAidDaySignoffs");
+            entity.HasKey(x => x.Id);
+            entity.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            entity.Property(x => x.SubmittedValue).HasPrecision(12, 2);
+            entity.Property(x => x.SnapshotJson).IsRequired();
+            entity.HasIndex(x => new { x.DentalPracticeId, x.BusinessDate }).IsUnique();
+        });
+
         // CT_PHASE6H: Two permitted invoice sources.
         // Both existing consultation records and future orthodontic
         // invoices must reference exactly one legitimate source.
