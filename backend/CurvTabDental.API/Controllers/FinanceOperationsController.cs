@@ -202,7 +202,9 @@ public sealed class FinanceOperationsController : ControllerBase
 
     // POST /api/finance/operations/expenses
     [HttpPost("expenses")]
-    [Authorize(Roles = "PracticeAdmin")]
+    // Reception may capture a real verified payment/expense; manager-only cash
+    // variance review and accounting adjustments remain separately gated.
+    [Authorize(Roles = "Receptionist,PracticeAdmin")]
     public async Task<IActionResult> AddExpense(
         [FromBody] AddExpenseRequest request,
         CancellationToken ct)
