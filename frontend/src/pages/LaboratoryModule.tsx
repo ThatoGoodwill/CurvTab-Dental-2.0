@@ -81,6 +81,7 @@ export default function LaboratoryModule() {
   const admin = role === 'PracticeAdmin'
   const front = role === 'Receptionist' || admin
   const [data, setData] = useState<Dashboard>(empty)
+  const [labNeeded, setLabNeeded] = useState<{ procedureId: string; patientName: string; planTitle: string; description: string; toothCode: string | null }[]>([])
   const [section, setSection] = useState<Section>('orders') // CT_LAB_WORKBENCH_V3
   const [orderId, setOrderId] = useState('')
   const [itemId, setItemId] = useState('')
@@ -109,6 +110,9 @@ export default function LaboratoryModule() {
     finally { setLoading(false) }
   }, [])
   useEffect(() => { void load() }, [load])
+  useEffect(() => {
+    apiRequest<typeof labNeeded>('/laboratory/lab-required').then(setLabNeeded).catch(() => setLabNeeded([]))
+  }, [])
   useEffect(() => {
     if (modal !== 'order' || isLab) return
     const t = setTimeout(() => {
@@ -339,6 +343,12 @@ export default function LaboratoryModule() {
           <div><strong>{clinicalQa.length}</strong><span>QA required</span></div>
           <div><strong>{fitmentQueue.length}</strong><span>Ready for fitment</span></div>
         </div>}
+        {front && labNeeded.length > 0 && <section className="lab-panel">
+          <div className="lab-section-head"><div><h2>Patients needing lab work</h2><p>Agreed treatment plans with procedures that require the laboratory. Create a laboratory order for each.</p></div></div>
+          <div className="lab-table-wrap"><table className="lab-table"><thead><tr><th>Patient</th><th>Procedure</th><th>Tooth</th><th>Plan</th></tr></thead><tbody>
+            {labNeeded.map(item => <tr key={item.procedureId}><td><strong>{item.patientName}</strong></td><td>{item.description}</td><td>{item.toothCode ?? '—'}</td><td>{item.planTitle}</td></tr>)}
+          </tbody></table></div>
+        </section>}
         <section className="lab-panel">
           <div className="lab-section-head"><div><h2>Laboratory orders</h2><p>Each order is linked to a registered patient and can contain multiple independently tracked items.</p></div>
             <label className="lab-search"><Search size={17}/><input aria-label="Search laboratory cases" placeholder="Search by case, patient or laboratory" value={caseSearch} onChange={e=>setCaseSearch(e.target.value)}/></label></div>

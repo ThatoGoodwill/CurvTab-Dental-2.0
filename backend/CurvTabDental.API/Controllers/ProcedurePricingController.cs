@@ -33,7 +33,9 @@ public sealed class ProcedurePricingController : ControllerBase
         string Category,
         decimal Price,
         bool IsActive,
-        DateTime? ExpectedUpdatedAtUtc
+        DateTime? ExpectedUpdatedAtUtc,
+        bool RequiresLab = false,
+        decimal SupplierEstimate = 0m
     );
 
     private static bool Valid(PriceRequest? r) =>
@@ -45,7 +47,10 @@ public sealed class ProcedurePricingController : ControllerBase
         (r.Category?.Trim().Length ?? 0) <= 80 &&
         r.Price > 0 &&
         r.Price <= 10000000m &&
-        decimal.Round(r.Price, 2) == r.Price;
+        decimal.Round(r.Price, 2) == r.Price &&
+        r.SupplierEstimate >= 0m &&
+        r.SupplierEstimate <= 10000000m &&
+        decimal.Round(r.SupplierEstimate, 2) == r.SupplierEstimate;
 
     [HttpGet]
     public async Task<IActionResult> List(
@@ -66,6 +71,8 @@ public sealed class ProcedurePricingController : ControllerBase
                 x.Category,
                 x.Price,
                 x.IsActive,
+                x.RequiresLab,
+                x.SupplierEstimate,
                 x.CreatedAtUtc,
                 x.UpdatedAtUtc
             })
@@ -113,6 +120,8 @@ public sealed class ProcedurePricingController : ControllerBase
                 ? "General" : request.Category.Trim(),
             Price = request.Price,
             IsActive = request.IsActive,
+            RequiresLab = request.RequiresLab,
+            SupplierEstimate = request.RequiresLab ? request.SupplierEstimate : 0m,
             CreatedAtUtc = now,
             UpdatedAtUtc = now
         };
@@ -196,6 +205,8 @@ public sealed class ProcedurePricingController : ControllerBase
             ? "General" : request.Category.Trim();
         item.Price = request.Price;
         item.IsActive = request.IsActive;
+        item.RequiresLab = request.RequiresLab;
+        item.SupplierEstimate = request.RequiresLab ? request.SupplierEstimate : 0m;
         item.UpdatedAtUtc = DateTime.UtcNow;
 
         _db.ProcedurePriceHistories.Add(
