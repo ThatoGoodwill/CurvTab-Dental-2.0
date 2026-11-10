@@ -540,4 +540,395 @@ function MedicalAidDaySignoff({date,setDate,revision,refresh}: {
   </>
 }
 
-// ADD_MOVEMENTS_AND_CLAIMS_BELOW
+
+type ExpenseRequestRow = {
+  id:string; supplier:string; expenseDate:string; category:string; description:string
+  amount:number;method:string;reference:string;receiptReference:string
+  requestedByUserId:string;requestedAtUtc:string
+  decision: null|{id:string;decision:string;notes:string;postedExpenseId:string|null}
+}
+type ExpenseData = {pendingOrDecided:ExpenseRequestRow[];posted:ExpenseRow[]}
+const expenseCategories = ['Dental Supplies','Laboratory','Equipment','Utilities','Maintenance','Rent','Staff Costs','Other']
+
+function ExpenseDrawer({date,manager,onClose}:{
+  date:string;manager:boolean;onClose:()=>void
+}) {
+  const [supplier,setSupplier]=useState('')
+  const [category,setCategory]=useState('Dental Supplies')
+  const [description,setDescription]=useState('')
+  const [amount,setAmount]=useState('')
+  const [method,setMethod]=useState('Cash')
+  const [reference,setReference]=useState('')
+  const [receipt,setReceipt]=useState('')
+  const [data,setData]=useState<ExpenseData|null>(null)
+  const [selected,setSelected]=useState<ExpenseRequestRow|null>(null)
+  const [decisionNote,setDecisionNote]=useState('')
+  const [busy,setBusy]=useState(false)
+  const [note,setNote]=useState<Note|null>(null)
+  const [revision,refresh]=useState(0)
+  const requestId=useRef<string|null>(null)
+  const decisionId=useRef<string|null>(null)
+  useEffect(()=>{
+    let active=true
+    apiRequest<ExpenseData>('/billing/expenses?date='+encodeURIComponent(date))
+      .then(d=>{if(active)setData(d)})
+      .catch(e=>{if(active)setNote({kind:'error',text:problem(e)})})
+    return()=>{active=false}
+  },[date,revision])
+  const fieldChanged=()=>{requestId.current=null}
+  async function submit(e:FormEvent){
+    e.preventDefault();setNote(null);setBusy(true)
+    requestId.current||=randId()
+    try{
+      await apiRequest('/billing/expenses','POST',{
+        requestId:requestId.current,expenseDate:date,supplier,category,description,
+        amount:Number(amount),method,reference,receiptReference:receipt
+      })
+      requestId.current=null
+      setSupplier('');setDescription('');setAmount('');setReference('');setReceipt('')
+      setNote({kind:'success',text:'Expense requested. Practice manager approval is required before it appears in the ledger.'})
+      refresh(n=>n+1)
+    }catch(err){setNote({kind:'error',text:problem(err)})}
+    finally{setBusy(false)}
+  }
+  async function decide(decision:'Approved'|'Rejected'){
+    if(!selected)return
+    setNote(null);setBusy(true);decisionId.current||=randId()
+    try{
+      await apiRequest('/billing/expenses/'+encodeURIComponent(selected.id)+'/decision','POST',{
+        requestId:decisionId.current,decision,notes:decisionNote
+      })
+      decisionId.current=null;setSelected(null);setDecisionNote('')
+      setNote({kind:'success',text:decision==='Approved'?'Approved and posted once to Finances.':'Rejected without a ledger entry.'})
+      refresh(n=>n+1)
+    }catch(err){setNote({kind:'error',text:problem(err)})}
+    finally{setBusy(false)}
+  }
+  return <Popup title="Record daily expense" subtitle="One pending request, one approved Finances expense" onClose={onClose}>
+    <Notice value={note}/>
+    <form className="ct-day-form" onSubmit={submit}>
+      <div className="ct-day-form-grid">
+        <label>Supplier<input required minLength={2} maxLength={120} value={supplier}
+          placeholder="City Pharmacy" onChange={e=>{setSupplier(e.target.value);fieldChanged()}}/></label>
+        <label>Category<select value={category} onChange={e=>{setCategory(e.target.value);fieldChanged()}}>
+          {expenseCategories.map(x=><option key={x}>{x}</option>)}</select></label>
+        <label>Amount (ZAR)<input required type="number" step=".01" min=".01" value={amount}
+          onChange={e=>{setAmount(e.target.value);fieldChanged()}}/></label>
+        <label>Payment method<select value={method} onChange={e=>{setMethod(e.target.value);fieldChanged()}}>
+          <option>Cash</option><option>Card</option><option>EFT</option></select></label>
+        <label>Transaction reference<input value={reference} maxLength={100}
+          required={method!=='Cash'} placeholder="Cash slip / card / EFT reference"
+          onChange={e=>{setReference(e.target.value);fieldChanged()}}/></label>
+        <label>Receipt / evidence reference<input required minLength={3} maxLength={300} value={receipt}
+          placeholder="Receipts secure file ID or slip reference"
+          onChange={e=>{setReceipt(e.target.value);fieldChanged()}}/></label>
+      </div>
+      <label>Description<textarea required minLength={5} maxLength={250} rows={2}
+        value={description} onChange={e=>{setDescription(e.target.value);fieldChanged()}}
+        placeholder="Why this purchase was needed"/></label>
+      <button type="submit" className="primary-button" disabled={busy}>
+        <Plus size={15}/> {busy?'Saving…':'Request expense approval'}
+      </button>
+      <p className="ct-day-muted">Reception may capture the expense, but only a manager's approval posts it into the existing financial ledger. Laboratory payouts already recorded there must not be entered twice.</p>
+    </form>
+    <section className="ct-day-subpanel">
+      <h3>Daily expense approvals</h3>
+      {!data&&<p>Loading expense requests…</p>}
+      {data?.pendingOrDecided.map(x=><div className="ct-day-stat-row" key={x.id}>
+        <span><strong>{x.supplier}</strong> · {x.category} · {money(x.amount)}
+          <small>{x.receiptReference}</small></span>
+        <div className="ct-day-inline">
+          <Status good={x.decision?.decision==='Approved'} label={x.decision?.decision||'Pending approval'}/>
+          {manager&&!x.decision&&<button className="ct-day-link" type="button"
+            onClick={()=>{setSelected(x);setDecisionNote('');decisionId.current=null}}>Review</button>}
+        </div>
+      </div>)}
+      {data?.pendingOrDecided.length===0&&<p>No approval requests on this date.</p>}
+      <small className="ct-day-muted">{data?.posted.length||0} expenses already posted in the authoritative Finances ledger for this date.</small>
+    </section>
+    {selected&&<Popup title={'Manager approval: '+selected.supplier} subtitle="Review amount, supplier and evidence before posting" onClose={()=>setSelected(null)}>
+      <div className="ct-day-detail">
+        <div><span>Amount</span><strong>{money(selected.amount)}</strong></div>
+        <div><span>Payment method</span><strong>{selected.method}</strong></div>
+        <div><span>Receipt evidence</span><strong>{selected.receiptReference}</strong></div>
+        <div><span>Description</span><strong>{selected.description}</strong></div>
+      </div>
+      <label className="ct-day-field">Authorisation or rejection reason
+        <textarea minLength={5} required value={decisionNote} rows={3}
+          onChange={e=>{setDecisionNote(e.target.value);decisionId.current=null}}/></label>
+      <div className="ct-day-actions">
+        <button type="button" className="primary-button" disabled={busy||decisionNote.trim().length<5}
+          onClick={()=>void decide('Approved')}>Approve & post once</button>
+        <button type="button" className="secondary-button" disabled={busy||decisionNote.trim().length<5}
+          onClick={()=>void decide('Rejected')}>Reject</button>
+      </div>
+    </Popup>}
+  </Popup>
+}
+
+type RefundRow = {id:string;paymentId:string;refundedOn:string;amount:number;method:string;reason:string;evidenceReference:string}
+function RefundDrawer({date,onClose}:{date:string;onClose:()=>void}){
+  const [paymentId,setPaymentId]=useState('')
+  const [amount,setAmount]=useState('')
+  const [reason,setReason]=useState('')
+  const [evidence,setEvidence]=useState('')
+  const [rows,setRows]=useState<RefundRow[]>([])
+  const [revision,refresh]=useState(0)
+  const [note,setNote]=useState<Note|null>(null)
+  const [busy,setBusy]=useState(false)
+  const request=useRef<string|null>(null)
+  useEffect(()=>{
+    let live=true
+    apiRequest<RefundRow[]>('/billing/refunds?date='+encodeURIComponent(date))
+      .then(x=>{if(live)setRows(x)}).catch(e=>{if(live)setNote({kind:'error',text:problem(e)})})
+    return()=>{live=false}
+  },[date,revision])
+  async function submit(e:FormEvent){
+    e.preventDefault();setBusy(true);request.current||=randId()
+    try{
+      await apiRequest('/billing/refunds','POST',{
+        requestId:request.current,paymentId,amount:Number(amount),
+        refundedOn:date,reason,evidenceReference:evidence
+      })
+      request.current=null;setPaymentId('');setAmount('');setReason('');setEvidence('')
+      setNote({kind:'success',text:'Actual refund declared against the original receipt. No second invoice or payment created.'})
+      refresh(v=>v+1)
+    }catch(err){setNote({kind:'error',text:problem(err)})}
+    finally{setBusy(false)}
+  }
+  return <Popup title="Record actual refund" subtitle="Manager-approved, evidence-linked money outflow" onClose={onClose}>
+    <Notice value={note}/>
+    <form className="ct-day-form" onSubmit={submit}>
+      <label>Original payment ID<input required value={paymentId} placeholder="Use payment ID from receipt"
+        onChange={e=>{setPaymentId(e.target.value);request.current=null}}/></label>
+      <label>Amount actually refunded (ZAR)<input type="number" required min=".01" step=".01" value={amount}
+        onChange={e=>{setAmount(e.target.value);request.current=null}}/></label>
+      <label>Reason<textarea required minLength={5} rows={2} value={reason}
+        onChange={e=>{setReason(e.target.value);request.current=null}}/></label>
+      <label>Evidence / bank or cash slip reference<input required minLength={3} value={evidence}
+        onChange={e=>{setEvidence(e.target.value);request.current=null}}/></label>
+      <button className="primary-button" disabled={busy} type="submit">Record verified money outflow</button>
+      <p className="ct-day-muted">This is a record of funds already returned, not a payment gateway instruction or an automatic reversal of invoice allocations.</p>
+    </form>
+    <h3>Recorded refunds</h3>
+    {rows.length===0&&<p>No refunds on the selected date.</p>}
+    {rows.map(x=><div className="ct-day-stat-row" key={x.id}>
+      <span>{x.method} · {x.reason}</span><strong>{money(x.amount)}</strong></div>)}
+  </Popup>
+}
+
+type ClaimRow = {id:string;patientId:string;invoiceId:string;claimNumber:string
+  patientName:string;schemeName:string;planName:string;claimedAmount:number;status:string}
+type ClaimEvent = {id:string;toStatus:string;fromStatus:string;performedAtUtc:string
+  externalReference:string|null;reason:string;evidenceReference:string}
+type Correction = {id:string;version:number;previousCode:string;correctedCode:string
+  reason:string;approvedAtUtc:string;evidenceReference:string}
+type ClaimHistory = {claim:{id:string;status:string;claimedAmount:number
+  externalReference:string|null};events:ClaimEvent[];corrections:Correction[]}
+type InvoiceLine = {id:string;description:string;amount:number}
+const allowedTransitions:Record<string,string[]> = {
+  Draft:['SubmittedExternallyReported'],
+  SubmittedExternallyReported:['AcknowledgedReported','ApprovedReported','PartiallyApprovedReported','RejectedReported'],
+  AcknowledgedReported:['ApprovedReported','PartiallyApprovedReported','RejectedReported'],
+  CorrectedPendingResubmission:['SubmittedExternallyReported']
+}
+function MedicalAidActivity({date,setDate,revision,refresh,manager}:{
+  date:string;setDate:(date:string)=>void;revision:number;refresh:()=>void;manager:boolean
+}){
+  const [day,setDay]=useState<MedicalDay|null>(null)
+  const [claims,setClaims]=useState<ClaimRow[]>([])
+  const [search,setSearch]=useState('')
+  const [filter,setFilter]=useState<'all'|'rejected'|'submitted'|'draft'|'approved'>('all')
+  const [selected,setSelected]=useState<ClaimRow|null>(null)
+  const [history,setHistory]=useState<ClaimHistory|null>(null)
+  const [lines,setLines]=useState<InvoiceLine[]>([])
+  const [loading,setLoading]=useState(true)
+  const [notice,setNotice]=useState<Note|null>(null)
+  const [toolsOpen,setToolsOpen]=useState(false)
+  const [busy,setBusy]=useState(false)
+  const [target,setTarget]=useState('SubmittedExternallyReported')
+  const [externalRef,setExternalRef]=useState('')
+  const [approved,setApproved]=useState('0.00')
+  const [evidence,setEvidence]=useState('')
+  const [reason,setReason]=useState('')
+  const [invoiceLine,setInvoiceLine]=useState('')
+  const [oldCode,setOldCode]=useState('')
+  const [newCode,setNewCode]=useState('')
+  const [correctionOpen,setCorrectionOpen]=useState(false)
+  const request=useRef<string|null>(null)
+  const [localRevision,localRefresh]=useState(0)
+
+  useEffect(()=>{
+    let live=true;setLoading(true)
+    Promise.all([
+      apiRequest<MedicalDay>('/billing/medical-aid-day?date='+encodeURIComponent(date)),
+      apiRequest<ClaimRow[]>('/finance/medical-aid/claims')
+    ]).then(([d,c])=>{if(live){setDay(d);setClaims(c);setNotice(null)}})
+      .catch(err=>{if(live)setNotice({kind:'error',text:problem(err)})})
+      .finally(()=>{if(live)setLoading(false)})
+    return()=>{live=false}
+  },[date,revision,localRevision])
+
+  useEffect(()=>{
+    if(!selected)return
+    let live=true
+    Promise.all([
+      apiRequest<ClaimHistory>('/finance/medical-aid/claims/'+encodeURIComponent(selected.id)+'/workflow/history'),
+      apiRequest<{lines:InvoiceLine[]}>('/finance/invoices/'+encodeURIComponent(selected.invoiceId))
+    ]).then(([h,i])=>{if(live){setHistory(h);setLines(i.lines||[]);setInvoiceLine(i.lines?.[0]?.id||'')}})
+      .catch(err=>{if(live)setNotice({kind:'error',text:problem(err)})})
+    return()=>{live=false}
+  },[selected?.id,selected?.invoiceId,localRevision])
+
+  const filtered=useMemo(()=>claims.filter(c=>{
+    const q=search.trim().toLowerCase()
+    const matches= [c.patientName,c.claimNumber,c.schemeName,c.status].some(s=>s.toLowerCase().includes(q))
+    return matches && (filter==='all'||
+      filter==='rejected'&&(c.status==='RejectedReported'||c.status==='CorrectedPendingResubmission')||
+      filter==='submitted'&&c.status==='SubmittedExternallyReported'||
+      filter==='draft'&&c.status==='Draft'||
+      filter==='approved'&&['ApprovedReported','PartiallyApprovedReported'].includes(c.status))
+  }),[claims,filter,search])
+
+  async function transition(e:FormEvent){
+    e.preventDefault();if(!selected)return
+    setBusy(true);setNotice(null);request.current||=randId()
+    try{
+      await apiRequest('/finance/medical-aid/claims/'+encodeURIComponent(selected.id)+'/workflow/transition','POST',{
+        requestId:request.current,targetStatus:target,externalReference:externalRef||null,
+        approvedAmount:['ApprovedReported','PartiallyApprovedReported','RejectedReported'].includes(target)
+          ?Number(approved):null,
+        evidenceReference:evidence,reason
+      })
+      request.current=null;setSelected(null);setHistory(null);localRefresh(n=>n+1);refresh()
+      setNotice({kind:'success',text:'Claim event recorded on the original claim, without posting financial receipts.'})
+    }catch(err){setNotice({kind:'error',text:problem(err)})}
+    finally{setBusy(false)}
+  }
+  async function correct(e:FormEvent){
+    e.preventDefault();if(!selected)return
+    setBusy(true);setNotice(null);request.current||=randId()
+    try{
+      await apiRequest('/finance/medical-aid/claims/'+encodeURIComponent(selected.id)+'/corrections','POST',{
+        requestId:request.current,invoiceLineId:invoiceLine,previousCode:oldCode,
+        correctedCode:newCode,reason,evidenceReference:evidence
+      })
+      request.current=null;setCorrectionOpen(false);setSelected(null);setHistory(null)
+      localRefresh(n=>n+1);refresh()
+      setNotice({kind:'success',text:'Versioned correction recorded. Resubmit the SAME claim using a NEW submission reference.'})
+    }catch(err){setNotice({kind:'error',text:problem(err)})}
+    finally{setBusy(false)}
+  }
+  const options=selected?(allowedTransitions[selected.status]||[]):[]
+  return <>
+    <Header title="Billing – Medical Aid" subtitle="Claims are operations, NOT cash receipts. Follow every rejected claim to correction and resubmission."
+      date={date} setDate={setDate} refresh={refresh}/>
+    <Notice value={notice}/>
+    {loading&&<p>Loading medical aid activity…</p>}
+    {day&&<div className="ct-day-kpis">
+      <Kpi label="Unique claims today" value={String(day.activity.uniqueClaims)} note="One original claim ID"/>
+      <Kpi tone="purple" label="Claim value" value={money(day.activity.submittedValue)} note="Not money received"/>
+      <Kpi tone="teal" label="Transmission attempts" value={String(day.activity.submissionAttempts)} note="Includes resubmissions"/>
+      <Kpi tone="gold" label="Actions pending" value={String(day.activity.actionsPending)} note="Rejected / unsubmitted follow-up"/>
+    </div>}
+    <div className="ct-day-panel">
+      <div className="ct-day-toolbar"><label><Search size={15}/><input type="search" value={search}
+        onChange={e=>setSearch(e.target.value)} placeholder="Search patient, scheme, claim or status"/></label>
+        <button className="secondary-button" type="button" onClick={()=>setToolsOpen(v=>!v)}>
+          {toolsOpen?'Hide':'Open'} claims & remittance tools
+        </button></div>
+      <nav className="ct-day-tabs" aria-label="Claim status filters">
+        {(['all','submitted','draft','approved','rejected'] as const).map(x=>
+          <button type="button" key={x} className={filter===x?'active':''}
+            onClick={()=>setFilter(x)}>{x==='rejected'?'Rejected / Needs correction':x}</button>)}
+      </nav>
+      <div className="ct-day-table-scroll"><table><thead><tr>
+        <th>Patient</th><th>Scheme</th><th>Claim</th><th>Claimed</th><th>Status</th><th>Action</th>
+      </tr></thead><tbody>
+        {filtered.map(c=><tr key={c.id}>
+          <td>{c.patientName}</td><td>{c.schemeName}</td>
+          <td>{c.claimNumber}</td><td>{money(c.claimedAmount)}</td>
+          <td><Status good={c.status==='ApprovedReported'} label={c.status.replaceAll('Reported','')}/></td>
+          <td><button className="ct-day-link" type="button"
+            onClick={()=>{setSelected(c);setHistory(null);setReason('');setEvidence('');
+              setApproved(c.status==='RejectedReported'?'0.00':String(c.claimedAmount));
+              setExternalRef('');setTarget((allowedTransitions[c.status]||[])[0]||'');
+              setCorrectionOpen(false);request.current=null}}>
+            Review / correct</button></td>
+        </tr>)}
+        {filtered.length===0&&<tr><td colSpan={6}>No claims match these filters.</td></tr>}
+      </tbody></table></div>
+    </div>
+    {toolsOpen&&<section className="ct-day-existing-module">
+      <MedicalAidPanel canManage={manager}/>
+    </section>}
+    {selected&&<Popup title={'Medical Aid – '+selected.claimNumber}
+      subtitle={selected.patientName+' / '+selected.schemeName+' / '+money(selected.claimedAmount)}
+      onClose={()=>setSelected(null)}>
+      {!history?<p>Loading the original claim and its submission attempts…</p>:<>
+        <div className="ct-day-inline">
+          <Status good={selected.status==='ApprovedReported'} label={selected.status}/>
+          <strong>One logical claim · {history.events.filter(e=>e.toStatus==='SubmittedExternallyReported').length} transmission attempts</strong>
+        </div>
+        <h3>Submission, rejection and correction history</h3>
+        <div className="ct-day-timeline">
+          {history.events.map(x=><div key={x.id}>
+            <small>{dateTime(x.performedAtUtc)}</small>
+            <strong>{x.toStatus}</strong>
+            <p>{x.reason}</p>
+            <small>Evidence: {x.evidenceReference} {x.externalReference?' · Scheme ref '+x.externalReference:''}</small>
+          </div>)}
+          {history.corrections?.map(x=><div key={x.id}>
+            <small>{dateTime(x.approvedAtUtc)}</small>
+            <strong>Correction v{x.version}: {x.previousCode} → {x.correctedCode}</strong>
+            <p>{x.reason}</p><small>Evidence: {x.evidenceReference}</small>
+          </div>)}
+        </div>
+        {selected.status==='RejectedReported'&&manager&&
+          <button type="button" className="primary-button" onClick={()=>{setCorrectionOpen(true);request.current=null}}>
+            Review / correct rejected claim</button>}
+        {correctionOpen&&selected.status==='RejectedReported'&&manager&&
+          <form className="ct-day-form" onSubmit={correct}>
+            <h3>Approved code correction</h3>
+            <label>Clinical invoice source line<select required value={invoiceLine}
+              onChange={e=>{setInvoiceLine(e.target.value);request.current=null}}>
+              {lines.map(l=><option key={l.id} value={l.id}>{l.description} · {money(l.amount)}</option>)}
+            </select></label>
+            <div className="ct-day-form-grid">
+              <label>Rejected code<input required maxLength={40} value={oldCode}
+                onChange={e=>{setOldCode(e.target.value);request.current=null}}/></label>
+              <label>Corrected approved procedure code<input required maxLength={40} value={newCode}
+                onChange={e=>{setNewCode(e.target.value);request.current=null}}/></label>
+            </div>
+            <label>Clinical verification & manager authorisation notes<textarea required minLength={10}
+              value={reason} onChange={e=>{setReason(e.target.value);request.current=null}} rows={3}/></label>
+            <label>Evidence reference<input required minLength={3} value={evidence}
+              onChange={e=>{setEvidence(e.target.value);request.current=null}}/></label>
+            <p className="ct-day-muted">This records a corrected claim-code version only. It does not alter the invoice, clinical history or original claim ID.</p>
+            <button className="primary-button" type="submit" disabled={busy||!invoiceLine}>Save versioned correction</button>
+          </form>}
+        {!!options.length&&manager&&!(selected.status==='RejectedReported')&&
+          <form className="ct-day-form" onSubmit={transition}>
+            <h3>{selected.status==='CorrectedPendingResubmission'?'Resubmit corrected claim':'Record staff-reported scheme response'}</h3>
+            <label>Next status<select value={target} onChange={e=>{setTarget(e.target.value);request.current=null}}>
+              {options.map(x=><option key={x} value={x}>{x}</option>)}
+            </select></label>
+            {target==='SubmittedExternallyReported'&&<label>New external submission reference
+              <input required minLength={2} value={externalRef} maxLength={120}
+                onChange={e=>{setExternalRef(e.target.value);request.current=null}}/></label>}
+            {['ApprovedReported','PartiallyApprovedReported','RejectedReported'].includes(target)&&
+              <label>Reported scheme approved amount (R0 for rejection)
+                <input type="number" min="0" step=".01" required value={approved}
+                  onChange={e=>{setApproved(e.target.value);request.current=null}}/></label>}
+            <label>Evidence / scheme response ID<input required minLength={3} value={evidence}
+              onChange={e=>{setEvidence(e.target.value);request.current=null}}/></label>
+            <label>Reason / response details<textarea required minLength={5} rows={2} value={reason}
+              onChange={e=>{setReason(e.target.value);request.current=null}}/></label>
+            <button type="submit" className="primary-button" disabled={busy}>Record event without posting cash</button>
+          </form>}
+        <p className="ct-day-muted">Scheme remittances are recorded and allocated only after the bank movement is verified. Open claims & remittance tools to match actual receipts.</p>
+      </>}
+    </Popup>}
+  </>
+}
+
