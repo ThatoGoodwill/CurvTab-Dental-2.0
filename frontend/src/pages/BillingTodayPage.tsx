@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Banknote, CalendarDays, CreditCard, RefreshCw, Receipt, ShieldCheck, Wallet } from 'lucide-react'
+import { Banknote, RefreshCw, Receipt, ShieldCheck, Wallet } from 'lucide-react'
 import './BillingClientGuide.css'
 
 type Movement = {
@@ -32,11 +32,6 @@ type ExpenseSummary = {
 }
 type AidSummary = { submittedValue: number; uniqueClaims: number; signed: boolean }
 
-type Props = {
-  onNavigate: (section: 'cashPrivate' | 'medicalAid' | 'cashClose' | 'aidClose') => void
-  onRecordExpense: () => void
-}
-
 const money = (n: number) => new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(n)
 const today = () => new Intl.DateTimeFormat('en-CA', {
   timeZone: 'Africa/Johannesburg', year: 'numeric', month: '2-digit', day: '2-digit',
@@ -52,7 +47,7 @@ async function get<T>(url: string): Promise<T> {
   return res.json() as Promise<T>
 }
 
-export default function BillingTodayPage({ onNavigate, onRecordExpense }: Props) {
+export default function BillingTodayPage() {
   const [date, setDate] = useState(today)
   const [reload, setReload] = useState(0)
   const [ledger, setLedger] = useState<Ledger | null>(null)
@@ -64,15 +59,21 @@ export default function BillingTodayPage({ onNavigate, onRecordExpense }: Props)
   useEffect(() => {
     let active = true
     setBusy(true)
-    Promise.all([
+    Promise.allSettled([
       get<Ledger>(`/api/finance/ledger?${period(date)}`),
       get<ExpenseSummary>(`/api/finance/operations?date=${date}`),
       get<AidSummary>(`/api/billing/medical-aid-day-signoff?date=${date}`),
     ]).then(([l, e, m]) => {
       if (!active) return
-      setLedger(l); setExpenses(e); setAid(m); setError('')
-    }).catch((err: unknown) => {
-      if (active) setError(err instanceof Error ? err.message : 'Billing activity unavailable.')
+      setLedger(l.status === 'fulfilled' ? l.value : null)
+      setExpenses(e.status === 'fulfilled' ? e.value : null)
+      setAid(m.status === 'fulfilled' ? m.value : null)
+      const failed = [
+        l.status === 'rejected' ? 'Payments' : '',
+        e.status === 'rejected' ? 'Expenses' : '',
+        m.status === 'rejected' ? 'Medical aid' : '',
+      ].filter(Boolean)
+      setError(failed.length ? `Unable to load ${failed.join(', ')}. Other available figures are shown below; refresh to retry.` : '')
     }).finally(() => { if (active) setBusy(false) })
     return () => { active = false }
   }, [date, reload])
@@ -91,9 +92,9 @@ export default function BillingTodayPage({ onNavigate, onRecordExpense }: Props)
   const expensesTotal = expenses?.expenses.reduce((sum,row) => sum + row.amount,0) ?? 0
 
   return <section className="ct-guide-page">
-    <header className="ct-guide-heading">
-      <div><small>RECEPTION / BILLING</small><h2>Today's Billing</h2>
-        <p>Actual cash movements and claim-submission activity are kept separate.</p></div>
+    <header className="ct-guide-heading ct-billing-datebar">
+      <div><small>DAILY OVERVIEW</small>
+        <p>Actual money received and expenses are separate from medical-aid submissions.</p></div>
       <div className="ct-guide-heading-tools">
         <label>Business date <input type="date" value={date} max={today()} onChange={e => setDate(e.target.value)}/></label>
         <button type="button" className="secondary-button" disabled={busy} onClick={() => setReload(x => x+1)}>
@@ -107,12 +108,6 @@ export default function BillingTodayPage({ onNavigate, onRecordExpense }: Props)
       <article><Wallet size={19}/><span>Net movement</span><strong>{ledger && expenses ? money(ledger.totalReceived-expensesTotal) : '—'}</strong><small>Receipts minus recorded expenses</small></article>
       <article><ShieldCheck size={19}/><span>Medical-aid activity</span><strong>{aid ? money(aid.submittedValue) : '—'}</strong><small>{aid?.uniqueClaims ?? '—'} unique submitted claims · NOT received</small></article>
     </div>
-    <div className="ct-guide-actions">
-      <button type="button" className="primary-button" onClick={() => onNavigate('cashPrivate')}><CreditCard size={16}/> Record / view payment</button>
-      <button type="button" className="secondary-button" onClick={onRecordExpense}><Receipt size={16}/> Record Expense</button>
-      <button type="button" className="secondary-button" onClick={() => onNavigate('cashClose')}><Banknote size={16}/> Cash Day Close</button>
-      <button type="button" className="secondary-button" onClick={() => onNavigate('aidClose')}><CalendarDays size={16}/> Medical Aid Sign-Off</button>
-    </div>
     <div className="ct-guide-columns">
       <section className="ct-guide-panel">
         <h3>Today's transactions</h3>
@@ -124,7 +119,7 @@ export default function BillingTodayPage({ onNavigate, onRecordExpense }: Props)
               <td>{new Date(row.at).toLocaleTimeString('en-ZA',{hour:'2-digit',minute:'2-digit'})}</td>
               <td>{row.label}<small>{row.category}</small></td><td>{row.method}</td>
               <td>{money(row.amount)}</td></tr>)}
-              {!movements.length && <tr><td colSpan={4}>{busy ? 'Loading…' : 'No recorded transactions on this date.'}</td></tr>}
+              {!movements.length && <tr><td colSpan={4}>{busy ? 'Loading…' : error ? 'Some transaction sources are unavailable. Refresh to retry.' : 'No recorded transactions on this date.'}</td></tr>}
             </tbody></table>
         </div>
       </section>
