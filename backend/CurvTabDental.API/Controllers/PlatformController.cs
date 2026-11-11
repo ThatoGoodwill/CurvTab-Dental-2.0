@@ -99,6 +99,72 @@ public class PlatformController : ControllerBase
         return Created($"/api/platform/practices/{practice.Id}", dto);
     }
 
+    // Recovery of an existing first PracticeAdmin is a platform-admin operation.
+    // It never creates a second practice, never returns password hashes, and
+    // checks BOTH the selected practice and the user's PracticeAdmin role.
+    [HttpGet("practices/{id:guid}/administrators")]
+    public async Task<IActionResult> ListPracticeAdministrators(Guid id, CancellationToken ct)
+    {
+        if (!await _db.DentalPractices.AsNoTracking().AnyAsync(x => x.Id == id, ct))
+            return NotFound();
+
+        var admins = await (
+            from u in _db.Users.AsNoTracking()
+            join ur in _db.UserRoles.AsNoTracking() on u.Id equals ur.UserId
+            join role in _db.Roles.AsNoTracking() on ur.RoleId equals role.Id
+            where u.DentalPracticeId == id && role.Name == StaffRoles.PracticeAdmin
+            orderby u.FullName
+            select new
+            {
+                u.Id, u.FullName, u.Email, u.IsActive, u.MustChangePassword
+            }).ToListAsync(ct);
+
+        return Ok(admins);
+    }
+
+    public sealed record RecoverPracticeAdministratorRequest(string TemporaryPassword);
+
+    [HttpPost("practices/{id:guid}/administrators/{userId:guid}/reset-password")]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("login")]
+    public async Task<IActionResult> ResetPracticeAdministratorPassword(
+        Guid id, Guid userId,
+        [FromBody] RecoverPracticeAdministratorRequest request,
+        CancellationToken ct)
+    {
+        if (request is null || string.IsNullOrWhiteSpace(request.TemporaryPassword) ||
+            request.TemporaryPassword.Length > 128)
+            return BadRequest(new { title = "A valid temporary password is required." });
+
+        if (!await _db.DentalPractices.AsNoTracking().AnyAsync(x => x.Id == id && x.IsActive, ct))
+            return NotFound();
+
+        var user = await _users.FindByIdAsync(userId.ToString());
+        if (user is null || user.DentalPracticeId != id ||
+            !user.IsActive || !await _users.IsInRoleAsync(user, StaffRoles.PracticeAdmin))
+            return NotFound();
+
+        // ASP.NET Identity checks the configured password policy and updates
+        // the password hash and security stamp. No direct SQL hash edits.
+        var token = await _users.GeneratePasswordResetTokenAsync(user);
+        var result = await _users.ResetPasswordAsync(user, token, request.TemporaryPassword);
+        if (!result.Succeeded)
+            return BadRequest(result.ToValidationProblem());
+
+        user.MustChangePassword = true;
+        var saved = await _users.UpdateAsync(user);
+        if (!saved.Succeeded) return BadRequest(saved.ToValidationProblem());
+        await _users.ResetAccessFailedCountAsync(user);
+        await _users.SetLockoutEndDateAsync(user, null);
+        await _users.UpdateSecurityStampAsync(user);
+
+        await _audit.WriteAsync(
+            "PLATFORM_PRACTICE_ADMIN_PASSWORD_RESET", "User", user.Id.ToString(),
+            detail: "SuperAdmin recovery; temporary password change required",
+            practiceId: id, ct: ct);
+
+        return NoContent();
+    }
+
     /// <summary>Activate / deactivate a practice. History is kept; its staff are signed out on their next request.</summary>
     [HttpPatch("practices/{id:guid}/active")]
     public async Task<IActionResult> SetPracticeActive(Guid id, [FromBody] SetActiveRequest request, CancellationToken ct)
