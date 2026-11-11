@@ -43,21 +43,23 @@ export default function PracticeAdminPriorities({
     {name:'Staff Management',detail:'Active staff',value:counts.staff,Icon:UsersRound,action:onStaff},
     {name:'Laboratory',detail:'Open lab orders',value:counts.lab,Icon:FlaskConical,action:onLaboratory}
   ]
-  return <section className="ct-practice-priorities" aria-label="Practice manager priorities">
-    <div className="ct-practice-priorities-heading">
-      <div><strong>Practice management</strong><span>Live operational priorities and shortcuts</span></div>
-      <button type="button" aria-label="Refresh practice management counts" disabled={loading}
-        onClick={()=>setRefresh(v=>v+1)}><RefreshCw size={15}/></button>
-    </div>
-    <div className="ct-role-shortcuts">
+  return <details className="ct-practice-actions">
+    <summary aria-label="Open practice management actions">
+      Practice actions <span aria-hidden="true">•••</span>
+    </summary>
+    <div className="ct-practice-actions-menu">
+      <div className="ct-practice-actions-title">
+        <strong>Practice management</strong>
+        <button type="button" aria-label="Refresh practice management counts" disabled={loading}
+          onClick={()=>setRefresh(v=>v+1)}><RefreshCw size={14}/></button>
+      </div>
       {actions.map(({name,detail,value,Icon,action})=>
-        <button type="button" className="ct-role-shortcut" key={name} onClick={action}>
-          <Icon aria-hidden="true"/>
-          <strong>{name}</strong>
-          <small>{value === null ? detail : `${detail}: ${value}`}</small>
+        <button type="button" className="ct-practice-action" key={name} onClick={action}>
+          <Icon size={15} aria-hidden="true"/>
+          <span><strong>{name}</strong><small>{value === null ? detail : `${detail}: ${value}`}</small></span>
         </button>)}
+      {counts.checkout !== null && counts.checkout > 0 &&
+        <p className="ct-practice-checkout-note">{counts.checkout} checkout {counts.checkout===1?'visit needs':'visits need'} attention.</p>}
     </div>
-    {counts.checkout !== null && counts.checkout > 0 &&
-      <p className="ct-practice-checkout-note">{counts.checkout} checkout {counts.checkout===1?'visit needs':'visits need'} attention today.</p>}
-  </section>
+  </details>
 }
