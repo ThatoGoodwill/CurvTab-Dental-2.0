@@ -1,0 +1,68 @@
+/* CurvTab Clinical Calm — compact Phase 1 intake and routing, theme-token aware. */
+.ct-ortho-intake { display:flex; flex-direction:column; gap:11px; color:var(--text,#1d3654); width:100%; min-width:0; font-size:12px; }
+.ct-ortho-intake-header { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.ct-ortho-intake-header h2 { margin:3px 0 4px; font-size:clamp(17px,1.8vw,22px); }
+.ct-ortho-intake-header span { font-size:9px; letter-spacing:.1em; color:var(--practice-primary,#216fd6); font-weight:800; }
+.ct-ortho-intake-header p { margin:0; color:var(--text-muted,#5d7288); font-size:11px; }
+.ct-ortho-intake-header-buttons { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+.ct-ortho-intake button { font-size:11px; border-radius:7px; min-height:29px; padding:5px 10px; }
+.ct-ortho-intake button svg { width:14px; height:14px; }
+.ct-ortho-intake-error,.ct-ortho-intake-success { border-radius:8px; padding:9px 11px; font-size:11px; }
+.ct-ortho-intake-error { background:#fff1f1; color:#a32222; border:1px solid #e6b8b8; }
+.ct-ortho-intake-success { background:#e9f8ef; color:#096734; border:1px solid #b2e3c7; }
+.ct-ortho-intake-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
+.ct-ortho-intake-metrics > div { border:1px solid var(--border,#d7e2ef); border-radius:9px; background:var(--surface,#fff); display:grid; grid-template-columns:22px minmax(0,1fr); gap:4px 7px; padding:10px; }
+.ct-ortho-intake-metrics svg { grid-row:span 2; color:var(--practice-primary,#2272d2); }
+.ct-ortho-intake-metrics span { color:var(--text-muted,#677c93); font-size:10px; }
+.ct-ortho-intake-metrics strong { font-size:20px; line-height:1; }
+.ct-ortho-intake-toolbar { display:flex; gap:10px; align-items:end; justify-content:space-between; }
+.ct-ortho-intake-toolbar label { display:grid; gap:3px; min-width:min(260px,100%); font-size:10px; color:var(--text-muted,#53697f); }
+.ct-ortho-intake select,.ct-ortho-intake input,.ct-ortho-intake textarea { color:var(--text,#193953); background:var(--surface,#fff); border:1px solid var(--border,#cdddea); border-radius:7px; min-height:31px; padding:6px 9px; font:inherit; width:100%; box-sizing:border-box; }
+.ct-ortho-intake textarea { min-height:58px; resize:vertical; }
+.ct-ortho-intake label { min-width:0; }
+.ct-ortho-intake-empty { padding:28px 15px; color:var(--text-muted,#63758a); text-align:center; background:var(--surface,#fff); border:1px solid var(--border,#d8e4ef); border-radius:10px; }
+.ct-ortho-intake-rows { border:1px solid var(--border,#d7e2ee); border-radius:10px; overflow:hidden; background:var(--surface,#fff); }
+.ct-ortho-intake-row { display:grid; grid-template-columns:1fr 1.2fr .8fr; gap:12px; align-items:center; width:100%; text-align:left; background:transparent; color:inherit; border:0; border-bottom:1px solid var(--border,#e0e8f2); padding:10px 13px!important; min-height:66px!important; border-radius:0!important; cursor:pointer; }
+.ct-ortho-intake-row:last-child { border:0; }
+.ct-ortho-intake-row:hover { background:var(--surface-soft,#f1f7fc); }
+.ct-ortho-intake-row div { display:grid; gap:4px; min-width:0; }
+.ct-ortho-intake-row strong,.ct-ortho-intake-row span { font-size:11px; font-weight:700; overflow-wrap:anywhere; }
+.ct-ortho-intake-row small { font-size:10px; color:var(--text-muted,#61758a); overflow-wrap:anywhere; }
+.ct-ortho-intake-dialog { padding:12px 14px; border:1px solid var(--border,#d6e2ee); background:var(--surface,#fff); border-radius:11px; display:flex; flex-direction:column; gap:12px; }
+.ct-ortho-intake-section-title { display:flex; align-items:center; justify-content:space-between; gap:8px; padding-bottom:9px; border-bottom:1px solid var(--border,#e0e8f1); }
+.ct-ortho-intake-section-title h3 { margin:0; font-size:16px; }
+.ct-ortho-intake-section-title p { font-size:11px; color:var(--text-muted,#61758a); margin:3px 0 0; }
+.ct-ortho-intake-section-title button { border:1px solid var(--border,#cdddec); background:var(--surface,#fff); color:inherit; }
+.ct-ortho-intake-form { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; gap:10px 13px; }
+.ct-ortho-intake-form label,.ct-ortho-intake-policy label,.ct-ortho-intake-clinical label { display:grid; gap:5px; font-size:11px; font-weight:700; }
+.ct-ortho-intake-form .ct-ortho-intake-hint { grid-column:1/-1; margin:0; }
+.ct-ortho-intake-form label:has(textarea) { grid-column:1/-1; }
+.ct-ortho-intake-form .ct-ortho-intake-actions { grid-column:1/-1; }
+.ct-ortho-intake-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.ct-ortho-intake-hint { display:flex; gap:8px; align-items:center; color:var(--text-muted,#61758a); font-size:11px; padding:10px 11px; border-radius:8px; background:var(--surface-soft,#f1f7fc); }
+.ct-ortho-intake-hint svg { flex:none; }
+.ct-ortho-intake-facts { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
+.ct-ortho-intake-facts > div { display:flex; flex-direction:column; gap:5px; padding:9px 10px; border-radius:8px; background:var(--surface-soft,#f3f8fd); min-width:0; }
+.ct-ortho-intake-facts strong { font-size:10px; color:var(--text-muted,#61758a); }
+.ct-ortho-intake-facts span { font-size:11px; overflow-wrap:anywhere; }
+.ct-ortho-intake-details { padding:10px 12px; border:1px solid var(--border,#d9e6f2); border-radius:8px; font-size:11px; }
+.ct-ortho-intake-details p { margin:5px 0; }
+.ct-ortho-intake-assign,.ct-ortho-intake-policy { display:grid; gap:6px; max-width:620px; }
+.ct-ortho-intake-policy { display:grid; grid-template-columns:1fr 1fr auto; align-items:end; gap:8px; max-width:none; }
+.ct-ortho-intake-policy button { white-space:nowrap; }
+.ct-ortho-intake-clinical { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; align-items:end; }
+.ct-ortho-intake-clinical h4 { font-size:13px; margin:0; grid-column:1/-1; }
+.ct-ortho-intake-clinical label:has(textarea),.ct-ortho-intake-clinical .ct-ortho-intake-check { grid-column:1/-1; }
+.ct-ortho-intake-clinical .ct-ortho-intake-check { display:flex; align-items:center; gap:8px; }
+.ct-ortho-intake-check input { width:16px; height:16px; min-height:0; }
+@media(max-width:760px) {
+ .ct-ortho-intake-metrics,.ct-ortho-intake-facts { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .ct-ortho-intake-row { grid-template-columns:1fr 1fr; }
+ .ct-ortho-intake-row div:last-child { grid-column:1/-1; }
+ .ct-ortho-intake-policy { grid-template-columns:1fr; }
+}
+@media(max-width:540px) {
+ .ct-ortho-intake-header { align-items:flex-start; flex-wrap:wrap; }
+ .ct-ortho-intake-form,.ct-ortho-intake-clinical { grid-template-columns:1fr; }
+ .ct-ortho-intake-form label:has(textarea) { grid-column:1; }
+}
