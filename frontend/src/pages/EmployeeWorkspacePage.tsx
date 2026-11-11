@@ -34,7 +34,7 @@ async function apiError(response: Response) {
 }
 
 /** No employee ID is sent by the client. Server resolves self via cookie identity. */
-export default function EmployeeWorkspacePage() {
+export default function EmployeeWorkspacePage({ onManageStaff }: { onManageStaff?: () => void }) {
   const [tab, setTab] = useState<Tab>('Overview')
   const [data, setData] = useState<ResponseData | null>(null)
   const [reload, setReload] = useState(0)
@@ -145,8 +145,15 @@ export default function EmployeeWorkspacePage() {
       </div>}
       <section className="ct-employee-records">
         <h3>{tab === 'Overview' ? 'Recent personal records' : tab}</h3>
-        {records.length === 0 ? <p>No {tab === 'Overview' ? 'personal' : tab.toLowerCase()} records have been published yet.
-          This does not imply a roster, payslip, contract or leave entitlement exists.</p> :
+        {records.length === 0 ? <div className="ct-employee-empty">
+          <p>No {tab === 'Overview' ? 'personal' : tab.toLowerCase()} records have been published yet.</p>
+          {onManageStaff ? <>
+            <p>Publish verified roster, payslip and contract records through Staff Management.</p>
+            <button type="button" className="secondary-button" onClick={onManageStaff}>
+              Open Staff Management
+            </button>
+          </> : <p>Your practice administrator can publish records for your account.</p>}
+        </div> :
           <div className="ct-employee-record-list">{records.map(row =>
             <article key={row.id}>
               <div><strong>{row.title}</strong><span>{row.status} · {row.category}</span></div>
