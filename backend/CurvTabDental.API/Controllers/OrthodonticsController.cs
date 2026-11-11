@@ -35,9 +35,17 @@ public sealed class OrthodonticsController : ControllerBase
         "Functional appliance", "Other"
     };
 
+    // Every patient-specific orthodontic route is assigned-specialist scoped.
+    // A general dentist must never open an unrelated orthodontic patient.
     private Task<bool> PatientExists(Guid patientId, Guid practiceId, bool active, CancellationToken ct) =>
-        _db.Patients.AsNoTracking().AnyAsync(p => p.Id == patientId &&
-            p.DentalPracticeId == practiceId && (!active || !p.IsArchived), ct);
+        (from patient in _db.Patients.AsNoTracking()
+         join intake in _db.OrthodonticIntakes.AsNoTracking()
+              on patient.Id equals intake.PatientId
+         where patient.Id == patientId && patient.DentalPracticeId == practiceId &&
+               intake.DentalPracticeId == practiceId &&
+               intake.AssignedOrthodontistUserId == _current.UserId &&
+               intake.ClosedAtUtc == null && (!active || !patient.IsArchived)
+         select patient.Id).AnyAsync(ct);
 
     // GET /api/dentist/patients/{patientId}/orthodontics
     [HttpGet]
@@ -74,6 +82,11 @@ public sealed class OrthodonticsController : ControllerBase
             return BadRequest(new { message = "Provide a case title, valid appliance type and treatment goals." });
         }
         if (!await PatientExists(patientId, practiceId, true, ct)) return NotFound();
+        var assessmentStarted = await _db.OrthodonticIntakes.AsNoTracking().AnyAsync(x =>
+            x.PatientId == patientId && x.AssignedOrthodontistUserId == userId &&
+            x.Status == "ASSESSMENT_IN_PROGRESS" && x.ClosedAtUtc == null, ct);
+        if (!assessmentStarted)
+            return Conflict(new { message = "Complete the orthodontic intake and begin specialist assessment first. Intake alone never creates treatment." });
 
         var entity = new OrthodonticCase
         {
