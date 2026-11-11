@@ -30,6 +30,8 @@ import ReceptionCheckoutPage from './pages/ReceptionCheckoutPage'
 import RandIcon from './components/RandIcon'
 import { Wallet } from 'lucide-react'
 import DentistDashboardPage from './pages/DentistDashboardPage'
+import LabTechnicianDashboard from './pages/LabTechnicianDashboard'
+import PracticeAdminPriorities from './pages/PracticeAdminPriorities'
 import OverviewDashboardPage from './pages/OverviewDashboardPage'
 import DailyPatientsPage from './pages/DailyPatientsPage'
 import { ClipboardList as DailyPatientsIcon } from 'lucide-react'
@@ -1360,7 +1362,10 @@ export default function App() {
           )}
           {/* Keep the client's original dental slideshow at the top.
               Compact live reports appear directly beneath its KPI row. */}
-          {section === 'Dashboard' && role !== 'Dentist' && (
+          {section === 'Dashboard' && role === 'LabTechnician' && (
+            <LabTechnicianDashboard onOpenLaboratory={() => navigate('Laboratory')} />
+          )}
+          {section === 'Dashboard' && role !== 'Dentist' && role !== 'LabTechnician' && (
             <ClinicDashboardEnhancements
               role={role}
               showActivityCharts={!showOverview}
@@ -1369,6 +1374,14 @@ export default function App() {
                 if (role === 'SuperAdmin') navigate('Dental Practices')
                 else openAppointmentTab('Appointments')
               }}
+            />
+          )}
+          {section === 'Dashboard' && isPracticeAdmin && (
+            <PracticeAdminPriorities
+              onDayClose={() => { setBillingSection('dayClose'); navigate('Billing'); setBillingExpanded(true) }}
+              onStaff={() => navigate('Management')}
+              onLaboratory={() => navigate('Laboratory')}
+              onScheduling={() => openAppointmentTab('Appointments')}
             />
           )}
           {section === 'Dashboard' && showOverview && (
@@ -1382,7 +1395,7 @@ export default function App() {
             />
           )}
 
-          {section === 'Dashboard' && role !== 'Dentist' && !showOverview && (
+          {section === 'Dashboard' && role !== 'Dentist' && role !== 'LabTechnician' && !showOverview && (
             <>
               <div className="page-heading">
                 <div>
