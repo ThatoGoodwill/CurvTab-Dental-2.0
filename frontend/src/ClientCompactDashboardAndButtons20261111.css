@@ -269,3 +269,36 @@
 #root .app-shell .ct-dashboard-details .ov-quick-tile svg {
   width: 18px; height: 18px;
 }
+
+/* Shrink short Workspace/Day Close dialogs to their contents rather than
+   occupying a 670px empty rectangle. Long forms still scroll inside. */
+@media (min-width: 900px) {
+  html body #root .app-shell .workspace > main.main-content.ct-module-popup-window:has(> .ct-employee-workspace),
+  html body #root .app-shell .workspace > main.main-content.ct-module-popup-window:has(.ct-guide-day-close-landing) {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - 28px) !important;
+    overflow-y: auto !important;
+  }
+  html body #root .app-shell .workspace > main.main-content.ct-module-popup-window:has(> .ct-employee-workspace) {
+    max-width: min(920px,calc(100vw - var(--ct-modal-nav,258px) - 32px)) !important;
+  }
+}
+#root .app-shell .ct-employee-empty {
+  max-width: 520px;
+  padding: 10px 12px;
+  border: 1px dashed var(--border,#d2deec);
+  border-radius: 8px;
+  background: var(--surface-soft,transparent);
+  display: grid;
+  gap: 8px;
+  align-items: start;
+}
+#root .app-shell .ct-employee-empty p {
+  margin: 0 !important;
+  font-size: 11px !important;
+  line-height: 1.4;
+}
+#root .app-shell .ct-employee-empty button {
+  justify-self: start;
+}
