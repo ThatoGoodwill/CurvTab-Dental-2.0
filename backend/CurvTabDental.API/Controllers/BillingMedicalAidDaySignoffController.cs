@@ -77,10 +77,14 @@ public sealed class BillingMedicalAidDaySignoffController : ControllerBase
                 x.PerformedAtUtc
             }).ToListAsync(ct);
 
+        // Attempts are activity on the day; only FIRST submissions establish
+        // original claim value. A later resubmission must never be a new claim.
         var submissions = events.Where(x =>
             x.ToStatus is "SubmittedExternallyReported" or
                 "ResubmittedExternallyReported").ToList();
-        var claimIds = submissions.Select(x => x.ClaimId).Distinct().ToArray();
+        var originalSubmissions = submissions
+            .Where(x => x.ToStatus == "SubmittedExternallyReported").ToList();
+        var claimIds = originalSubmissions.Select(x => x.ClaimId).Distinct().ToArray();
 
         var rows = await (
             from claim in _db.Set<MedicalAidClaim>().AsNoTracking()
@@ -135,7 +139,7 @@ public sealed class BillingMedicalAidDaySignoffController : ControllerBase
             actionsPending = pending,
             claims = details,
             dayEvents = events,
-            note = "Claim submission events are not cash or bank receipts. Resubmitted attempts remain under their original claim."
+            note = "Unique claims and submitted value reflect original submission events only. Later resubmissions count as activity, never as new claims or receipts."
         };
     }
 
