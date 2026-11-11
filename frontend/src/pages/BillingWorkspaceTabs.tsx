@@ -135,7 +135,6 @@ export default function BillingWorkspaceTabs({
           className="ct-billing-menu-trigger"
           aria-expanded={menuOpen}
           aria-controls="ct-billing-all-menu"
-          aria-haspopup="true"
           onClick={() => setMenuOpen(open => !open)}
         >
           <LayoutGrid size={15} aria-hidden="true" />
@@ -147,7 +146,7 @@ export default function BillingWorkspaceTabs({
           <nav id="ct-billing-all-menu" className="ct-billing-menu" aria-label="Choose Billing section or action">
             <div className="ct-billing-menu-heading">BILLING SECTIONS</div>
             {sections.map(({ id, label, Icon }) => {
-              const current = section === id && (id !== 'cashPrivate' || cashTab === 'checkout')
+              const current = section === id && id !== 'cashPrivate' // Only the selected Cash & Private subview gets a check
               return <button key={id} type="button"
                 className={'ct-billing-menu-item' + (current ? ' active' : '')}
                 aria-current={current ? 'page' : undefined}
