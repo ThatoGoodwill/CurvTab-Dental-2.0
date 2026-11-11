@@ -17,6 +17,11 @@ type Intake = {
 }
 type PatientOption = { id: string; name: string }
 type Clinician = { id: string; name: string }
+type IntakeDocument = { id:string; category:string; originalFileName:string; sizeBytes:number; sha256:string; uploadedAtUtc:string }
+type AppointmentOption = { id:string; startUtc:string; reason:string|null; status:string }
+type AdvanceReceipt = { recorded:boolean; required?:boolean; amount?:number;currency:string; payment?:{
+  id:string; receiptNumber:string;amount:number;method:string;receivedAtUtc:string
+} }
 type IntakeDetail = Intake & {
   referralReason: string | null; referralNotes: string | null
   previousProvider: string | null; existingAppliances: string | null
@@ -76,6 +81,15 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
   const [error,setError] = useState('')
   const [success,setSuccess] = useState('')
   const [working,setWorking] = useState(false)
+  const [documents,setDocuments] = useState<IntakeDocument[]>([])
+  const [docCategory,setDocCategory] = useState('XRAY')
+  const [uploadFile,setUploadFile] = useState<File|null>(null)
+  const [appointments,setAppointments] = useState<AppointmentOption[]>([])
+  const [appointmentId,setAppointmentId] = useState('')
+  const [advanceMethod,setAdvanceMethod] = useState<'Cash'|'EFT'>('Cash')
+  const [bankReference,setBankReference] = useState('')
+  const [fundsConfirmed,setFundsConfirmed] = useState(false)
+  const [receipt,setReceipt] = useState<AdvanceReceipt|null>(null)
   const [reload,setReload] = useState(0)
   const [loading,setLoading] = useState(true)
 
@@ -153,6 +167,13 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
     setDueDate(item.dueDate?.slice(0,10)??'')
     setPolicy(item.advancePolicy)
     setDetail(null)
+    setDocuments([])
+    setReceipt(null)
+    setAppointments([])
+    setUploadFile(null)
+    setFundsConfirmed(false)
+    setBankReference('')
+    setAppointmentId('')
     setApprovedTerms(null)
     setSignerName('')
     setSignatureData('')
@@ -160,6 +181,19 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
     try {
       const data=await apiRequest<IntakeDetail>('/orthodontics/intakes/'+encodeURIComponent(item.id))
       setDetail(data)
+      const [docs,pay,bookings] = await Promise.all([
+        apiRequest<IntakeDocument[]>('/orthodontics/intakes/'+encodeURIComponent(item.id)+'/documents'),
+        (isManager || role==='Receptionist')
+          ? apiRequest<AdvanceReceipt>('/orthodontics/intakes/'+encodeURIComponent(item.id)+'/advance')
+          : Promise.resolve(null),
+        (isManager || role==='Receptionist')
+          ? apiRequest<AppointmentOption[]>('/orthodontics/intakes/'+encodeURIComponent(item.id)+'/advance/appointments')
+          : Promise.resolve([])
+      ])
+      setDocuments(docs)
+      setReceipt(pay)
+      setAppointments(bookings)
+      setAppointmentId(bookings[0]?.id ?? '')
     }catch(cause){setError(cause instanceof Error?cause.message:'Unable to load this intake.')}
   }
   useEffect(()=>{
@@ -170,6 +204,58 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
       .catch(()=>{if(active)setApprovedTerms({available:false,message:'Unable to load approved intake terms.'})})
     return ()=>{active=false}
   },[view,selected?.id,selected?.termsApplicable,selected?.termsAcceptedAtUtc])
+
+  async function downloadSecure(path:string, filename:string) {
+    setError('')
+    try {
+      const response = await fetch('/api'+path,{
+        credentials:'same-origin',
+        headers:{'X-Requested-With':'XMLHttpRequest'}
+      })
+      if(!response.ok) {
+        const problem=await response.json().catch(()=>null)
+        throw new Error(problem?.message||problem?.title||'Download unavailable.')
+      }
+      const url=URL.createObjectURL(await response.blob())
+      const link=document.createElement('a')
+      link.href=url;link.download=filename;document.body.appendChild(link);link.click()
+      link.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)
+    }catch(cause){setError(cause instanceof Error?cause.message:'Unable to download private file.')}
+  }
+  async function uploadEvidence(event:FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if(!selectedId||!uploadFile)return
+    if(uploadFile.size>4_000_000){setError('Files must be 4 MB or smaller.');return}
+    setWorking(true);setError('');setSuccess('')
+    try {
+      const formData=new FormData()
+      formData.append('file',uploadFile)
+      formData.append('category',docCategory)
+      const response=await fetch('/api/orthodontics/intakes/'+encodeURIComponent(selectedId)+'/documents',{
+        method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'},credentials:'same-origin',body:formData
+      })
+      if(!response.ok){
+        const data=await response.json().catch(()=>null)
+        throw new Error(data?.message||data?.title||'Upload failed.')
+      }
+      setSuccess('Document saved securely to the patient intake. The specialist must still verify the content.')
+      setUploadFile(null)
+      const input=document.getElementById('ct-ortho-document-input') as HTMLInputElement|null
+      if(input)input.value=''
+      setDocuments(await apiRequest<IntakeDocument[]>('/orthodontics/intakes/'+encodeURIComponent(selectedId)+'/documents'))
+    }catch(cause){setError(cause instanceof Error?cause.message:'Upload failed.')}
+    finally{setWorking(false)}
+  }
+  async function recordAdvance() {
+    if(!selectedId)return
+    const saved=await run(()=>apiRequest('/orthodontics/intakes/'+encodeURIComponent(selectedId)+'/advance','POST',{
+      appointmentId,method:advanceMethod,bankReference:bankReference||null,confirmedFundsReceived:fundsConfirmed
+    }),'Advance recorded once in the existing billing ledger. Receipt is available below.')
+    if(saved){
+      setFundsConfirmed(false)
+      setReceipt(await apiRequest<AdvanceReceipt>('/orthodontics/intakes/'+encodeURIComponent(selectedId)+'/advance'))
+    }
+  }
 
   const selectedId=selected?.id
   const change=(key:keyof CreateForm,value:string)=>setForm(old=>({...old,[key]:value}))
