@@ -154,6 +154,10 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 
+// PDFsharp Core needs an explicit font resolver before creating any PDF fonts.
+PdfSharp.Fonts.GlobalFontSettings.FontResolver =
+    new CurvTabDental.API.Services.CurvTabPdfFontResolver();
+
 var app = builder.Build();
 
 // ---------- ISOLATED STAGING SCHEMA INITIALIZATION ----------
