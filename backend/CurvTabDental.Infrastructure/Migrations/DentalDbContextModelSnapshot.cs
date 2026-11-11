@@ -2142,6 +2142,21 @@ namespace CurvTabDental.Infrastructure.Migrations
                     b.Property<string>("UrgentConcerns")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
+                    b.Property<string>("TransferContinuationDecision")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("TransferDecisionReason")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid?>("TransferDecidedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("TransferDecidedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
 
                     b.Property<string>("DocumentReferencesJson")
                         .IsRequired()
