@@ -1578,6 +1578,29 @@ namespace CurvTabDental.Infrastructure.Migrations
                     b.ToTable("MedicalAidClaimEvents", (string)null);
                 });
 
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.EmployeeWorkspaceRecord", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<Guid>("DentalPracticeId").HasColumnType("uuid");
+                    b.Property<Guid>("EmployeeUserId").HasColumnType("uuid");
+                    b.Property<Guid>("RequestId").HasColumnType("uuid");
+                    b.Property<string>("Category").IsRequired().HasMaxLength(20).HasColumnType("character varying(20)");
+                    b.Property<string>("Title").IsRequired().HasMaxLength(180).HasColumnType("character varying(180)");
+                    b.Property<string>("Status").IsRequired().HasMaxLength(30).HasColumnType("character varying(30)");
+                    b.Property<DateOnly?>("StartDate").HasColumnType("date");
+                    b.Property<DateOnly?>("EndDate").HasColumnType("date");
+                    b.Property<decimal?>("Amount").HasPrecision(12, 2).HasColumnType("numeric(12,2)");
+                    b.Property<string>("DocumentReference").HasMaxLength(350).HasColumnType("character varying(350)");
+                    b.Property<string>("Notes").HasMaxLength(1200).HasColumnType("character varying(1200)");
+                    b.Property<Guid>("CreatedByUserId").HasColumnType("uuid");
+                    b.Property<DateTime>("CreatedAtUtc").HasColumnType("timestamp with time zone");
+                    b.HasKey("Id");
+                    b.HasIndex("EmployeeUserId");
+                    b.HasIndex("DentalPracticeId", "RequestId").IsUnique();
+                    b.HasIndex("DentalPracticeId", "EmployeeUserId", "Category", "CreatedAtUtc");
+                    b.ToTable("EmployeeWorkspaceRecords", (string)null);
+                });
+
             modelBuilder.Entity("CurvTabDental.Domain.Entities.MedicalAidDaySignoff", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3595,6 +3618,13 @@ namespace CurvTabDental.Infrastructure.Migrations
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.EmployeeWorkspaceRecord", b =>
+                {
+                    b.HasOne("CurvTabDental.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany().HasForeignKey("EmployeeUserId")
+                        .OnDelete(DeleteBehavior.Restrict).IsRequired();
                 });
 
             modelBuilder.Entity("CurvTabDental.Domain.Entities.MedicalAidClaimEvent", b =>

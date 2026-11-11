@@ -598,6 +598,24 @@ modelBuilder.Entity<Appointment>(entity =>
         });
 
 
+        // Employee self-service: all queries are filtered by practice and controllers by employee.
+        modelBuilder.Entity<EmployeeWorkspaceRecord>(entity =>
+        {
+            entity.ToTable("EmployeeWorkspaceRecords");
+            entity.HasKey(x => x.Id);
+            entity.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            entity.Property(x => x.Category).IsRequired().HasMaxLength(20);
+            entity.Property(x => x.Title).IsRequired().HasMaxLength(180);
+            entity.Property(x => x.Status).IsRequired().HasMaxLength(30);
+            entity.Property(x => x.Amount).HasPrecision(12, 2);
+            entity.Property(x => x.DocumentReference).HasMaxLength(350);
+            entity.Property(x => x.Notes).HasMaxLength(1200);
+            entity.HasIndex(x => new { x.DentalPracticeId, x.RequestId }).IsUnique();
+            entity.HasIndex(x => new { x.DentalPracticeId, x.EmployeeUserId, x.Category, x.CreatedAtUtc });
+            entity.HasOne<ApplicationUser>().WithMany()
+                .HasForeignKey(x => x.EmployeeUserId).OnDelete(DeleteBehavior.Restrict);
+        });
+
         // CT_CLIENT_SEPARATE_DAILY_SIGNOFFS
         modelBuilder.Entity<CashDayCloseSubmission>(entity =>
         {
