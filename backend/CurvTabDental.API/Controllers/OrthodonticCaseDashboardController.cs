@@ -30,9 +30,14 @@ public sealed class OrthodonticCaseDashboardController : ControllerBase
 
         var cases = await (
             from c in _db.OrthodonticCases.AsNoTracking()
+            join intake in _db.OrthodonticIntakes.AsNoTracking()
+                on c.PatientId equals intake.PatientId
             join p in _db.Patients.AsNoTracking()
                 on c.PatientId equals p.Id
             where c.DentalPracticeId == practiceId
+               && intake.DentalPracticeId == practiceId
+               && intake.AssignedOrthodontistUserId == _current.UserId
+               && intake.ClosedAtUtc == null
                && p.DentalPracticeId == practiceId
                && !p.IsArchived
             orderby c.CreatedAtUtc descending
