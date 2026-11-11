@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using CurvTabDental.API.Services;
 using CurvTabDental.Application.Abstractions;
 using CurvTabDental.Domain.Entities;
 using CurvTabDental.Infrastructure.Identity;
@@ -43,6 +44,7 @@ public sealed class OrthodonticIntakesController : ControllerBase
     public record AdvancePolicyRequest(string Policy, string Reason);
     public record TermsSignatureRequest(string Version, string SignerName,
         string SignerCapacity, string SignatureDataUrl, string AcceptanceMethod);
+    public record TransferReviewRequest(string Decision, string Reason, bool EvidenceReviewed);
 
     private bool Manager => _current.Role == StaffRoles.PracticeAdmin;
     private bool Reception => _current.Role == StaffRoles.Receptionist;
@@ -66,7 +68,8 @@ public sealed class OrthodonticIntakesController : ControllerBase
         x.HistoryVerifiedByClinician,
         // A payment flag, never an inferred amount or unrestricted ledger.
         AdvanceRecorded = x.AdvancePaymentId.HasValue,
-        x.UrgentConcerns
+        x.UrgentConcerns, x.TransferContinuationDecision,
+        x.TransferDecisionReason, x.TransferDecidedAtUtc
     };
 
     [HttpGet]
@@ -192,8 +195,59 @@ public sealed class OrthodonticIntakesController : ControllerBase
         if (_current.PracticeId is not Guid practiceId) return Forbid();
         var entity = await Visible().FirstOrDefaultAsync(x => x.Id == id && x.DentalPracticeId == practiceId, ct);
         if (entity is null) return NotFound();
+        // One patient across general dentistry and specialist intake.
+        // Administrative registration and medical history are reused,
+        // never copied into a second patient record.
+        var patientProfile = await _db.Patients.AsNoTracking()
+            .Where(p => p.Id == entity.PatientId && p.DentalPracticeId == practiceId)
+            .Select(p => new { p.Id, patientName = p.FirstName + " " + p.LastName,
+                p.DateOfBirth, p.PaymentMethod })
+            .FirstOrDefaultAsync(ct);
+        var responsiblePerson = await _db.PatientRegistrationDetails.AsNoTracking()
+            .Where(r => r.DentalPracticeId == practiceId && r.PatientId == entity.PatientId)
+            .Select(r => new { r.ResponsibleName, r.ResponsibleRelationship,
+                r.ResponsiblePhone, r.ResponsibleEmail, r.GuardianConsent })
+            .FirstOrDefaultAsync(ct);
+        var nextVisit = await _db.Appointments.AsNoTracking()
+            .Where(a => a.DentalPracticeId == practiceId && a.PatientId == entity.PatientId &&
+                a.Status != "Cancelled" && a.Status != "CheckedOut")
+            .OrderBy(a => a.StartUtc)
+            .Select(a => new { a.Id, a.StartUtc, a.EndUtc, a.Status, a.Reason })
+            .FirstOrDefaultAsync(ct);
+        object? medicalHistory = null;
+        if (_current.Role == StaffRoles.Dentist)
+        {
+            medicalHistory = await _db.PatientMedicalHistories.AsNoTracking()
+                .Where(h => h.DentalPracticeId == practiceId && h.PatientId == entity.PatientId)
+                .Select(h => new { h.Allergies, h.CurrentMedications, h.MedicalConditions,
+                    h.DentalHistory, h.AdditionalNotes, h.UpdatedAtUtc })
+                .FirstOrDefaultAsync(ct);
+        }
+        Response.Headers.CacheControl = "private, no-store";
         await _audit.WriteAsync("ORTHO_INTAKE_VIEWED", "OrthodonticIntakeCase", id.ToString(), ct: ct);
-        return Ok(entity);
+        // Do not place a captured signature image or an entire legal document
+        // into ordinary JSON responses. Use the audited PDF download instead.
+        return Ok(new
+        {
+            entity.Id, entity.PatientId, entity.DentalPracticeId,
+            entity.Source, entity.Status, entity.CreatedByUserId,
+            entity.ReferralAuthorUserId, entity.AssignedOrthodontistUserId,
+            entity.ReferralReason, entity.ReferralNotes, entity.PreviousProvider,
+            entity.TransferContinuationDecision, entity.TransferDecisionReason,
+            entity.TransferDecidedAtUtc, entity.TransferDecidedByUserId,
+            entity.ExistingAppliances, entity.PreviousTreatmentStartDate,
+            entity.PreviousTreatmentPlanSummary, entity.TransferReason,
+            entity.PreviousRecordsSummary, entity.UrgentConcerns,
+            entity.DocumentReferencesJson, entity.MissingDocumentsJson,
+            entity.HistoryVerifiedByClinician, entity.HistoryVerifiedAtUtc,
+            entity.TermsApplicable, entity.TermsVersion, entity.TermsSha256,
+            entity.TermsSignerName, entity.TermsSignerCapacity,
+            entity.TermsAcceptedAtUtc, entity.TermsAcceptanceMethod,
+            entity.AdvancePolicy, entity.AdvancePaymentId,
+            entity.NextAction, entity.DueDate,
+            entity.AssessmentStartedAtUtc, entity.CreatedAtUtc, entity.UpdatedAtUtc,
+            patientProfile, responsiblePerson, nextVisit, medicalHistory
+        });
     }
 
     [HttpPatch("{id:guid}/assign")]
@@ -272,6 +326,8 @@ public sealed class OrthodonticIntakesController : ControllerBase
             return BadRequest(new { message = "Choose the applicable policy and record its reason." });
         var intake = await _db.OrthodonticIntakes.FirstOrDefaultAsync(x => x.Id == id && x.DentalPracticeId == practiceId && x.ClosedAtUtc == null, ct);
         if (intake is null) return NotFound();
+        if (intake.TermsAcceptedAtUtc.HasValue || intake.AdvancePaymentId.HasValue)
+            return Conflict(new { message = "Payment policy cannot be silently changed after the terms were signed or money was recorded. Escalate any correction for an audited review." });
         intake.AdvancePolicy = req.Policy;
         intake.TermsApplicable = req.Policy == "STANDARD_R2500";
         intake.Status = "RECORDS_PENDING";
@@ -301,6 +357,10 @@ public sealed class OrthodonticIntakesController : ControllerBase
         if (_current.PracticeId is not Guid practiceId) return Forbid();
         var intake = await _db.OrthodonticIntakes.FirstOrDefaultAsync(x => x.Id == id && x.DentalPracticeId == practiceId && x.ClosedAtUtc == null, ct);
         if (intake is null) return NotFound();
+        // Dentists cannot retrieve or sign a different specialist's intake,
+        // even if they guess the case UUID.
+        if (_current.Role == StaffRoles.Dentist &&
+            intake.AssignedOrthodontistUserId != _current.UserId) return NotFound();
         var docVersion = _settings["Orthodontics:ApprovedIntakeTermsVersion"];
         var docText = _settings["Orthodontics:ApprovedIntakeTermsText"];
         if (string.IsNullOrWhiteSpace(docVersion) || string.IsNullOrWhiteSpace(docText))
@@ -346,6 +406,58 @@ public sealed class OrthodonticIntakesController : ControllerBase
         return Ok(new { intake.Id, intake.TermsVersion, intake.TermsSha256, intake.TermsAcceptedAtUtc });
     }
 
+    /// <summary>
+    /// Re-render the exact document stored when signed; never use the current
+    /// configuration version for historical patient records.
+    /// </summary>
+    [HttpGet("{id:guid}/signed-terms.pdf")]
+    public async Task<IActionResult> DownloadSignedTerms(Guid id, CancellationToken ct)
+    {
+        if (_current.PracticeId is not Guid practiceId) return Forbid();
+        var intake = await Visible().FirstOrDefaultAsync(x =>
+            x.Id == id && x.DentalPracticeId == practiceId, ct);
+        if (intake is null) return NotFound();
+        if (!intake.TermsAcceptedAtUtc.HasValue ||
+            string.IsNullOrWhiteSpace(intake.TermsFullText) ||
+            string.IsNullOrWhiteSpace(intake.TermsSha256) ||
+            string.IsNullOrWhiteSpace(intake.TermsVersion))
+            return NotFound(new { message = "No signed, versioned intake document is available yet." });
+        var currentHash = SHA256.HashData(Encoding.UTF8.GetBytes(intake.TermsFullText));
+        if (!CryptographicOperations.FixedTimeEquals(
+            currentHash,
+            Convert.FromHexString(intake.TermsSha256)))
+            return Conflict(new { message = "Document integrity verification failed. Contact the practice administrator." });
+
+        var patientName = await _db.Patients.AsNoTracking()
+            .Where(p => p.Id == intake.PatientId && p.DentalPracticeId == practiceId)
+            .Select(p => p.FirstName + " " + p.LastName)
+            .FirstOrDefaultAsync(ct);
+        if (patientName is null) return NotFound();
+        var practiceName = await _db.DentalPractices.AsNoTracking()
+            .Where(p => p.Id == practiceId).Select(p => p.Name)
+            .FirstOrDefaultAsync(ct) ?? "Dental Practice";
+
+        byte[] pdf;
+        try
+        {
+            pdf = OrthodonticIntakePdf.Render(new OrthodonticIntakePdf.SignedIntakeDocument(
+                intake.Id, practiceName, patientName, intake.Source, intake.TermsVersion,
+                intake.TermsFullText, intake.TermsSha256, intake.TermsSignerName ?? "",
+                intake.TermsSignerCapacity ?? "", intake.TermsAcceptanceMethod ?? "",
+                intake.TermsAcceptedAtUtc.Value, intake.TermsSignatureDataUrl));
+        }
+        catch (Exception e) when (e is FormatException or InvalidDataException or InvalidOperationException)
+        {
+            return Conflict(new { message = "The stored signature could not be rendered safely. Escalate to the practice administrator." });
+        }
+        Response.Headers.CacheControl = "private, no-store";
+        Response.Headers["X-Content-Type-Options"] = "nosniff";
+        await _audit.WriteAsync("ORTHO_INTAKE_SIGNED_PDF_DOWNLOADED",
+            "OrthodonticIntakeCase", intake.Id.ToString(),
+            detail: $"version={intake.TermsVersion};sha256={intake.TermsSha256}", ct: ct);
+        return File(pdf, "application/pdf", $"orthodontic-intake-{intake.Id:N}.pdf");
+    }
+
     [HttpPost("{id:guid}/begin-assessment")]
     [Authorize(Roles = "Dentist")]
     public async Task<IActionResult> BeginAssessment(Guid id, CancellationToken ct)
@@ -364,6 +476,78 @@ public sealed class OrthodonticIntakesController : ControllerBase
         await _db.SaveChangesAsync(ct);
         await _audit.WriteAsync("ORTHO_ASSESSMENT_STARTED", "OrthodonticIntakeCase", id.ToString(), ct: ct);
         return Ok(new { intake.Id, intake.Status });
+    }
+
+    [HttpPatch("{id:guid}/transfer-review")]
+    [Authorize(Roles = "Dentist")]
+    public async Task<IActionResult> TransferReview(Guid id, [FromBody] TransferReviewRequest req,
+        CancellationToken ct)
+    {
+        if (_current.PracticeId is not Guid practiceId ||
+            _current.UserId is not Guid clinician) return Forbid();
+        if (req.Decision is not ("NEED_MORE_RECORDS" or
+            "ACCEPT_CONTINUATION" or "DECLINE_CONTINUATION") ||
+            string.IsNullOrWhiteSpace(req.Reason) ||
+            req.Reason.Length is < 12 or > 2000 ||
+            !req.EvidenceReviewed)
+            return BadRequest(new
+            {
+                message = "The assigned orthodontist must review evidence, choose a decision, and document clinical reasoning (12–2000 characters)."
+            });
+        var intake = await _db.OrthodonticIntakes.FirstOrDefaultAsync(x =>
+            x.Id == id && x.DentalPracticeId == practiceId &&
+            x.AssignedOrthodontistUserId == clinician &&
+            x.Source == "TRANSFER_IN" && x.ClosedAtUtc == null, ct);
+        if (intake is null) return NotFound();
+
+        if (intake.TransferContinuationDecision is
+            "ACCEPT_CONTINUATION" or "DECLINE_CONTINUATION")
+            return Conflict(new
+            {
+                message = "The specialist has already recorded a final transfer decision. Any correction must be formally reviewed."
+            });
+
+        if (req.Decision != "NEED_MORE_RECORDS" &&
+            (intake.Status != "ASSESSMENT_IN_PROGRESS" ||
+             !intake.HistoryVerifiedByClinician ||
+             intake.AssessmentStartedAtUtc is null))
+            return Conflict(new
+            {
+                message = "A documented independent specialist assessment and verified clinical history are required before accepting or declining continuing care."
+            });
+
+        var now = DateTime.UtcNow;
+        intake.TransferContinuationDecision = req.Decision;
+        intake.TransferDecisionReason = req.Reason.Trim();
+        intake.TransferDecidedAtUtc = now;
+        intake.TransferDecidedByUserId = clinician;
+        intake.UpdatedAtUtc = now;
+        if (req.Decision == "NEED_MORE_RECORDS")
+        {
+            intake.Status = "RECORDS_PENDING";
+            intake.NextAction = "Assigned specialist requests additional transfer clinical records.";
+        }
+        else if (req.Decision == "DECLINE_CONTINUATION")
+        {
+            intake.Status = "TRANSFER_DECLINED";
+            intake.ClosedAtUtc = now;
+            intake.NextAction = "Transfer-in continuation declined after independent specialist assessment; historical evidence retained.";
+        }
+        else
+        {
+            intake.NextAction = "Transfer-in continuation considered clinically acceptable. A separate future written plan and signed treatment contract are still required.";
+        }
+
+        await _db.SaveChangesAsync(ct);
+        await _audit.WriteAsync("ORTHODONTIC_TRANSFER_REVIEWED", "OrthodonticIntakeCase",
+            intake.Id.ToString(),
+            detail: $"decision={req.Decision};clinician={clinician};reason={req.Reason.Trim()}", ct: ct);
+        return Ok(new
+        {
+            intake.Id, intake.Status, intake.TransferContinuationDecision,
+            intake.TransferDecisionReason, intake.TransferDecidedByUserId,
+            intake.TransferDecidedAtUtc
+        });
     }
 
     // Recover orthodontic classifications registered before the intake table

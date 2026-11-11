@@ -4,8 +4,9 @@ import { apiRequest } from '../services/api'
 
 type Receipt = {
   paymentId: string
-  appointmentId: string
+  appointmentId: string | null
   receiptNumber: string
+  source: string
   amount: number
   method: string
   reference: string | null
@@ -67,7 +68,7 @@ function parseReceipts(value: unknown): Receipt[] {
 
     if (
       typeof row.paymentId !== 'string' ||
-      typeof row.appointmentId !== 'string' ||
+      (row.appointmentId !== null && typeof row.appointmentId !== 'string') ||
       typeof row.receiptNumber !== 'string' ||
       typeof row.amount !== 'number' ||
       !Number.isFinite(row.amount) ||
@@ -81,6 +82,7 @@ function parseReceipts(value: unknown): Receipt[] {
       paymentId: row.paymentId,
       appointmentId: row.appointmentId,
       receiptNumber: row.receiptNumber,
+      source: typeof row.source === 'string' ? row.source : 'Patient payment',
       amount: row.amount,
       method: row.method,
       reference:
@@ -235,7 +237,7 @@ export default function PatientAccountActivityView({
       reference: receipt.receiptNumber,
       amount: receipt.amount,
       date: receipt.receivedAtUtc,
-      detail: receipt.method
+      detail: receipt.source + ' · ' + receipt.method
     })),
     ...(section === 'Transactions' ? invoices.map(invoice => ({
       id: `invoice-${invoice.id}`,
@@ -292,7 +294,8 @@ export default function PatientAccountActivityView({
       <p className="ct-pa-v3-footnote">
         Read-only records. Receipts represent money recorded as received.
         Invoices represent charges, not additional cash receipts.
-        Allocation reversals are not refunds.
+        Orthodontic assessment advances remain patient credits until an agreed
+        treatment allocation. Allocation reversals are not refunds.
       </p>
     </div>
   )

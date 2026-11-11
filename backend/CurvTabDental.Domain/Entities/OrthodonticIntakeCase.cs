@@ -26,6 +26,12 @@ public sealed class OrthodonticIntakeCase : IPracticeOwned
     public string? TransferReason { get; set; }
     public string? PreviousRecordsSummary { get; set; }
     public string? UrgentConcerns { get; set; }
+    // A transfer is NOT accepted merely because an intake or appointment
+    // exists. Acceptance requires an independent specialist review.
+    public string TransferContinuationDecision { get; set; } = "NOT_REVIEWED";
+    public string? TransferDecisionReason { get; set; }
+    public Guid? TransferDecidedByUserId { get; set; }
+    public DateTime? TransferDecidedAtUtc { get; set; }
     // References to reviewed documents, not untrusted raw file content.
     public string DocumentReferencesJson { get; set; } = "[]";
     public string MissingDocumentsJson { get; set; } = "[]";

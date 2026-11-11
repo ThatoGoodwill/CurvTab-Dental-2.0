@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { ClipboardCheck, FileText, Plus, RefreshCw, ShieldCheck, Users, UserRoundCheck } from 'lucide-react'
-import { apiRequest } from '../services/api'
+import { apiRequest, apiUpload, apiDownload } from '../services/api'
 import { SignaturePad } from './RegistrationExtras'
 import './OrthodonticIntakePanel.css'
 
@@ -17,12 +17,28 @@ type Intake = {
 }
 type PatientOption = { id: string; name: string }
 type Clinician = { id: string; name: string }
+type IntakeDocument = {
+  id: string; originalFileName: string; category: string; contentType: string;
+  sizeBytes: number; sha256: string; sourceProvider: string | null;
+  uploadedAtUtc: string; reviewedAtUtc: string | null
+}
+type AdvanceReceipt = {
+  id: string; receiptNumber: string; amount: number; method: string;
+  reference: string | null; receivedAtUtc: string; creditAvailable: number
+}
+
 type IntakeDetail = Intake & {
   referralReason: string | null; referralNotes: string | null
   previousProvider: string | null; existingAppliances: string | null
   previousTreatmentStartDate: string | null; previousTreatmentPlanSummary: string | null
   transferReason: string | null; previousRecordsSummary: string | null
   documentReferencesJson: string
+  patientProfile?: {id:string;patientName:string;dateOfBirth:string|null;paymentMethod:string}|null
+  responsiblePerson?: { responsibleName:string|null; responsibleRelationship:string|null;
+    responsiblePhone:string|null;responsibleEmail:string|null;guardianConsent:boolean|null }|null
+  nextVisit?: {id:string;startUtc:string;endUtc:string;status:string;reason:string|null}|null
+  medicalHistory?: {allergies:string|null;currentMedications:string|null;medicalConditions:string|null;
+    dentalHistory:string|null;additionalNotes:string|null;updatedAtUtc:string}|null
 }
 type Props = {
   role: string
@@ -47,7 +63,7 @@ const sourceName = (source: IntakeSource) => ({
   DIRECT: 'Direct registration', INTERNAL: 'Internal referral', TRANSFER_IN: 'Transfer-in'
 })[source]
 const stateLabel = (state: string) => state.replaceAll('_',' ').toLowerCase()
-const initialList = ['New Assessments','Internal Referrals','Transfer-In Reviews','Active Treatment','Retention','Follow-ups','Repairs','Financial Interventions']
+const initialList = ['New Assessments','Internal Referrals','Transfer-In Reviews','Assessment In Progress','Financial Interventions']
 
 export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
   const isManager = role === 'PracticeAdmin'
@@ -59,6 +75,7 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
   const [patientError,setPatientError] = useState('')
   const [form,setForm] = useState<CreateForm>(newForm)
   const [view,setView] = useState<'queue'|'create'|'review'>('queue')
+  const [reviewTab,setReviewTab] = useState<'Overview'|'Documents'|'Consent & Payments'|'Clinical Review'>('Overview')
   const [filter,setFilter] = useState('All')
   const [selected,setSelected] = useState<Intake | null>(null)
   const [detail,setDetail] = useState<IntakeDetail | null>(null)
@@ -78,6 +95,17 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
   const [working,setWorking] = useState(false)
   const [reload,setReload] = useState(0)
   const [loading,setLoading] = useState(true)
+  const [documents,setDocuments] = useState<IntakeDocument[]>([])
+  const [advanceReceipts,setAdvanceReceipts] = useState<AdvanceReceipt[]>([])
+  const [uploadFile,setUploadFile] = useState<File|null>(null)
+  const [documentCategory,setDocumentCategory] = useState('Radiograph')
+  const [documentSource,setDocumentSource] = useState('')
+  const [paymentMethod,setPaymentMethod] = useState('Cash')
+  const [paymentReference,setPaymentReference] = useState('')
+  const [confirmPayment,setConfirmPayment] = useState(false)
+  const [paymentRequestId,setPaymentRequestId] = useState(() => crypto.randomUUID())
+  const [documentLoadError,setDocumentLoadError] = useState('')
+
 
   useEffect(()=>{
     let active=true
@@ -118,9 +146,8 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
     return cases.filter(c=> filter==='New Assessments' ? c.source==='DIRECT' && c.status!=='ASSESSMENT_IN_PROGRESS'
       : filter==='Internal Referrals' ? c.source==='INTERNAL'
       : filter==='Transfer-In Reviews' ? c.source==='TRANSFER_IN'
-      : filter==='Active Treatment' ? c.status==='ASSESSMENT_IN_PROGRESS'
+      : filter==='Assessment In Progress' ? c.status==='ASSESSMENT_IN_PROGRESS'
       : filter==='Financial Interventions' ? c.status==='PAYMENT_PENDING' || c.advancePolicy==='REVIEW_REQUIRED'
-      : (filter==='Follow-ups'||filter==='Repairs'||filter==='Retention') ? false
       : c.status.toLowerCase().includes(lower))
   },[cases,filter])
 
@@ -146,7 +173,7 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
     if (saved) setView('queue')
   }
   async function inspect(item:Intake) {
-    setSelected(item);setView('review');setError('');setSuccess('')
+    setSelected(item);setView('review');setReviewTab('Overview');setError('');setSuccess('')
     setHistoryVerified(item.historyVerifiedByClinician)
     setMissing(missingItems(item.missingDocumentsJson).join('\n'))
     setNextAction(item.nextAction??'')
@@ -157,10 +184,14 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
     setSignerName('')
     setSignatureData('')
     setTermsAcknowledged(false)
-    try {
-      const data=await apiRequest<IntakeDetail>('/orthodontics/intakes/'+encodeURIComponent(item.id))
-      setDetail(data)
-    }catch(cause){setError(cause instanceof Error?cause.message:'Unable to load this intake.')}
+    setUploadFile(null)
+    setDocuments([])
+    setAdvanceReceipts([])
+    setDocumentLoadError('')
+    setPaymentMethod('Cash')
+    setPaymentReference('')
+    setConfirmPayment(false)
+    setPaymentRequestId(crypto.randomUUID())
   }
   useEffect(()=>{
     if(view !== 'review' || !selected?.termsApplicable || selected.termsAcceptedAtUtc) return
@@ -172,6 +203,73 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
   },[view,selected?.id,selected?.termsApplicable,selected?.termsAcceptedAtUtc])
 
   const selectedId=selected?.id
+  useEffect(() => {
+    if (view !== 'review' || !selected?.id) return
+    let active = true
+    const id = selected.id
+    const load = async () => {
+      try {
+        const [record, docs, receipts] = await Promise.all([
+          apiRequest<IntakeDetail>('/orthodontics/intakes/' + encodeURIComponent(id)),
+          apiRequest<IntakeDocument[]>('/orthodontics/intakes/' + encodeURIComponent(id) + '/documents'),
+          isDentist ? Promise.resolve([] as AdvanceReceipt[]) :
+            apiRequest<AdvanceReceipt[]>('/orthodontics/intakes/' + encodeURIComponent(id) + '/advance')
+        ])
+        if (!active) return
+        setDetail(record)
+        setDocuments(docs)
+        setAdvanceReceipts(receipts)
+        setDocumentLoadError('')
+        setSelected(previous => previous?.id === id ? { ...previous, ...record } : previous)
+      } catch (cause) {
+        if (active) setDocumentLoadError(cause instanceof Error ? cause.message :
+          'Unable to load patient intake documents.')
+      }
+    }
+    void load()
+    return () => { active = false }
+  }, [view, selected?.id, reload, isDentist])
+
+  async function uploadDocument(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!selectedId || !uploadFile) return
+    const data = new FormData()
+    data.append('file',uploadFile)
+    data.append('category',documentCategory)
+    data.append('sourceProvider',documentSource)
+    const saved = await run(
+      () => apiUpload('/orthodontics/intakes/' + selectedId + '/documents', data),
+      'Clinical document uploaded to the patient intake. Specialist review is still required.')
+    if (saved) { setUploadFile(null); setDocumentSource('') }
+  }
+
+  async function downloadDocument(file: IntakeDocument) {
+    if (!selectedId) return
+    await run(() => apiDownload('/orthodontics/intakes/' + selectedId +
+      '/documents/' + file.id + '/file', file.originalFileName),
+      'Document downloaded securely.')
+  }
+
+  async function downloadSignedTerms() {
+    if (!selectedId) return
+    await run(() => apiDownload('/orthodontics/intakes/' + selectedId +
+      '/signed-terms.pdf', 'orthodontic-intake-' + selectedId + '.pdf'),
+      'Signed versioned intake PDF downloaded.')
+  }
+
+  async function recordAdvance(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!selectedId || !confirmPayment) return
+    const saved = await run(() => apiRequest(
+      '/orthodontics/intakes/' + selectedId + '/advance','POST',{
+        requestId:paymentRequestId,amount:2500,method:paymentMethod,
+        reference:paymentMethod==='Cash'?null:paymentReference.trim(),
+        confirmFundsReceived:confirmPayment
+      }), 'The actual R2,500 advance was recorded once as patient credit. Print or download the verified receipt.')
+    if (saved) { setConfirmPayment(false); setPaymentRequestId(crypto.randomUUID()) }
+  }
+
+
   const change=(key:keyof CreateForm,value:string)=>setForm(old=>({...old,[key]:value}))
   const showPatient=(patientId:string)=>onOpenPatient?.(patientId)
 
@@ -244,7 +342,33 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
         <div><strong>Advance policy</strong><span>{selected.advancePolicy.replaceAll('_',' ')} (no payment implied)</span></div>
         <div><strong>Consent terms</strong><span>{selected.termsAcceptedAtUtc?'Versioned signature recorded':'Not yet signed'}</span></div>
       </div>
-      {detail && <div className="ct-ortho-intake-details">
+      <nav className="ct-ortho-review-tabs" aria-label="Orthodontic intake sections">
+        {(['Overview','Documents','Consent & Payments', ...(isDentist?['Clinical Review']:[])] as Array<'Overview'|'Documents'|'Consent & Payments'|'Clinical Review'>).map(tab=>
+          <button type="button" key={tab} className={reviewTab===tab?'is-active':''}
+            onClick={()=>setReviewTab(tab)}>{tab}</button>
+        )}
+      </nav>
+      {reviewTab==='Overview' && detail && <div className="ct-ortho-intake-details">
+        {detail.patientProfile && <p><strong>Patient:</strong> {detail.patientProfile.patientName} ·
+          DOB {detail.patientProfile.dateOfBirth ?? 'Unknown'} ·
+          Payment category: {detail.patientProfile.paymentMethod}</p>}
+        {detail.responsiblePerson && <p><strong>Responsible person / payer:</strong>
+          {' '}{detail.responsiblePerson.responsibleName||'Not specified'} ·
+          {' '}{detail.responsiblePerson.responsibleRelationship||'Relationship to verify'} ·
+          {' '}{detail.responsiblePerson.responsiblePhone||'Phone missing'} ·
+          Guardian authority: {detail.responsiblePerson.guardianConsent===true?'Recorded (verify identity)':'Not verified'}</p>}
+        {detail.nextVisit && <p><strong>Next appointment:</strong>
+          {' '}{new Date(detail.nextVisit.startUtc).toLocaleString('en-ZA')} · {detail.nextVisit.status}
+          {' '}{detail.nextVisit.reason||''}</p>}
+        {!detail.nextVisit && <p><strong>Next appointment:</strong> Not scheduled in the current clinical queue.</p>}
+        {isDentist && detail.medicalHistory && <details><summary>Patient-supplied medical and dental history (clinical verification required)</summary>
+          <p><strong>Allergies:</strong> {detail.medicalHistory.allergies||'Not recorded'}</p>
+          <p><strong>Medications:</strong> {detail.medicalHistory.currentMedications||'Not recorded'}</p>
+          <p><strong>Medical conditions:</strong> {detail.medicalHistory.medicalConditions||'Not recorded'}</p>
+          <p><strong>Dental history:</strong> {detail.medicalHistory.dentalHistory||'Not recorded'}</p>
+          <p><strong>Additional notes:</strong> {detail.medicalHistory.additionalNotes||'Not recorded'}</p>
+        </details>}
+
         {detail.referralReason && <p><strong>Referral:</strong> {detail.referralReason}</p>}
         {detail.referralNotes && <p><strong>Referring clinician notes:</strong> {detail.referralNotes}</p>}
         {detail.previousProvider && <p><strong>Previous provider:</strong> {detail.previousProvider}</p>}
@@ -253,7 +377,82 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
         {detail.previousRecordsSummary && <p><strong>Records supplied:</strong> {detail.previousRecordsSummary}</p>}
         {detail.urgentConcerns && <p><strong>Urgent concerns:</strong> {detail.urgentConcerns}</p>}
       </div>}
-      {isManager && <>
+      {reviewTab==='Documents' && <section className="ct-ortho-intake-evidence">
+        <div className="ct-ortho-intake-section-title">
+          <div><h3>Clinical documents & evidence</h3>
+            <p>Linked to the existing patient. Uploads are not treated as verified findings.</p>
+          </div>
+          <span>{documents.length} file(s)</span>
+        </div>
+        {documentLoadError && <p role="alert" className="ct-ortho-intake-error">{documentLoadError}</p>}
+        {documents.length===0 ? <p className="ct-ortho-intake-hint">No supporting documents uploaded. Use the missing-items checklist below.</p> :
+          <div className="ct-ortho-intake-doc-list">{documents.map(file=><div key={file.id} className="ct-ortho-intake-doc">
+            <div><strong>{file.originalFileName}</strong>
+              <small>{file.category} · {Math.ceil(file.sizeBytes/1024)} KB · {file.reviewedAtUtc?'Clinically reviewed':'Review pending'}</small>
+              {file.sourceProvider && <small>Source: {file.sourceProvider}</small>}
+            </div>
+            <button type="button" className="secondary-button" disabled={working} onClick={()=>void downloadDocument(file)}>Download</button>
+            {isDentist && !file.reviewedAtUtc &&
+              <button type="button" className="secondary-button" disabled={working}
+                onClick={()=>void run(()=>apiRequest('/orthodontics/intakes/'+selectedId+
+                  '/documents/'+file.id+'/verify','PATCH',{}),'Document provenance clinically reviewed.')}>Mark reviewed</button>}
+          </div>)}</div>}
+        <form className="ct-ortho-intake-doc-form" onSubmit={uploadDocument}>
+          <label>Document type
+            <select value={documentCategory} onChange={e=>setDocumentCategory(e.target.value)}>
+              {['Referral','TransferRecords','Radiograph','Photo','MedicalHistory','GuardianAuthority','Other'].map(x=><option key={x} value={x}>{x==='TransferRecords'?'Transfer records':x==='MedicalHistory'?'Medical history':x==='GuardianAuthority'?'Guardian authority':x}</option>)}
+            </select>
+          </label>
+          <label>Source / previous provider (if known)
+            <input value={documentSource} maxLength={250} onChange={e=>setDocumentSource(e.target.value)} placeholder="Practice or provider supplying records"/>
+          </label>
+          <label>PDF or clinical image, maximum 6 MB
+            <input key={reload} type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
+              onChange={e=>setUploadFile(e.target.files?.[0]??null)} required/>
+          </label>
+          <button type="submit" className="primary-button" disabled={working || !uploadFile}>Upload evidence</button>
+        </form>
+      </section>}
+      {reviewTab==='Consent & Payments' && selected.termsAcceptedAtUtc && <div className="ct-ortho-intake-signed">
+        <div><strong>Signed electronic intake terms</strong><small>Exact recorded version, time, signer and checksum preserved.</small></div>
+        <button type="button" className="secondary-button" disabled={working}
+          onClick={()=>void downloadSignedTerms()}>Download signed PDF</button>
+      </div>}
+      {reviewTab==='Consent & Payments' && !isDentist && <section className="ct-ortho-intake-evidence">
+        <h3>Initial orthodontic advance</h3>
+        <p className="ct-ortho-intake-hint">For the standard assessment, R2,500 is a patient credit toward an agreed braces quotation. Transfer-in exceptions need an approved policy. Never record money that has not been received.</p>
+        {advanceReceipts.map(r=><div key={r.id} className="ct-ortho-intake-signed">
+          <div><strong>{r.receiptNumber} · R {r.amount.toLocaleString('en-ZA',{minimumFractionDigits:2})}</strong>
+            <small>{r.method} · {new Date(r.receivedAtUtc).toLocaleString('en-ZA')} · Unallocated patient credit R {r.creditAvailable.toFixed(2)}</small></div>
+          <button type="button" className="secondary-button" onClick={()=>void run(
+            ()=>apiDownload('/orthodontics/intakes/'+selectedId+'/advance/'+r.id+'/receipt.pdf',
+              r.receiptNumber+'.pdf'),'Official payment receipt downloaded.')}>Download receipt PDF</button>
+        </div>)}
+        {advanceReceipts.length===0 && selected.advancePolicy==='STANDARD_R2500' && selected.termsAcceptedAtUtc &&
+          <form className="ct-ortho-intake-payment" onSubmit={recordAdvance}>
+            <label>Received amount <input disabled readOnly value="R 2 500,00" /></label>
+            <label>Tender method
+              <select value={paymentMethod} onChange={e=>setPaymentMethod(e.target.value)}>
+                <option value="Cash">Cash</option><option value="Card">Card</option><option value="EFT">EFT</option>
+              </select>
+            </label>
+            {paymentMethod!=='Cash' && <label>Verified terminal / EFT reference
+              <input required value={paymentReference} maxLength={100} onChange={e=>setPaymentReference(e.target.value)} placeholder="Never enter card numbers" />
+            </label>}
+            <label className="ct-ortho-intake-check ct-ortho-intake-full">
+              <input type="checkbox" checked={confirmPayment} onChange={e=>setConfirmPayment(e.target.checked)}/>
+              <span>I have independently confirmed that R2,500 was actually received, and the approved intake terms were signed before collection.</span>
+            </label>
+            <button type="submit" className="primary-button" disabled={working || !confirmPayment || (paymentMethod!=='Cash'&&!paymentReference.trim())}>Record actual advance & issue receipt</button>
+          </form>}
+        {advanceReceipts.length===0 && (!selected.termsAcceptedAtUtc || selected.advancePolicy!=='STANDARD_R2500') &&
+          <p className="ct-ortho-intake-hint">
+            {selected.advancePolicy==='REVIEW_REQUIRED'?'The advance policy has not yet been confirmed.':
+              selected.advancePolicy==='NOT_APPLICABLE'?'No advance is required under the recorded exception.':
+                'Approved signed terms are required before collecting R2,500.'}
+          </p>}
+      </section>}
+      {reviewTab==='Overview' && isManager && <>
         <label className="ct-ortho-intake-assign">Assign to an authorised dentist
           <select value={selected.assignedOrthodontistUserId??''} onChange={e=>{
             const value=e.target.value
@@ -267,7 +466,14 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
             {clinicians.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </label>
-        <div className="ct-ortho-intake-policy">
+
+        <button type="button" className="secondary-button" disabled={working} onClick={()=>run(
+          ()=>apiRequest('/orthodontics/intakes/sync-classifications','POST',{}),
+          'Previously classified patients routed without duplicate registrations.')}>
+          Route previously classified patients
+        </button>
+      </>}
+      {reviewTab==='Consent & Payments' && isManager &&         <div className="ct-ortho-intake-policy">
           <label>Advance policy
             <select value={policy} onChange={e=>setPolicy(e.target.value)}>
               <option value="STANDARD_R2500">Standard R2,500 assessment advance</option>
@@ -279,14 +485,8 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
           <button type="button" className="secondary-button" disabled={working||!policyReason.trim()}
             onClick={()=>run(()=>apiRequest('/orthodontics/intakes/'+selectedId+'/advance-policy','PATCH',
               {policy,reason:policyReason}), 'Policy decision recorded. No money has been collected.')}>Save policy</button>
-        </div>
-        <button type="button" className="secondary-button" disabled={working} onClick={()=>run(
-          ()=>apiRequest('/orthodontics/intakes/sync-classifications','POST',{}),
-          'Previously classified patients routed without duplicate registrations.')}>
-          Route previously classified patients
-        </button>
-      </>}
-      {selected.termsApplicable && !selected.termsAcceptedAtUtc && <details className="ct-ortho-terms">
+        </div>}
+      {reviewTab==='Consent & Payments' && selected.termsApplicable && !selected.termsAcceptedAtUtc && <details className="ct-ortho-terms">
         <summary>Electronic intake and advance terms · approval required</summary>
         {!approvedTerms ? <p>Checking approved document…</p>
           : !approvedTerms.available || !approvedTerms.version || !approvedTerms.fullText ?
@@ -325,7 +525,7 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
               })}}>Sign approved intake terms</button>
           </>}
       </details>}
-      {isDentist && <>
+      {isDentist && reviewTab==='Clinical Review' && <>
         <div className="ct-ortho-intake-clinical">
           <h4>Clinical readiness review</h4>
           <label className="ct-ortho-intake-check">
@@ -350,7 +550,7 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
         Standard advances require approved guardian/payer terms and an actual existing-ledger receipt.
         A missing document is not treated as a negative finding.
       </div>
-      {onOpenPatient && <button type="button" className="secondary-button" onClick={()=>showPatient(selected.patientId)}>Open existing patient record</button>}
+      {reviewTab==='Overview' && onOpenPatient && <button type="button" className="secondary-button" onClick={()=>showPatient(selected.patientId)}>Open existing patient record</button>}
     </section>}
 
     {view==='queue' && <>

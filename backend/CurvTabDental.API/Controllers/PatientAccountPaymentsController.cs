@@ -54,16 +54,40 @@ public sealed class PatientAccountPaymentsController : ControllerBase
             select new
             {
                 paymentId = payment.Id,
-                payment.AppointmentId,
+                appointmentId = (Guid?)payment.AppointmentId,
                 payment.ReceiptNumber,
                 payment.Amount,
                 payment.Method,
                 payment.Reference,
-                payment.ReceivedAtUtc
+                payment.ReceivedAtUtc,
+                source = "Visit checkout"
             }
         ).ToListAsync(ct);
 
+        // Show all actual patient receipts without treating future
+        // invoice allocations as a second payment. Intake advances remain
+        // unallocated patient credits until a signed treatment agreement.
+        var planReceipts = await _db.PlanPayments.AsNoTracking()
+            .Where(p => p.DentalPracticeId == practiceId && p.PatientId == patientId)
+            .OrderByDescending(p => p.ReceivedAtUtc)
+            .Select(p => new
+            {
+                paymentId = p.Id, appointmentId = (Guid?)null, p.ReceiptNumber,
+                p.Amount, p.Method, p.Reference, p.ReceivedAtUtc,
+                source = "Treatment plan receipt"
+            }).ToListAsync(ct);
+        var advanceReceipts = await _db.OrthodonticIntakeAdvanceReceipts.AsNoTracking()
+            .Where(p => p.DentalPracticeId == practiceId && p.PatientId == patientId)
+            .OrderByDescending(p => p.ReceivedAtUtc)
+            .Select(p => new
+            {
+                paymentId = p.Id, appointmentId = (Guid?)null, p.ReceiptNumber,
+                p.Amount, p.Method, p.Reference, p.ReceivedAtUtc,
+                source = "Orthodontic intake advance (patient credit)"
+            }).ToListAsync(ct);
+
         Response.Headers.CacheControl = "private, no-store";
-        return Ok(receipts);
+        return Ok(receipts.Concat(planReceipts).Concat(advanceReceipts)
+            .OrderByDescending(x => x.ReceivedAtUtc));
     }
 }

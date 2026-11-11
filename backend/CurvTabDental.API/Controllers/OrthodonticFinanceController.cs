@@ -47,13 +47,14 @@ public sealed class OrthodonticFinanceController : ControllerBase
         if (_current.PracticeId is not Guid practiceId)
             return Forbid();
 
-        var belongsToPractice =
-            await _db.OrthodonticCases.AsNoTracking()
-                .AnyAsync(c =>
-                    c.Id == caseId &&
-                    c.DentalPracticeId == practiceId, ct);
-
-        if (!belongsToPractice)
+        var patientId = await _db.OrthodonticCases.AsNoTracking()
+            .Where(c => c.Id == caseId && c.DentalPracticeId == practiceId)
+            .Select(c => c.PatientId).FirstOrDefaultAsync(ct);
+        if (patientId == Guid.Empty) return NotFound();
+        if (_current.Role == "Dentist" &&
+            !await _db.OrthodonticIntakes.AsNoTracking().AnyAsync(i =>
+                i.DentalPracticeId == practiceId && i.PatientId == patientId &&
+                i.AssignedOrthodontistUserId == _current.UserId && i.ClosedAtUtc == null, ct))
             return NotFound();
 
         var agreement =
@@ -141,17 +142,22 @@ public sealed class OrthodonticFinanceController : ControllerBase
             });
         }
 
-        var caseExists =
-            await _db.OrthodonticCases.AsNoTracking()
-                .AnyAsync(c =>
-                    c.Id == caseId &&
-                    c.DentalPracticeId == practiceId, ct);
-
-        if (!caseExists)
-            return NotFound(new
-            {
-                message = "Orthodontic case not found."
-            });
+        var casePatientId = await _db.OrthodonticCases.AsNoTracking()
+            .Where(c => c.Id == caseId && c.DentalPracticeId == practiceId)
+            .Select(c => c.PatientId).FirstOrDefaultAsync(ct);
+        if (casePatientId == Guid.Empty)
+            return NotFound(new { message = "Orthodontic case not found." });
+        if (_current.Role == "Dentist" &&
+            !await _db.OrthodonticIntakes.AsNoTracking().AnyAsync(i =>
+                i.DentalPracticeId == practiceId && i.PatientId == casePatientId &&
+                i.AssignedOrthodontistUserId == actorId && i.ClosedAtUtc == null, ct))
+            return NotFound();
+        // Phase 1 expressly prohibits a final braces contract or an instalment
+        // schedule on an INTAKE record. Legacy active treatment cases remain
+        // readable; new intake-linked treatment agreements are Phase 3 only.
+        if (await _db.OrthodonticIntakes.AsNoTracking().AnyAsync(i =>
+            i.DentalPracticeId == practiceId && i.PatientId == casePatientId, ct))
+            return Conflict(new { message = "A final orthodontic contract and instalment schedule require a separate signed Phase 3 treatment agreement. Phase 1 intake cannot activate them." });
 
         var existing =
             await _db.OrthodonticFinancialAgreements

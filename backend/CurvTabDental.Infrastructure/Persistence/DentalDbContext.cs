@@ -67,6 +67,8 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
     public DbSet<ClinicalImage> ClinicalImages => Set<ClinicalImage>();
     public DbSet<OrthodonticCase> OrthodonticCases => Set<OrthodonticCase>();
     public DbSet<OrthodonticIntakeCase> OrthodonticIntakes => Set<OrthodonticIntakeCase>();
+    public DbSet<OrthodonticIntakeDocument> OrthodonticIntakeDocuments => Set<OrthodonticIntakeDocument>();
+    public DbSet<OrthodonticIntakeAdvanceReceipt> OrthodonticIntakeAdvanceReceipts => Set<OrthodonticIntakeAdvanceReceipt>();
     public DbSet<OrthodonticProgressNote> OrthodonticProgressNotes => Set<OrthodonticProgressNote>();
 
     // EF evaluates this per query (it is a member of the context), not once at model build time.
@@ -523,6 +525,47 @@ modelBuilder.Entity<Appointment>(entity =>
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
+        // R2,500 standard assessment advance is a real receipt-backed
+        // unallocated patient credit, not an OrthodonticInstallment.
+        modelBuilder.Entity<OrthodonticIntakeAdvanceReceipt>(entity =>
+        {
+            entity.ToTable("OrthodonticIntakeAdvanceReceipts");
+            entity.HasKey(x => x.Id);
+            entity.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            entity.Property(x => x.ReceiptNumber).HasMaxLength(60).IsRequired();
+            entity.Property(x => x.Method).HasMaxLength(10).IsRequired();
+            entity.Property(x => x.Reference).HasMaxLength(100);
+            entity.Property(x => x.Amount).HasPrecision(12, 2);
+            entity.HasIndex(x => new { x.DentalPracticeId, x.OrthodonticIntakeCaseId }).IsUnique();
+            entity.HasIndex(x => new { x.DentalPracticeId, x.RequestId }).IsUnique();
+            entity.HasIndex(x => new { x.DentalPracticeId, x.ReceivedAtUtc });
+            entity.HasOne<OrthodonticIntakeCase>().WithMany().HasForeignKey(x => x.OrthodonticIntakeCaseId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Patient>().WithMany().HasForeignKey(x => x.PatientId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Persistent, practice-filtered intake attachments; read access is
+        // additionally enforced by the assigned-specialist API.
+        modelBuilder.Entity<OrthodonticIntakeDocument>(entity =>
+        {
+            entity.ToTable("OrthodonticIntakeDocuments");
+            entity.HasKey(x => x.Id);
+            entity.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            entity.Property(x => x.Category).HasMaxLength(40).IsRequired();
+            entity.Property(x => x.OriginalFileName).HasMaxLength(180).IsRequired();
+            entity.Property(x => x.ContentType).HasMaxLength(80).IsRequired();
+            entity.Property(x => x.Sha256).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.SourceProvider).HasMaxLength(250);
+            entity.Property(x => x.FileBytes).HasColumnType("bytea").IsRequired();
+            entity.HasIndex(x => new { x.DentalPracticeId, x.OrthodonticIntakeCaseId, x.UploadedAtUtc });
+            entity.HasIndex(x => new { x.DentalPracticeId, x.PatientId });
+            entity.HasOne<OrthodonticIntakeCase>().WithMany().HasForeignKey(x => x.OrthodonticIntakeCaseId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Patient>().WithMany().HasForeignKey(x => x.PatientId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
         // Phase 1: separate orthodontic intake; never an implicit treatment case.
         modelBuilder.Entity<OrthodonticIntakeCase>(entity =>
         {
@@ -540,6 +583,8 @@ modelBuilder.Entity<Appointment>(entity =>
             entity.Property(x => x.TransferReason).HasMaxLength(2000);
             entity.Property(x => x.PreviousRecordsSummary).HasMaxLength(4000);
             entity.Property(x => x.UrgentConcerns).HasMaxLength(2000);
+            entity.Property(x => x.TransferContinuationDecision).IsRequired().HasMaxLength(32);
+            entity.Property(x => x.TransferDecisionReason).HasMaxLength(2000);
             entity.Property(x => x.DocumentReferencesJson).IsRequired().HasColumnType("jsonb");
             entity.Property(x => x.MissingDocumentsJson).IsRequired().HasColumnType("jsonb");
             entity.Property(x => x.TermsVersion).HasMaxLength(80);

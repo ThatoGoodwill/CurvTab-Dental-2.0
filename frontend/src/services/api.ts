@@ -93,3 +93,43 @@ export const authApi = {
     })
   },
 }
+
+
+// Multipart and downloadable clinical evidence must use the same signed-in
+// session and XHR protection as our JSON API. Never create a public file URL.
+export async function apiUpload<T>(path: string, form: FormData): Promise<T> {
+  const response = await fetch(`/api${path}`, {
+    method: 'POST',
+    headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' },
+    credentials: 'same-origin',
+    body: form
+  })
+  if (!response.ok) {
+    const problem = await response.json().catch(() => null)
+    throw new ApiError(response.status,
+      problem?.message || problem?.title || problem?.detail || `Upload failed: ${response.status}`)
+  }
+  return response.json() as Promise<T>
+}
+
+export async function apiDownload(path: string, filename: string): Promise<void> {
+  const response = await fetch(`/api${path}`, {
+    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    credentials: 'same-origin',
+    cache: 'no-store'
+  })
+  if (!response.ok) {
+    const problem = await response.json().catch(() => null)
+    throw new ApiError(response.status,
+      problem?.message || problem?.title || problem?.detail || `Download failed: ${response.status}`)
+  }
+  const file = await response.blob()
+  const url = URL.createObjectURL(file)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = filename
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+  window.setTimeout(() => URL.revokeObjectURL(url), 30_000)
+}

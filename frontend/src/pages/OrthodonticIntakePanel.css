@@ -79,3 +79,58 @@
 .ct-ortho-terms .ct-ortho-intake-check input { flex:none; width:16px; height:16px; }
 .ct-ortho-terms .ct-ortho-intake-check span { font-size:11px; line-height:1.45; }
 @media(max-width:560px) { .ct-ortho-terms-sign { grid-template-columns:1fr; } }
+
+/* Phase 1 case evidence and one-time advance: compact, responsive, theme-aware */
+.ct-ortho-intake-evidence {
+  display:flex; flex-direction:column; gap:9px; border-radius:10px;
+  background:var(--surface,#fff); border:1px solid var(--border,#d6e4ef);
+  padding:12px; min-width:0;
+}
+.ct-ortho-intake-evidence > h3 {margin:0; font-size:13px}
+.ct-ortho-intake-evidence > p {margin:0}
+.ct-ortho-intake-doc-list {display:grid; gap:6px; min-width:0;}
+.ct-ortho-intake-doc {
+  display:flex; align-items:center; gap:8px;
+  border:1px solid var(--border,#d6e4ef); padding:8px; border-radius:7px;
+  min-width:0; flex-wrap:wrap;
+}
+.ct-ortho-intake-doc > div {flex:1 1 220px; min-width:0; display:grid; gap:3px;}
+.ct-ortho-intake-doc strong,.ct-ortho-intake-signed strong {
+  font-size:11px; overflow-wrap:anywhere;
+}
+.ct-ortho-intake-doc small,.ct-ortho-intake-signed small {
+  color:var(--text-muted,#60768a); font-size:10px; overflow-wrap:anywhere;
+}
+.ct-ortho-intake-doc-form,.ct-ortho-intake-payment {
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+  align-items:end; gap:8px; padding:9px; border-radius:8px;
+  background:var(--surface-soft,#f2f7fc);
+}
+.ct-ortho-intake-doc-form label,.ct-ortho-intake-payment label {
+  display:grid; font-size:11px; font-weight:650; gap:4px; min-width:0;
+}
+.ct-ortho-intake-doc-form button,.ct-ortho-intake-payment button {justify-self:start}
+.ct-ortho-intake-signed {
+  display:flex; align-items:center; flex-wrap:wrap; justify-content:space-between;
+  gap:8px; padding:9px; border:1px solid var(--border,#dae5f1);
+  border-radius:8px; background:var(--surface-soft,#f4f8fc);
+}
+.ct-ortho-intake-signed > div {display:grid; gap:4px; min-width:0}
+.ct-ortho-intake-full {grid-column:1/-1;}
+.ct-ortho-intake-payment .ct-ortho-intake-check {
+  display:flex; align-items:center; gap:7px; font-weight:400;
+}
+.ct-ortho-intake-payment .ct-ortho-intake-check input {width:16px; height:16px; min-height:0; flex:none}
+@media(max-width:840px) {
+ .ct-ortho-intake-doc-form,.ct-ortho-intake-payment {grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media(max-width:550px) {
+ .ct-ortho-intake-doc-form,.ct-ortho-intake-payment {grid-template-columns:1fr;}
+}
+
+.ct-ortho-review-tabs {display:flex;flex-wrap:wrap;gap:5px;padding:5px;border:1px solid var(--border,#d6e4ee);border-radius:8px;background:var(--surface-soft,#f2f6fb)}
+.ct-ortho-review-tabs button {border:1px solid transparent;border-radius:7px;background:transparent;color:var(--text,#24415b);font-weight:650;font-size:11px;padding:6px 11px}
+.ct-ortho-review-tabs button.is-active {background:var(--practice-primary,#216ad4);color:#fff}
+.ct-ortho-intake-details details {margin:8px 0;border-top:1px solid var(--border,#d9e4ef);padding:7px 0}
+.ct-ortho-intake-details details summary {font-weight:750;cursor:pointer}
+.ct-ortho-intake-details details p {white-space:pre-wrap;overflow-wrap:anywhere}

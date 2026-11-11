@@ -106,11 +106,19 @@ public sealed class FinanceOperationsController : ControllerBase
                 p.ReceivedAtUtc >= start &&
                 p.ReceivedAtUtc < end);
 
+        // Orthodontic intake advances are actual receipt-backed cash
+        // movements, but are HELD AS PATIENT CREDIT until a future
+        // treatment agreement. Count the tender ONCE in daily receipts.
+        var orthoAdvances = _db.OrthodonticIntakeAdvanceReceipts.AsNoTracking()
+            .Where(p => p.DentalPracticeId == practiceId &&
+                p.Method == "Cash" && p.ReceivedAtUtc >= start && p.ReceivedAtUtc < end);
         var cashReceived =
             (await receipts.SumAsync(p => (decimal?)p.Amount, ct) ?? 0m) +
-            (await planReceipts.SumAsync(p => (decimal?)p.Amount, ct) ?? 0m);
+            (await planReceipts.SumAsync(p => (decimal?)p.Amount, ct) ?? 0m) +
+            (await orthoAdvances.SumAsync(p => (decimal?)p.Amount, ct) ?? 0m);
         var receiptCount =
-            await receipts.CountAsync(ct) + await planReceipts.CountAsync(ct);
+            await receipts.CountAsync(ct) + await planReceipts.CountAsync(ct) +
+            await orthoAdvances.CountAsync(ct);
 
         var cashExpenses =
             await expenses.SumAsync(e => (decimal?)e.Amount, ct) ?? 0m;
