@@ -1381,16 +1381,16 @@ export default function App() {
           {section === 'Dashboard' && role === 'Finance' && (
             <FinanceRoleDashboard onOpenFinances={() => navigate('Finance')} />
           )}
-          {section === 'Dashboard' && isPracticeAdmin && (
-            <PracticeAdminPriorities
-              onDayClose={() => { setBillingSection('dayClose'); navigate('Billing'); setBillingExpanded(true) }}
-              onStaff={() => navigate('Management')}
-              onLaboratory={() => navigate('Laboratory')}
-              onScheduling={() => openAppointmentTab('Appointments')}
-            />
-          )}
           {section === 'Dashboard' && showOverview && (
             <OverviewDashboardPage
+              managementTools={isPracticeAdmin ? (
+                <PracticeAdminPriorities
+                  onDayClose={() => { setBillingSection('dayClose'); navigate('Billing'); setBillingExpanded(true) }}
+                  onStaff={() => navigate('Management')}
+                  onLaboratory={() => navigate('Laboratory')}
+                  onScheduling={() => openAppointmentTab('Appointments')}
+                />
+              ) : undefined}
               role={isPracticeAdmin ? 'PracticeAdmin' : 'Receptionist'}
               fullName={user?.fullName ?? ''}
               practiceName={user?.practiceName ?? null}
