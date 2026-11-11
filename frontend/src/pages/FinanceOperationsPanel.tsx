@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { FormEvent } from 'react'
 import { ClipboardCheck, Plus, RefreshCw } from 'lucide-react'
 import RandIcon from '../components/RandIcon'
@@ -295,7 +296,7 @@ export default function FinanceOperationsPanel({
                 onClick={() => { setError(''); setShowExpenseForm(true) }}>
                 <Plus size={16}/> Record expense
               </button>
-              {showExpenseForm && (
+              {showExpenseForm && createPortal(
                 <div className="ct-finance-action-overlay" role="presentation"
                   onMouseDown={event => {
                     if (event.target === event.currentTarget && !busy) setShowExpenseForm(false)
@@ -378,7 +379,8 @@ export default function FinanceOperationsPanel({
               </button>
                     </form>
                   </div>
-                </div>
+                </div>,
+                document.body
               )}
             </div>
           )}
