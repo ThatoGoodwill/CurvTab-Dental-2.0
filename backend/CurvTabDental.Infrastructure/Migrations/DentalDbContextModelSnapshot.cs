@@ -215,6 +215,45 @@ namespace CurvTabDental.Infrastructure.Migrations
                     b.ToTable("CashDayCloseReviews", (string)null);
                 });
 
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.CashDayCloseInstrumentEvidence", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<Guid>("DentalPracticeId").HasColumnType("uuid");
+                    b.Property<string>("Instrument").IsRequired().HasMaxLength(12).HasColumnType("character varying(12)");
+                    b.Property<decimal>("LedgerReceived").HasPrecision(12, 2).HasColumnType("numeric(12,2)");
+                    b.Property<decimal>("VerifiedReceived").HasPrecision(12, 2).HasColumnType("numeric(12,2)");
+                    b.Property<string>("EvidenceReference").IsRequired().HasMaxLength(300).HasColumnType("character varying(300)");
+                    b.Property<string>("VerificationSource").IsRequired().HasMaxLength(40).HasColumnType("character varying(40)");
+                    b.Property<bool>("ExternalSettlementConfirmed").HasColumnType("boolean");
+                    b.Property<Guid>("RecordedByUserId").HasColumnType("uuid");
+                    b.Property<DateTime>("RecordedAtUtc").HasColumnType("timestamp with time zone");
+                    b.Property<Guid>("RequestId").HasColumnType("uuid");
+                    b.Property<Guid>("SubmissionId").HasColumnType("uuid");
+                    b.HasKey("Id");
+                    b.HasIndex("SubmissionId");
+                    b.HasIndex("DentalPracticeId", "RequestId").IsUnique();
+                    b.HasIndex("DentalPracticeId", "SubmissionId", "Instrument", "RecordedAtUtc");
+                    b.ToTable("CashDayCloseInstrumentEvidence", (string)null);
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.CashDayCloseFinancialSignoff", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<Guid>("DentalPracticeId").HasColumnType("uuid");
+                    b.Property<Guid>("SubmissionId").HasColumnType("uuid");
+                    b.Property<DateOnly>("BusinessDate").HasColumnType("date");
+                    b.Property<Guid>("RequestId").HasColumnType("uuid");
+                    b.Property<string>("SnapshotJson").IsRequired().HasColumnType("text");
+                    b.Property<string>("HandoverReason").IsRequired().HasMaxLength(1000).HasColumnType("character varying(1000)");
+                    b.Property<Guid>("SignedByUserId").HasColumnType("uuid");
+                    b.Property<DateTime>("SignedAtUtc").HasColumnType("timestamp with time zone");
+                    b.HasKey("Id");
+                    b.HasIndex("SubmissionId");
+                    b.HasIndex("DentalPracticeId", "BusinessDate").IsUnique();
+                    b.HasIndex("DentalPracticeId", "RequestId").IsUnique();
+                    b.ToTable("CashDayCloseFinancialSignoffs", (string)null);
+                });
+
             modelBuilder.Entity("CurvTabDental.Domain.Entities.CashDayCloseSubmission", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1537,6 +1576,29 @@ namespace CurvTabDental.Infrastructure.Migrations
                     b.HasIndex("DentalPracticeId", "ClaimId", "PerformedAtUtc");
 
                     b.ToTable("MedicalAidClaimEvents", (string)null);
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.EmployeeWorkspaceRecord", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<Guid>("DentalPracticeId").HasColumnType("uuid");
+                    b.Property<Guid>("EmployeeUserId").HasColumnType("uuid");
+                    b.Property<Guid>("RequestId").HasColumnType("uuid");
+                    b.Property<string>("Category").IsRequired().HasMaxLength(20).HasColumnType("character varying(20)");
+                    b.Property<string>("Title").IsRequired().HasMaxLength(180).HasColumnType("character varying(180)");
+                    b.Property<string>("Status").IsRequired().HasMaxLength(30).HasColumnType("character varying(30)");
+                    b.Property<DateOnly?>("StartDate").HasColumnType("date");
+                    b.Property<DateOnly?>("EndDate").HasColumnType("date");
+                    b.Property<decimal?>("Amount").HasPrecision(12, 2).HasColumnType("numeric(12,2)");
+                    b.Property<string>("DocumentReference").HasMaxLength(350).HasColumnType("character varying(350)");
+                    b.Property<string>("Notes").HasMaxLength(1200).HasColumnType("character varying(1200)");
+                    b.Property<Guid>("CreatedByUserId").HasColumnType("uuid");
+                    b.Property<DateTime>("CreatedAtUtc").HasColumnType("timestamp with time zone");
+                    b.HasKey("Id");
+                    b.HasIndex("EmployeeUserId");
+                    b.HasIndex("DentalPracticeId", "RequestId").IsUnique();
+                    b.HasIndex("DentalPracticeId", "EmployeeUserId", "Category", "CreatedAtUtc");
+                    b.ToTable("EmployeeWorkspaceRecords", (string)null);
                 });
 
             modelBuilder.Entity("CurvTabDental.Domain.Entities.MedicalAidDaySignoff", b =>
@@ -3302,6 +3364,20 @@ namespace CurvTabDental.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.CashDayCloseFinancialSignoff", b =>
+                {
+                    b.HasOne("CurvTabDental.Domain.Entities.CashDayCloseSubmission", null)
+                        .WithMany().HasForeignKey("SubmissionId")
+                        .OnDelete(DeleteBehavior.Restrict).IsRequired();
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.CashDayCloseInstrumentEvidence", b =>
+                {
+                    b.HasOne("CurvTabDental.Domain.Entities.CashDayCloseSubmission", null)
+                        .WithMany().HasForeignKey("SubmissionId")
+                        .OnDelete(DeleteBehavior.Restrict).IsRequired();
+                });
+
             modelBuilder.Entity("CurvTabDental.Domain.Entities.CashDayCloseReview", b =>
                 {
                     b.HasOne("CurvTabDental.Domain.Entities.CashDayCloseSubmission", null)
@@ -3542,6 +3618,13 @@ namespace CurvTabDental.Infrastructure.Migrations
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.EmployeeWorkspaceRecord", b =>
+                {
+                    b.HasOne("CurvTabDental.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany().HasForeignKey("EmployeeUserId")
+                        .OnDelete(DeleteBehavior.Restrict).IsRequired();
                 });
 
             modelBuilder.Entity("CurvTabDental.Domain.Entities.MedicalAidClaimEvent", b =>

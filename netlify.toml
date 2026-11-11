@@ -21,3 +21,6 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Deploy previews use the same working API proxy as the production frontend.
+# The incomplete staging API is NOT used until separately validated.

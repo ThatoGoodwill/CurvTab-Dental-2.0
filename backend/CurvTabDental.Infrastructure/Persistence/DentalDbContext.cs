@@ -598,6 +598,24 @@ modelBuilder.Entity<Appointment>(entity =>
         });
 
 
+        // Employee self-service: all queries are filtered by practice and controllers by employee.
+        modelBuilder.Entity<EmployeeWorkspaceRecord>(entity =>
+        {
+            entity.ToTable("EmployeeWorkspaceRecords");
+            entity.HasKey(x => x.Id);
+            entity.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            entity.Property(x => x.Category).IsRequired().HasMaxLength(20);
+            entity.Property(x => x.Title).IsRequired().HasMaxLength(180);
+            entity.Property(x => x.Status).IsRequired().HasMaxLength(30);
+            entity.Property(x => x.Amount).HasPrecision(12, 2);
+            entity.Property(x => x.DocumentReference).HasMaxLength(350);
+            entity.Property(x => x.Notes).HasMaxLength(1200);
+            entity.HasIndex(x => new { x.DentalPracticeId, x.RequestId }).IsUnique();
+            entity.HasIndex(x => new { x.DentalPracticeId, x.EmployeeUserId, x.Category, x.CreatedAtUtc });
+            entity.HasOne<ApplicationUser>().WithMany()
+                .HasForeignKey(x => x.EmployeeUserId).OnDelete(DeleteBehavior.Restrict);
+        });
+
         // CT_CLIENT_SEPARATE_DAILY_SIGNOFFS
         modelBuilder.Entity<CashDayCloseSubmission>(entity =>
         {
@@ -638,6 +656,35 @@ modelBuilder.Entity<Appointment>(entity =>
             entity.Property(x => x.EvidenceReference).IsRequired().HasMaxLength(300);
             entity.HasIndex(x => new { x.DentalPracticeId, x.RequestId }).IsUnique();
             entity.HasIndex(x => new { x.DentalPracticeId, x.SubmissionId, x.RecordedAtUtc });
+            entity.HasOne<CashDayCloseSubmission>().WithMany()
+                .HasForeignKey(x => x.SubmissionId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<CashDayCloseInstrumentEvidence>(entity =>
+        {
+            entity.ToTable("CashDayCloseInstrumentEvidence");
+            entity.HasKey(x => x.Id);
+            entity.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            entity.Property(x => x.Instrument).IsRequired().HasMaxLength(12);
+            entity.Property(x => x.LedgerReceived).HasPrecision(12, 2);
+            entity.Property(x => x.VerifiedReceived).HasPrecision(12, 2);
+            entity.Property(x => x.EvidenceReference).IsRequired().HasMaxLength(300);
+            entity.Property(x => x.VerificationSource).IsRequired().HasMaxLength(40);
+            entity.HasIndex(x => new { x.DentalPracticeId, x.RequestId }).IsUnique();
+            entity.HasIndex(x => new { x.DentalPracticeId, x.SubmissionId, x.Instrument, x.RecordedAtUtc });
+            entity.HasOne<CashDayCloseSubmission>().WithMany()
+                .HasForeignKey(x => x.SubmissionId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<CashDayCloseFinancialSignoff>(entity =>
+        {
+            entity.ToTable("CashDayCloseFinancialSignoffs");
+            entity.HasKey(x => x.Id);
+            entity.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            entity.Property(x => x.SnapshotJson).IsRequired();
+            entity.Property(x => x.HandoverReason).IsRequired().HasMaxLength(1000);
+            entity.HasIndex(x => new { x.DentalPracticeId, x.BusinessDate }).IsUnique();
+            entity.HasIndex(x => new { x.DentalPracticeId, x.RequestId }).IsUnique();
             entity.HasOne<CashDayCloseSubmission>().WithMany()
                 .HasForeignKey(x => x.SubmissionId).OnDelete(DeleteBehavior.Restrict);
         });

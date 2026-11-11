@@ -21,6 +21,7 @@ import type { ThemeSurface } from './workspace/workspacePrefs'
 import BillingWorkspaceTabs from './pages/BillingWorkspaceTabs'
 import type { BillingSection } from './pages/BillingWorkspaceTabs'
 import MedicalAidPanel from './pages/MedicalAidPanel'
+import EmployeeWorkspacePage from './pages/EmployeeWorkspacePage'
 import ClinicalClaimCorrectionsPage from './pages/ClinicalClaimCorrectionsPage'
 import PatientBalancesPanel from './pages/PatientBalancesPanel'
 import InvoicesPanel from './pages/InvoicesPanel'
@@ -107,6 +108,7 @@ type Section =
   | 'Subscriptions'
   | 'Configuration Center'
   | 'My Profile'
+  | 'Workspace'
   | 'Clinical Claim Corrections'
 
 // =========================================
@@ -930,6 +932,7 @@ export default function App() {
         ...(canManageStaff ? [{ name: 'Configuration Center' as Section, icon: CtAppearanceIcon }] : []),
         // CT_LAB_TECH_NAV
         ...(role === 'LabTechnician' ? [{ name: 'Laboratory' as Section, icon: FlaskConical }] : []),
+        { name: 'Workspace' as Section, icon: CtManagementIcon },
         { name: 'My Profile' as Section, icon: UserCircle },
       ]
 
@@ -1555,6 +1558,8 @@ export default function App() {
 
           {section === 'Clinical Claim Corrections' && role === 'Dentist' && <ClinicalClaimCorrectionsPage />}
 
+          {section === 'Workspace' && !isSuperAdmin && <EmployeeWorkspacePage />}
+
           {/* STAFF MANAGEMENT */}
           {section === 'Management' && canManageStaff && (
             <StaffPage />
@@ -1685,6 +1690,7 @@ export default function App() {
 
           {/* DENIED SECTIONS */}
           {(
+            (section === 'Workspace' && isSuperAdmin) ||
             (section === 'Clinical Claim Corrections' && role !== 'Dentist') ||
             (section === 'Clinical Imaging' && role !== 'Dentist') ||
             (section === 'Orthodontics' && role !== 'Dentist') ||

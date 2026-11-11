@@ -14,6 +14,7 @@ import {
 
 import { apiRequest } from '../services/api'
 import LaboratoryAccountsPanel from './LaboratoryAccountsPanel'
+import EmployeeWorkspaceManagementPanel from './EmployeeWorkspaceManagementPanel'
 import './StaffPage.css'
 
 // Matches the StaffDto returned by our ASP.NET Core API.
@@ -508,6 +509,7 @@ export default function StaffPage() {
           )}
         </section>
       </div>
+      <EmployeeWorkspaceManagementPanel />
       <LaboratoryAccountsPanel />
     </div>
   )
