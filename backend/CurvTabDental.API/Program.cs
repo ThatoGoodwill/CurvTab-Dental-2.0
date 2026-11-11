@@ -31,8 +31,33 @@ builder.Services.AddHostedService<
 
 // ---------- Database ----------
 // ConnectionStrings:DentalDatabase lives in dotnet user-secrets (never in Git).
+// Staging may accept a Neon URI through a dedicated environment variable.
+// Never read this setting in production, and never print the credential.
+var dentalConnection = builder.Configuration.GetConnectionString("DentalDatabase");
+if (builder.Environment.IsStaging() && string.IsNullOrWhiteSpace(dentalConnection))
+{
+    var uriText = builder.Configuration["STAGING_DATABASE_URL"];
+    if (!string.IsNullOrWhiteSpace(uriText))
+    {
+        var dbUri = new Uri(uriText);
+        if (dbUri.Scheme is not ("postgres" or "postgresql"))
+            throw new InvalidOperationException("Staging database URL must use PostgreSQL.");
+        var userInfo = dbUri.UserInfo.Split(':', 2);
+        if (userInfo.Length != 2)
+            throw new InvalidOperationException("Staging database URL is missing credentials.");
+        dentalConnection = new Npgsql.NpgsqlConnectionStringBuilder
+        {
+            Host = dbUri.Host,
+            Port = dbUri.Port > 0 ? dbUri.Port : 5432,
+            Database = Uri.UnescapeDataString(dbUri.AbsolutePath.TrimStart('/')),
+            Username = Uri.UnescapeDataString(userInfo[0]),
+            Password = Uri.UnescapeDataString(userInfo[1]),
+            SslMode = Npgsql.SslMode.Require,
+        }.ConnectionString;
+    }
+}
 builder.Services.AddDbContext<DentalDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DentalDatabase")));
+    options.UseNpgsql(dentalConnection));
 
 // ---------- Identity + cookie authentication ----------
 builder.Services
