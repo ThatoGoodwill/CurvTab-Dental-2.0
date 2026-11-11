@@ -141,3 +141,110 @@
   .ov-hero-art { display: none; }
   .ov-heading { flex-wrap: wrap; }
 }
+
+/* CurvTab client: swipable operational dashboard, not a long second dashboard.
+   Each report is a focused single stage. Existing API data and actions stay intact. */
+.ov { min-width: 0; max-width: 1180px; margin: 10px auto 0; }
+.ov-carousel-heading {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px; padding: 10px 15px;
+  border: 1px solid var(--ov-line); border-radius: 13px;
+  background: var(--ov-card);
+  color: var(--ov-ink);
+}
+.ov-carousel-eyebrow {
+  font-size: 9px; font-weight: 800; letter-spacing: .11em;
+  color: var(--practice-primary,var(--ov-blue));
+}
+.ov-carousel-heading h2 {
+  font-size: clamp(16px,1.7vw,20px); line-height: 1.15; margin: 4px 0;
+  color: var(--ov-ink);
+}
+.ov-carousel-heading p { margin: 0; color: var(--ov-muted); font-size: 11px; }
+.ov-carousel-controls { display: flex; align-items: center; gap: 7px; }
+.ov-carousel-arrow {
+  display: grid; place-items: center;
+  width: 33px; height: 33px; flex: 0 0 auto;
+  background: var(--ov-card); color: var(--ov-ink);
+  border: 1px solid var(--ov-line); border-radius: 10px;
+  cursor: pointer; transition: transform .18s ease,box-shadow .18s ease;
+}
+.ov-carousel-arrow:hover {
+  transform: translateY(-2px) scale(1.08);
+  box-shadow: 0 7px 16px rgba(37,99,235,.14);
+}
+.ov-carousel-count { min-width: 42px; font-weight: 700; font-size: 11px; text-align: center; color: var(--ov-muted); }
+.ov-carousel-tabs { display: flex; gap: 7px; overflow-x: auto; padding: 10px 2px 9px; scrollbar-width: thin; }
+.ov-carousel-tab {
+  white-space: nowrap; padding: 7px 12px; border-radius: 9px;
+  border: 1px solid var(--ov-line); background: var(--ov-card);
+  color: var(--ov-muted); font-size: 11px; font-weight: 700;
+  cursor: pointer; transition: transform .2s ease,box-shadow .2s ease;
+}
+.ov-carousel-tab.active {
+  background: var(--practice-primary,var(--ov-blue));
+  border-color: var(--practice-primary,var(--ov-blue));
+  color: #fff;
+  box-shadow: 0 5px 12px rgba(36,99,210,.16);
+}
+.ov-carousel-tab:hover:not(.active) { transform: translateY(-2px); }
+.ov-grid.ov-slide-0,.ov-grid.ov-slide-1,.ov-grid.ov-slide-2,.ov-grid.ov-slide-3 {
+  display: grid; margin-top: 2px; gap: 12px; min-width: 0;
+  animation: ov-arrive .5s cubic-bezier(.18,.85,.2,1) both;
+}
+.ov-grid.ov-slide-0 { grid-template-columns: minmax(0,1fr); grid-template-areas: "quick"; }
+.ov-grid.ov-slide-1 { grid-template-columns: minmax(0,1fr); grid-template-areas: "cal"; }
+.ov-grid.ov-slide-2 { grid-template-columns: repeat(2,minmax(0,1fr)); grid-template-areas: "status overview"; }
+.ov-grid.ov-slide-3 { grid-template-columns: minmax(0,1fr); grid-template-areas: "trends"; }
+.ov-grid.ov-slide-0 > :not(.ov-quick),
+.ov-grid.ov-slide-1 > :not(.ov-calendar),
+.ov-grid.ov-slide-2 > :not(.ov-status):not(.ov-overview),
+.ov-grid.ov-slide-3 > :not(.ov-trends) { display: none !important; }
+.ov-grid .ov-card {
+  min-width: 0; padding: 15px; border-radius: 12px;
+  transition: transform .28s ease,box-shadow .28s ease,border-color .28s ease;
+}
+.ov-grid .ov-card:hover {
+  transform: perspective(800px) translateZ(6px) scale(1.008);
+  box-shadow: 0 14px 30px rgba(26,73,140,.11);
+  border-color: var(--practice-accent,var(--ov-line));
+}
+.ov-grid .ov-card h3 { font-size: 14px; }
+.ov-slide-0 .ov-quick-grid { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; margin-top: 12px; }
+.ov-slide-0 .ov-quick-tile {
+  min-height: 88px; padding: 12px; font-size: 11px; gap: 9px;
+  border-radius: 10px; transition: transform .22s ease,box-shadow .22s ease;
+}
+.ov-slide-0 .ov-quick-tile svg { width: 23px; height: 23px; }
+.ov-slide-0 .ov-quick-tile:hover {
+  transform: translateY(-5px) scale(1.03);
+  box-shadow: 0 12px 25px rgba(27,75,154,.15);
+}
+.ov-slide-1 .ov-calendar-body { gap: 15px; }
+.ov-slide-1 .ov-day-list { max-height: 300px; overflow-y: auto; }
+.ov-slide-1 .ov-cal-cell { height: 42px; }
+.ov-slide-1 .ov-card-head { margin-bottom: 10px; }
+.ov-slide-2 .ov-status-grid { gap: 8px; }
+.ov-slide-3 .ov-trends { width: 100%; }
+.ov-slide-3 .ov-trends svg { max-height: 265px; }
+@keyframes ov-arrive {
+  from { opacity: .25; transform: perspective(1050px) translateY(17px) scale(.96); filter: blur(2px); }
+  to { opacity: 1; transform: perspective(1050px) translateY(0) scale(1); filter: blur(0); }
+}
+@media (max-width: 850px) {
+  .ov-grid.ov-slide-2 { grid-template-columns: 1fr; grid-template-areas: "status" "overview"; }
+  .ov-slide-0 .ov-quick-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .ov-carousel-heading { padding: 10px 12px; }
+}
+@media (max-width: 600px) {
+  .ov-slide-1 .ov-calendar-body { grid-template-columns: minmax(0,1fr); }
+  .ov-slide-0 .ov-quick-tile { min-height: 76px; }
+  .ov-carousel-controls { width: 100%; justify-content: flex-start; }
+  .ov-carousel-tab { font-size: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ov-grid.ov-slide-0,.ov-grid.ov-slide-1,.ov-grid.ov-slide-2,.ov-grid.ov-slide-3 { animation: none; }
+  .ov-grid .ov-card,.ov-carousel-tab,.ov-carousel-arrow,.ov-slide-0 .ov-quick-tile {
+    transition: none; transform: none !important;
+  }
+}
