@@ -340,6 +340,7 @@ export function OverviewDashboardView(props: ViewProps) {
             </div>
           )}
         </section>}
+        {panel === 1 && <section className="ov-card ov-status">
           <h3>
             Appointments Status <small>(Today)</small>
           </h3>
