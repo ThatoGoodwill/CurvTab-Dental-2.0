@@ -67,6 +67,7 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
     public DbSet<ClinicalImage> ClinicalImages => Set<ClinicalImage>();
     public DbSet<OrthodonticCase> OrthodonticCases => Set<OrthodonticCase>();
     public DbSet<OrthodonticIntakeCase> OrthodonticIntakes => Set<OrthodonticIntakeCase>();
+    public DbSet<OrthodonticIntakeDocument> OrthodonticIntakeDocuments => Set<OrthodonticIntakeDocument>();
     public DbSet<OrthodonticProgressNote> OrthodonticProgressNotes => Set<OrthodonticProgressNote>();
 
     // EF evaluates this per query (it is a member of the context), not once at model build time.
@@ -520,6 +521,27 @@ modelBuilder.Entity<Appointment>(entity =>
             entity.HasOne<Patient>().WithMany().HasForeignKey(e => e.PatientId)
                 .OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Consultation>().WithMany().HasForeignKey(e => e.ConsultationId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Persistent, practice-filtered intake attachments; read access is
+        // additionally enforced by the assigned-specialist API.
+        modelBuilder.Entity<OrthodonticIntakeDocument>(entity =>
+        {
+            entity.ToTable("OrthodonticIntakeDocuments");
+            entity.HasKey(x => x.Id);
+            entity.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            entity.Property(x => x.Category).HasMaxLength(40).IsRequired();
+            entity.Property(x => x.OriginalFileName).HasMaxLength(180).IsRequired();
+            entity.Property(x => x.ContentType).HasMaxLength(80).IsRequired();
+            entity.Property(x => x.Sha256).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.SourceProvider).HasMaxLength(250);
+            entity.Property(x => x.FileBytes).HasColumnType("bytea").IsRequired();
+            entity.HasIndex(x => new { x.DentalPracticeId, x.OrthodonticIntakeCaseId, x.UploadedAtUtc });
+            entity.HasIndex(x => new { x.DentalPracticeId, x.PatientId });
+            entity.HasOne<OrthodonticIntakeCase>().WithMany().HasForeignKey(x => x.OrthodonticIntakeCaseId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Patient>().WithMany().HasForeignKey(x => x.PatientId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
