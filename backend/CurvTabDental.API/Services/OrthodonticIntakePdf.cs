@@ -19,6 +19,58 @@ public static class OrthodonticIntakePdf
         string AcceptanceMethod, DateTime AcceptedAtUtc,
         string? SignatureDataUrl);
 
+    public static byte[] RenderAdvanceReceipt(
+        string practiceName, string patientName, string receiptNumber,
+        Guid receiptId, Guid intakeId, decimal amount, string method,
+        string? reference, DateTime receivedAtUtc)
+    {
+        using var document = new PdfDocument();
+        document.Info.Title = "Orthodontic advance receipt " + receiptNumber;
+        document.Info.Author = practiceName;
+        var page = document.AddPage();
+        page.Size = PdfSharp.PageSize.A4;
+        using (var g = XGraphics.FromPdfPage(page))
+        {
+            var title = new XFont("DejaVu Sans", 17, XFontStyleEx.Bold);
+            var strong = new XFont("DejaVu Sans", 10, XFontStyleEx.Bold);
+            var ordinary = new XFont("DejaVu Sans", 10);
+            var small = new XFont("DejaVu Sans", 8);
+            var y = 60.0;
+            void Row(string label, string value)
+            {
+                g.DrawString(label, strong, XBrushes.Black, new XPoint(48, y));
+                g.DrawString(value, ordinary, XBrushes.Black, new XPoint(210, y));
+                y += 30;
+            }
+            g.DrawString(practiceName, title, XBrushes.Black, new XPoint(48, y));
+            y += 37;
+            g.DrawString("ORTHODONTIC INTAKE ADVANCE RECEIPT", strong, XBrushes.Black, new XPoint(48, y));
+            y += 33;
+            Row("Receipt number", receiptNumber);
+            Row("Patient", patientName);
+            Row("Intake ID", intakeId.ToString("D"));
+            Row("Payment ID", receiptId.ToString("D"));
+            Row("Received (SA time)", receivedAtUtc.AddHours(2).ToString("yyyy-MM-dd HH:mm"));
+            Row("Payment method", method);
+            if (!string.IsNullOrWhiteSpace(reference)) Row("Transaction reference", reference);
+            Row("Actual amount received", "R " + amount.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("en-ZA")));
+            y += 14;
+            g.DrawLine(XPens.LightGray, 48, y, page.Width.Point - 48, y);
+            y += 31;
+            g.DrawString("Recorded as patient credit toward future agreed orthodontic treatment.", ordinary,
+                XBrushes.Black, new XPoint(48, y));
+            y += 22;
+            g.DrawString("It is not a final treatment agreement or a second instalment payment.", small,
+                XBrushes.Black, new XPoint(48, y));
+            y += 20;
+            g.DrawString("Refunds/forfeiture depend on the actual disclosed, accepted terms and applicable law.", small,
+                XBrushes.Black, new XPoint(48, y));
+        }
+        using var buffer = new MemoryStream();
+        document.Save(buffer, false);
+        return buffer.ToArray();
+    }
+
     private const double Margin = 44;
     private const double BodyLine = 14;
 
