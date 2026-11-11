@@ -58,6 +58,10 @@ public sealed class BillingLedgerController : ControllerBase
                 p.ReceivedAtUtc >= from &&
                 p.ReceivedAtUtc < to);
 
+        var orthoAdvances = _db.OrthodonticIntakeAdvanceReceipts.AsNoTracking()
+            .Where(p => p.DentalPracticeId == practiceId &&
+                p.ReceivedAtUtc >= from && p.ReceivedAtUtc < to);
+
         // Calculate complete period totals before limiting displayed rows.
         var visitTotals = await payments
             .GroupBy(p => p.Method)
@@ -78,7 +82,13 @@ public sealed class BillingLedgerController : ControllerBase
             })
             .ToListAsync(ct);
 
-        var totals = visitTotals.Concat(planTotals)
+        var advanceTotals = await orthoAdvances
+            .GroupBy(p => p.Method)
+            .Select(g => new
+            {
+                Method = g.Key, Count = g.Count(), Amount = g.Sum(p => p.Amount)
+            }).ToListAsync(ct);
+        var totals = visitTotals.Concat(planTotals).Concat(advanceTotals)
             .GroupBy(x => x.Method)
             .Select(g => new
             {
@@ -133,6 +143,18 @@ public sealed class BillingLedgerController : ControllerBase
                 "Treatment plan")
         ).Take(500).ToListAsync(ct);
 
+        var orthoAdvanceRows = await (
+            from advance in orthoAdvances
+            join patient in _db.Patients.AsNoTracking() on advance.PatientId equals patient.Id
+            where patient.DentalPracticeId == practiceId
+            orderby advance.ReceivedAtUtc descending, advance.Id
+            select new LedgerRow(
+                advance.Id, advance.ReceiptNumber, advance.Amount, advance.Method,
+                advance.Reference, advance.ReceivedAtUtc, advance.ReceivedByUserId,
+                (Guid?)null, patient.Id, patient.FirstName + " " + patient.LastName,
+                "Orthodontic intake advance (patient credit)")
+        ).Take(500).ToListAsync(ct);
+
         // Only MATCHED real bank deposits are counted as scheme receipts:
         // draft/submitted/approved claims and remittance advice are not money.
         // One match is one allocation of an existing bank receipt, not a second receipt.
@@ -183,7 +205,7 @@ public sealed class BillingLedgerController : ControllerBase
             "Medical aid reconciled bank receipt"
         ));
 
-        var rows = visitRows.Concat(planRows).Concat(schemeRows)
+        var rows = visitRows.Concat(planRows).Concat(orthoAdvanceRows).Concat(schemeRows)
             .OrderByDescending(r => r.ReceivedAtUtc)
             .Take(500)
             .ToList();
@@ -199,6 +221,7 @@ public sealed class BillingLedgerController : ControllerBase
             displayedCount = rows.Count,
             totalReceived = totals.Sum(x => x.Amount) + schemeReceived,
             schemeReconciledReceived = schemeReceived,
+            orthodonticPatientCreditsReceived = advanceTotals.Sum(x => x.Amount),
             cashReceived = totals
                 .Where(x => x.Method == "Cash")
                 .Sum(x => x.Amount),
