@@ -9,6 +9,7 @@ import { AuthGate } from './auth/AuthGate'
 // Last on purpose: these must win over every older stylesheet above.
 import './WorkspaceThemes.css'
 import './WorkspaceLayouts.css'
+import './SidebarSafeDialogs20261111.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
