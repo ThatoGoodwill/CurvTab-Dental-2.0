@@ -1360,7 +1360,7 @@ export default function App() {
           )}
           {/* Keep the client's original dental slideshow at the top.
               Compact live reports appear directly beneath its KPI row. */}
-          {section === 'Dashboard' && (
+          {section === 'Dashboard' && role !== 'Dentist' && (
             <ClinicDashboardEnhancements
               role={role}
               showActivityCharts={!showOverview}
