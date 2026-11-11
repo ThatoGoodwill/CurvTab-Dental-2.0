@@ -1941,6 +1941,142 @@ namespace CurvTabDental.Infrastructure.Migrations
                     b.ToTable("OrthodonticCases");
                 });
 
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.OrthodonticIntakeDocument", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DentalPracticeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrthodonticIntakeCaseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PatientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasMaxLength(180)
+                        .HasColumnType("character varying(180)");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<byte[]>("FileBytes")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Sha256")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("SourceProvider")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<Guid>("UploadedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UploadedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ReviewedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ReviewedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DentalPracticeId", "OrthodonticIntakeCaseId", "UploadedAtUtc");
+
+                    b.HasIndex("DentalPracticeId", "PatientId");
+
+                    b.HasIndex("OrthodonticIntakeCaseId");
+
+                    b.HasIndex("PatientId");
+
+                    b.ToTable("OrthodonticIntakeDocuments");
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.OrthodonticIntakeAdvanceReceipt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DentalPracticeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrthodonticIntakeCaseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PatientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ReceiptNumber")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<string>("Method")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("ReceivedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ReceivedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AllocatedOrthodonticAgreementId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AllocatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DentalPracticeId", "OrthodonticIntakeCaseId")
+                        .IsUnique();
+
+                    b.HasIndex("DentalPracticeId", "RequestId")
+                        .IsUnique();
+
+                    b.HasIndex("DentalPracticeId", "ReceivedAtUtc");
+
+                    b.HasIndex("OrthodonticIntakeCaseId");
+
+                    b.HasIndex("PatientId");
+
+                    b.ToTable("OrthodonticIntakeAdvanceReceipts");
+                });
+
             modelBuilder.Entity("CurvTabDental.Domain.Entities.OrthodonticIntakeCase", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2162,6 +2298,38 @@ namespace CurvTabDental.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("OrthodonticInstallments");
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.OrthodonticIntakeDocument", b =>
+                {
+                    b.HasOne("CurvTabDental.Domain.Entities.OrthodonticIntakeCase", null)
+                        .WithMany()
+                        .HasForeignKey("OrthodonticIntakeCaseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CurvTabDental.Domain.Entities.Patient", null)
+                        .WithMany()
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.OrthodonticIntakeAdvanceReceipt", b =>
+                {
+                    b.HasOne("CurvTabDental.Domain.Entities.OrthodonticIntakeCase", null)
+                        .WithMany()
+                        .HasForeignKey("OrthodonticIntakeCaseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CurvTabDental.Domain.Entities.Patient", null)
+                        .WithMany()
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                 });
 
             modelBuilder.Entity("CurvTabDental.Domain.Entities.OrthodonticIntakeCase", b =>
