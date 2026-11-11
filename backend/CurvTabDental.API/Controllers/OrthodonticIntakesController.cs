@@ -44,6 +44,7 @@ public sealed class OrthodonticIntakesController : ControllerBase
     public record AdvancePolicyRequest(string Policy, string Reason);
     public record TermsSignatureRequest(string Version, string SignerName,
         string SignerCapacity, string SignatureDataUrl, string AcceptanceMethod);
+    public record TransferReviewRequest(string Decision, string Reason, bool EvidenceReviewed);
 
     private bool Manager => _current.Role == StaffRoles.PracticeAdmin;
     private bool Reception => _current.Role == StaffRoles.Receptionist;
@@ -67,7 +68,8 @@ public sealed class OrthodonticIntakesController : ControllerBase
         x.HistoryVerifiedByClinician,
         // A payment flag, never an inferred amount or unrestricted ledger.
         AdvanceRecorded = x.AdvancePaymentId.HasValue,
-        x.UrgentConcerns
+        x.UrgentConcerns, x.TransferContinuationDecision,
+        x.TransferDecisionReason, x.TransferDecidedAtUtc
     };
 
     [HttpGet]
@@ -231,6 +233,8 @@ public sealed class OrthodonticIntakesController : ControllerBase
             entity.Source, entity.Status, entity.CreatedByUserId,
             entity.ReferralAuthorUserId, entity.AssignedOrthodontistUserId,
             entity.ReferralReason, entity.ReferralNotes, entity.PreviousProvider,
+            entity.TransferContinuationDecision, entity.TransferDecisionReason,
+            entity.TransferDecidedAtUtc, entity.TransferDecidedByUserId,
             entity.ExistingAppliances, entity.PreviousTreatmentStartDate,
             entity.PreviousTreatmentPlanSummary, entity.TransferReason,
             entity.PreviousRecordsSummary, entity.UrgentConcerns,
@@ -472,6 +476,78 @@ public sealed class OrthodonticIntakesController : ControllerBase
         await _db.SaveChangesAsync(ct);
         await _audit.WriteAsync("ORTHO_ASSESSMENT_STARTED", "OrthodonticIntakeCase", id.ToString(), ct: ct);
         return Ok(new { intake.Id, intake.Status });
+    }
+
+    [HttpPatch("{id:guid}/transfer-review")]
+    [Authorize(Roles = "Dentist")]
+    public async Task<IActionResult> TransferReview(Guid id, [FromBody] TransferReviewRequest req,
+        CancellationToken ct)
+    {
+        if (_current.PracticeId is not Guid practiceId ||
+            _current.UserId is not Guid clinician) return Forbid();
+        if (req.Decision is not ("NEED_MORE_RECORDS" or
+            "ACCEPT_CONTINUATION" or "DECLINE_CONTINUATION") ||
+            string.IsNullOrWhiteSpace(req.Reason) ||
+            req.Reason.Length is < 12 or > 2000 ||
+            !req.EvidenceReviewed)
+            return BadRequest(new
+            {
+                message = "The assigned orthodontist must review evidence, choose a decision, and document clinical reasoning (12–2000 characters)."
+            });
+        var intake = await _db.OrthodonticIntakes.FirstOrDefaultAsync(x =>
+            x.Id == id && x.DentalPracticeId == practiceId &&
+            x.AssignedOrthodontistUserId == clinician &&
+            x.Source == "TRANSFER_IN" && x.ClosedAtUtc == null, ct);
+        if (intake is null) return NotFound();
+
+        if (intake.TransferContinuationDecision is
+            "ACCEPT_CONTINUATION" or "DECLINE_CONTINUATION")
+            return Conflict(new
+            {
+                message = "The specialist has already recorded a final transfer decision. Any correction must be formally reviewed."
+            });
+
+        if (req.Decision != "NEED_MORE_RECORDS" &&
+            (intake.Status != "ASSESSMENT_IN_PROGRESS" ||
+             !intake.HistoryVerifiedByClinician ||
+             intake.AssessmentStartedAtUtc is null))
+            return Conflict(new
+            {
+                message = "A documented independent specialist assessment and verified clinical history are required before accepting or declining continuing care."
+            });
+
+        var now = DateTime.UtcNow;
+        intake.TransferContinuationDecision = req.Decision;
+        intake.TransferDecisionReason = req.Reason.Trim();
+        intake.TransferDecidedAtUtc = now;
+        intake.TransferDecidedByUserId = clinician;
+        intake.UpdatedAtUtc = now;
+        if (req.Decision == "NEED_MORE_RECORDS")
+        {
+            intake.Status = "RECORDS_PENDING";
+            intake.NextAction = "Assigned specialist requests additional transfer clinical records.";
+        }
+        else if (req.Decision == "DECLINE_CONTINUATION")
+        {
+            intake.Status = "TRANSFER_DECLINED";
+            intake.ClosedAtUtc = now;
+            intake.NextAction = "Transfer-in continuation declined after independent specialist assessment; historical evidence retained.";
+        }
+        else
+        {
+            intake.NextAction = "Transfer-in continuation considered clinically acceptable. A separate future written plan and signed treatment contract are still required.";
+        }
+
+        await _db.SaveChangesAsync(ct);
+        await _audit.WriteAsync("ORTHODONTIC_TRANSFER_REVIEWED", "OrthodonticIntakeCase",
+            intake.Id.ToString(),
+            detail: $"decision={req.Decision};clinician={clinician};reason={req.Reason.Trim()}", ct: ct);
+        return Ok(new
+        {
+            intake.Id, intake.Status, intake.TransferContinuationDecision,
+            intake.TransferDecisionReason, intake.TransferDecidedByUserId,
+            intake.TransferDecidedAtUtc
+        });
     }
 
     // Recover orthodontic classifications registered before the intake table
