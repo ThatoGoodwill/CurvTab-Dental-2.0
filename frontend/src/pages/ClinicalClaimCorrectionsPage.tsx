@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import type { FormEvent } from 'react'
 import { RefreshCw, ShieldCheck } from 'lucide-react'
 
 type RejectedClaim = {
@@ -71,7 +72,7 @@ export default function ClinicalClaimCorrectionsPage() {
     return () => controller.abort()
   }, [selectedId, reload])
 
-  async function approve(event: React.FormEvent<HTMLFormElement>) {
+  async function approve(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!selected || saving) return
     if (!procedureCode.trim() || reason.trim().length < 5 || evidence.trim().length < 3) {
