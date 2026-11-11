@@ -193,6 +193,34 @@ public sealed class OrthodonticIntakesController : ControllerBase
         if (_current.PracticeId is not Guid practiceId) return Forbid();
         var entity = await Visible().FirstOrDefaultAsync(x => x.Id == id && x.DentalPracticeId == practiceId, ct);
         if (entity is null) return NotFound();
+        // One patient across general dentistry and specialist intake.
+        // Administrative registration and medical history are reused,
+        // never copied into a second patient record.
+        var patientProfile = await _db.Patients.AsNoTracking()
+            .Where(p => p.Id == entity.PatientId && p.DentalPracticeId == practiceId)
+            .Select(p => new { p.Id, patientName = p.FirstName + " " + p.LastName,
+                p.DateOfBirth, p.PaymentMethod })
+            .FirstOrDefaultAsync(ct);
+        var responsiblePerson = await _db.PatientRegistrationDetails.AsNoTracking()
+            .Where(r => r.DentalPracticeId == practiceId && r.PatientId == entity.PatientId)
+            .Select(r => new { r.ResponsibleName, r.ResponsibleRelationship,
+                r.ResponsiblePhone, r.ResponsibleEmail, r.GuardianConsent })
+            .FirstOrDefaultAsync(ct);
+        var nextVisit = await _db.Appointments.AsNoTracking()
+            .Where(a => a.DentalPracticeId == practiceId && a.PatientId == entity.PatientId &&
+                a.Status != "Cancelled" && a.Status != "CheckedOut")
+            .OrderBy(a => a.StartUtc)
+            .Select(a => new { a.Id, a.StartUtc, a.EndUtc, a.Status, a.Reason })
+            .FirstOrDefaultAsync(ct);
+        object? medicalHistory = null;
+        if (_current.Role == StaffRoles.Dentist)
+        {
+            medicalHistory = await _db.PatientMedicalHistories.AsNoTracking()
+                .Where(h => h.DentalPracticeId == practiceId && h.PatientId == entity.PatientId)
+                .Select(h => new { h.Allergies, h.CurrentMedications, h.MedicalConditions,
+                    h.DentalHistory, h.AdditionalNotes, h.UpdatedAtUtc })
+                .FirstOrDefaultAsync(ct);
+        }
         Response.Headers.CacheControl = "private, no-store";
         await _audit.WriteAsync("ORTHO_INTAKE_VIEWED", "OrthodonticIntakeCase", id.ToString(), ct: ct);
         // Do not place a captured signature image or an entire legal document
@@ -213,7 +241,8 @@ public sealed class OrthodonticIntakesController : ControllerBase
             entity.TermsAcceptedAtUtc, entity.TermsAcceptanceMethod,
             entity.AdvancePolicy, entity.AdvancePaymentId,
             entity.NextAction, entity.DueDate,
-            entity.AssessmentStartedAtUtc, entity.CreatedAtUtc, entity.UpdatedAtUtc
+            entity.AssessmentStartedAtUtc, entity.CreatedAtUtc, entity.UpdatedAtUtc,
+            patientProfile, responsiblePerson, nextVisit, medicalHistory
         });
     }
 
