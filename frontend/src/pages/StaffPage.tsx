@@ -509,7 +509,10 @@ export default function StaffPage() {
           )}
         </section>
       </div>
-      <EmployeeWorkspaceManagementPanel />
+      <details className="ct-staff-hr-details">
+        <summary>Employee records, rosters and leave approvals</summary>
+        <EmployeeWorkspaceManagementPanel />
+      </details>
       <LaboratoryAccountsPanel />
     </div>
   )
