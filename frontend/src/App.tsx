@@ -1151,8 +1151,7 @@ export default function App() {
                     ['today', "Today's Billing"],
                     ['cashPrivate', 'Cash & Private'],
                     ['medicalAid', 'Medical Aid'],
-                    ['cashClose', 'Cash Day Close'],
-                    ['aidClose', 'Medical Aid Day Sign-Off'],
+                    ['dayClose', 'Day Close'],
                   ] as const).map(([id, name]) => (
                     <button key={id} type="button"
                       className={section === 'Billing' && billingSection === id ? 'nav-item nav-active' : 'nav-item'}
