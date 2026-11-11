@@ -1,0 +1,41 @@
+name: CurvTab client-guide safety checks
+
+on:
+  push:
+    branches: [feature/client-guide-financial-reconciliation-20261111]
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - '.github/workflows/client-guide-safety.yml'
+
+jobs:
+  backend-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Restore and build API
+        run: dotnet build backend/CurvTabDental.API/CurvTabDental.API.csproj --configuration Release
+      - name: Verify migration can be discovered
+        run: |
+          dotnet tool install --global dotnet-ef --version 10.0.0
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          dotnet ef migrations list --project backend/CurvTabDental.Infrastructure/CurvTabDental.Infrastructure.csproj --startup-project backend/CurvTabDental.API/CurvTabDental.API.csproj --no-connect | grep FinancialEvidenceAndSignoff
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run build
