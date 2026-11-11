@@ -1,0 +1,152 @@
+/* Client-requested consistent workspace, 11 Nov 2026.
+   Keeps the sidebar visible, leaves clinical and financial records untouched.
+   Applied after previous workspace styles. */
+
+/* Sidebar group labels retain their click-to-expand behavior, without arrows. */
+#root .app-shell .sidebar .nav-group > svg:last-child:not(:first-child) {
+  display: none !important;
+}
+#root .app-shell .sidebar .nav-group {
+  padding-right: 12px !important;
+}
+
+/* Normal registration: required name and DOB come first; extra identity
+   preferences are collapsed and clearly optional, never required by API. */
+#root .ct-reg-v3-modal .ct-registration-optional {
+  margin: 13px 0 4px;
+  border: 1px solid #d7e4f0;
+  border-radius: 9px;
+  background: #f7fafd;
+}
+#root .ct-reg-v3-modal .ct-registration-optional > summary {
+  padding: 10px 12px;
+  cursor: pointer;
+  font-weight: 700;
+  color: #234d75;
+  font-size: 12px;
+}
+#root .ct-reg-v3-modal .ct-registration-optional .ct-reg-v3-mini-grid {
+  margin: 0 !important;
+  padding: 0 12px 12px;
+  grid-template-columns: repeat(3,minmax(0,1fr)) !important;
+}
+#root .ct-reg-v3-modal .ct-reg-language-bottom {
+  margin-top: 10px;
+}
+
+/* Consistent wide workspaces: 1000px centered in the content area to the
+   RIGHT of the sidebar, not centered over the whole viewport. */
+@media (min-width: 900px) {
+  :root { --ct-popup-workspace-width: 1000px; --ct-popup-workspace-height: 650px; }
+  html body .app-shell .workspace > main.main-content.ct-module-popup-window {
+    width: min(1000px,calc(100vw - 286px)) !important;
+    max-width: 1000px !important;
+    height: min(650px,calc(100dvh - 28px)) !important;
+    max-height: calc(100dvh - 28px) !important;
+    overflow-y: auto !important;
+    border-radius: 12px !important;
+  }
+  html body .ct-reg-v3-overlay,
+  html body .ct-pv5-overlay {
+    left: 258px !important;
+    width: calc(100% - 258px) !important;
+    background: rgba(21,36,59,.28) !important;
+  }
+  html body .ct-reg-v3-modal,
+  html body .ct-pv5-dialog {
+    width: min(1000px,calc(100vw - 288px)) !important;
+    max-width: 1000px !important;
+    height: min(650px,calc(100dvh - 28px)) !important;
+    max-height: calc(100dvh - 28px) !important;
+    min-height: 0 !important;
+    border-radius: 12px !important;
+  }
+  html body .ct-lab-floating-window {
+    width: min(1000px,calc(100vw - 288px)) !important;
+    max-width: 1000px !important;
+    height: min(650px,calc(100dvh - 28px)) !important;
+    max-height: calc(100dvh - 28px) !important;
+  }
+}
+
+/* Medical Aid operations belong in one compact selector, not seven huge pills. */
+#root .ct-medical-aid-menu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: end;
+  margin: 10px 0 13px;
+  padding: 9px 11px;
+  border: 1px solid var(--border,#d9e5f0);
+  border-radius: 9px;
+  background: var(--surface,#fff);
+}
+#root .ct-medical-aid-menu label {
+  display: grid;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text,#233952);
+  font-weight: 700;
+}
+#root .ct-medical-aid-menu select {
+  min-width: 220px;
+  max-width: min(100%,360px);
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid var(--border,#c8d8e9);
+  border-radius: 7px;
+  background: var(--surface,#fff);
+  color: var(--text,#203754);
+  font-size: 12px;
+}
+#root .ct-medical-aid-menu button {
+  min-height: 32px !important;
+  padding: 6px 11px !important;
+  font-size: 11px !important;
+  width: fit-content !important;
+}
+
+/* Lab case page handles work; account administration is in
+   Settings -> Laboratory Settings and need not occupy the header. */
+#root .lab-module .lab-head-actions button {
+  min-height: 30px !important;
+  padding: 5px 10px !important;
+  font-size: 11px !important;
+}
+#root .lab-module .lab-setup-settings-note {
+  display: inline-block;
+  font-size: 11px;
+  color: var(--lab-muted,#526c85);
+  font-weight: 650;
+}
+
+/* One original dental illustration, no duplicate KPI strip above the single
+   rotating detailed operations report. */
+#root .app-shell .main-content:has(> .ov) > .ct-dashboard-enhancements > .ct-hero {
+  border-radius: 11px !important;
+}
+#root .app-shell .main-content:has(> .ov) > .ov .ct-live-report {
+  min-height: 0;
+}
+#root .app-shell .main-content:has(> .ov) > .ov .ct-live-report .ov-card {
+  border-radius: 10px !important;
+}
+@media(max-width:899px) {
+  html body .ct-reg-v3-overlay, html body .ct-pv5-overlay {
+    left: 0 !important; width: 100% !important;
+  }
+  html body .ct-reg-v3-modal, html body .ct-pv5-dialog {
+    width: calc(100vw - 20px) !important;
+    max-width: calc(100vw - 20px) !important;
+    height: min(650px,calc(100dvh - 20px)) !important;
+    max-height: calc(100dvh - 20px) !important;
+  }
+}
+@media(max-width:600px) {
+  #root .ct-reg-v3-modal .ct-registration-optional .ct-reg-v3-mini-grid {
+    grid-template-columns: 1fr !important;
+  }
+  #root .ct-medical-aid-menu select {
+    min-width: 0; width: 100%; max-width: none;
+  }
+}
