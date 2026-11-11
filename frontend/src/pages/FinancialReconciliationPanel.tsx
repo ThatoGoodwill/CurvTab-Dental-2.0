@@ -72,7 +72,6 @@ export default function FinancialReconciliationPanel({ businessDate }: { busines
     return () => { active = false }
   }, [businessDate, reload])
 
-  const latest = instrument === 'Card' ? summary?.latestCard : summary?.latestEft
   const ledgerValue = instrument === 'Card' ? summary?.receipts?.card : summary?.receipts?.eft
 
   async function saveEvidence(event: FormEvent<HTMLFormElement>) {
