@@ -15,3 +15,130 @@
 .dentist-filters label { display: grid; gap: 7px; font-size: 13px; font-weight: 600; }
 .dentist-filters input { border: 1px solid #d3dfe6; border-radius: 9px; padding: 10px 12px; background: transparent; color: inherit; min-width: 180px; }
 @media (max-width: 600px) { .dentist-row { flex-direction: column; align-items: start; } }
+
+/* Dentist's own dashboard: a compact clinical workstation rather than a
+   second marketing dashboard. Scoped so Daily Patients and other screens
+   retain their existing layouts. */
+#root .app-shell .main-content:has(> .dentist-workspace) {
+  padding: clamp(12px,1.7vw,22px) !important;
+  max-width: 1240px !important;
+  margin-inline: auto !important;
+  width: 100%;
+  box-sizing: border-box;
+}
+#root .app-shell .dentist-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  width: 100%;
+  min-width: 0;
+}
+#root .app-shell .dentist-workspace .page-heading {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+#root .app-shell .dentist-workspace .page-heading .eyebrow {
+  font-size: 9px;
+  letter-spacing: .12em;
+}
+#root .app-shell .dentist-workspace .page-heading h1 {
+  font-size: clamp(20px,2.1vw,27px);
+  line-height: 1.13;
+  margin: 3px 0 5px;
+}
+#root .app-shell .dentist-workspace .page-heading p {
+  font-size: 11px;
+  margin: 0;
+}
+#root .app-shell .dentist-workspace .dentist-metrics {
+  grid-template-columns: repeat(5,minmax(0,1fr));
+  gap: 9px;
+}
+#root .app-shell .dentist-workspace .dentist-metric {
+  min-height: 78px;
+  padding: 12px 13px;
+  gap: 9px;
+  justify-content: center;
+  border-radius: 10px;
+  box-shadow: none;
+}
+#root .app-shell .dentist-workspace .dentist-metric span {
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--text-muted,#607487);
+}
+#root .app-shell .dentist-workspace .dentist-metric strong {
+  font-size: 25px;
+  line-height: 1;
+  color: var(--text,#092b42);
+}
+#root .app-shell .dentist-workspace .dentist-actions {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+}
+#root .app-shell .dentist-workspace .dentist-actions button,
+#root .app-shell .dentist-workspace .page-heading button {
+  min-height: 31px !important;
+  width: auto !important;
+  padding: 6px 11px !important;
+  font-size: 11px !important;
+  border-radius: 8px !important;
+  gap: 6px;
+}
+#root .app-shell .dentist-workspace .dentist-actions svg,
+#root .app-shell .dentist-workspace .page-heading button svg {
+  width: 14px;
+  height: 14px;
+}
+#root .app-shell .dentist-workspace > section.panel {
+  min-height: 155px;
+  padding: 15px 17px;
+  border-radius: 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+#root .app-shell .dentist-workspace > section.panel .panel-header {
+  margin-bottom: 0;
+}
+#root .app-shell .dentist-workspace > section.panel .panel-header h2 {
+  font-size: 15px;
+  margin: 0 0 4px;
+}
+#root .app-shell .dentist-workspace > section.panel .panel-header p {
+  font-size: 11px;
+  margin: 0;
+}
+#root .app-shell .dentist-workspace .appointment-empty {
+  min-height: 55px;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  color: var(--text-muted,#607487);
+  font-size: 12px;
+}
+#root .app-shell .dentist-workspace .dentist-rows {
+  max-height: min(38dvh,300px);
+  overflow-y: auto;
+}
+#root .app-shell .dentist-workspace .dentist-row {
+  padding: 10px 0;
+}
+@media (max-width: 900px) {
+  #root .app-shell .dentist-workspace .dentist-metrics {
+    grid-template-columns: repeat(3,minmax(0,1fr));
+  }
+}
+@media (max-width: 620px) {
+  #root .app-shell .dentist-workspace .dentist-metrics {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+  #root .app-shell .dentist-workspace .page-heading {
+    align-items: flex-start;
+  }
+}
