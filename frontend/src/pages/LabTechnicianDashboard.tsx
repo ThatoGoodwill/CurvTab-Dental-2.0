@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { FlaskConical, RefreshCw, PackageCheck, Truck, ShieldCheck, Clock3 } from 'lucide-react'
 import { apiRequest } from '../services/api'
 import './RoleOperationsDashboard.css'
+import RoleDashboardCarousel from './RoleDashboardCarousel'
 
 type LabItem = {
   id: string
@@ -79,21 +80,41 @@ export default function LabTechnicianDashboard({ onOpenLaboratory }: { onOpenLab
         <strong>{loading && !data ? '…' : error && !data ? '—' : value}</strong>
       </article>)}
     </div>
-    <div className="ct-role-panel">
-      <header>
-        <div><h2>Assigned cases requiring attention</h2>
-          <p>Real orders from your authorised laboratory, not sample records.</p></div>
-        <button type="button" className="primary-button" onClick={onOpenLaboratory}>
-          <Truck size={15}/> Open Laboratory Workbench
-        </button>
-      </header>
-      {loading && !data ? <p className="ct-role-empty">Loading assigned cases…</p>
-        : !error && priority.length === 0 ? <p className="ct-role-empty">No active cases assigned to your laboratory.</p>
-        : <div className="ct-role-case-list">{priority.map(order =>
-          <div className="ct-role-case" key={order.id}>
-            <div><strong>{order.reference}</strong><span>{order.patientName}</span></div>
-            <span>{order.items.length} {order.items.length === 1 ? 'item' : 'items'} · {order.status.replace(/([a-z])([A-Z])/g,'$1 $2')}</span>
-          </div>)}</div>}
-    </div>
+    <RoleDashboardCarousel eyebrow="LABORATORY · ASSIGNED WORK"
+      loading={loading} onRefresh={() => { setLoading(true); setReload(i => i + 1) }}
+      slides={[
+        { title: 'Assigned Cases', content: (
+          <div className="ct-role-panel">
+            <header><div><h2>Cases requiring attention</h2>
+              <p>Real orders assigned to your laboratory, not sample records.</p></div>
+              <button type="button" className="primary-button" onClick={onOpenLaboratory}>
+                <Truck size={15}/> Open Workbench
+              </button>
+            </header>
+            {loading && !data ? <p className="ct-role-empty">Loading assigned cases…</p> :
+              error && !data ? <p className="ct-role-empty">Laboratory records unavailable.</p> :
+              priority.length === 0 ? <p className="ct-role-empty">No active cases assigned to your laboratory.</p> :
+              <div className="ct-role-case-list">{priority.map(order =>
+                <div className="ct-role-case" key={order.id}>
+                  <div><strong>{order.reference}</strong><span>{order.patientName}</span></div>
+                  <span>{order.items.length} {order.items.length === 1 ? 'item' : 'items'} · {order.status.replace(/([a-z])([A-Z])/g,'$1 $2')}</span>
+                </div>)}</div>}
+          </div>
+        ) },
+        { title: 'Production & Quality Checks', content: (
+          <div className="ct-role-panel">
+            <header><div><h2>Production and return overview</h2>
+              <p>Active manufacturing, quality assurance and return progress.</p></div></header>
+            <div className="ct-clinical-progress">
+              {counts.map(({ label, value, Icon }) => <div key={label}>
+                <Icon size={16} aria-hidden="true"/>
+                <span>{label}</span>
+                <strong>{loading && !data ? '…' : error && !data ? '—' : value}</strong>
+              </div>)}
+            </div>
+          </div>
+        ) }
+      ]}/>
+
   </section>
 }
