@@ -83,6 +83,16 @@ public sealed class BillingCashDayCloseController : ControllerBase
             .Where(x => x.DentalPracticeId == practiceId && x.Method == "EFT" &&
                 x.ReceivedAtUtc >= start && x.ReceivedAtUtc < end)
             .SumAsync(x => (decimal?)x.Amount, ct) ?? 0m);
+        // The initial orthodontic advance is one real tender held as
+        // patient credit, never a simulated claim or second invoice.
+        cardReceived += await _db.OrthodonticIntakeAdvanceReceipts.AsNoTracking()
+            .Where(x => x.DentalPracticeId == practiceId && x.Method == "Card" &&
+                x.ReceivedAtUtc >= start && x.ReceivedAtUtc < end)
+            .SumAsync(x => (decimal?)x.Amount, ct) ?? 0m;
+        eftReceived += await _db.OrthodonticIntakeAdvanceReceipts.AsNoTracking()
+            .Where(x => x.DentalPracticeId == practiceId && x.Method == "EFT" &&
+                x.ReceivedAtUtc >= start && x.ReceivedAtUtc < end)
+            .SumAsync(x => (decimal?)x.Amount, ct) ?? 0m;
         var nonCashOutflows = await _db.Set<PracticeExpense>().AsNoTracking()
             .Where(x => x.DentalPracticeId == practiceId && x.ExpenseDate == date &&
                 (x.Method == "Card" || x.Method == "EFT"))
@@ -182,19 +192,24 @@ public sealed class BillingCashDayCloseController : ControllerBase
             .Where(x => x.DentalPracticeId == practiceId && x.Method == "Cash" &&
                 x.ReceivedAtUtc >= start && x.ReceivedAtUtc < end)
             .SumAsync(x => (decimal?)x.Amount, ct) ?? 0m;
+        var orthoAdvanceCash = await _db.OrthodonticIntakeAdvanceReceipts.AsNoTracking()
+            .Where(x => x.DentalPracticeId == practiceId && x.Method == "Cash" &&
+                x.ReceivedAtUtc >= start && x.ReceivedAtUtc < end)
+            .SumAsync(x => (decimal?)x.Amount, ct) ?? 0m;
         var cashExpenses = await _db.Set<PracticeExpense>().AsNoTracking()
             .Where(x => x.DentalPracticeId == practiceId &&
                 x.ExpenseDate == request.BusinessDate && x.Method == "Cash")
             .SumAsync(x => (decimal?)x.Amount, ct) ?? 0m;
 
-        var expected = request.OpeningFloat + paymentCash + planCash - cashExpenses;
+        var totalCashReceipts = paymentCash + planCash + orthoAdvanceCash;
+        var expected = request.OpeningFloat + totalCashReceipts - cashExpenses;
         var submission = new CashDayCloseSubmission
         {
             DentalPracticeId = practiceId,
             BusinessDate = request.BusinessDate,
             OpeningFloat = request.OpeningFloat,
             CountedCash = request.CountedCash,
-            CashReceived = paymentCash + planCash,
+            CashReceived = totalCashReceipts,
             CashExpenses = cashExpenses,
             ExpectedCash = expected,
             Variance = request.CountedCash - expected,
