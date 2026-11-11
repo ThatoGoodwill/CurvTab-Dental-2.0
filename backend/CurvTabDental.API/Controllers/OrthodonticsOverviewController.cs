@@ -33,8 +33,12 @@ public sealed class OrthodonticsOverviewController : ControllerBase
         // Both case and patient must be owned by the authenticated practice.
         var query =
             from c in _db.OrthodonticCases.AsNoTracking()
+            join intake in _db.OrthodonticIntakes.AsNoTracking() on c.PatientId equals intake.PatientId
             join p in _db.Patients.AsNoTracking() on c.PatientId equals p.Id
             where c.DentalPracticeId == practiceId
+               && intake.DentalPracticeId == practiceId
+               && intake.AssignedOrthodontistUserId == _current.UserId
+               && intake.ClosedAtUtc == null
                && p.DentalPracticeId == practiceId
                && !p.IsArchived
             select new
@@ -60,10 +64,15 @@ public sealed class OrthodonticsOverviewController : ControllerBase
             from n in _db.OrthodonticProgressNotes.AsNoTracking()
             join c in _db.OrthodonticCases.AsNoTracking()
                 on n.OrthodonticCaseId equals c.Id
+            join intake in _db.OrthodonticIntakes.AsNoTracking()
+                on c.PatientId equals intake.PatientId
             join p in _db.Patients.AsNoTracking()
                 on c.PatientId equals p.Id
             where n.DentalPracticeId == practiceId
                && c.DentalPracticeId == practiceId
+               && intake.DentalPracticeId == practiceId
+               && intake.AssignedOrthodontistUserId == _current.UserId
+               && intake.ClosedAtUtc == null
                && p.DentalPracticeId == practiceId
                && !p.IsArchived
             orderby n.VisitDate descending, n.RecordedAtUtc descending
