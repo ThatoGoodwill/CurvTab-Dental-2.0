@@ -1,94 +1,135 @@
-/* CurvTab Dental — non-obscuring, compact workspace dialogs.
-   The navigation remains outside of the modal backdrop on desktop.
-   All changes are scoped to application dialogs; in-place confirmation
-   popups retain their own sizing and interactions. */
+/* SIDEBAR-SAFE MODALS v2: do not translate fixed overlays themselves.
+   A translated/animated ancestor makes position:fixed relative to that ancestor;
+   shifting nested overlays by the sidebar width caused the right-half blackout. */
 @media (min-width: 900px) {
-  #root .app-shell {
-    --ct-dialog-navigation-width: 258px;
-    --ct-dialog-safe-gap: 12px;
-  }
-  #root .app-shell.ct-nav-rail {
-    --ct-dialog-navigation-width: 76px;
-  }
-  #root .app-shell.ct-nav-top {
-    --ct-dialog-navigation-width: 0px;
-  }
+  #root .app-shell { --ct-modal-nav: 258px; }
+  #root .app-shell.ct-nav-rail { --ct-modal-nav: 76px; }
+  #root .app-shell.ct-nav-top { --ct-modal-nav: 0px; }
 
-  /* Keep the navigation visible and clickable, never tinted or blurred. */
-  #root .app-shell > .sidebar {
+  /* Navigation is always in front of page dimmers, not on top of the forms. */
+  html body #root .app-shell > .sidebar {
     z-index: 11000 !important;
   }
 
-  /* Main module backdrop is limited to the content workspace only. */
+  /* The main module is the one case requiring explicit viewport positioning. */
   html body #root .app-shell .workspace > .ct-module-backdrop {
-    inset: 0 0 0 var(--ct-dialog-navigation-width) !important;
-    width: auto !important;
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
     z-index: 3800 !important;
+    box-sizing: border-box !important;
   }
-
-  /* Main module dialog is centred in the available area, not the viewport. */
   html body #root .app-shell .workspace > main.main-content.ct-module-popup-window {
-    left: calc(var(--ct-dialog-navigation-width) + (100vw - var(--ct-dialog-navigation-width)) / 2) !important;
-    right: auto !important;
+    position: fixed !important;
+    left: calc(var(--ct-modal-nav) + (100vw - var(--ct-modal-nav)) / 2) !important;
     top: 50% !important;
+    right: auto !important;
     transform: translate(-50%, -50%) !important;
-    width: min(1020px, calc(100vw - var(--ct-dialog-navigation-width) - 28px)) !important;
-    max-width: calc(100vw - var(--ct-dialog-navigation-width) - 28px) !important;
-    height: min(670px, calc(100dvh - 28px)) !important;
+    width: min(1020px, calc(100vw - var(--ct-modal-nav) - 32px)) !important;
+    max-width: calc(100vw - var(--ct-modal-nav) - 32px) !important;
     max-height: calc(100dvh - 28px) !important;
-    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
   }
 
-  /* All full-screen workspace overlays share the same content boundary. */
+  /* Full-screen module launchers keep an unshifted fixed backdrop.
+     Left padding, NOT left/inset offset, centres the window beside navigation. */
   html body #root .app-shell :is(
     .ct-lab-floating-overlay,
     .ct-dir4-overlay,
     .ct-pv5-overlay,
     .ct-reg-v3-overlay,
-    .ct-appt-page-overlay,
-    .ct-appt-booking-overlay,
-    .ct-platform-recovery-overlay
+    .ct-appt-page-overlay
   ) {
-    left: var(--ct-dialog-navigation-width) !important;
+    position: fixed !important;
+    inset: 0 !important;
+    left: 0 !important;
     right: 0 !important;
-    width: calc(100vw - var(--ct-dialog-navigation-width)) !important;
+    width: 100vw !important;
+    height: 100dvh !important;
     max-width: none !important;
+    box-sizing: border-box !important;
+    padding: 14px 14px 14px calc(var(--ct-modal-nav) + 14px) !important;
+  }
+
+  /* Prevent a dialog nested under another dialog from escaping into
+     the global workspace (and painting a second displaced backdrop). */
+  html body #root .app-shell :is(
+    .ct-module-popup-window,
+    .ct-appointments-modal,
+    .ct-dir4-dialog,
+    .ct-pv5-dialog,
+    .ct-lab-floating-window,
+    .ct-reg-v3-modal
+  ) :is(
+    .ct-platform-recovery-overlay,
+    .ct-appt-booking-overlay,
+    .ct-guide-drawer-backdrop,
+    .ct-reg-v3-overlay,
+    .ct-pv5-overlay,
+    .ct-dir4-overlay
+  ) {
+    position: absolute !important;
+    inset: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    padding: 12px !important;
     box-sizing: border-box !important;
   }
 
-  /* Large workspaces scale down inside the remaining width. */
+  /* SuperAdmin reset is nested under the fixed and transformed main module.
+     Its coordinate origin is that module, so it MUST NOT be shifted 258px. */
+  html body #root .app-shell .ct-module-popup-window .ct-platform-recovery-overlay {
+    position: absolute !important;
+    inset: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    padding: 12px !important;
+    place-items: center !important;
+  }
+  html body #root .app-shell .ct-platform-recovery-dialog {
+    width: min(480px, 100%) !important;
+    max-width: 100% !important;
+    max-height: calc(100% - 8px) !important;
+  }
+
+  /* In a narrow workspace prefer a smaller window instead of cropping it. */
   html body #root .app-shell :is(
     .ct-lab-floating-window,
     .ct-dir4-dialog,
     .ct-pv5-dialog,
-    .ct-appointments-modal
+    .ct-appointments-modal,
+    .ct-reg-v3-modal
   ) {
-    max-width: calc(100vw - var(--ct-dialog-navigation-width) - 28px) !important;
+    max-width: min(1020px, calc(100vw - var(--ct-modal-nav) - 32px)) !important;
     min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+  html body #root .app-shell .ct-appointments-modal-calendar {
+    width: min(1020px, calc(100vw - var(--ct-modal-nav) - 32px)) !important;
+  }
+  html body #root .app-shell .ct-appointments-modal-queue {
+    width: min(720px, calc(100vw - var(--ct-modal-nav) - 32px)) !important;
   }
   html body #root .app-shell .ct-lab-floating-window {
-    width: min(1020px, calc(100vw - var(--ct-dialog-navigation-width) - 28px)) !important;
-  }
-  html body #root .app-shell .ct-dir4-overlay .ct-dir4-dialog {
-    width: min(900px, calc(100vw - var(--ct-dialog-navigation-width) - 28px)) !important;
+    width: min(1020px, calc(100vw - var(--ct-modal-nav) - 32px)) !important;
   }
 
-  /* Booking and password-recovery popups stay smaller than module dialogs. */
-  html body #root .app-shell :is(
-    .ct-appt-booking-dialog,
-    .ct-platform-recovery-dialog
-  ) {
-    max-width: calc(100vw - var(--ct-dialog-navigation-width) - 28px) !important;
-  }
-
-  /* Top navigation remains visible too, including while dialogs are open. */
-  #root .app-shell.ct-nav-top > .sidebar {
-    z-index: 11000 !important;
+  /* Floating drawers and auxiliary popups stay within the viewport and
+     do not acquire a sidebar offset from an ancestor modal. */
+  html body #root .app-shell .ct-appt-booking-dialog {
+    max-width: min(455px, 100%) !important;
   }
 }
 
-/* Small screens still need their hamburger/navigation overlay, and therefore
-   keep the original full-screen modal behaviour. */
+/* On tablet/mobile, the hamburger navigation is intentionally independent.
+   Existing full-screen dialog styling continues to apply. */
 @media (max-width: 899px) {
-  #root .app-shell { --ct-dialog-navigation-width: 0px; }
+  #root .app-shell { --ct-modal-nav: 0px; }
 }
