@@ -250,13 +250,13 @@ export function OverviewDashboardView(props: ViewProps) {
 
   return (
     <div className="ov"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
       onBlurCapture={event => {
         if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false)
       }}>
-      <div className="ov-carousel-heading">
+      <div className="ov-carousel-heading"
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}>
         <div className="ov-carousel-heading-copy">
           <span className="ov-carousel-eyebrow">PRACTICE OPERATIONS · LIVE DATA</span>
           <h2>{panelNames[panel]}</h2>
@@ -272,7 +272,7 @@ export function OverviewDashboardView(props: ViewProps) {
             disabled={props.loading}><RefreshCw size={14}/> Refresh</button>
         </div>
       </div>
-      <div className="ov-carousel-tabs" role="group" aria-label="Choose report">
+      <div className="ov-carousel-tabs" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} role="group" aria-label="Choose report">
         {panelNames.map((name, index) => (
           <button type="button" key={name}
             aria-pressed={panel === index}
@@ -287,7 +287,9 @@ export function OverviewDashboardView(props: ViewProps) {
         </div>
       )}
 
-      <div key={panel} className={`ov-grid ov-slide-${panel}`}
+      <div key={panel} className={`ct-live-report ct-live-report-${panel}`}
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
         onTouchStart={event => { touchStart.current = event.touches[0]?.clientX ?? null }}
         onTouchEnd={event => finishSwipe(event.changedTouches[0]?.clientX ?? 0)}
         onKeyDown={event => {
@@ -296,37 +298,7 @@ export function OverviewDashboardView(props: ViewProps) {
           if (event.key === 'ArrowLeft') navigatePanel(-1)
         }}
         tabIndex={0} aria-label={`Dashboard report: ${panelNames[panel]}`}>
-        <section className="ov-hero">
-          <div className="ov-hero-copy">
-            <h2>
-              Healthy Smiles,
-              <br />
-              Fresher Confidence
-            </h2>
-            <p>Preventive care, clean teeth and long-term oral health for the whole family.</p>
-            <button type="button" className="ov-btn ov-btn-white" onClick={props.onNewAppointment}>
-              Book an Appointment <ArrowRight size={16} />
-            </button>
-          </div>
-          <div className="ov-hero-art" aria-hidden="true">
-            <ToothArt />
-          </div>
-        </section>
-
-        <div className="ov-kpis">
-          {kpis.map((kpi) => (
-            <div key={kpi.label} className="ov-card ov-kpi">
-              <div className={`ov-kpi-icon ${kpi.tone}`}>{kpi.icon}</div>
-              <div className="ov-kpi-body">
-                <div className="ov-kpi-label">{kpi.label}</div>
-                <div className="ov-kpi-value">{kpi.value}</div>
-                {kpi.note && <div className="ov-kpi-note">{kpi.note}</div>}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <section className="ov-card ov-calendar">
+        {panel === 0 && <section className="ov-card ov-calendar">
           <div className="ov-card-head">
             <h3>Appointments Calendar</h3>
             <div className="ov-month-switch">
@@ -405,9 +377,9 @@ export function OverviewDashboardView(props: ViewProps) {
               })}
             </div>
           </div>
-        </section>
+        </section>}
 
-        <section className="ov-card ov-overview">
+        {panel === 1 && <section className="ov-card ov-overview">
           <div className="ov-card-head">
             <h3>Practice Overview</h3>
             <span className="ov-select">{MONTHS[now.getMonth()]}</span>
@@ -428,9 +400,7 @@ export function OverviewDashboardView(props: ViewProps) {
               </ul>
             </div>
           )}
-        </section>
-
-        <section className="ov-card ov-status">
+        </section>}
           <h3>
             Appointments Status <small>(Today)</small>
           </h3>
@@ -442,15 +412,15 @@ export function OverviewDashboardView(props: ViewProps) {
               </div>
             ))}
           </div>
-        </section>
+        </section>}
 
-        <section className="ov-card ov-trends">
+        {panel === 2 && <section className="ov-card ov-trends">
           <div className="ov-card-head">
             <h3>Monthly Trends</h3>
             <span className="ov-select">Last 6 months</span>
           </div>
           <LineChart labels={trendLabels} values={trendValues} />
-        </section>
+        </section>}
       </div>
     </div>
   )
