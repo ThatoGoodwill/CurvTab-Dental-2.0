@@ -70,12 +70,6 @@ function rand(amount: number): string {
   return new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount)
 }
 
-function greetingFor(hour: number): string {
-  if (hour < 12) return 'Good morning'
-  if (hour < 18) return 'Good afternoon'
-  return 'Good evening'
-}
-
 type Dated = OverviewAppointment & { start: Date; end: Date }
 
 // ---------------------------------------------------------
@@ -216,7 +210,6 @@ export function OverviewDashboardView(props: ViewProps) {
     { label: 'Checked Out', value: countToday('CheckedOut'), tone: 'slate' },
   ]
 
-  const first = props.fullName.split(' ')[0] || props.fullName
   const placeholder = props.loading && props.appointments.length === 0
 
   const kpis = [
