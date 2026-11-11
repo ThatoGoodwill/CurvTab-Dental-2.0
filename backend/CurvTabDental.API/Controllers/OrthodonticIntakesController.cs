@@ -244,7 +244,10 @@ public sealed class OrthodonticIntakesController : ControllerBase
         intake.UpdatedAtUtc = DateTime.UtcNow;
 
         var missing = JsonSerializer.Deserialize<string[]>(intake.MissingDocumentsJson) ?? [];
-        intake.Status = !req.HistoryVerified || missing.Length > 0
+        // Once assessment starts, do not silently return it to intake
+        // merely because a clinician amends the document checklist.
+        if (intake.Status != "ASSESSMENT_IN_PROGRESS")
+            intake.Status = !req.HistoryVerified || missing.Length > 0
             ? "RECORDS_PENDING"
             : intake.TermsApplicable && intake.TermsAcceptedAtUtc is null
                 ? "TERMS_PENDING"
