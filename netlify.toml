@@ -21,3 +21,8 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Production keeps its existing API proxy. A Deploy Preview copies its own
+# _redirects into the publish directory, which takes precedence over TOML.
+[context.deploy-preview]
+  command = "npm ci && npm run build && cp ../netlify-preview-redirects dist/_redirects"
