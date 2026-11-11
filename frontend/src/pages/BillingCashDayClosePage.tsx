@@ -27,8 +27,8 @@ const errorOf = async (res:Response) => {
   return body?.message ?? `Unable to complete cash day close (${res.status})`
 }
 
-export default function BillingCashDayClosePage({ isManager }: { isManager:boolean }) {
-  const [date,setDate]=useState(today)
+export default function BillingCashDayClosePage({ isManager, businessDate }: { isManager:boolean; businessDate?: string }) {
+  const [date,setDate]=useState(businessDate ?? today())
   const [reload,setReload]=useState(0)
   const [data,setData]=useState<Close|null>(null)
   const [loading,setLoading]=useState(true)
