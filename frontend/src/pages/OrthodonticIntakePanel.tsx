@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { ClipboardCheck, FileText, Plus, RefreshCw, ShieldCheck, Users, UserRoundCheck } from 'lucide-react'
-import { apiRequest } from '../services/api'
+import { apiRequest, apiUpload, apiDownload } from '../services/api'
 import { SignaturePad } from './RegistrationExtras'
 import './OrthodonticIntakePanel.css'
 
@@ -17,6 +17,16 @@ type Intake = {
 }
 type PatientOption = { id: string; name: string }
 type Clinician = { id: string; name: string }
+type IntakeDocument = {
+  id: string; originalFileName: string; category: string; contentType: string;
+  sizeBytes: number; sha256: string; sourceProvider: string | null;
+  uploadedAtUtc: string; reviewedAtUtc: string | null
+}
+type AdvanceReceipt = {
+  id: string; receiptNumber: string; amount: number; method: string;
+  reference: string | null; receivedAtUtc: string; creditAvailable: number
+}
+
 type IntakeDetail = Intake & {
   referralReason: string | null; referralNotes: string | null
   previousProvider: string | null; existingAppliances: string | null
@@ -47,7 +57,7 @@ const sourceName = (source: IntakeSource) => ({
   DIRECT: 'Direct registration', INTERNAL: 'Internal referral', TRANSFER_IN: 'Transfer-in'
 })[source]
 const stateLabel = (state: string) => state.replaceAll('_',' ').toLowerCase()
-const initialList = ['New Assessments','Internal Referrals','Transfer-In Reviews','Active Treatment','Retention','Follow-ups','Repairs','Financial Interventions']
+const initialList = ['New Assessments','Internal Referrals','Transfer-In Reviews','Assessment In Progress','Financial Interventions']
 
 export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
   const isManager = role === 'PracticeAdmin'
@@ -78,6 +88,17 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
   const [working,setWorking] = useState(false)
   const [reload,setReload] = useState(0)
   const [loading,setLoading] = useState(true)
+  const [documents,setDocuments] = useState<IntakeDocument[]>([])
+  const [advanceReceipts,setAdvanceReceipts] = useState<AdvanceReceipt[]>([])
+  const [uploadFile,setUploadFile] = useState<File|null>(null)
+  const [documentCategory,setDocumentCategory] = useState('Radiograph')
+  const [documentSource,setDocumentSource] = useState('')
+  const [paymentMethod,setPaymentMethod] = useState('Cash')
+  const [paymentReference,setPaymentReference] = useState('')
+  const [confirmPayment,setConfirmPayment] = useState(false)
+  const [paymentRequestId,setPaymentRequestId] = useState(() => crypto.randomUUID())
+  const [documentLoadError,setDocumentLoadError] = useState('')
+
 
   useEffect(()=>{
     let active=true
@@ -118,9 +139,8 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
     return cases.filter(c=> filter==='New Assessments' ? c.source==='DIRECT' && c.status!=='ASSESSMENT_IN_PROGRESS'
       : filter==='Internal Referrals' ? c.source==='INTERNAL'
       : filter==='Transfer-In Reviews' ? c.source==='TRANSFER_IN'
-      : filter==='Active Treatment' ? c.status==='ASSESSMENT_IN_PROGRESS'
+      : filter==='Assessment In Progress' ? c.status==='ASSESSMENT_IN_PROGRESS'
       : filter==='Financial Interventions' ? c.status==='PAYMENT_PENDING' || c.advancePolicy==='REVIEW_REQUIRED'
-      : (filter==='Follow-ups'||filter==='Repairs'||filter==='Retention') ? false
       : c.status.toLowerCase().includes(lower))
   },[cases,filter])
 
@@ -157,10 +177,14 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
     setSignerName('')
     setSignatureData('')
     setTermsAcknowledged(false)
-    try {
-      const data=await apiRequest<IntakeDetail>('/orthodontics/intakes/'+encodeURIComponent(item.id))
-      setDetail(data)
-    }catch(cause){setError(cause instanceof Error?cause.message:'Unable to load this intake.')}
+    setUploadFile(null)
+    setDocuments([])
+    setAdvanceReceipts([])
+    setDocumentLoadError('')
+    setPaymentMethod('Cash')
+    setPaymentReference('')
+    setConfirmPayment(false)
+    setPaymentRequestId(crypto.randomUUID())
   }
   useEffect(()=>{
     if(view !== 'review' || !selected?.termsApplicable || selected.termsAcceptedAtUtc) return
@@ -172,6 +196,73 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
   },[view,selected?.id,selected?.termsApplicable,selected?.termsAcceptedAtUtc])
 
   const selectedId=selected?.id
+  useEffect(() => {
+    if (view !== 'review' || !selected?.id) return
+    let active = true
+    const id = selected.id
+    const load = async () => {
+      try {
+        const [record, docs, receipts] = await Promise.all([
+          apiRequest<IntakeDetail>('/orthodontics/intakes/' + encodeURIComponent(id)),
+          apiRequest<IntakeDocument[]>('/orthodontics/intakes/' + encodeURIComponent(id) + '/documents'),
+          isDentist ? Promise.resolve([] as AdvanceReceipt[]) :
+            apiRequest<AdvanceReceipt[]>('/orthodontics/intakes/' + encodeURIComponent(id) + '/advance')
+        ])
+        if (!active) return
+        setDetail(record)
+        setDocuments(docs)
+        setAdvanceReceipts(receipts)
+        setDocumentLoadError('')
+        setSelected(previous => previous?.id === id ? { ...previous, ...record } : previous)
+      } catch (cause) {
+        if (active) setDocumentLoadError(cause instanceof Error ? cause.message :
+          'Unable to load patient intake documents.')
+      }
+    }
+    void load()
+    return () => { active = false }
+  }, [view, selected?.id, reload, isDentist])
+
+  async function uploadDocument(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!selectedId || !uploadFile) return
+    const data = new FormData()
+    data.append('file',uploadFile)
+    data.append('category',documentCategory)
+    data.append('sourceProvider',documentSource)
+    const saved = await run(
+      () => apiUpload('/orthodontics/intakes/' + selectedId + '/documents', data),
+      'Clinical document uploaded to the patient intake. Specialist review is still required.')
+    if (saved) { setUploadFile(null); setDocumentSource('') }
+  }
+
+  async function downloadDocument(file: IntakeDocument) {
+    if (!selectedId) return
+    await run(() => apiDownload('/orthodontics/intakes/' + selectedId +
+      '/documents/' + file.id + '/file', file.originalFileName),
+      'Document downloaded securely.')
+  }
+
+  async function downloadSignedTerms() {
+    if (!selectedId) return
+    await run(() => apiDownload('/orthodontics/intakes/' + selectedId +
+      '/signed-terms.pdf', 'orthodontic-intake-' + selectedId + '.pdf'),
+      'Signed versioned intake PDF downloaded.')
+  }
+
+  async function recordAdvance(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!selectedId || !confirmPayment) return
+    const saved = await run(() => apiRequest(
+      '/orthodontics/intakes/' + selectedId + '/advance','POST',{
+        requestId:paymentRequestId,amount:2500,method:paymentMethod,
+        reference:paymentMethod==='Cash'?null:paymentReference.trim(),
+        confirmFundsReceived:confirmPayment
+      }), 'The actual R2,500 advance was recorded once as patient credit. Print or download the verified receipt.')
+    if (saved) { setConfirmPayment(false); setPaymentRequestId(crypto.randomUUID()) }
+  }
+
+
   const change=(key:keyof CreateForm,value:string)=>setForm(old=>({...old,[key]:value}))
   const showPatient=(patientId:string)=>onOpenPatient?.(patientId)
 
@@ -253,6 +344,81 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
         {detail.previousRecordsSummary && <p><strong>Records supplied:</strong> {detail.previousRecordsSummary}</p>}
         {detail.urgentConcerns && <p><strong>Urgent concerns:</strong> {detail.urgentConcerns}</p>}
       </div>}
+      <section className="ct-ortho-intake-evidence">
+        <div className="ct-ortho-intake-section-title">
+          <div><h3>Clinical documents & evidence</h3>
+            <p>Linked to the existing patient. Uploads are not treated as verified findings.</p>
+          </div>
+          <span>{documents.length} file(s)</span>
+        </div>
+        {documentLoadError && <p role="alert" className="ct-ortho-intake-error">{documentLoadError}</p>}
+        {documents.length===0 ? <p className="ct-ortho-intake-hint">No supporting documents uploaded. Use the missing-items checklist below.</p> :
+          <div className="ct-ortho-intake-doc-list">{documents.map(file=><div key={file.id} className="ct-ortho-intake-doc">
+            <div><strong>{file.originalFileName}</strong>
+              <small>{file.category} · {Math.ceil(file.sizeBytes/1024)} KB · {file.reviewedAtUtc?'Clinically reviewed':'Review pending'}</small>
+              {file.sourceProvider && <small>Source: {file.sourceProvider}</small>}
+            </div>
+            <button type="button" className="secondary-button" disabled={working} onClick={()=>void downloadDocument(file)}>Download</button>
+            {isDentist && !file.reviewedAtUtc &&
+              <button type="button" className="secondary-button" disabled={working}
+                onClick={()=>void run(()=>apiRequest('/orthodontics/intakes/'+selectedId+
+                  '/documents/'+file.id+'/verify','PATCH',{}),'Document provenance clinically reviewed.')}>Mark reviewed</button>}
+          </div>)}</div>}
+        <form className="ct-ortho-intake-doc-form" onSubmit={uploadDocument}>
+          <label>Document type
+            <select value={documentCategory} onChange={e=>setDocumentCategory(e.target.value)}>
+              {['Referral','TransferRecords','Radiograph','Photo','MedicalHistory','GuardianAuthority','Other'].map(x=><option key={x} value={x}>{x==='TransferRecords'?'Transfer records':x==='MedicalHistory'?'Medical history':x==='GuardianAuthority'?'Guardian authority':x}</option>)}
+            </select>
+          </label>
+          <label>Source / previous provider (if known)
+            <input value={documentSource} maxLength={250} onChange={e=>setDocumentSource(e.target.value)} placeholder="Practice or provider supplying records"/>
+          </label>
+          <label>PDF or clinical image, maximum 6 MB
+            <input key={reload} type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
+              onChange={e=>setUploadFile(e.target.files?.[0]??null)} required/>
+          </label>
+          <button type="submit" className="primary-button" disabled={working || !uploadFile}>Upload evidence</button>
+        </form>
+      </section>
+      {selected.termsAcceptedAtUtc && <div className="ct-ortho-intake-signed">
+        <div><strong>Signed electronic intake terms</strong><small>Exact recorded version, time, signer and checksum preserved.</small></div>
+        <button type="button" className="secondary-button" disabled={working}
+          onClick={()=>void downloadSignedTerms()}>Download signed PDF</button>
+      </div>}
+      {!isDentist && <section className="ct-ortho-intake-evidence">
+        <h3>Initial orthodontic advance</h3>
+        <p className="ct-ortho-intake-hint">For the standard assessment, R2,500 is a patient credit toward an agreed braces quotation. Transfer-in exceptions need an approved policy. Never record money that has not been received.</p>
+        {advanceReceipts.map(r=><div key={r.id} className="ct-ortho-intake-signed">
+          <div><strong>{r.receiptNumber} · R {r.amount.toLocaleString('en-ZA',{minimumFractionDigits:2})}</strong>
+            <small>{r.method} · {new Date(r.receivedAtUtc).toLocaleString('en-ZA')} · Unallocated patient credit R {r.creditAvailable.toFixed(2)}</small></div>
+          <button type="button" className="secondary-button" onClick={()=>void run(
+            ()=>apiDownload('/orthodontics/intakes/'+selectedId+'/advance/'+r.id+'/receipt.pdf',
+              r.receiptNumber+'.pdf'),'Official payment receipt downloaded.')}>Download receipt PDF</button>
+        </div>)}
+        {advanceReceipts.length===0 && selected.advancePolicy==='STANDARD_R2500' && selected.termsAcceptedAtUtc &&
+          <form className="ct-ortho-intake-payment" onSubmit={recordAdvance}>
+            <label>Received amount <input disabled readOnly value="R 2 500,00" /></label>
+            <label>Tender method
+              <select value={paymentMethod} onChange={e=>setPaymentMethod(e.target.value)}>
+                <option value="Cash">Cash</option><option value="Card">Card</option><option value="EFT">EFT</option>
+              </select>
+            </label>
+            {paymentMethod!=='Cash' && <label>Verified terminal / EFT reference
+              <input required value={paymentReference} maxLength={100} onChange={e=>setPaymentReference(e.target.value)} placeholder="Never enter card numbers" />
+            </label>}
+            <label className="ct-ortho-intake-check ct-ortho-intake-full">
+              <input type="checkbox" checked={confirmPayment} onChange={e=>setConfirmPayment(e.target.checked)}/>
+              <span>I have independently confirmed that R2,500 was actually received, and the approved intake terms were signed before collection.</span>
+            </label>
+            <button type="submit" className="primary-button" disabled={working || !confirmPayment || (paymentMethod!=='Cash'&&!paymentReference.trim())}>Record actual advance & issue receipt</button>
+          </form>}
+        {advanceReceipts.length===0 && (!selected.termsAcceptedAtUtc || selected.advancePolicy!=='STANDARD_R2500') &&
+          <p className="ct-ortho-intake-hint">
+            {selected.advancePolicy==='REVIEW_REQUIRED'?'The advance policy has not yet been confirmed.':
+              selected.advancePolicy==='NOT_APPLICABLE'?'No advance is required under the recorded exception.':
+                'Approved signed terms are required before collecting R2,500.'}
+          </p>}
+      </section>}
       {isManager && <>
         <label className="ct-ortho-intake-assign">Assign to an authorised dentist
           <select value={selected.assignedOrthodontistUserId??''} onChange={e=>{
