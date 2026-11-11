@@ -32,6 +32,7 @@ import { Wallet } from 'lucide-react'
 import DentistDashboardPage from './pages/DentistDashboardPage'
 import LabTechnicianDashboard from './pages/LabTechnicianDashboard'
 import PracticeAdminPriorities from './pages/PracticeAdminPriorities'
+import FinanceRoleDashboard from './pages/FinanceRoleDashboard'
 import OverviewDashboardPage from './pages/OverviewDashboardPage'
 import DailyPatientsPage from './pages/DailyPatientsPage'
 import { ClipboardList as DailyPatientsIcon } from 'lucide-react'
@@ -1358,8 +1359,8 @@ export default function App() {
           {section === 'Dashboard' && (
             <ClinicDashboardEnhancements
               role={role}
-              showActivityCharts={!showOverview && role !== 'Dentist' && role !== 'LabTechnician'}
-              showKpis={!showOverview && role !== 'Dentist' && role !== 'LabTechnician'}
+              showActivityCharts={isSuperAdmin}
+              showKpis={isSuperAdmin}
               onPrimaryAction={() => {
                 if (isSuperAdmin) navigate('Dental Practices')
                 else if (role === 'LabTechnician') navigate('Laboratory')
@@ -1376,6 +1377,9 @@ export default function App() {
           )}
           {section === 'Dashboard' && role === 'LabTechnician' && (
             <LabTechnicianDashboard onOpenLaboratory={() => navigate('Laboratory')} />
+          )}
+          {section === 'Dashboard' && role === 'Finance' && (
+            <FinanceRoleDashboard onOpenFinances={() => navigate('Finance')} />
           )}
           {section === 'Dashboard' && isPracticeAdmin && (
             <PracticeAdminPriorities
@@ -1396,7 +1400,7 @@ export default function App() {
             />
           )}
 
-          {section === 'Dashboard' && role !== 'Dentist' && role !== 'LabTechnician' && !showOverview && (
+          {section === 'Dashboard' && !isSuperAdmin && role !== 'Dentist' && role !== 'LabTechnician' && role !== 'Finance' && !showOverview && (
             <>
               <div className="page-heading">
                 <div>
