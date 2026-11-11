@@ -1346,6 +1346,28 @@ export default function App() {
               </button>
             </header>
           )}
+
+          {/* ================================
+              DASHBOARD
+              ================================ */}
+          {section === 'Dashboard' && role === 'Dentist' && (
+            <DentistDashboardPage
+              onOpenAppointments={() => openAppointmentTab('In Queue')}
+              onOpenDailyPatients={() => navigate('Daily Patients')}
+            />
+          )}
+          {/* Live report carousel first: immediately visible, no scrolling required. */}
+          {section === 'Dashboard' && showOverview && (
+            <OverviewDashboardPage
+              fullName={user?.fullName ?? ''}
+              practiceName={user?.practiceName ?? null}
+              onNewAppointment={() => openAppointmentTab('Appointments')}
+              onOpenQueue={() => openAppointmentTab('In Queue')}
+              onOpenCheckout={() => navigate('Billing')}
+              onOpenPatients={() => navigate('Patients')}
+            />
+          )}
+
           {/* Visual upgrade: slideshow and real-data appointment analytics. */}
           {section === 'Dashboard' && (
             <ClinicDashboardEnhancements
@@ -1357,26 +1379,6 @@ export default function App() {
             />
           )}
 
-
-          {/* ================================
-              DASHBOARD
-              ================================ */}
-          {section === 'Dashboard' && role === 'Dentist' && (
-            <DentistDashboardPage
-              onOpenAppointments={() => openAppointmentTab('In Queue')}
-              onOpenDailyPatients={() => navigate('Daily Patients')}
-            />
-          )}
-          {section === 'Dashboard' && showOverview && (
-            <OverviewDashboardPage
-              fullName={user?.fullName ?? ''}
-              practiceName={user?.practiceName ?? null}
-              onNewAppointment={() => openAppointmentTab('Appointments')}
-              onOpenQueue={() => openAppointmentTab('In Queue')}
-              onOpenCheckout={() => navigate('Billing')}
-              onOpenPatients={() => navigate('Patients')}
-            />
-          )}
           {section === 'Dashboard' && role !== 'Dentist' && !showOverview && (
             <>
               <div className="page-heading">
