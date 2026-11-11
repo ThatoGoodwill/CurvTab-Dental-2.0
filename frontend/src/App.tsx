@@ -21,6 +21,7 @@ import type { ThemeSurface } from './workspace/workspacePrefs'
 import BillingWorkspaceTabs from './pages/BillingWorkspaceTabs'
 import type { BillingSection } from './pages/BillingWorkspaceTabs'
 import MedicalAidPanel from './pages/MedicalAidPanel'
+import ClinicalClaimCorrectionsPage from './pages/ClinicalClaimCorrectionsPage'
 import PatientBalancesPanel from './pages/PatientBalancesPanel'
 import InvoicesPanel from './pages/InvoicesPanel'
 import FinanceOperationsPanel from './pages/FinanceOperationsPanel'
@@ -106,6 +107,7 @@ type Section =
   | 'Subscriptions'
   | 'Configuration Center'
   | 'My Profile'
+  | 'Clinical Claim Corrections'
 
 // =========================================
 // MY PROFILE
@@ -1224,6 +1226,11 @@ export default function App() {
                   <span>Clinical Imaging</span>
                 </button>
               )}
+              <button type="button"
+                className={section === 'Clinical Claim Corrections' ? 'nav-item nav-active' : 'nav-item'}
+                onClick={() => navigate('Clinical Claim Corrections')}>
+                <ShieldCheck size={19}/><span>Claim Corrections</span>
+              </button>
               {isModuleVisible('Orthodontics') && <button type="button"
                 className={section === 'Orthodontics' ? 'nav-item nav-active' : 'nav-item'}
                 onClick={() => navigate('Orthodontics')}>
@@ -1546,6 +1553,8 @@ export default function App() {
             />
           )}
 
+          {section === 'Clinical Claim Corrections' && role === 'Dentist' && <ClinicalClaimCorrectionsPage />}
+
           {/* STAFF MANAGEMENT */}
           {section === 'Management' && canManageStaff && (
             <StaffPage />
@@ -1676,6 +1685,7 @@ export default function App() {
 
           {/* DENIED SECTIONS */}
           {(
+            (section === 'Clinical Claim Corrections' && role !== 'Dentist') ||
             (section === 'Clinical Imaging' && role !== 'Dentist') ||
             (section === 'Orthodontics' && role !== 'Dentist') ||
             (section === 'Billing' && role !== 'Receptionist' && role !== 'PracticeAdmin') ||
