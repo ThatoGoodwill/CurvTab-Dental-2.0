@@ -1,7 +1,7 @@
 /*
  * CurvTab Dental - colour themes (Blue & White, Dark Blue).
  *
- * Imported LAST (see main.tsx) so it wins over the older Practice*/Client* stylesheets, several of which
+ * Imported LAST (see main.tsx) so it wins over the older Practice and Client stylesheets, several of which
  * use !important with very long selectors. Every rule here is anchored on the #root id, which outranks
  * any number of classes in those older rules, so this file does not need to be fought with more !important.
  *
