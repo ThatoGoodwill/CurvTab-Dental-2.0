@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CalendarDays, ClipboardList, RefreshCw, Stethoscope, Users } from 'lucide-react'
+import { ClipboardList, RefreshCw, Stethoscope, Users } from 'lucide-react'
 import { apiRequest } from '../services/api'
 import './DentistWorkspace.css'
 import RoleDashboardCarousel from './RoleDashboardCarousel'
@@ -85,24 +85,6 @@ export default function DentistDashboardPage({
       </div>
 
       {error && <div className="appointment-alert" role="alert">{error}</div>}
-      <div className="dentist-metrics">
-        {measures.map((item) => (
-          <article className="panel dentist-metric" key={item.label}>
-            <span>{item.label}</span>
-            <strong>{loading && !stats ? '…' : item.value}</strong>
-          </article>
-        ))}
-      </div>
-
-      <div className="dentist-actions">
-        <button type="button" className="primary-button" onClick={onOpenAppointments}>
-          <CalendarDays size={18} /> Open Patient Queue
-        </button>
-        <button type="button" className="secondary-button" onClick={onOpenDailyPatients}>
-          <ClipboardList size={18} /> Daily Patients
-        </button>
-      </div>
-
       <RoleDashboardCarousel eyebrow="CLINICAL OPERATIONS · AUTHORISED DATA"
         loading={loading} onRefresh={() => { setLoading(true); setReload(n => n + 1) }}
         slides={[
@@ -132,10 +114,18 @@ export default function DentistDashboardPage({
                   <ClipboardList size={15}/> Daily Patients
                 </button>
               </header>
-              <div className="ct-clinical-progress">
-                {measures.map(item => <div key={item.label}>
-                  <span>{item.label}</span><strong>{loading && !stats ? '…' : error && !stats ? '—' : item.value}</strong>
-                </div>)}
+              <div className="ct-clinical-bar-chart" role="img"
+                aria-label={measures.map(item => `${item.label}: ${item.value}`).join(', ')}>
+                {measures.map(item => {
+                  const max = Math.max(1, ...measures.map(row => row.value))
+                  const height = Math.max(5, (item.value / max) * 100)
+                  return <div key={item.label} className="ct-clinical-bar-column">
+                    <strong>{loading && !stats ? '…' : error && !stats ? '—' : item.value}</strong>
+                    <div className="ct-clinical-bar-track"><div className="ct-clinical-bar-fill"
+                      style={{height: `${height}%`}}/></div>
+                    <span>{item.label}</span>
+                  </div>
+                })}
               </div>
               <p className="ct-role-hint">Only records returned for your authorised clinical workspace appear here.</p>
             </section>
