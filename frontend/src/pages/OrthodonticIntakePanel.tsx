@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { ClipboardCheck, FileText, Plus, RefreshCw, ShieldCheck, Users, UserRoundCheck } from 'lucide-react'
 import { apiRequest } from '../services/api'
+import { SignaturePad } from './RegistrationExtras'
 import './OrthodonticIntakePanel.css'
 
 type IntakeSource = 'DIRECT' | 'INTERNAL' | 'TRANSFER_IN'
@@ -67,6 +68,11 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
   const [dueDate,setDueDate] = useState('')
   const [policy,setPolicy] = useState('REVIEW_REQUIRED')
   const [policyReason,setPolicyReason] = useState('')
+  const [approvedTerms,setApprovedTerms] = useState<{ available:boolean; version?:string; fullText?:string; sha256?:string; message?:string }|null>(null)
+  const [signerName,setSignerName] = useState('')
+  const [signerCapacity,setSignerCapacity] = useState<'Patient'|'ParentOrGuardian'|'Representative'>('ParentOrGuardian')
+  const [signatureData,setSignatureData] = useState('')
+  const [termsAcknowledged,setTermsAcknowledged] = useState(false)
   const [error,setError] = useState('')
   const [success,setSuccess] = useState('')
   const [working,setWorking] = useState(false)
@@ -147,11 +153,24 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
     setDueDate(item.dueDate?.slice(0,10)??'')
     setPolicy(item.advancePolicy)
     setDetail(null)
+    setApprovedTerms(null)
+    setSignerName('')
+    setSignatureData('')
+    setTermsAcknowledged(false)
     try {
       const data=await apiRequest<IntakeDetail>('/orthodontics/intakes/'+encodeURIComponent(item.id))
       setDetail(data)
     }catch(cause){setError(cause instanceof Error?cause.message:'Unable to load this intake.')}
   }
+  useEffect(()=>{
+    if(view !== 'review' || !selected?.termsApplicable || selected.termsAcceptedAtUtc) return
+    let active=true
+    apiRequest<{available:boolean;version?:string;fullText?:string;sha256?:string;message?:string}>('/orthodontics/intakes/approved-terms')
+      .then(data=>{if(active)setApprovedTerms(data)})
+      .catch(()=>{if(active)setApprovedTerms({available:false,message:'Unable to load approved intake terms.'})})
+    return ()=>{active=false}
+  },[view,selected?.id,selected?.termsApplicable,selected?.termsAcceptedAtUtc])
+
   const selectedId=selected?.id
   const change=(key:keyof CreateForm,value:string)=>setForm(old=>({...old,[key]:value}))
   const showPatient=(patientId:string)=>onOpenPatient?.(patientId)
@@ -267,6 +286,45 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
           Route previously classified patients
         </button>
       </>}
+      {selected.termsApplicable && !selected.termsAcceptedAtUtc && <details className="ct-ortho-terms">
+        <summary>Electronic intake and advance terms · approval required</summary>
+        {!approvedTerms ? <p>Checking approved document…</p>
+          : !approvedTerms.available || !approvedTerms.version || !approvedTerms.fullText ?
+            <p className="ct-ortho-intake-hint">{approvedTerms.message || 'Approved legal terms must be published by the practice before signatures can be collected.'}</p>
+          : <>
+            <div className="ct-ortho-terms-version">Version {approvedTerms.version} · integrity checksum: {approvedTerms.sha256}</div>
+            <div className="ct-ortho-terms-document" tabIndex={0} aria-label="Approved orthodontic intake terms">
+              {approvedTerms.fullText}
+            </div>
+            <div className="ct-ortho-terms-sign">
+              <label>Full name of authorised person signing
+                <input required value={signerName} maxLength={200}
+                  onChange={e=>setSignerName(e.target.value)}/>
+              </label>
+              <label>Authority to sign
+                <select value={signerCapacity}
+                  onChange={e=>setSignerCapacity(e.target.value as 'Patient'|'ParentOrGuardian'|'Representative')}>
+                  <option value="ParentOrGuardian">Parent or verified guardian</option>
+                  <option value="Patient">Adult patient</option>
+                  <option value="Representative">Legally authorised representative</option>
+                </select>
+              </label>
+            </div>
+            <SignaturePad label="Electronic intake agreement signature" value={signatureData} onChange={setSignatureData}/>
+            <label className="ct-ortho-intake-check">
+              <input type="checkbox" checked={termsAcknowledged} onChange={e=>setTermsAcknowledged(e.target.checked)}/>
+              <span>I have read this exact intake-terms version and confirm my authority to sign. This is not the final orthodontic treatment contract.</span>
+            </label>
+            <button type="button" className="primary-button"
+              disabled={working || !termsAcknowledged || !signerName.trim() || !signatureData}
+              onClick={()=>{void run(()=>apiRequest('/orthodontics/intakes/'+selectedId+'/sign-terms','POST',{
+                version:approvedTerms.version,signerName,signerCapacity,
+                signatureDataUrl:signatureData,acceptanceMethod:'DrawnSignature'
+              }), 'Exact approved intake document was signed and recorded. No payment was created.').then(saved=>{
+                if(saved && selected) setSelected({...selected,termsAcceptedAtUtc:new Date().toISOString()})
+              })}}>Sign approved intake terms</button>
+          </>}
+      </details>}
       {isDentist && <>
         <div className="ct-ortho-intake-clinical">
           <h4>Clinical readiness review</h4>
