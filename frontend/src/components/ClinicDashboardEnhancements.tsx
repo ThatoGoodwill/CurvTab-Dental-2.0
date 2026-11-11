@@ -36,9 +36,9 @@ const slides = [
     eyebrow: 'CURVTAB DENTAL · DAILY CARE',
     title: 'Healthy smiles, better every day.',
     description: 'A connected practice, from the first appointment to confident smiles.',
-    image: '/dental-ui/smile-hero.webp',
-    imageAlt: 'Close-up of a bright healthy smile',
-    variant: 'smile',
+    image: '/dental-ui/tooth-fresh.svg',
+    imageAlt: 'Clean illustration of a healthy tooth',
+    variant: 'fresh',
   },
   {
     eyebrow: 'CONFIDENCE STARTS WITH CARE',
@@ -133,8 +133,11 @@ function DentalSlideshow({ role, onPrimaryAction }: Pick<Props, 'role' | 'onPrim
     return () => { active = false }
   }, [role])
 
-  const activeSlides =
+  const activeSlides = (
     role === 'SuperAdmin' ? slides : practiceSlides ?? slides
+  ).map(item => item.image.includes('smile-hero.webp')
+    ? { ...item, image: '/dental-ui/tooth-fresh.svg', imageAlt: 'Clean illustration of a healthy tooth' }
+    : item)
 
   const slideIndex = current % activeSlides.length
   const slide = activeSlides[slideIndex]
