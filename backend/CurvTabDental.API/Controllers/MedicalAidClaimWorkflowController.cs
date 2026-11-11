@@ -2,6 +2,7 @@ using System.Text.Json;
 using CurvTabDental.Application.Abstractions;
 using CurvTabDental.Domain.Entities;
 using CurvTabDental.Infrastructure.Persistence;
+using CurvTabDental.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +11,7 @@ namespace CurvTabDental.API.Controllers;
 
 [ApiController]
 [Route("api/finance/medical-aid/claims/{claimId:guid}/workflow")]
-[Authorize(Roles = "Receptionist,PracticeAdmin,Finance")]
+[Authorize(Roles = "Receptionist,PracticeAdmin,Finance,Dentist")]
 public sealed class MedicalAidClaimWorkflowController : ControllerBase
 {
     private readonly DentalDbContext _db;
@@ -33,7 +34,8 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
         string? ExternalReference,
         decimal? ApprovedAmount,
         string EvidenceReference,
-        string Reason);
+        string Reason,
+        string? CorrectedProcedureCode = null);
 
     private static bool Allowed(string from, string to) =>
         (from == "Draft" &&
@@ -125,7 +127,7 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
     }
 
     [HttpPost("transition")]
-    [Authorize(Roles = "PracticeAdmin")]
+    [Authorize(Roles = "PracticeAdmin,Dentist")]
     public async Task<IActionResult> Transition(
         Guid claimId,
         [FromBody] TransitionRequest request,
@@ -141,6 +143,24 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
         var evidence = request.EvidenceReference?.Trim() ?? "";
         var reason = request.Reason?.Trim() ?? "";
         var external = request.ExternalReference?.Trim();
+        var correctedCode = request.CorrectedProcedureCode?.Trim();
+
+        // Clinician authorisation is based on the authenticated role and identity.
+        // PracticeAdmin cannot approve a clinical coding correction.
+        var isClinicalApproval = target == "CorrectionApproved";
+        if (isClinicalApproval
+            ? !User.IsInRole(StaffRoles.Dentist)
+            : !User.IsInRole(StaffRoles.PracticeAdmin))
+            return Forbid();
+
+        if (isClinicalApproval &&
+            (string.IsNullOrWhiteSpace(correctedCode) || correctedCode.Length > 64 ||
+             correctedCode.Any(char.IsControl)))
+            return BadRequest(new {
+                message = "A dentist must provide the clinically verified procedure code."
+            });
+        if (!isClinicalApproval && !string.IsNullOrEmpty(correctedCode))
+            return BadRequest(new { message = "Procedure code is only valid for clinician correction approval." });
 
         if (request.RequestId == Guid.Empty ||
             evidence.Length is < 3 or > 300 ||
@@ -182,7 +202,10 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
                         ? external
                         : claim.ExternalReference) &&
                 previous.EvidenceReference == evidence &&
-                previous.Reason == reason)
+                previous.Reason == reason &&
+                (!isClinicalApproval || (previous.PerformedByUserId == actorId &&
+                   previous.PayloadSnapshotJson != null &&
+                   previous.PayloadSnapshotJson.Contains(JsonSerializer.Serialize(correctedCode!)))))
             {
                 return Ok(new
                 {
@@ -365,6 +388,16 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
                 claim.ClaimedAmount, claim.Currency, claim.Status,
                 attemptNumber, externalReference = external, evidence, reason,
                 recordedAtUtc = now
+            }) : isClinicalApproval ? JsonSerializer.Serialize(new
+            {
+                originalClaimId = claim.Id,
+                originalInvoiceId = claim.InvoiceId,
+                claimNumber = claim.ClaimNumber,
+                correctedProcedureCode = correctedCode,
+                clinicianUserId = actorId,
+                clinicallyApprovedAtUtc = now,
+                evidenceReference = evidence,
+                clinicalReason = reason
             }) : null,
             EvidenceReference = evidence,
             Reason = reason,
@@ -377,7 +410,8 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
         await _db.SaveChangesAsync(ct);
 
         await _audit.WriteAsync(
-            "MEDICAL_AID_CLAIM_STATUS_RECORDED",
+            isClinicalApproval ? "MEDICAL_AID_CODE_CORRECTION_CLINICIAN_APPROVED"
+                : "MEDICAL_AID_CLAIM_STATUS_RECORDED",
             "MedicalAidClaimEvent",
             historyEvent.Id.ToString(),
             ct: ct);
