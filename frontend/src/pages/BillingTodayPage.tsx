@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { ArrowDownToLine, RefreshCw, Receipt, ShieldCheck, Wallet } from 'lucide-react'
+import { ArrowLeftRight, RefreshCw, ShieldCheck } from 'lucide-react'
+import RandIcon from '../components/RandIcon'
 import './BillingClientGuide.css'
 
 type Movement = {
@@ -103,14 +104,14 @@ export default function BillingTodayPage({ onRecordExpense }: { onRecordExpense:
         <button type="button" className="secondary-button" disabled={busy} onClick={() => setReload(x => x+1)}>
           <RefreshCw size={15}/> Refresh</button>
         <button type="button" className="secondary-button" onClick={onRecordExpense}>
-          <Receipt size={15}/> Record Expense</button>
+          <RandIcon size={15}/> Record Expense</button>
       </div>
     </header>
     {error && <p className="ct-guide-warning" role="alert">{error}</p>}
     <div className="ct-guide-kpis">
-      <article><ArrowDownToLine size={19}/><span>Money received</span><strong>{ledger ? money(ledger.totalReceived) : '—'}</strong><small>Actual receipts · cash / card / EFT</small></article>
-      <article><Receipt size={19}/><span>Expenses paid</span><strong>{expenses ? money(expensesTotal) : '—'}</strong><small>Recorded cash, card and EFT outflows</small></article>
-      <article><Wallet size={19}/><span>Net movement</span><strong>{ledger && expenses ? money(ledger.totalReceived-expensesTotal) : '—'}</strong><small>Receipts minus recorded expenses</small></article>
+      <article><RandIcon size={19}/><span>Money received</span><strong>{ledger ? money(ledger.totalReceived) : '—'}</strong><small>Actual receipts · cash / card / EFT</small></article>
+      <article><RandIcon size={19}/><span>Expenses paid</span><strong>{expenses ? money(expensesTotal) : '—'}</strong><small>Recorded cash, card and EFT outflows</small></article>
+      <article><ArrowLeftRight size={19}/><span>Net movement</span><strong>{ledger && expenses ? money(ledger.totalReceived-expensesTotal) : '—'}</strong><small>Receipts minus recorded expenses</small></article>
       <article><ShieldCheck size={19}/><span>Medical-aid activity</span><strong>{aid ? money(aid.submittedValue) : '—'}</strong><small>{aid?.uniqueClaims ?? '—'} unique submitted claims · NOT received</small></article>
     </div>
     <div className="ct-guide-columns">
