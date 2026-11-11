@@ -230,3 +230,94 @@
 @media (prefers-reduced-motion: reduce) {
   #root .app-shell .main-content > .ov .ct-live-report { animation: none !important; }
 }
+
+/* Fix verified against the reported 1366x768 screenshot:
+   original grid-area names were placing panels into invisible implicit
+   grid tracks, pushing the only visible status panel to the far right. */
+#root .app-shell .main-content > .ov .ct-live-report {
+  display: grid !important;
+  grid-auto-flow: row !important;
+  grid-auto-columns: minmax(0,1fr) !important;
+  grid-template-rows: minmax(0,1fr) !important;
+  align-items: stretch !important;
+  justify-items: stretch !important;
+  width: 100% !important;
+  justify-content: stretch !important;
+}
+#root .app-shell .main-content > .ov .ct-live-report-0,
+#root .app-shell .main-content > .ov .ct-live-report-2 {
+  grid-template-columns: minmax(0,1fr) !important;
+  grid-template-areas: none !important;
+}
+#root .app-shell .main-content > .ov .ct-live-report-1 {
+  grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+  grid-template-areas: none !important;
+}
+#root .app-shell .main-content > .ov .ct-live-report > .ov-card {
+  grid-area: auto !important;
+  grid-column: auto !important;
+  grid-row: auto !important;
+  justify-self: stretch !important;
+  align-self: stretch !important;
+  max-width: none !important;
+  box-shadow: 0 3px 10px rgba(20,65,115,.06) !important;
+}
+/* The original dental banner is the main visual. Restore breathing room,
+   retain the whole tooth graphic and isolate its controls from CTA button. */
+@media (min-width: 900px) {
+  #root .app-shell .main-content:has(> .ov) .ct-dashboard-enhancements > .ct-hero {
+    height: clamp(164px,23dvh,190px) !important;
+    max-height: 190px !important;
+    grid-template-columns: minmax(0,1.32fr) minmax(230px,.68fr) !important;
+  }
+  #root .app-shell .main-content:has(> .ov) .ct-hero-copy {
+    padding: 12px 20px 38px !important;
+    justify-content: center !important;
+  }
+  #root .app-shell .main-content:has(> .ov) .ct-hero-copy h2 {
+    font-size: clamp(21px,2.2vw,27px) !important;
+    margin: 6px 0 5px !important;
+  }
+  #root .app-shell .main-content:has(> .ov) .ct-hero-controls {
+    left: 18px !important;
+    bottom: 8px !important;
+    gap: 6px !important;
+  }
+  #root .app-shell .main-content:has(> .ov) .ct-hero-art {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  #root .app-shell .main-content:has(> .ov) .ct-hero-art img {
+    object-fit: contain !important;
+    object-position: center !important;
+    transform: none !important;
+    max-width: 100% !important;
+    height: 100% !important;
+  }
+  #root .app-shell .main-content:has(> .ov) .ct-hero:hover .ct-hero-art img {
+    transform: none !important;
+  }
+  #root .app-shell .main-content:has(> .ov) .ct-live-report-1 .ov-card {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  #root .app-shell .main-content:has(> .ov) .ct-live-report-1 .ov-overview-body {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+  }
+  #root .app-shell .main-content:has(> .ov) .ct-live-report-1 .ov-status-grid {
+    grid-template-columns: repeat(3,minmax(0,1fr)) !important;
+  }
+}
+/* Breakpoints intentionally re-enable page scrolling on narrower devices so
+   calendar and form controls are not clipped or inaccessible. */
+@media (max-width: 899px) {
+  #root .app-shell .main-content > .ov .ct-live-report-1 {
+    grid-template-columns: minmax(0,1fr) !important;
+    grid-template-rows: auto !important;
+  }
+}
