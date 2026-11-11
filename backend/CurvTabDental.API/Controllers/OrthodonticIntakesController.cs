@@ -193,7 +193,23 @@ public sealed class OrthodonticIntakesController : ControllerBase
         var entity = await Visible().FirstOrDefaultAsync(x => x.Id == id && x.DentalPracticeId == practiceId, ct);
         if (entity is null) return NotFound();
         await _audit.WriteAsync("ORTHO_INTAKE_VIEWED", "OrthodonticIntakeCase", id.ToString(), ct: ct);
-        return Ok(entity);
+        // Never send the captured signature PNG or full legal text as part of
+        // generic case details; retrieve signed documents through audited routes.
+        return Ok(new {
+            entity.Id, entity.PatientId, entity.DentalPracticeId, entity.Source, entity.Status,
+            entity.CreatedByUserId, entity.ReferralAuthorUserId, entity.AssignedOrthodontistUserId,
+            entity.ReferralReason, entity.ReferralNotes, entity.PreviousProvider,
+            entity.ExistingAppliances, entity.PreviousTreatmentStartDate,
+            entity.PreviousTreatmentPlanSummary, entity.TransferReason,
+            entity.PreviousRecordsSummary, entity.UrgentConcerns,
+            entity.DocumentReferencesJson, entity.MissingDocumentsJson,
+            entity.HistoryVerifiedByClinician, entity.HistoryVerifiedAtUtc,
+            entity.TermsApplicable, entity.TermsVersion, entity.TermsSha256,
+            entity.TermsSignerName, entity.TermsSignerCapacity, entity.TermsAcceptedAtUtc,
+            entity.AdvancePolicy, AdvanceRecorded = entity.AdvancePaymentId.HasValue,
+            entity.NextAction, entity.DueDate, entity.CreatedAtUtc, entity.UpdatedAtUtc,
+            entity.AssessmentStartedAtUtc
+        });
     }
 
     [HttpPatch("{id:guid}/assign")]
@@ -244,10 +260,16 @@ public sealed class OrthodonticIntakesController : ControllerBase
         intake.UpdatedAtUtc = DateTime.UtcNow;
 
         var missing = JsonSerializer.Deserialize<string[]>(intake.MissingDocumentsJson) ?? [];
+        // A typed checklist alone cannot prove that an X-ray, referral or
+        // other specialist record has really been uploaded and reviewed.
+        var hasEvidence = await _db.OrthodonticIntakeDocuments.AsNoTracking()
+            .AnyAsync(x => x.IntakeId == intake.Id && x.PatientId == intake.PatientId &&
+                           x.DentalPracticeId == practiceId, ct);
+
         // Once assessment starts, do not silently return it to intake
         // merely because a clinician amends the document checklist.
         if (intake.Status != "ASSESSMENT_IN_PROGRESS")
-            intake.Status = !req.HistoryVerified || missing.Length > 0
+            intake.Status = !req.HistoryVerified || missing.Length > 0 || !hasEvidence
             ? "RECORDS_PENDING"
             : intake.TermsApplicable && intake.TermsAcceptedAtUtc is null
                 ? "TERMS_PENDING"
@@ -258,7 +280,7 @@ public sealed class OrthodonticIntakesController : ControllerBase
                         : "ASSESSMENT_READY";
         await _db.SaveChangesAsync(ct);
         await _audit.WriteAsync("ORTHO_INTAKE_REVIEWED", "OrthodonticIntakeCase", id.ToString(),
-            detail: $"status={intake.Status};history_verified={req.HistoryVerified};missing_count={missing.Length}", ct: ct);
+            detail: $"status={intake.Status};history_verified={req.HistoryVerified};missing_count={missing.Length};has_uploaded_evidence={hasEvidence}", ct: ct);
         return Ok(new { intake.Id, intake.Status });
     }
 
@@ -301,6 +323,7 @@ public sealed class OrthodonticIntakesController : ControllerBase
         if (_current.PracticeId is not Guid practiceId) return Forbid();
         var intake = await _db.OrthodonticIntakes.FirstOrDefaultAsync(x => x.Id == id && x.DentalPracticeId == practiceId && x.ClosedAtUtc == null, ct);
         if (intake is null) return NotFound();
+        if (Dentist && intake.AssignedOrthodontistUserId != _current.UserId) return NotFound();
         var docVersion = _settings["Orthodontics:ApprovedIntakeTermsVersion"];
         var docText = _settings["Orthodontics:ApprovedIntakeTermsText"];
         if (string.IsNullOrWhiteSpace(docVersion) || string.IsNullOrWhiteSpace(docText))
