@@ -1941,6 +1941,164 @@ namespace CurvTabDental.Infrastructure.Migrations
                     b.ToTable("OrthodonticCases");
                 });
 
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.OrthodonticIntakeCase", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DentalPracticeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PatientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ReferralAuthorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AssignedOrthodontistUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ReferralReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("ReferralNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("PreviousProvider")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<string>("ExistingAppliances")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateOnly?>("PreviousTreatmentStartDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("PreviousTreatmentPlanSummary")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("TransferReason")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("PreviousRecordsSummary")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("UrgentConcerns")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("DocumentReferencesJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("MissingDocumentsJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<bool>("HistoryVerifiedByClinician")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("HistoryVerifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("HistoryVerifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("TermsApplicable")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("TermsVersion")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("TermsFullText")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TermsSha256")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("TermsSignerName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("TermsSignerCapacity")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<string>("TermsSignatureDataUrl")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("TermsAcceptedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TermsAcceptanceMethod")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("AdvancePolicy")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid?>("AdvancePaymentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("NextAction")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateOnly?>("DueDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("AssessmentStartedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("AssessmentStartedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ClosedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatientId");
+
+                    b.HasIndex("DentalPracticeId", "AssignedOrthodontistUserId", "Status");
+
+                    b.HasIndex("DentalPracticeId", "PatientId")
+                        .IsUnique()
+                        .HasFilter("\"ClosedAtUtc\" IS NULL");
+
+                    b.ToTable("OrthodonticIntakes");
+                });
+
             modelBuilder.Entity("CurvTabDental.Domain.Entities.OrthodonticFinancialAgreement", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2004,6 +2162,15 @@ namespace CurvTabDental.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("OrthodonticInstallments");
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.OrthodonticIntakeCase", b =>
+                {
+                    b.HasOne("CurvTabDental.Domain.Entities.Patient", null)
+                        .WithMany()
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("CurvTabDental.Domain.Entities.OrthodonticProgressNote", b =>
