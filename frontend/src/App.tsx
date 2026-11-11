@@ -1391,6 +1391,7 @@ export default function App() {
           )}
           {section === 'Dashboard' && showOverview && (
             <OverviewDashboardPage
+              role={isPracticeAdmin ? 'PracticeAdmin' : 'Receptionist'}
               fullName={user?.fullName ?? ''}
               practiceName={user?.practiceName ?? null}
               onNewAppointment={() => openAppointmentTab('Appointments')}
