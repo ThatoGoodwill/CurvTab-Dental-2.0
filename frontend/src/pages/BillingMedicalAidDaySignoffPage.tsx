@@ -6,8 +6,8 @@ type ClaimRow={id:string;patientId:string;patientName:string;schemeName:string;s
 type Day={businessDate:string;signed:boolean;status:string;patientsTreated:number;uniqueClaims:number;submissionAttempts:number;submittedValue:number;actionsPending:number;claims?:ClaimRow[];snapshotJson?:string;signedAtUtc?:string;note?:string}
 const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Africa/Johannesburg',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())
 const money=(n:number)=>new Intl.NumberFormat('en-ZA',{style:'currency',currency:'ZAR'}).format(n)
-export default function BillingMedicalAidDaySignoffPage(){
-  const [date,setDate]=useState(today)
+export default function BillingMedicalAidDaySignoffPage({ businessDate }: { businessDate?: string }){
+  const [date,setDate]=useState(businessDate ?? today())
   const [reload,setReload]=useState(0)
   const [day,setDay]=useState<Day|null>(null)
   const [loading,setLoading]=useState(true)
