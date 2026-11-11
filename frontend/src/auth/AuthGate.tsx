@@ -111,6 +111,7 @@ function LoginScreen() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showRecoveryHelp, setShowRecoveryHelp] = useState(false)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -194,6 +195,19 @@ function LoginScreen() {
           >
             {submitting ? 'Signing in...' : 'Sign in securely'}
           </button>
+          <button type="button" className="ct-forgot-password-link"
+            aria-expanded={showRecoveryHelp}
+            onClick={() => setShowRecoveryHelp(value => !value)}>
+            Forgot your password?
+          </button>
+          {showRecoveryHelp && (
+            <div className="ct-recovery-help" role="status">
+              Contact your CurvTab platform administrator to request a secure temporary password.
+              A verified Super Admin can restore access to your existing practice from
+              Dental Practices → Reset Admin Access. Email-based self-service recovery
+              is not enabled yet.
+            </div>
+          )}
         </form>
 
         <div className="auth-security">
