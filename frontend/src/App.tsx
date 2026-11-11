@@ -1206,7 +1206,7 @@ export default function App() {
           )}
           {role === 'PracticeAdmin' && (
             <button type="button" className={section === 'Configuration Center' ? 'nav-item nav-active' : 'nav-item'}
-              onClick={() => navigate('Configuration Center')}><CtAppearanceIcon size={19}/><span>Settings</span></button>
+              onClick={() => navigate('Configuration Center')}><CtAppearanceIcon size={19}/><span>Configuration Center</span></button>
           )}
           {role === 'PracticeAdmin' && (
             <button type="button"
