@@ -126,6 +126,31 @@ public sealed class MedicalAidClaimWorkflowController : ControllerBase
         });
     }
 
+    // Read-only clinician queue, scoped to the authenticated practice.
+    // No patient account details or payment actions are exposed here.
+    [HttpGet("/api/clinical/claim-corrections")]
+    [Authorize(Roles = "Dentist")]
+    public async Task<IActionResult> ClinicalCorrections(CancellationToken ct)
+    {
+        if (_current.PracticeId is not Guid practiceId) return Forbid();
+        var rows = await (
+            from claim in _db.Set<MedicalAidClaim>().AsNoTracking()
+            join patient in _db.Patients.AsNoTracking()
+                on claim.PatientId equals patient.Id
+            where claim.DentalPracticeId == practiceId &&
+                  patient.DentalPracticeId == practiceId &&
+                  claim.Status == "RejectedReported"
+            orderby claim.LastStatusAtUtc descending
+            select new {
+                claim.Id, claim.ClaimNumber, claim.InvoiceId,
+                claim.ClaimedAmount,
+                patientName = patient.FirstName + " " + patient.LastName
+            }
+        ).Take(100).ToListAsync(ct);
+        Response.Headers.CacheControl = "private, no-store";
+        return Ok(rows);
+    }
+
     [HttpPost("transition")]
     [Authorize(Roles = "PracticeAdmin,Dentist")]
     public async Task<IActionResult> Transition(
