@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Banknote, RefreshCw, Receipt, ShieldCheck, Wallet } from 'lucide-react'
+import { ArrowDownToLine, RefreshCw, Receipt, ShieldCheck, Wallet } from 'lucide-react'
 import './BillingClientGuide.css'
 
 type Movement = {
@@ -47,7 +47,7 @@ async function get<T>(url: string): Promise<T> {
   return res.json() as Promise<T>
 }
 
-export default function BillingTodayPage() {
+export default function BillingTodayPage({ onRecordExpense }: { onRecordExpense: () => void }) {
   const [date, setDate] = useState(today)
   const [reload, setReload] = useState(0)
   const [ledger, setLedger] = useState<Ledger | null>(null)
@@ -102,11 +102,13 @@ export default function BillingTodayPage() {
         <label>Business date <input type="date" value={date} max={today()} onChange={e => setDate(e.target.value)}/></label>
         <button type="button" className="secondary-button" disabled={busy} onClick={() => setReload(x => x+1)}>
           <RefreshCw size={15}/> Refresh</button>
+        <button type="button" className="secondary-button" onClick={onRecordExpense}>
+          <Receipt size={15}/> Record Expense</button>
       </div>
     </header>
     {error && <p className="ct-guide-warning" role="alert">{error}</p>}
     <div className="ct-guide-kpis">
-      <article><Banknote size={19}/><span>Money received</span><strong>{ledger ? money(ledger.totalReceived) : '—'}</strong><small>Actual receipts · cash / card / EFT</small></article>
+      <article><ArrowDownToLine size={19}/><span>Money received</span><strong>{ledger ? money(ledger.totalReceived) : '—'}</strong><small>Actual receipts · cash / card / EFT</small></article>
       <article><Receipt size={19}/><span>Expenses paid</span><strong>{expenses ? money(expensesTotal) : '—'}</strong><small>Recorded cash, card and EFT outflows</small></article>
       <article><Wallet size={19}/><span>Net movement</span><strong>{ledger && expenses ? money(ledger.totalReceived-expensesTotal) : '—'}</strong><small>Receipts minus recorded expenses</small></article>
       <article><ShieldCheck size={19}/><span>Medical-aid activity</span><strong>{aid ? money(aid.submittedValue) : '—'}</strong><small>{aid?.uniqueClaims ?? '—'} unique submitted claims · NOT received</small></article>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Banknote, ClipboardCheck, RefreshCw, ShieldCheck } from 'lucide-react'
+import { Wallet, ClipboardCheck, RefreshCw, ShieldCheck } from 'lucide-react'
 import './BillingClientGuide.css'
 
 type Cash = {
@@ -131,7 +131,7 @@ export default function BillingCashDayClosePage({ isManager }: { isManager:boole
       <h3>Blind physical count</h3>
       <p>The expected cash and variance are deliberately hidden until your count is submitted. You cannot edit the original after submission.</p>
       {!countVisible?<button type="button" className="primary-button" onClick={()=>setCountVisible(true)}>
-        <Banknote size={16}/> Start Blind Cash Count</button>:
+        <Wallet size={16}/> Start Blind Cash Count</button>:
       <form className="ct-guide-form" onSubmit={e=>void submitBlindCount(e)}>
         <label>Opening float (ZAR)<input required inputMode="decimal" value={float}
           onChange={e=>setFloat(e.target.value)} placeholder="500.00"/></label>
