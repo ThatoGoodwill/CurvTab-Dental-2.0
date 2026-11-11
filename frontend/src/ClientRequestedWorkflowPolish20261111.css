@@ -150,3 +150,50 @@
     min-width: 0; width: 100%; max-width: none;
   }
 }
+
+/* 11 Nov 15:45 — expandable module indicator; only buttons with aria-expanded
+   get a dot, ordinary sidebar items stay unchanged. */
+#root .app-shell .sidebar button.nav-group[aria-expanded] {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding-right: 13px !important;
+}
+#root .app-shell .sidebar button.nav-group[aria-expanded] > svg:last-child {
+  display: none !important;
+}
+#root .app-shell .sidebar button.nav-group[aria-expanded]::after {
+  content: "";
+  display: block;
+  flex: 0 0 7px;
+  width: 7px;
+  height: 7px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: rgba(255,255,255,.55);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.12);
+  transition: background .18s ease,box-shadow .18s ease;
+}
+#root .app-shell .sidebar button.nav-group[aria-expanded="true"]::after {
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(255,255,255,.22);
+}
+
+/* Patients' real directory uses ct-dir4-dialog, not ct-pv5-dialog.
+   Match the 1000x650 module window and keep the 258px sidebar visible. */
+@media (min-width: 900px) {
+  html body .ct-dir4-overlay {
+    left: 258px !important;
+    width: calc(100vw - 258px) !important;
+    background: rgba(21,36,59,.28) !important;
+  }
+  html body .ct-dir4-overlay .ct-dir4-dialog {
+    width: min(1000px,calc(100vw - 288px)) !important;
+    max-width: 1000px !important;
+    height: min(650px,calc(100dvh - 28px)) !important;
+    max-height: calc(100dvh - 28px) !important;
+    min-height: 0 !important;
+    border-radius: 12px !important;
+    padding: 15px 20px !important;
+  }
+}
