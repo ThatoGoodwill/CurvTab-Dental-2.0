@@ -1354,27 +1354,28 @@ export default function App() {
           {/* ================================
               DASHBOARD
               ================================ */}
+          {/* Shared compact slideshow; each account sees only role-authorised reports below. */}
+          {section === 'Dashboard' && (
+            <ClinicDashboardEnhancements
+              role={role}
+              showActivityCharts={!showOverview && role !== 'Dentist' && role !== 'LabTechnician'}
+              showKpis={!showOverview && role !== 'Dentist' && role !== 'LabTechnician'}
+              onPrimaryAction={() => {
+                if (isSuperAdmin) navigate('Dental Practices')
+                else if (role === 'LabTechnician') navigate('Laboratory')
+                else if (role === 'Finance') navigate('Finances')
+                else openAppointmentTab(role === 'Dentist' ? 'In Queue' : 'Appointments')
+              }}
+            />
+          )}
           {section === 'Dashboard' && role === 'Dentist' && (
             <DentistDashboardPage
               onOpenAppointments={() => openAppointmentTab('In Queue')}
               onOpenDailyPatients={() => navigate('Daily Patients')}
             />
           )}
-          {/* Keep the client's original dental slideshow at the top.
-              Compact live reports appear directly beneath its KPI row. */}
           {section === 'Dashboard' && role === 'LabTechnician' && (
             <LabTechnicianDashboard onOpenLaboratory={() => navigate('Laboratory')} />
-          )}
-          {section === 'Dashboard' && role !== 'Dentist' && role !== 'LabTechnician' && (
-            <ClinicDashboardEnhancements
-              role={role}
-              showActivityCharts={!showOverview}
-              showKpis={!showOverview}
-              onPrimaryAction={() => {
-                if (role === 'SuperAdmin') navigate('Dental Practices')
-                else openAppointmentTab('Appointments')
-              }}
-            />
           )}
           {section === 'Dashboard' && isPracticeAdmin && (
             <PracticeAdminPriorities
