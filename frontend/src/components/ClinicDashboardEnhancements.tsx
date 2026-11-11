@@ -169,7 +169,7 @@ function DentalSlideshow({ role, onPrimaryAction }: Pick<Props, 'role' | 'onPrim
         <p>{slide.description}</p>
         <button type="button" className="ct-hero-action" onClick={onPrimaryAction}>
           <CalendarDays size={17} />
-          {role === 'SuperAdmin' ? 'Manage practices' : 'Open appointments'}
+          {role === 'SuperAdmin' ? 'Manage practices' : role === 'LabTechnician' ? 'Open Laboratory' : role === 'Finance' ? 'Open Finances' : role === 'Dentist' ? 'Open patient queue' : 'Open appointments'}
         </button>
       </div>
       <div className="ct-hero-art" key={`image-${current}`}>
