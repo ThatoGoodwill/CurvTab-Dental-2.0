@@ -33,6 +33,12 @@ type IntakeDetail = Intake & {
   previousTreatmentStartDate: string | null; previousTreatmentPlanSummary: string | null
   transferReason: string | null; previousRecordsSummary: string | null
   documentReferencesJson: string
+  patientProfile?: {id:string;patientName:string;dateOfBirth:string|null;paymentMethod:string}|null
+  responsiblePerson?: { responsibleName:string|null; responsibleRelationship:string|null;
+    responsiblePhone:string|null;responsibleEmail:string|null;guardianConsent:boolean|null }|null
+  nextVisit?: {id:string;startUtc:string;endUtc:string;status:string;reason:string|null}|null
+  medicalHistory?: {allergies:string|null;currentMedications:string|null;medicalConditions:string|null;
+    dentalHistory:string|null;additionalNotes:string|null;updatedAtUtc:string}|null
 }
 type Props = {
   role: string
@@ -69,6 +75,7 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
   const [patientError,setPatientError] = useState('')
   const [form,setForm] = useState<CreateForm>(newForm)
   const [view,setView] = useState<'queue'|'create'|'review'>('queue')
+  const [reviewTab,setReviewTab] = useState<'Overview'|'Documents'|'Consent & Payments'|'Clinical Review'>('Overview')
   const [filter,setFilter] = useState('All')
   const [selected,setSelected] = useState<Intake | null>(null)
   const [detail,setDetail] = useState<IntakeDetail | null>(null)
@@ -166,7 +173,7 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
     if (saved) setView('queue')
   }
   async function inspect(item:Intake) {
-    setSelected(item);setView('review');setError('');setSuccess('')
+    setSelected(item);setView('review');setReviewTab('Overview');setError('');setSuccess('')
     setHistoryVerified(item.historyVerifiedByClinician)
     setMissing(missingItems(item.missingDocumentsJson).join('\n'))
     setNextAction(item.nextAction??'')
@@ -335,7 +342,33 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
         <div><strong>Advance policy</strong><span>{selected.advancePolicy.replaceAll('_',' ')} (no payment implied)</span></div>
         <div><strong>Consent terms</strong><span>{selected.termsAcceptedAtUtc?'Versioned signature recorded':'Not yet signed'}</span></div>
       </div>
-      {detail && <div className="ct-ortho-intake-details">
+      <nav className="ct-ortho-review-tabs" aria-label="Orthodontic intake sections">
+        {(['Overview','Documents','Consent & Payments', ...(isDentist?['Clinical Review']:[])] as Array<'Overview'|'Documents'|'Consent & Payments'|'Clinical Review'>).map(tab=>
+          <button type="button" key={tab} className={reviewTab===tab?'is-active':''}
+            onClick={()=>setReviewTab(tab)}>{tab}</button>
+        )}
+      </nav>
+      {reviewTab==='Overview' && detail && <div className="ct-ortho-intake-details">
+        {detail.patientProfile && <p><strong>Patient:</strong> {detail.patientProfile.patientName} ·
+          DOB {detail.patientProfile.dateOfBirth ?? 'Unknown'} ·
+          Payment category: {detail.patientProfile.paymentMethod}</p>}
+        {detail.responsiblePerson && <p><strong>Responsible person / payer:</strong>
+          {' '}{detail.responsiblePerson.responsibleName||'Not specified'} ·
+          {' '}{detail.responsiblePerson.responsibleRelationship||'Relationship to verify'} ·
+          {' '}{detail.responsiblePerson.responsiblePhone||'Phone missing'} ·
+          Guardian authority: {detail.responsiblePerson.guardianConsent===true?'Recorded (verify identity)':'Not verified'}</p>}
+        {detail.nextVisit && <p><strong>Next appointment:</strong>
+          {' '}{new Date(detail.nextVisit.startUtc).toLocaleString('en-ZA')} · {detail.nextVisit.status}
+          {' '}{detail.nextVisit.reason||''}</p>}
+        {!detail.nextVisit && <p><strong>Next appointment:</strong> Not scheduled in the current clinical queue.</p>}
+        {isDentist && detail.medicalHistory && <details><summary>Patient-supplied medical and dental history (clinical verification required)</summary>
+          <p><strong>Allergies:</strong> {detail.medicalHistory.allergies||'Not recorded'}</p>
+          <p><strong>Medications:</strong> {detail.medicalHistory.currentMedications||'Not recorded'}</p>
+          <p><strong>Medical conditions:</strong> {detail.medicalHistory.medicalConditions||'Not recorded'}</p>
+          <p><strong>Dental history:</strong> {detail.medicalHistory.dentalHistory||'Not recorded'}</p>
+          <p><strong>Additional notes:</strong> {detail.medicalHistory.additionalNotes||'Not recorded'}</p>
+        </details>}
+
         {detail.referralReason && <p><strong>Referral:</strong> {detail.referralReason}</p>}
         {detail.referralNotes && <p><strong>Referring clinician notes:</strong> {detail.referralNotes}</p>}
         {detail.previousProvider && <p><strong>Previous provider:</strong> {detail.previousProvider}</p>}
@@ -344,7 +377,7 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
         {detail.previousRecordsSummary && <p><strong>Records supplied:</strong> {detail.previousRecordsSummary}</p>}
         {detail.urgentConcerns && <p><strong>Urgent concerns:</strong> {detail.urgentConcerns}</p>}
       </div>}
-      <section className="ct-ortho-intake-evidence">
+      {reviewTab==='Documents' && <section className="ct-ortho-intake-evidence">
         <div className="ct-ortho-intake-section-title">
           <div><h3>Clinical documents & evidence</h3>
             <p>Linked to the existing patient. Uploads are not treated as verified findings.</p>
@@ -379,13 +412,13 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
           </label>
           <button type="submit" className="primary-button" disabled={working || !uploadFile}>Upload evidence</button>
         </form>
-      </section>
-      {selected.termsAcceptedAtUtc && <div className="ct-ortho-intake-signed">
+      </section>}
+      {reviewTab==='Consent & Payments' && selected.termsAcceptedAtUtc && <div className="ct-ortho-intake-signed">
         <div><strong>Signed electronic intake terms</strong><small>Exact recorded version, time, signer and checksum preserved.</small></div>
         <button type="button" className="secondary-button" disabled={working}
           onClick={()=>void downloadSignedTerms()}>Download signed PDF</button>
       </div>}
-      {!isDentist && <section className="ct-ortho-intake-evidence">
+      {reviewTab==='Consent & Payments' && !isDentist && <section className="ct-ortho-intake-evidence">
         <h3>Initial orthodontic advance</h3>
         <p className="ct-ortho-intake-hint">For the standard assessment, R2,500 is a patient credit toward an agreed braces quotation. Transfer-in exceptions need an approved policy. Never record money that has not been received.</p>
         {advanceReceipts.map(r=><div key={r.id} className="ct-ortho-intake-signed">
@@ -419,7 +452,7 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
                 'Approved signed terms are required before collecting R2,500.'}
           </p>}
       </section>}
-      {isManager && <>
+      {reviewTab==='Overview' && isManager && <>
         <label className="ct-ortho-intake-assign">Assign to an authorised dentist
           <select value={selected.assignedOrthodontistUserId??''} onChange={e=>{
             const value=e.target.value
@@ -433,7 +466,14 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
             {clinicians.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </label>
-        <div className="ct-ortho-intake-policy">
+
+        <button type="button" className="secondary-button" disabled={working} onClick={()=>run(
+          ()=>apiRequest('/orthodontics/intakes/sync-classifications','POST',{}),
+          'Previously classified patients routed without duplicate registrations.')}>
+          Route previously classified patients
+        </button>
+      </>}
+      {reviewTab==='Consent & Payments' && isManager &&         <div className="ct-ortho-intake-policy">
           <label>Advance policy
             <select value={policy} onChange={e=>setPolicy(e.target.value)}>
               <option value="STANDARD_R2500">Standard R2,500 assessment advance</option>
@@ -445,14 +485,8 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
           <button type="button" className="secondary-button" disabled={working||!policyReason.trim()}
             onClick={()=>run(()=>apiRequest('/orthodontics/intakes/'+selectedId+'/advance-policy','PATCH',
               {policy,reason:policyReason}), 'Policy decision recorded. No money has been collected.')}>Save policy</button>
-        </div>
-        <button type="button" className="secondary-button" disabled={working} onClick={()=>run(
-          ()=>apiRequest('/orthodontics/intakes/sync-classifications','POST',{}),
-          'Previously classified patients routed without duplicate registrations.')}>
-          Route previously classified patients
-        </button>
-      </>}
-      {selected.termsApplicable && !selected.termsAcceptedAtUtc && <details className="ct-ortho-terms">
+        </div>}
+      {reviewTab==='Consent & Payments' && selected.termsApplicable && !selected.termsAcceptedAtUtc && <details className="ct-ortho-terms">
         <summary>Electronic intake and advance terms · approval required</summary>
         {!approvedTerms ? <p>Checking approved document…</p>
           : !approvedTerms.available || !approvedTerms.version || !approvedTerms.fullText ?
@@ -491,7 +525,7 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
               })}}>Sign approved intake terms</button>
           </>}
       </details>}
-      {isDentist && <>
+      {isDentist && reviewTab==='Clinical Review' && <>
         <div className="ct-ortho-intake-clinical">
           <h4>Clinical readiness review</h4>
           <label className="ct-ortho-intake-check">
@@ -516,7 +550,7 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
         Standard advances require approved guardian/payer terms and an actual existing-ledger receipt.
         A missing document is not treated as a negative finding.
       </div>
-      {onOpenPatient && <button type="button" className="secondary-button" onClick={()=>showPatient(selected.patientId)}>Open existing patient record</button>}
+      {reviewTab==='Overview' && onOpenPatient && <button type="button" className="secondary-button" onClick={()=>showPatient(selected.patientId)}>Open existing patient record</button>}
     </section>}
 
     {view==='queue' && <>
