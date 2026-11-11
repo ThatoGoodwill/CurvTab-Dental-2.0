@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { ClipboardList, Plus, RefreshCw, Save } from 'lucide-react'
 import { apiRequest } from '../services/api'
-import { loadClinicalPatients } from '../utils/clinicalPatients'
+import OrthodonticIntakePanel from './OrthodonticIntakePanel'
 import type { ClinicalPatient } from '../utils/clinicalPatients'
 import ClinicalImagingPanel from './ClinicalImagingPanel'
 import OrthodonticFinancials from './OrthodonticFinancials'
@@ -54,8 +54,8 @@ export default function OrthodonticsPage() {
   // CT_ORTHO_FINANCIALS_TAB
   // CT_ORTHO_DASHBOARD_V1
   const [activeTab, setActiveTab] = useState<
-    'Dashboard' | 'Cases' | 'Patients' | 'Reports' | 'Analysis'
-  >('Dashboard')
+    'Intake' | 'Dashboard' | 'Cases' | 'Patients' | 'Reports' | 'Analysis'
+  >('Intake')
 
   const [openNewCase, setOpenNewCase] = useState(false)
 
@@ -101,7 +101,7 @@ export default function OrthodonticsPage() {
 
   useEffect(() => {
     let cancelled = false
-    loadClinicalPatients()
+    apiRequest<ClinicalPatient[]>('/orthodontics/intakes/patients')
       .then((rows) => {
         if (cancelled) return
         setPatients(rows)
@@ -250,7 +250,7 @@ export default function OrthodonticsPage() {
         </div>
         <div className="ct-ortho-compact-controls">
       <nav className="ct-ortho-hub-tabs" aria-label="Orthodontics sections">
-        {(['Dashboard', 'Cases', 'Patients', 'Reports', 'Analysis'] as const).map(tab => (
+        {(['Intake', 'Dashboard', 'Cases', 'Patients', 'Reports', 'Analysis'] as const).map(tab => (
           <button
             key={tab}
             type="button"
@@ -258,7 +258,7 @@ export default function OrthodonticsPage() {
             aria-current={activeTab === tab ? 'page' : undefined}
             onClick={() => setActiveTab(tab)}
           >
-            {tab === 'Dashboard' ? 'Overview' : tab}
+            {tab === 'Dashboard' ? 'Treatment Overview' : tab === 'Intake' ? 'Intake Queue' : tab}
           </button>
         ))}
       </nav>
@@ -279,9 +279,7 @@ export default function OrthodonticsPage() {
           type="button"
           className="primary-button"
           onClick={() => {
-            setActiveTab('Patients')
-            setWorkspaceTab('Clinical')
-            setOpenNewCase(true)
+            setActiveTab('Intake')
           }}
         >
           <Plus size={17} />
@@ -298,7 +296,13 @@ export default function OrthodonticsPage() {
 
       {/* CT_ORTHO_CASE_CARDS_V1 */}
 
-      {/* ORTHOHUB_V1 — overview and practice-wide cases */}
+      {activeTab === 'Intake' && <OrthodonticIntakePanel role="Dentist"
+        onOpenPatient={(id) => {
+          selectPatient(id)
+          setActiveTab('Patients')
+        }} />}
+
+      {/* ORTHOHUB_V1 — assigned specialist treatment cases only */}
       {activeTab === 'Dashboard' && (
         <OrthoHub mode="overview"
           onOpenCase={item => {
@@ -316,9 +320,7 @@ export default function OrthodonticsPage() {
             setActiveTab('Reports')
           }}
           onNewCase={() => {
-            setActiveTab('Patients')
-            setWorkspaceTab('Clinical')
-            setOpenNewCase(true)
+            setActiveTab('Intake')
           }}
           onCases={() => setActiveTab('Cases')}
           onReports={() => setActiveTab('Reports')}
@@ -342,9 +344,7 @@ export default function OrthodonticsPage() {
             setActiveTab('Reports')
           }}
           onNewCase={() => {
-            setActiveTab('Patients')
-            setWorkspaceTab('Clinical')
-            setOpenNewCase(true)
+            setActiveTab('Intake')
           }}
           onCases={() => setActiveTab('Cases')}
           onReports={() => setActiveTab('Reports')}
