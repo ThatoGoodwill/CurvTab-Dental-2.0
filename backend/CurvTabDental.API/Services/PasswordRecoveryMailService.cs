@@ -2,12 +2,11 @@ using System.Net;
 using System.Net.Mail;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using Microsoft.Extensions.Options;
 
 namespace CurvTabDental.API.Services;
 
 /// <summary>
-/// SMTP-based password recovery mailer. Requires externally supplied secrets.
+/// HTTPS transactional email (Resend) with an optional SMTP fallback. Requires externally supplied secrets.
 /// Never sends credentials or writes reset tokens to logs.
 /// </summary>
 public sealed class PasswordRecoveryMailService
@@ -47,9 +46,9 @@ public sealed class PasswordRecoveryMailService
                 from = $"CurvTab Dental <{_config["PasswordRecovery:FromAddress"]}>",
                 to = new[] { destination },
                 subject = "Reset your CurvTab Dental password",
-                text = "You requested a CurvTab Dental password reset.\\n\\n" +
-                       "Open this secure link to choose a new password:\\n" +
-                       resetLink + "\\n\\nThis link expires in 30 minutes. If you did not request this, ignore the email."
+                text = "You requested a CurvTab Dental password reset.\n\n" +
+                       "Open this secure link to choose a new password:\n" +
+                       resetLink + "\n\nThis link expires in 30 minutes. If you did not request this, ignore the email."
             });
             using var response = await _client.SendAsync(request, ct);
             if (!response.IsSuccessStatusCode)
