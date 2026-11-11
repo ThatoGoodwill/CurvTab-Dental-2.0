@@ -49,6 +49,13 @@ function dateKey(date: Date): string {
   return `${y}-${m}-${d}`
 }
 
+// Match the server's Africa/Johannesburg calendar-day rule (UTC+02:00).
+function isCheckInDay(startUtc: string): boolean {
+  const options: Intl.DateTimeFormatOptions = { timeZone: 'Africa/Johannesburg', year: 'numeric', month: '2-digit', day: '2-digit' }
+  const fmt = new Intl.DateTimeFormat('en-CA', options)
+  return fmt.format(new Date(startUtc)) === fmt.format(new Date())
+}
+
 function parsePatients(response: unknown): PatientChoice[] {
   const source = response as
     | Record<string, unknown>
@@ -309,6 +316,13 @@ export default function AppointmentsPage({
     id: string,
     action: 'check-in' | 'call' | 'start-consultation'
   ) {
+    if (action === 'check-in') {
+      const item = appointments.find(appointment => appointment.id === id)
+      if (!item || !isCheckInDay(item.startUtc)) {
+        setError('Check-in is only available on the scheduled appointment day (South Africa time).')
+        return
+      }
+    }
     setSaving(true)
     setError('')
     setSuccess('')
@@ -802,7 +816,7 @@ export default function AppointmentsPage({
                         <small className={`ct-status ct-status-${item.status.toLowerCase()}`}>{item.status}</small>
                       </div>
 
-                      {item.status === 'Scheduled' && canBook && (
+                      {item.status === 'Scheduled' && canBook && isCheckInDay(item.startUtc) && (
                         <button
                           type="button"
                           className="primary-button"
