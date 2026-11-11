@@ -1363,7 +1363,7 @@ export default function App() {
               onPrimaryAction={() => {
                 if (isSuperAdmin) navigate('Dental Practices')
                 else if (role === 'LabTechnician') navigate('Laboratory')
-                else if (role === 'Finance') navigate('Finances')
+                else if (role === 'Finance') navigate('Finance')
                 else openAppointmentTab(role === 'Dentist' ? 'In Queue' : 'Appointments')
               }}
             />
