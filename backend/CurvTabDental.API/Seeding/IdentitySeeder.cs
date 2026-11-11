@@ -47,7 +47,7 @@ public static class IdentitySeeder
             logger.LogWarning("Bootstrap:SuperAdminEmail / Bootstrap:SuperAdminPassword not set; no SuperAdmin seeded.");
         }
 
-        if (env.IsDevelopment() && config.GetValue<bool>("Seed:Demo"))
+        if ((env.IsDevelopment() || env.IsStaging()) && config.GetValue<bool>("Seed:Demo"))
         {
             var demoPassword = config["Seed:DemoPassword"];
             if (string.IsNullOrWhiteSpace(demoPassword))
