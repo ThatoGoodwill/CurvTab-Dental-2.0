@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ClipboardCheck, RefreshCw, ShieldCheck } from 'lucide-react'
 import RandIcon from '../components/RandIcon'
 import './BillingClientGuide.css'
+import './BillingDayCloseLandingPage.css'
 
 type FinancialDay = {
   submitted: boolean
