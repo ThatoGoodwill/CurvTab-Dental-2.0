@@ -152,3 +152,25 @@
   background:var(--surface-soft,rgba(127,164,183,.10));
   color:inherit;
 }
+
+/* Password recovery: compact, theme-compatible login flow. */
+.ct-auth-login .ct-recovery-heading {
+  margin: 1px 0 4px;
+  font-size: 17px;
+  font-weight: 800;
+  color: inherit;
+}
+.ct-auth-login .ct-recovery-description {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.ct-auth-login .ct-recovery-success {
+  padding: 10px 12px;
+  background: color-mix(in srgb, #18845c 9%, transparent);
+  color: inherit;
+  border: 1px solid color-mix(in srgb, #18845c 27%, transparent);
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+}
