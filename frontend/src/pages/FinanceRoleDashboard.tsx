@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Banknote, Wallet, RefreshCw } from 'lucide-react'
+import { Banknote, Wallet } from 'lucide-react'
 import RoleDashboardCarousel from './RoleDashboardCarousel'
 import './RoleOperationsDashboard.css'
 
