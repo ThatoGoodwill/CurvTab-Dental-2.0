@@ -81,3 +81,144 @@
     grid-template-columns:repeat(2,minmax(0,1fr));
   }
 }
+/* Shared visual language: dentist, laboratory, finance and management.
+   Report content uses its own grid, rather than the legacy ov-* grid areas. */
+#root .app-shell .ct-role-carousel {
+  width: 100%; min-width: 0; max-width: 1180px; margin: 0 auto;
+  display: flex; flex-direction: column; gap: 6px;
+}
+#root .app-shell .ct-role-carousel-heading {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  background: var(--surface,#fff); border: 1px solid var(--border,#d8e3f1);
+  border-radius: 10px; padding: 8px 12px;
+}
+#root .app-shell .ct-role-carousel-heading h2 {
+  margin: 3px 0 0; color: var(--text,#203854);
+  font-size: 14px; line-height: 1.15;
+}
+#root .app-shell .ct-role-carousel-controls {
+  display: flex; align-items: center; gap: 6px;
+}
+#root .app-shell .ct-role-carousel-controls span {
+  font-size: 10px; font-weight: 700;
+  color: var(--text-muted,#61748d);
+  min-width: 30px; text-align: center;
+}
+#root .app-shell .ct-role-carousel-controls button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  background: var(--surface,#fff); border: 1px solid var(--border,#d8e3f1);
+  border-radius: 7px; min-height: 27px; padding: 4px 8px;
+  color: var(--text,#203854); font-size: 10px; cursor: pointer;
+}
+#root .app-shell .ct-role-carousel-controls button:hover:not(:disabled) {
+  border-color: var(--practice-primary,#2874cf);
+}
+#root .app-shell .ct-role-carousel-tabs {
+  display: flex; align-items: center; gap: 6px;
+  overflow-x: auto; scrollbar-width: thin;
+}
+#root .app-shell .ct-role-carousel-tabs button {
+  border-radius: 7px; padding: 6px 10px; border: 1px solid var(--border,#d8e3f1);
+  background: var(--surface,#fff); color: var(--text-muted,#61748d);
+  font-size: 10px; font-weight: 700; white-space: nowrap; cursor: pointer;
+}
+#root .app-shell .ct-role-carousel-tabs button.active {
+  color: #fff; background: var(--practice-primary,#2476d2);
+  border-color: var(--practice-primary,#2476d2);
+}
+#root .app-shell .ct-role-carousel-body {
+  min-width: 0; width: 100%; outline-offset: 2px;
+  animation: ct-roles-approach .55s ease-out both;
+}
+#root .app-shell .ct-role-carousel-body .ct-role-panel {
+  min-height: 170px; max-height: 280px; overflow-y: auto;
+}
+#root .app-shell .ct-clinical-progress {
+  display: grid; grid-template-columns: repeat(5,minmax(0,1fr));
+  gap: 8px; min-width: 0;
+}
+#root .app-shell .ct-clinical-progress > div {
+  min-width: 0; display: flex; flex-direction: column; gap: 5px;
+  align-items: flex-start;
+  padding: 10px 11px;
+  border-radius: 8px; border: 1px solid var(--border,#d8e3f1);
+  background: var(--surface-soft,#f5f8fd);
+}
+#root .app-shell .ct-clinical-progress > div span {
+  font-size: 10px; color: var(--text-muted,#61748d);
+}
+#root .app-shell .ct-clinical-progress > div strong {
+  color: var(--text,#203854); font-size: 21px; line-height: 1;
+}
+#root .app-shell .ct-clinical-progress > div strong.ct-role-status-text {
+  font-size: 13px; line-height: 1.3;
+}
+#root .app-shell .ct-role-hint { color: var(--text-muted,#61748d); font-size: 10px; }
+#root .app-shell .ct-dentist-report .dentist-rows {
+  max-height: 180px; overflow: auto;
+}
+#root .app-shell .ct-finance-dashboard .ct-clinical-progress {
+  grid-template-columns: repeat(4,minmax(0,1fr));
+}
+#root .app-shell .ct-role-dashboard > .ct-role-heading h1 {
+  font-size: clamp(18px,1.7vw,23px);
+}
+#root .app-shell .ct-role-dashboard > .ct-role-heading { margin: 0; }
+#root .app-shell .ct-role-dashboard > .ct-role-metrics .ct-role-metric { min-height: 59px; }
+#root .app-shell .ct-role-dashboard > .ct-role-metrics .ct-role-metric strong { font-size: 18px; }
+#root .app-shell .dentist-workspace {
+  gap: 7px !important;
+}
+#root .app-shell .dentist-workspace .dentist-metrics {
+  gap: 7px !important;
+}
+#root .app-shell .dentist-workspace .dentist-metric {
+  min-height: 59px !important; padding: 7px 11px !important;
+}
+#root .app-shell .dentist-workspace .dentist-metric strong {
+  font-size: 20px !important;
+}
+#root .app-shell .dentist-workspace .dentist-actions {
+  margin: 0 0 3px !important;
+}
+#root .app-shell .main-content:has(> .dentist-workspace) > .ct-dashboard-enhancements,
+#root .app-shell .main-content:has(> .ct-role-dashboard) > .ct-dashboard-enhancements {
+  width: 100%; max-width: 1180px; margin: 0 auto 9px;
+}
+#root .app-shell .main-content:has(> .dentist-workspace) .ct-hero,
+#root .app-shell .main-content:has(> .ct-role-dashboard) .ct-hero {
+  height: 142px !important; min-height: 142px !important;
+  border-radius: 11px !important; box-shadow: none !important;
+}
+#root .app-shell .main-content:has(> .dentist-workspace) .ct-hero-copy,
+#root .app-shell .main-content:has(> .ct-role-dashboard) .ct-hero-copy {
+  padding: 13px 20px 33px !important;
+}
+#root .app-shell .main-content:has(> .dentist-workspace) .ct-hero-copy h2,
+#root .app-shell .main-content:has(> .ct-role-dashboard) .ct-hero-copy h2 {
+  font-size: 23px !important; margin: 4px 0 !important;
+}
+#root .app-shell .main-content:has(> .dentist-workspace) .ct-hero-controls,
+#root .app-shell .main-content:has(> .ct-role-dashboard) .ct-hero-controls {
+  bottom: 7px !important; left: 20px !important;
+}
+#root .app-shell .main-content:has(> .dentist-workspace) .ct-hero-art,
+#root .app-shell .main-content:has(> .ct-role-dashboard) .ct-hero-art {
+  height: 142px !important; min-height: 0 !important;
+}
+@keyframes ct-roles-approach {
+  from { opacity: .45; transform: translateY(9px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (max-width: 950px) {
+  #root .app-shell .ct-clinical-progress { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  #root .app-shell .ct-finance-dashboard .ct-clinical-progress { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 640px) {
+  #root .app-shell .ct-role-carousel-heading { flex-wrap:wrap; }
+  #root .app-shell .ct-clinical-progress { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  #root .app-shell .ct-role-carousel-body .ct-role-panel { max-height: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #root .app-shell .ct-role-carousel-body { animation: none !important; }
+}
