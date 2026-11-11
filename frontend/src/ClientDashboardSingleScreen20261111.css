@@ -1,0 +1,232 @@
+/* Client-approved dashboard layout, 11 Nov 2026.
+   One compact screen: ORIGINAL dental hero first, live KPI row second,
+   a rotating (rendered, not hidden with CSS) report underneath.
+   This file intentionally overrides the older experimental ov-slide CSS. */
+@media (min-width: 900px) {
+  #root .app-shell .workspace > .main-content:has(> .ct-dashboard-enhancements):has(> .ov) {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 7px !important;
+    padding: 9px 15px !important;
+    max-width: 1220px !important;
+    height: calc(100dvh - 80px) !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+}
+#root .app-shell .main-content:has(> .ov) > .ct-dashboard-enhancements {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  flex: 0 0 auto !important;
+}
+#root .app-shell .main-content:has(> .ov) .ct-dashboard-enhancements > .ct-hero {
+  display: grid !important;
+  flex: none !important;
+  height: clamp(116px,19dvh,152px) !important;
+  min-height: 0 !important;
+  max-height: 152px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  border-radius: 11px !important;
+}
+#root .app-shell .main-content:has(> .ov) .ct-hero-copy {
+  padding: 11px 17px 27px !important;
+}
+#root .app-shell .main-content:has(> .ov) .ct-hero-copy h2 {
+  font-size: clamp(18px,2.15vw,25px) !important;
+  margin: 3px 0 4px !important;
+}
+#root .app-shell .main-content:has(> .ov) .ct-hero-copy p {
+  margin: 0 0 5px !important;
+  font-size: 10px !important;
+}
+#root .app-shell .main-content:has(> .ov) .ct-hero-art {
+  height: 100% !important;
+  min-height: 0 !important;
+}
+#root .app-shell .main-content:has(> .ov) .ct-hero-controls {
+  bottom: 5px !important;
+  left: 17px !important;
+}
+#root .app-shell .main-content:has(> .ov) .client-kpis-toolbar {
+  margin: 0 0 4px !important;
+  min-height: 24px !important;
+}
+#root .app-shell .main-content:has(> .ov) .client-kpis-grid {
+  gap: 7px !important;
+}
+#root .app-shell .main-content:has(> .ov) .client-kpi {
+  padding: 7px 9px !important;
+  min-height: 57px !important;
+  border-radius: 8px !important;
+}
+#root .app-shell .main-content:has(> .ov) .client-kpi-icon {
+  width: 30px !important; height: 30px !important;
+}
+#root .app-shell .main-content:has(> .ov) .client-kpi-value {
+  font-size: 19px !important;
+}
+
+/* Independent panel class avoids obsolete ov-grid/ov-slide rules
+   which previously left all report content invisible. */
+#root .app-shell .main-content > .ov {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 5px !important;
+}
+#root .app-shell .main-content > .ov .ov-carousel-heading {
+  flex: 0 0 auto;
+  min-height: 40px !important;
+  padding: 6px 11px !important;
+  border-radius: 9px !important;
+  gap: 9px !important;
+}
+#root .app-shell .main-content > .ov .ov-carousel-heading h2 {
+  font-size: 14px !important;
+  margin: 2px 0 !important;
+}
+#root .app-shell .main-content > .ov .ov-carousel-heading p {
+  display: none !important;
+}
+#root .app-shell .main-content > .ov .ov-carousel-eyebrow {
+  font-size: 8px !important;
+}
+#root .app-shell .main-content > .ov .ov-carousel-controls {
+  gap: 5px !important;
+}
+#root .app-shell .main-content > .ov .ov-carousel-controls button {
+  height: 27px !important;
+  min-height: 27px !important;
+  width: auto;
+  padding: 3px 9px !important;
+  font-size: 10px !important;
+}
+#root .app-shell .main-content > .ov .ov-carousel-arrow {
+  width: 27px !important;
+}
+#root .app-shell .main-content > .ov .ov-carousel-tabs {
+  flex: 0 0 auto;
+  padding: 0 !important;
+  margin: 0 !important;
+  gap: 5px !important;
+}
+#root .app-shell .main-content > .ov .ov-carousel-tabs button {
+  font-size: 10px !important;
+  padding: 4px 9px !important;
+  min-height: 24px !important;
+}
+#root .app-shell .main-content > .ov .ct-live-report {
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr);
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow: hidden !important;
+  gap: 9px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 10px !important;
+  animation: ct-live-panel-enter 1.4s cubic-bezier(.2,.8,.25,1) both;
+}
+#root .app-shell .main-content > .ov .ct-live-report-1 {
+  grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important;
+}
+#root .app-shell .main-content > .ov .ct-live-report > .ov-card {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 10px 12px !important;
+  border-radius: 9px !important;
+  transform: none;
+  box-sizing: border-box;
+}
+#root .app-shell .main-content > .ov .ct-live-report .ov-card-head {
+  gap: 8px !important;
+  margin: 0 0 7px !important;
+}
+#root .app-shell .main-content > .ov .ct-live-report .ov-card h3 {
+  font-size: 12px !important;
+}
+#root .app-shell .main-content > .ov .ct-live-report :is(.ov-btn,.ov-month-switch button) {
+  padding: 4px 8px !important;
+  min-height: 25px !important;
+  border-radius: 6px !important;
+  font-size: 10px !important;
+}
+#root .app-shell .main-content > .ov .ct-live-report .ov-calendar-body {
+  display: grid !important;
+  grid-template-columns: minmax(0,1.12fr) minmax(0,.88fr) !important;
+  gap: 10px !important;
+  min-width: 0 !important;
+}
+#root .app-shell .main-content > .ov .ct-live-report .ov-cal-cell {
+  height: clamp(22px,3.25dvh,30px) !important;
+  min-height: 0 !important;
+  padding: 2px 3px !important;
+  font-size: 10px !important;
+}
+#root .app-shell .main-content > .ov .ct-live-report .ov-day-list {
+  max-height: min(260px,35dvh) !important;
+  overflow-y: auto !important;
+  padding: 8px !important;
+  border-radius: 8px;
+}
+#root .app-shell .main-content > .ov .ct-live-report .ov-status-grid {
+  grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+  gap: 7px !important;
+}
+#root .app-shell .main-content > .ov .ct-live-report .ov-status-tile {
+  padding: 9px !important;
+  border-radius: 7px !important;
+}
+#root .app-shell .main-content > .ov .ct-live-report .ov-status-value {
+  font-size: 18px !important;
+}
+#root .app-shell .main-content > .ov .ct-live-report .ov-overview-body {
+  gap: 9px !important;
+}
+#root .app-shell .main-content > .ov .ct-live-report .ov-trends svg {
+  width: 100% !important;
+  max-height: min(265px,34dvh) !important;
+}
+@keyframes ct-live-panel-enter {
+  from { opacity: .4; transform: perspective(900px) translateY(11px) scale(.965); }
+  70% { opacity: 1; transform: perspective(900px) translateY(-2px) scale(1.008); }
+  to { opacity: 1; transform: perspective(900px) translateY(0) scale(1); }
+}
+@media (max-width: 899px) {
+  #root .app-shell .main-content > .ov .ct-live-report,
+  #root .app-shell .main-content > .ov .ct-live-report-1 {
+    grid-template-columns: minmax(0,1fr) !important;
+    min-height: 280px !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  #root .app-shell .main-content > .ov .ct-live-report > .ov-card {
+    min-height: 240px !important;
+    max-height: none !important;
+  }
+  #root .app-shell .main-content > .ov .ct-live-report .ov-calendar-body {
+    grid-template-columns: minmax(0,1fr) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #root .app-shell .main-content > .ov .ct-live-report { animation: none !important; }
+}
