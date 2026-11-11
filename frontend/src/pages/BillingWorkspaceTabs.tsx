@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
-  Banknote, Check, ChevronDown, ClipboardList, CreditCard,
-  FileText, LayoutGrid, Receipt, ShieldCheck, Users, Wallet,
+  Check, ChevronDown, ClipboardCheck, ClipboardList, LayoutGrid, ShieldCheck, Wallet,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import BillingTodayPage from './BillingTodayPage'
@@ -36,23 +35,22 @@ type BillingDestination = {
 type PrivateDestination = {
   id: CashPrivateTab
   label: string
-  Icon: LucideIcon
 }
 
 const sections: BillingDestination[] = [
   { id: 'today', label: "Today's Billing", Icon: LayoutGrid },
   { id: 'cashPrivate', label: 'Cash & Private', Icon: Wallet },
   { id: 'medicalAid', label: 'Medical Aid', Icon: ShieldCheck },
-  { id: 'cashClose', label: 'Cash Day Close', Icon: Banknote },
+  { id: 'cashClose', label: 'Cash Day Close', Icon: ClipboardCheck },
   { id: 'aidClose', label: 'Medical Aid Day Sign-Off', Icon: ClipboardList },
 ]
 
 const privateSections: PrivateDestination[] = [
-  { id: 'checkout', label: 'Patient Checkout', Icon: CreditCard },
-  { id: 'invoices', label: 'Invoices & Allocations', Icon: FileText },
-  { id: 'plans', label: 'Treatment Plans', Icon: ClipboardList },
-  { id: 'balances', label: 'Patient Balances', Icon: Users },
-  { id: 'ledger', label: 'Payments Ledger', Icon: Receipt },
+  { id: 'checkout', label: 'Checkout' },
+  { id: 'invoices', label: 'Invoices' },
+  { id: 'plans', label: 'Treatment Plans' },
+  { id: 'balances', label: 'Patient Balances' },
+  { id: 'ledger', label: 'Payment Ledger' },
 ]
 
 const descriptions: Record<BillingSection, string> = {
@@ -77,9 +75,8 @@ export default function BillingWorkspaceTabs({
   const cashContent: Record<CashPrivateTab, ReactNode> = {
     checkout, invoices, plans, balances, ledger,
   }
-  const selectedLabel = section === 'cashPrivate'
-    ? privateSections.find(item => item.id === cashTab)?.label ?? 'Cash & Private'
-    : sections.find(item => item.id === section)?.label ?? 'Billing'
+  const selectedLabel = sections.find(item => item.id === section)?.label ?? 'Billing'
+  const selectedPrivateLabel = privateSections.find(item => item.id === cashTab)?.label ?? 'Checkout'
 
   useEffect(() => {
     if (!menuOpen) return
@@ -109,12 +106,6 @@ export default function BillingWorkspaceTabs({
     setMenuOpen(false)
   }
 
-  function goToPrivateTab(destination: CashPrivateTab) {
-    setCashTab(destination)
-    onSectionChange('cashPrivate')
-    setMenuOpen(false)
-  }
-
   function openExpense() {
     setExpenseOpen(true)
     setMenuOpen(false)
@@ -124,61 +115,55 @@ export default function BillingWorkspaceTabs({
     <header className="ct-billing-compact-header">
       <div className="ct-billing-compact-title">
         <small>RECEPTION / BILLING</small>
-        <h2>{section === 'cashPrivate' ? 'Cash & Private' : selectedLabel}</h2>
+        <h2>{selectedLabel}</h2>
         <p>{descriptions[section]}</p>
       </div>
+    </header>
+    <div className="ct-billing-navigation-row">
       <div className="ct-billing-menu-tools" ref={menuRef}>
-        <span className="ct-billing-current" aria-live="polite">{selectedLabel}</span>
-        <button
-          ref={menuTriggerRef}
-          type="button"
-          className="ct-billing-menu-trigger"
-          aria-expanded={menuOpen}
-          aria-controls="ct-billing-all-menu"
-          onClick={() => setMenuOpen(open => !open)}
-        >
-          <LayoutGrid size={15} aria-hidden="true" />
+        <button ref={menuTriggerRef} type="button" className="ct-billing-menu-trigger"
+          aria-expanded={menuOpen} aria-haspopup="true" aria-controls="ct-billing-all-menu"
+          onClick={() => setMenuOpen(open => !open)}>
+          <LayoutGrid size={15} aria-hidden="true"/>
           <span>All Billing</span>
-          <ChevronDown size={14} aria-hidden="true" className={menuOpen ? 'ct-billing-chevron-open' : ''}/>
+          <ChevronDown size={14} aria-hidden="true"
+            className={menuOpen ? 'ct-billing-chevron-open' : ''}/>
         </button>
-
         {menuOpen && (
-          <nav id="ct-billing-all-menu" className="ct-billing-menu" aria-label="Choose Billing section or action">
-            <div className="ct-billing-menu-heading">BILLING SECTIONS</div>
+          <nav id="ct-billing-all-menu" className="ct-billing-menu"
+            aria-label="Choose one of the five Billing sections">
             {sections.map(({ id, label, Icon }) => {
-              const current = section === id && id !== 'cashPrivate' // Only the selected Cash & Private subview gets a check
+              const current = section === id
               return <button key={id} type="button"
                 className={'ct-billing-menu-item' + (current ? ' active' : '')}
                 aria-current={current ? 'page' : undefined}
-                onClick={() => goToSection(id)}
-              ><Icon size={15} aria-hidden="true"/><span>{label}</span>
+                onClick={() => goToSection(id)}>
+                <Icon size={15} aria-hidden="true"/>
+                <span>{label}</span>
                 {current && <Check size={15} className="ct-billing-menu-check" aria-hidden="true"/>}
               </button>
             })}
-            <div className="ct-billing-menu-heading">CASH & PRIVATE</div>
-            {privateSections.map(({ id, label, Icon }) => {
-              const current = section === 'cashPrivate' && cashTab === id
-              return <button key={id} type="button"
-                className={'ct-billing-menu-item' + (current ? ' active' : '')}
-                aria-current={current ? 'page' : undefined}
-                onClick={() => goToPrivateTab(id)}
-              ><Icon size={15} aria-hidden="true"/><span>{label}</span>
-                {current && <Check size={15} className="ct-billing-menu-check" aria-hidden="true"/>}
-              </button>
-            })}
-            <div className="ct-billing-menu-heading">QUICK ACTION</div>
-            <button type="button" className="ct-billing-menu-item" onClick={openExpense}>
-              <Receipt size={15} aria-hidden="true"/><span>Record Expense</span>
-            </button>
           </nav>
         )}
       </div>
-    </header>
+      <span className="ct-billing-current" aria-live="polite">
+        {section === 'cashPrivate' ? selectedPrivateLabel : selectedLabel}
+      </span>
+    </div>
 
-    {section === 'today' && <BillingTodayPage key={reload}/>}
+    {section === 'today' && <BillingTodayPage key={reload} onRecordExpense={openExpense}/>}
     {section === 'cashPrivate' && (
-      <section className="ct-billing-private-panel" aria-label={selectedLabel} key={cashTab}>
-        {cashContent[cashTab]}
+      <section className="ct-billing-private-panel" aria-label="Cash and private billing">
+        <div className="ct-billing-private-picker">
+          <label htmlFor="ct-billing-private-view">View</label>
+          <select id="ct-billing-private-view" value={cashTab}
+            onChange={event => setCashTab(event.target.value as CashPrivateTab)}>
+            {privateSections.map(({ id, label }) => (
+              <option key={id} value={id}>{label}</option>
+            ))}
+          </select>
+        </div>
+        <div key={cashTab}>{cashContent[cashTab]}</div>
       </section>
     )}
     {section === 'medicalAid' && <section className="ct-billing-private-panel">{medicalAid}</section>}
