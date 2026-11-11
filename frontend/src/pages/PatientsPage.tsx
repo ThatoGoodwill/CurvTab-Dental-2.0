@@ -774,12 +774,7 @@ export default function PatientsPage({
                 <h3>Personal details</h3>
                 <p>Enter the patient's information. An ID number is not required.</p>
 
-                <div className="ct-reg-v3-mini-grid">
-                  <label className="ct-reg-label">Title<select value={registrationExtras.title} onChange={event => setRegistrationExtras(v => ({...v,title:event.target.value}))}><option value="">Choose title</option>{['Mr','Mrs','Ms','Miss','Mx','Dr','Prof'].map(t=><option key={t}>{t}</option>)}</select></label>
-                  <label className="ct-reg-label">Middle name(s)<input value={registrationExtras.middleNames} onChange={event => setRegistrationExtras(v => ({...v,middleNames:event.target.value}))}/></label>
 
-                  <label className="ct-reg-label">Preferred pronouns<select value={registrationExtras.pronouns} onChange={event => setRegistrationExtras(v => ({...v,pronouns:event.target.value}))}>{['','He / Him','She / Her','They / Them','Other','Prefer not to say'].map(s=><option key={s} value={s}>{s || 'Not specified'}</option>)}</select></label>
-                </div>
                 <div className="ct-wizard-grid">
                   <label style={labelStyle}>
                     First name *
@@ -869,6 +864,15 @@ export default function PatientsPage({
 <div className="ct-reg-v3-mini-grid ct-reg-language-bottom">
                   <label className="ct-reg-label">Communication language<select value={registrationExtras.language} onChange={event => setRegistrationExtras(v => ({...v,language:event.target.value}))}>{['English','Sesotho','Setswana','isiZulu','isiXhosa','Afrikaans','Sepedi','siSwati','Other'].map(s=><option key={s}>{s}</option>)}</select></label>
 </div>
+                <details className="ct-registration-optional">
+                  <summary>Additional personal details (optional)</summary>
+                                  <div className="ct-reg-v3-mini-grid">
+                  <label className="ct-reg-label">Title<select value={registrationExtras.title} onChange={event => setRegistrationExtras(v => ({...v,title:event.target.value}))}><option value="">Choose title</option>{['Mr','Mrs','Ms','Miss','Mx','Dr','Prof'].map(t=><option key={t}>{t}</option>)}</select></label>
+                  <label className="ct-reg-label">Middle name(s)<input value={registrationExtras.middleNames} onChange={event => setRegistrationExtras(v => ({...v,middleNames:event.target.value}))}/></label>
+
+                  <label className="ct-reg-label">Preferred pronouns<select value={registrationExtras.pronouns} onChange={event => setRegistrationExtras(v => ({...v,pronouns:event.target.value}))}>{['','He / Him','She / Her','They / Them','Other','Prefer not to say'].map(s=><option key={s} value={s}>{s || 'Not specified'}</option>)}</select></label>
+                </div>
+                </details>
 </section>
             )}
 
