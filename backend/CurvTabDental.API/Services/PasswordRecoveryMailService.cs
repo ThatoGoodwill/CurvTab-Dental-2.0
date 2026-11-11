@@ -97,6 +97,6 @@ public sealed class PasswordRecoveryMailService
             !string.IsNullOrWhiteSpace(uri.Query) ||
             !string.IsNullOrWhiteSpace(uri.Fragment))
             throw new InvalidOperationException("Recovery frontend origin must be an HTTPS URL without query parameters.");
-        return $"{root.TrimEnd('/')}/?reset-email={Uri.EscapeDataString(email)}&reset-token={Uri.EscapeDataString(token)}";
+        return $"{root.TrimEnd('/')}/#reset-email={Uri.EscapeDataString(email)}&reset-token={Uri.EscapeDataString(token)}";
     }
 }
