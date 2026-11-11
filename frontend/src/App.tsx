@@ -1363,6 +1363,7 @@ export default function App() {
             <ClinicDashboardEnhancements
               role={role}
               showActivityCharts={!showOverview}
+              showKpis={!showOverview}
               onPrimaryAction={() => {
                 if (role === 'SuperAdmin') navigate('Dental Practices')
                 else openAppointmentTab('Appointments')
