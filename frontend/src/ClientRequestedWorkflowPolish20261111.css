@@ -197,3 +197,50 @@
     padding: 15px 20px !important;
   }
 }
+
+/* Normal patient registration: title beside required names, then optional
+   middle name and pronouns alongside DOB and gender, not before names. */
+#root .ct-reg-v3-modal .ct-patient-personal-grid {
+  display: grid !important;
+  grid-template-columns: minmax(125px,.5fr) minmax(180px,1fr) minmax(180px,1fr) !important;
+  gap: 11px 13px !important;
+  align-items: end;
+}
+#root .ct-reg-v3-modal .ct-patient-personal-grid > label,
+#root .ct-reg-v3-modal .ct-patient-personal-grid > .ct-wizard-dob-row {
+  min-width: 0 !important;
+  width: 100%;
+}
+#root .ct-reg-v3-modal .ct-patient-personal-grid input,
+#root .ct-reg-v3-modal .ct-patient-personal-grid select {
+  width: 100%;
+  box-sizing: border-box;
+}
+#root .ct-reg-v3-modal .ct-patient-personal-grid .ct-personal-middle {
+  grid-column: 1;
+  grid-row: 2;
+}
+#root .ct-reg-v3-modal .ct-patient-personal-grid .ct-wizard-dob-row {
+  grid-column: 2;
+  grid-row: 2;
+}
+#root .ct-reg-v3-modal .ct-patient-personal-grid .ct-personal-pronouns {
+  grid-column: 1;
+  grid-row: 3;
+}
+@media (max-width: 720px) {
+  #root .ct-reg-v3-modal .ct-patient-personal-grid {
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+  }
+  #root .ct-reg-v3-modal .ct-patient-personal-grid .ct-personal-middle,
+  #root .ct-reg-v3-modal .ct-patient-personal-grid .ct-wizard-dob-row,
+  #root .ct-reg-v3-modal .ct-patient-personal-grid .ct-personal-pronouns {
+    grid-column: auto;
+    grid-row: auto;
+  }
+}
+@media (max-width: 510px) {
+  #root .ct-reg-v3-modal .ct-patient-personal-grid {
+    grid-template-columns: minmax(0,1fr) !important;
+  }
+}
