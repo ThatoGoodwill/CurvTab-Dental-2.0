@@ -23,7 +23,7 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<IAuditService, AuditService>();
-builder.Services.AddSingleton<PasswordRecoveryMailService>();
+builder.Services.AddHttpClient<PasswordRecoveryMailService>();
 builder.Services.Configure<Microsoft.AspNetCore.DataProtection.TokenProviderOptions>(options =>
     options.TokenLifespan = TimeSpan.FromMinutes(30));
 builder.Services.Configure<SecurityStampValidatorOptions>(options =>
