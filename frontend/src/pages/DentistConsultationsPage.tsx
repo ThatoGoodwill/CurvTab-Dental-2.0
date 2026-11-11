@@ -361,13 +361,8 @@ export default function DentistConsultationsPage({
             ))}</div>}
         </aside>
 
-        <section className="panel clinical-editor">
-          {!selectedAppointmentId ? (
-            <div className="clinical-empty"><Stethoscope size={30}/>
-              <h2>Select a consultation</h2>
-              <p>{patientId ? 'Select a recorded visit above, or start a new consultation from the Appointments queue.' : 'Start a consultation from Appointments, then select the patient here or in Daily Patients.'}</p>
-            </div>
-          ) : detailsError ? (
+        {selectedAppointmentId && <section className="panel clinical-editor">
+          {detailsError ? (
             <div role="alert" className="clinical-error">{detailsError}</div>
           ) : detailsLoading ? (
             <p>Loading clinical record...</p>
@@ -510,7 +505,7 @@ export default function DentistConsultationsPage({
               </form>
             </>
           ) : <p>Record not found.</p>}
-        </section>
+        </section>}
       </div>
     </div>
   )
