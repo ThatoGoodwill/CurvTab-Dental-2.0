@@ -331,13 +331,24 @@ public class AppointmentsController : ControllerBase
         if (_current.PracticeId is not Guid practiceId)
             return Forbid();
 
-        // Atomic SQL update: only a Scheduled visit
+        // Check-ins are allowed only on the scheduled calendar day in
+        // South Africa. Enforce this in SQL too: clients cannot bypass
+        // the rule by sending a direct request or changing device time.
+        var clinicZone = TimeZoneInfo.FindSystemTimeZoneById("Africa/Johannesburg");
+        var today = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, clinicZone).Date;
+        var clinicMidnight = DateTime.SpecifyKind(today, DateTimeKind.Unspecified);
+        var dayStartUtc = TimeZoneInfo.ConvertTimeToUtc(clinicMidnight, clinicZone);
+        var dayEndUtc = TimeZoneInfo.ConvertTimeToUtc(clinicMidnight.AddDays(1), clinicZone);
+
+        // Atomic SQL update: only today's Scheduled visit
         // can be checked in, and only once.
         var updated = await _db.Set<Appointment>()
             .Where(a =>
                 a.Id == id &&
                 a.DentalPracticeId == practiceId &&
-                a.Status == "Scheduled")
+                a.Status == "Scheduled" &&
+                a.StartUtc >= dayStartUtc &&
+                a.StartUtc < dayEndUtc)
             .ExecuteUpdateAsync(setters => setters
                 .SetProperty(a => a.Status, "Waiting")
                 .SetProperty(
@@ -350,7 +361,7 @@ public class AppointmentsController : ControllerBase
             return Conflict(new
             {
                 message =
-                    "Appointment was not found or cannot be checked in."
+                    "Check-in is allowed only on the appointment's scheduled day (South Africa time), while the appointment is Scheduled."
             });
         }
 
