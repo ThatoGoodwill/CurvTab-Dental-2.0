@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import {
   ChevronLeft,
   ChevronRight,
@@ -68,6 +69,7 @@ type ViewProps = {
   fullName: string
   practiceName: string | null
   role?: 'PracticeAdmin' | 'Receptionist'
+  managementTools?: ReactNode
   now: Date
   appointments: OverviewAppointment[]
   patientTotal: number | null
@@ -203,6 +205,7 @@ export function OverviewDashboardView(props: ViewProps) {
           <p>Live practice reports, smoothly changing every 2 seconds. Hover or focus to pause.</p>
         </div>
         <div className="ov-carousel-controls" role="group" aria-label="Dashboard report slides">
+          {props.managementTools}
           <button type="button" className="ov-carousel-arrow" aria-label="Previous report"
             onClick={() => navigatePanel(-1)}><ChevronLeft size={19}/></button>
           <span className="ov-carousel-count" aria-live="polite">{panel + 1} / {panelNames.length}</span>
@@ -375,6 +378,7 @@ type Props = {
   fullName: string
   practiceName: string | null
   role?: 'PracticeAdmin' | 'Receptionist'
+  managementTools?: ReactNode
   onNewAppointment: () => void
   onOpenQueue: () => void
   onOpenCheckout: () => void
