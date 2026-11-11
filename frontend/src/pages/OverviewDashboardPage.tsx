@@ -1,13 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  ArrowRight,
-  CalendarDays,
   ChevronLeft,
   ChevronRight,
-  CreditCard,
-  Receipt,
   RefreshCw,
-  Users,
 } from 'lucide-react'
 import { apiRequest } from '../services/api'
 import { Donut, LineChart } from '../components/charts'
@@ -63,10 +58,6 @@ function parseUtc(value: string): Date {
   return new Date(/([zZ]|[+-]\d{2}:?\d{2})$/.test(value) ? value : `${value}Z`)
 }
 
-function rand(amount: number): string {
-  return new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount)
-}
-
 type Dated = OverviewAppointment & { start: Date; end: Date }
 
 // ---------------------------------------------------------
@@ -88,27 +79,6 @@ type ViewProps = {
   onOpenQueue: () => void
   onOpenCheckout: () => void
   onOpenPatients: () => void
-}
-
-function ToothArt() {
-  return (
-    <svg
-      width="230"
-      height="230"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.1"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path
-        transform="translate(1 0)"
-        d="M8 2.5c-2.8 0-4.5 2.2-4.5 5 0 2.2 1.1 3.9 1.7 6.1.6 2.7.8 8 2.9 8 2 0 1.6-4.6 3.4-4.6s1.4 4.6 3.4 4.6c2.1 0 2.3-5.3 2.9-8 .6-2.2 1.7-3.9 1.7-6.1 0-2.8-1.7-5-4.5-5-1.7 0-2.3.8-3.5.8S9.7 2.5 8 2.5z"
-      />
-    </svg>
-  )
 }
 
 export function OverviewDashboardView(props: ViewProps) {
@@ -216,37 +186,6 @@ export function OverviewDashboardView(props: ViewProps) {
   ]
 
   const placeholder = props.loading && props.appointments.length === 0
-
-  const kpis = [
-    {
-      label: "Today's Appointments",
-      value: placeholder ? '…' : String(today.length),
-      icon: <CalendarDays size={26} />,
-      tone: 'blue',
-      note: `${countToday('Scheduled')} still to arrive`,
-    },
-    {
-      label: 'Active Patients',
-      value: props.patientTotal === null ? '—' : props.patientTotal.toLocaleString('en-ZA'),
-      icon: <Users size={26} />,
-      tone: 'indigo',
-      note: 'Registered in this practice',
-    },
-    {
-      label: 'Awaiting Checkout',
-      value: props.awaitingCount === null ? '—' : String(props.awaitingCount),
-      icon: <Receipt size={26} />,
-      tone: 'amber',
-      note: props.awaitingAmount === null ? '' : `${rand(props.awaitingAmount)} to collect`,
-    },
-    {
-      label: 'Checked Out Today',
-      value: placeholder ? '…' : String(countToday('CheckedOut')),
-      icon: <CreditCard size={26} />,
-      tone: 'green',
-      note: 'Visits completed today',
-    },
-  ]
 
   return (
     <div className="ov"
