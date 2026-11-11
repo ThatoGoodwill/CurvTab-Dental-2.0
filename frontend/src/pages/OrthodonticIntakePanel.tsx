@@ -52,7 +52,7 @@ const sourceName = (source: IntakeSource) => ({
   DIRECT: 'Direct registration', INTERNAL: 'Internal referral', TRANSFER_IN: 'Transfer-in'
 })[source]
 const stateLabel = (state: string) => state.replaceAll('_',' ').toLowerCase()
-const initialList = ['New Assessments','Internal Referrals','Transfer-In Reviews','Active Treatment','Retention','Follow-ups','Repairs','Financial Interventions']
+const initialList = ['New Assessments','Internal Referrals','Transfer-In Reviews','Financial Interventions']
 
 export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
   const isManager = role === 'PracticeAdmin'
@@ -132,9 +132,7 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
     return cases.filter(c=> filter==='New Assessments' ? c.source==='DIRECT' && c.status!=='ASSESSMENT_IN_PROGRESS'
       : filter==='Internal Referrals' ? c.source==='INTERNAL'
       : filter==='Transfer-In Reviews' ? c.source==='TRANSFER_IN'
-      : filter==='Active Treatment' ? c.status==='ASSESSMENT_IN_PROGRESS'
       : filter==='Financial Interventions' ? c.status==='PAYMENT_PENDING' || c.advancePolicy==='REVIEW_REQUIRED'
-      : (filter==='Follow-ups'||filter==='Repairs'||filter==='Retention') ? false
       : c.status.toLowerCase().includes(lower))
   },[cases,filter])
 
