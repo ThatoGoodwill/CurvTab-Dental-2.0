@@ -1562,7 +1562,7 @@ export default function App() {
 
           {section === 'Clinical Claim Corrections' && role === 'Dentist' && <ClinicalClaimCorrectionsPage />}
 
-          {section === 'Workspace' && !isSuperAdmin && <EmployeeWorkspacePage />}
+          {section === 'Workspace' && !isSuperAdmin && <EmployeeWorkspacePage onManageStaff={isPracticeAdmin ? () => navigate('Management') : undefined} />}
 
           {/* STAFF MANAGEMENT */}
           {section === 'Management' && canManageStaff && (
