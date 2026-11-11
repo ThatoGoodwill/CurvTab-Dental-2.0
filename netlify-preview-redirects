@@ -1,0 +1,4 @@
+# Only copied into Netlify deploy-preview output; never used by production site.
+# Requests are routed to ISOLATED staging Render service. No production DB access.
+/api/* https://curvtab-dental-staging-20261111.onrender.com/api/:splat 200!
+/* /index.html 200
