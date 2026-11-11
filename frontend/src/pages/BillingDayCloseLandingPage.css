@@ -1,0 +1,32 @@
+
+/* Day Close is a single destination with two genuinely independent workflows.
+   Existing transaction and sign-off components remain authoritative. */
+.ct-guide-day-close-landing { min-width: 0; }
+.ct-guide-day-close-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+.ct-guide-day-close-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid var(--border, #d7e2ee);
+  background: var(--surface, #fff);
+  color: var(--text, inherit);
+  border-radius: 11px;
+  padding: 16px;
+}
+.ct-guide-day-close-card-title { display: flex; align-items: center; gap: 9px; }
+.ct-guide-day-close-card-title h3 { font-size: 16px; margin: 0; }
+.ct-guide-day-close-card p { margin: 0; font-size: 12px; line-height: 1.5; }
+.ct-guide-day-close-card-total { margin-top: auto; display: grid; gap: 4px; }
+.ct-guide-day-close-card-total strong { font-size: 21px; }
+.ct-guide-day-close-card-total small { color: var(--muted, #5b6d85); font-size: 11px; }
+.ct-guide-day-close-card > .primary-button { align-self: stretch; justify-content: center; min-height: 34px; }
+@media (max-width: 680px) {
+  .ct-guide-day-close-grid { grid-template-columns: minmax(0, 1fr); }
+  .ct-guide-day-close-card { padding: 12px; }
+}
