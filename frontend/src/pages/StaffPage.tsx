@@ -37,6 +37,7 @@ export default function StaffPage() {
   const [busy, setBusy] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
 
+  const [staffPanel, setStaffPanel] = useState<'none' | 'add' | 'directory'>('none')
   const [search, setSearch] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -121,6 +122,7 @@ export default function StaffPage() {
       setEmail('')
       setPassword('')
       setRole('Receptionist')
+      setStaffPanel('none')
 
       refresh()
     } catch (cause) {
@@ -285,10 +287,20 @@ export default function StaffPage() {
         </div>
       )}
 
+      <div className="ct-staff-toolbar">
+        <button type="button" className={staffPanel === 'add' ? 'primary-button' : 'secondary-button'}
+          aria-expanded={staffPanel === 'add'} onClick={() => setStaffPanel(panel => panel === 'add' ? 'none' : 'add')}>
+          <UserPlus size={15}/> {staffPanel === 'add' ? 'Close employee form' : 'Add Employee'}
+        </button>
+        <button type="button" className={staffPanel === 'directory' ? 'primary-button' : 'secondary-button'}
+          aria-expanded={staffPanel === 'directory'} onClick={() => setStaffPanel(panel => panel === 'directory' ? 'none' : 'directory')}>
+          <Users size={15}/> {staffPanel === 'directory' ? 'Close Staff Directory' : 'View Staff Directory'}
+        </button>
+      </div>
       <div className="staff-layout">
 
         {/* CREATE EMPLOYEE */}
-        <section className="panel">
+        {staffPanel === 'add' && <section className="panel ct-staff-action-panel">
           <div className="staff-section-title">
             <UserPlus size={20} />
             <h2>Add Employee</h2>
@@ -362,10 +374,10 @@ export default function StaffPage() {
               {busy ? 'Saving...' : 'Create Employee'}
             </button>
           </form>
-        </section>
+        </section>}
 
         {/* STAFF DIRECTORY */}
-        <section className="panel">
+        {staffPanel === 'directory' && <section className="panel ct-staff-action-panel">
           <div className="staff-section-title">
             <ShieldCheck size={20} />
             <h2>Staff Directory</h2>
@@ -507,7 +519,7 @@ export default function StaffPage() {
               ))}
             </div>
           )}
-        </section>
+        </section>}
       </div>
       <details className="ct-staff-hr-details">
         <summary>Employee records, rosters and leave approvals</summary>
