@@ -18,6 +18,8 @@ type ClaimDay = {
   actionsPending: number
 }
 type Props = {
+  businessDate: string
+  onBusinessDateChange: (date: string) => void
   openFinancial: () => void
   openClaims: () => void
 }
@@ -36,8 +38,7 @@ async function readDay<T>(path: string): Promise<T> {
 }
 
 /** Read-only launcher: opening either workflow never signs off the other. */
-export default function BillingDayCloseLandingPage({ openFinancial, openClaims }: Props) {
-  const [date, setDate] = useState(todaySA)
+export default function BillingDayCloseLandingPage({ businessDate: date, onBusinessDateChange, openFinancial, openClaims }: Props) {
   const [reload, setReload] = useState(0)
   const [financial, setFinancial] = useState<FinancialDay | null>(null)
   const [claims, setClaims] = useState<ClaimDay | null>(null)
@@ -76,7 +77,7 @@ export default function BillingDayCloseLandingPage({ openFinancial, openClaims }
       </div>
       <div className="ct-guide-heading-tools">
         <label>Business date
-          <input type="date" max={todaySA()} value={date} onChange={event => setDate(event.target.value)} />
+          <input type="date" max={todaySA()} value={date} onChange={event => onBusinessDateChange(event.target.value)} />
         </label>
         <button type="button" className="secondary-button" disabled={loading}
           onClick={() => setReload(value => value + 1)}>
