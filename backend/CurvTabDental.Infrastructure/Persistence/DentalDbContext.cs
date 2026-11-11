@@ -642,6 +642,35 @@ modelBuilder.Entity<Appointment>(entity =>
                 .HasForeignKey(x => x.SubmissionId).OnDelete(DeleteBehavior.Restrict);
         });
 
+        modelBuilder.Entity<CashDayCloseInstrumentEvidence>(entity =>
+        {
+            entity.ToTable("CashDayCloseInstrumentEvidence");
+            entity.HasKey(x => x.Id);
+            entity.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            entity.Property(x => x.Instrument).IsRequired().HasMaxLength(12);
+            entity.Property(x => x.LedgerReceived).HasPrecision(12, 2);
+            entity.Property(x => x.VerifiedReceived).HasPrecision(12, 2);
+            entity.Property(x => x.EvidenceReference).IsRequired().HasMaxLength(300);
+            entity.Property(x => x.VerificationSource).IsRequired().HasMaxLength(40);
+            entity.HasIndex(x => new { x.DentalPracticeId, x.RequestId }).IsUnique();
+            entity.HasIndex(x => new { x.DentalPracticeId, x.SubmissionId, x.Instrument, x.RecordedAtUtc });
+            entity.HasOne<CashDayCloseSubmission>().WithMany()
+                .HasForeignKey(x => x.SubmissionId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<CashDayCloseFinancialSignoff>(entity =>
+        {
+            entity.ToTable("CashDayCloseFinancialSignoffs");
+            entity.HasKey(x => x.Id);
+            entity.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            entity.Property(x => x.SnapshotJson).IsRequired();
+            entity.Property(x => x.HandoverReason).IsRequired().HasMaxLength(1000);
+            entity.HasIndex(x => new { x.DentalPracticeId, x.BusinessDate }).IsUnique();
+            entity.HasIndex(x => new { x.DentalPracticeId, x.RequestId }).IsUnique();
+            entity.HasOne<CashDayCloseSubmission>().WithMany()
+                .HasForeignKey(x => x.SubmissionId).OnDelete(DeleteBehavior.Restrict);
+        });
+
         modelBuilder.Entity<MedicalAidDaySignoff>(entity =>
         {
             entity.ToTable("MedicalAidDaySignoffs");
