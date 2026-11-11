@@ -2,6 +2,7 @@ using CurvTabDental.API.Notifications;
 using System.Threading.RateLimiting;
 using CurvTabDental.API.Middleware;
 using CurvTabDental.API.Security;
+using CurvTabDental.API.Services;
 using CurvTabDental.API.Seeding;
 using CurvTabDental.Application.Abstractions;
 using CurvTabDental.Infrastructure.Identity;
@@ -22,6 +23,11 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddSingleton<PasswordRecoveryMailService>();
+builder.Services.Configure<Microsoft.AspNetCore.DataProtection.TokenProviderOptions>(options =>
+    options.TokenLifespan = TimeSpan.FromMinutes(30));
+builder.Services.Configure<SecurityStampValidatorOptions>(options =>
+    options.ValidationInterval = TimeSpan.FromMinutes(1));
 
 // CT_PHASE8B_WORKER_REGISTRATION
 // Disabled by default; only creates mock reminder records.
@@ -134,6 +140,15 @@ builder.Services.AddRateLimiter(options =>
             {
                 PermitLimit = 20,
                 Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+    options.AddPolicy("password-recovery", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            $"recovery:{context.Connection.RemoteIpAddress?.ToString() ?? "unknown"}",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(15),
                 QueueLimit = 0
             }));
 });
