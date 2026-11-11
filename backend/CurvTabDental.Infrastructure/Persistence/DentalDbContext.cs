@@ -66,6 +66,7 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
     public DbSet<DentalChartEntry> DentalChartEntries => Set<DentalChartEntry>();
     public DbSet<ClinicalImage> ClinicalImages => Set<ClinicalImage>();
     public DbSet<OrthodonticCase> OrthodonticCases => Set<OrthodonticCase>();
+    public DbSet<OrthodonticIntakeCase> OrthodonticIntakes => Set<OrthodonticIntakeCase>();
     public DbSet<OrthodonticProgressNote> OrthodonticProgressNotes => Set<OrthodonticProgressNote>();
 
     // EF evaluates this per query (it is a member of the context), not once at model build time.
@@ -519,6 +520,38 @@ modelBuilder.Entity<Appointment>(entity =>
             entity.HasOne<Patient>().WithMany().HasForeignKey(e => e.PatientId)
                 .OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Consultation>().WithMany().HasForeignKey(e => e.ConsultationId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Phase 1: separate orthodontic intake; never an implicit treatment case.
+        modelBuilder.Entity<OrthodonticIntakeCase>(entity =>
+        {
+            entity.ToTable("OrthodonticIntakes");
+            entity.HasKey(x => x.Id);
+            entity.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            entity.Property(x => x.Source).IsRequired().HasMaxLength(20);
+            entity.Property(x => x.Status).IsRequired().HasMaxLength(40);
+            entity.Property(x => x.AdvancePolicy).IsRequired().HasMaxLength(32);
+            entity.Property(x => x.ReferralReason).HasMaxLength(1000);
+            entity.Property(x => x.ReferralNotes).HasMaxLength(4000);
+            entity.Property(x => x.PreviousProvider).HasMaxLength(250);
+            entity.Property(x => x.ExistingAppliances).HasMaxLength(1000);
+            entity.Property(x => x.PreviousTreatmentPlanSummary).HasMaxLength(4000);
+            entity.Property(x => x.TransferReason).HasMaxLength(2000);
+            entity.Property(x => x.PreviousRecordsSummary).HasMaxLength(4000);
+            entity.Property(x => x.UrgentConcerns).HasMaxLength(2000);
+            entity.Property(x => x.DocumentReferencesJson).IsRequired().HasColumnType("jsonb");
+            entity.Property(x => x.MissingDocumentsJson).IsRequired().HasColumnType("jsonb");
+            entity.Property(x => x.TermsVersion).HasMaxLength(80);
+            entity.Property(x => x.TermsSha256).HasMaxLength(64);
+            entity.Property(x => x.TermsSignerName).HasMaxLength(200);
+            entity.Property(x => x.TermsSignerCapacity).HasMaxLength(60);
+            entity.Property(x => x.TermsAcceptanceMethod).HasMaxLength(50);
+            entity.Property(x => x.NextAction).HasMaxLength(500);
+            entity.HasIndex(x => new { x.DentalPracticeId, x.PatientId })
+                .IsUnique().HasFilter("\"ClosedAtUtc\" IS NULL");
+            entity.HasIndex(x => new { x.DentalPracticeId, x.AssignedOrthodontistUserId, x.Status });
+            entity.HasOne<Patient>().WithMany().HasForeignKey(x => x.PatientId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
