@@ -135,7 +135,7 @@ export default function FinancialReconciliationPanel({ businessDate, isManager }
   if (!summary?.countSubmitted) return null
   return <section className="ct-guide-panel ct-financial-evidence">
     <header className="ct-financial-evidence-header">
-      <div><small>DAY CLOSE / STEPS 2–4</small><h3>Card, EFT and Financial Sign-Off</h3>
+      <div><small>DAY CLOSE / STEPS 2–4</small><h3>Cash Reconciliation · Card, EFT and Sign-Off</h3>
         <p>External settlement references are not payments. Mismatches require investigation.</p></div>
       <button type="button" className="secondary-button" onClick={() => setReload(n => n + 1)}>
         <RefreshCw size={14}/> Refresh
