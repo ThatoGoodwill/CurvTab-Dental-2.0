@@ -7,7 +7,9 @@ export type PracticeAppearance = {
   primaryColor: string
   accentColor: string
   layoutPreset: 'Classic' | 'Compact' | 'Clinical'
-  navigationMode: 'Sidebar' | 'Topbar'
+  navigationMode: 'Sidebar' | 'Topbar' | 'Rail'
+  // Practice-wide default colour theme for every account (white | blue | dark).
+  themeSurface?: 'white' | 'blue' | 'dark'
   enabledModules: string[]
   logoUrl?: string | null
   badgeUrl?: string | null

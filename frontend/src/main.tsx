@@ -6,6 +6,9 @@ import App from './App'
 import './newlook.css'
 import { AuthProvider } from './auth/AuthProvider'
 import { AuthGate } from './auth/AuthGate'
+// Last on purpose: these must win over every older stylesheet above.
+import './WorkspaceThemes.css'
+import './WorkspaceLayouts.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
