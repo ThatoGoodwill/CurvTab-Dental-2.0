@@ -111,8 +111,76 @@ function LoginScreen() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [showRecoveryHelp, setShowRecoveryHelp] = useState(false)
+  const [recoveryLink] = useState(() => {
+    const qs = new URLSearchParams(window.location.search)
+    return { email: qs.get('reset-email') || '', token: qs.get('reset-token') || '' }
+  })
+  const [recoveryMode, setRecoveryMode] = useState<'login' | 'request' | 'reset'>(
+    recoveryLink.email && recoveryLink.token ? 'reset' : 'login'
+  )
+  const [recoveryEmail, setRecoveryEmail] = useState(recoveryLink.email)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [recoveryMessage, setRecoveryMessage] = useState('')
+  const [recoveryBusy, setRecoveryBusy] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!recoveryLink.token) return
+    const qs = new URLSearchParams(window.location.search)
+    qs.delete('reset-token')
+    qs.delete('reset-email')
+    const suffix = qs.toString()
+    window.history.replaceState(null, '', window.location.pathname + (suffix ? '?' + suffix : '') + window.location.hash)
+  }, [recoveryLink.token])
+
+  async function requestRecovery(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setError('')
+    setRecoveryMessage('')
+    setRecoveryBusy(true)
+    try {
+      const result = await apiRequest<{message:string}>('/auth/forgot-password', 'POST', {
+        email: recoveryEmail.trim()
+      })
+      setRecoveryMessage(result.message)
+    } catch(err) {
+      setError(err instanceof Error ? err.message : 'Password recovery is temporarily unavailable.')
+    } finally {
+      setRecoveryBusy(false)
+    }
+  }
+
+  async function resetPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setError('')
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match.')
+      return
+    }
+    if (newPassword.length < 12 || !/[A-Z]/.test(newPassword) ||
+        !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+      setError('Use at least 12 characters with uppercase, lowercase and a number.')
+      return
+    }
+    setRecoveryBusy(true)
+    try {
+      await apiRequest<void>('/auth/reset-password', 'POST', {
+        email: recoveryLink.email,
+        token: recoveryLink.token,
+        newPassword,
+      })
+      setNewPassword('')
+      setConfirmPassword('')
+      setPassword('')
+      setRecoveryMode('login')
+      setRecoveryMessage('Password updated. You can now sign in with your new password.')
+    } catch(err) {
+      setError(err instanceof Error ? err.message : 'The reset link is invalid or expired.')
+    } finally {
+      setRecoveryBusy(false)
+    }
+  }
   const [submitting, setSubmitting] = useState(false)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -158,57 +226,73 @@ function LoginScreen() {
           {branding?.tagline || 'Sign in to your dental practice workspace.'}
         </p>
 
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <label>
-            Email address
-            <input
-              type="email"
-              autoComplete="username"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@practice.com"
-              required
-            />
-          </label>
-
-          <label>
-            Password
-            <input
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </label>
-
-          {error && (
-            <div className="auth-error" role="alert">
-              {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            className="auth-submit"
-            disabled={submitting}
-          >
-            {submitting ? 'Signing in...' : 'Sign in securely'}
-          </button>
-          <button type="button" className="ct-forgot-password-link"
-            aria-expanded={showRecoveryHelp}
-            onClick={() => setShowRecoveryHelp(value => !value)}>
-            Forgot your password?
-          </button>
-          {showRecoveryHelp && (
-            <div className="ct-recovery-help" role="status">
-              Contact your CurvTab platform administrator to request a secure temporary password.
-              A verified Super Admin can restore access to your existing practice from
-              Dental Practices → Reset Admin Access. Email-based self-service recovery
-              is not enabled yet.
-            </div>
-          )}
-        </form>
+        {recoveryMode === 'login' && (
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <label>Email address
+              <input type="email" autoComplete="username" value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="you@practice.com" required />
+            </label>
+            <label>Password
+              <input type="password" autoComplete="current-password" value={password}
+                onChange={e => setPassword(e.target.value)} required />
+            </label>
+            {error && <div className="auth-error" role="alert">{error}</div>}
+            {recoveryMessage && <div className="ct-recovery-success" role="status">{recoveryMessage}</div>}
+            <button type="submit" className="auth-submit" disabled={submitting}>
+              {submitting ? 'Signing in...' : 'Sign in securely'}
+            </button>
+            <button type="button" className="ct-forgot-password-link"
+              onClick={() => { setError(''); setRecoveryMessage(''); setRecoveryEmail(email); setRecoveryMode('request') }}>
+              Forgot your password?
+            </button>
+          </form>
+        )}
+        {recoveryMode === 'request' && (
+          <form className="auth-form" onSubmit={requestRecovery}>
+            <h2 className="ct-recovery-heading">Reset password</h2>
+            <p className="ct-recovery-description">
+              Enter your account email. If it is eligible, we will email you a secure, 30-minute reset link.
+            </p>
+            <label>Account email
+              <input type="email" autoComplete="email" required maxLength={256}
+                value={recoveryEmail} onChange={e => setRecoveryEmail(e.target.value)} />
+            </label>
+            {error && <div className="auth-error" role="alert">{error}</div>}
+            {recoveryMessage && <div className="ct-recovery-success" role="status">{recoveryMessage}</div>}
+            <button type="submit" className="auth-submit" disabled={recoveryBusy}>
+              {recoveryBusy ? 'Sending request...' : 'Email reset link'}
+            </button>
+            <button type="button" className="ct-forgot-password-link"
+              onClick={() => { setError(''); setRecoveryMessage(''); setRecoveryMode('login') }}>
+              Back to sign in
+            </button>
+          </form>
+        )}
+        {recoveryMode === 'reset' && (
+          <form className="auth-form" onSubmit={resetPassword}>
+            <h2 className="ct-recovery-heading">Choose a new password</h2>
+            <p className="ct-recovery-description">Resetting access for {recoveryLink.email}.</p>
+            <label>New password
+              <input type="password" autoComplete="new-password" minLength={12}
+                maxLength={128} required value={newPassword}
+                onChange={e => setNewPassword(e.target.value)} />
+            </label>
+            <label>Confirm new password
+              <input type="password" autoComplete="new-password" minLength={12}
+                maxLength={128} required value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)} />
+            </label>
+            {error && <div className="auth-error" role="alert">{error}</div>}
+            <button type="submit" className="auth-submit" disabled={recoveryBusy}>
+              {recoveryBusy ? 'Resetting...' : 'Save new password'}
+            </button>
+            <button type="button" className="ct-forgot-password-link"
+              onClick={() => { setError(''); setRecoveryMode('request') }}>
+              Request a new link
+            </button>
+          </form>
+        )}
 
         <div className="auth-security">
           <ShieldCheck size={17} />
