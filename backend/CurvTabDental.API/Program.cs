@@ -115,6 +115,17 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
+// ---------- ISOLATED STAGING SCHEMA INITIALIZATION ----------
+// Only the dedicated staging service may self-migrate. Never use this
+// switch on a production Render instance or against a production DB.
+if (builder.Environment.IsStaging() && builder.Configuration.GetValue<bool>("Staging:AutoMigrate"))
+{
+    using var migrationScope = app.Services.CreateScope();
+    var stagingDb = migrationScope.ServiceProvider.GetRequiredService<DentalDbContext>();
+    await stagingDb.Database.MigrateAsync();
+    app.Logger.LogInformation("Staging schema migrations applied to isolated database.");
+}
+
 // ---------- Seed roles / bootstrap admin / demo data ----------
 try
 {
