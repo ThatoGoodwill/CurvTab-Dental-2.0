@@ -249,48 +249,26 @@ export default function MedicalAidPanel({
         <p>Register schemes and draft claims linked to existing invoices.</p>
       </div>
 
-      <nav className="ct-medical-aid-tabs" aria-label="Medical aid sections">
-        <button type="button" className={tab === 'claims' ? 'active' : ''}
-          onClick={() => setTab('claims')}>Claims Ledger</button>
-        <button type="button" className={tab === 'memberships' ? 'active' : ''}
-          onClick={() => setTab('memberships')}>Memberships</button>
-        <button type="button"
-          className={tab === 'authorisations' ? 'active' : ''}
-          onClick={() => setTab('authorisations')}>
-          Authorisations
-        </button>
-        <button
-          type="button"
-          className={tab === 'processing' ? 'active' : ''}
-          onClick={() => setTab('processing')}
+      <div className="ct-medical-aid-menu">
+        <label htmlFor="ct-medical-aid-section">Medical Aid section</label>
+        <select
+          id="ct-medical-aid-section"
+          value={tab}
+          onChange={event => setTab(event.target.value as Tab)}
+          aria-label="Choose Medical Aid section"
         >
-          Claim Processing
-        </button>
-        <button
-          type="button"
-          className={tab === 'remittances' ? 'active' : ''}
-          onClick={() => setTab('remittances')}
-        >
-          Remittances & Settlement
-        </button>
-        <button type="button" onClick={() => setReload(n => n + 1)}>
+          <option value="claims">Claims Ledger</option>
+          <option value="memberships">Memberships</option>
+          <option value="authorisations">Authorisations</option>
+          <option value="processing">Claim Processing</option>
+          <option value="remittances">Remittances &amp; Settlement</option>
+          <option value="bankReceipts">Scheme Bank Receipts</option>
+          <option value="matching">Remittance Matching</option>
+        </select>
+        <button type="button" className="secondary-button" onClick={() => setReload(n => n + 1)}>
           Refresh
         </button>
-        <button
-          type="button"
-          className={tab === 'bankReceipts' ? 'active' : ''}
-          onClick={() => setTab('bankReceipts')}
-        >
-          Scheme Bank Receipts
-        </button>
-        <button
-          type="button"
-          className={tab === 'matching' ? 'active' : ''}
-          onClick={() => setTab('matching')}
-        >
-          Remittance Matching
-        </button>
-      </nav>
+      </div>
 
       {error && <p role="alert" className="ct-medical-aid-error">{error}</p>}
       {notice && <p role="status" className="ct-medical-aid-success">{notice}</p>}
