@@ -372,7 +372,7 @@ export function RegistrationMedicalScreen({value:v,onChange:cb}:Omit<Props,'isMi
       </div>
   </section>
 }
-function SignaturePad({label,value,onChange}:{label:string,value:string,onChange:(v:string)=>void}) {
+export function SignaturePad({label,value,onChange}:{label:string,value:string,onChange:(v:string)=>void}) {
   const canvas=useRef<HTMLCanvasElement|null>(null)
   const drawing=useRef(false)
   const [inked,setInked]=useState(false)
