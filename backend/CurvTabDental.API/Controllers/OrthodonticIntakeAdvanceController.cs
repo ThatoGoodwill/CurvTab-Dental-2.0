@@ -79,8 +79,8 @@ public sealed class OrthodonticIntakeAdvanceController : ControllerBase
         var method = req.Method?.Trim();
         if (method is not ("Cash" or "EFT"))
             return BadRequest(new { message = "Use Cash or verified EFT only. Card payments require a separate integrated processor confirmation." });
-        if (method == "EFT" && (string.IsNullOrWhiteSpace(req.BankReference) || req.BankReference.Trim().Length > 75))
-            return BadRequest(new { message = "A bank-confirmed reference (max 75 characters) is required for EFT." });
+        if (method == "EFT" && (string.IsNullOrWhiteSpace(req.BankReference) || req.BankReference.Trim().Length > 55))
+            return BadRequest(new { message = "A bank-confirmed reference (max 55 characters) is required for EFT." });
         var appointment = await _db.Appointments.AsNoTracking().FirstOrDefaultAsync(x =>
             x.Id == req.AppointmentId && x.PatientId == intake.PatientId &&
             x.DentalPracticeId == practiceId && x.Status != "Cancelled", ct);
@@ -111,9 +111,12 @@ public sealed class OrthodonticIntakeAdvanceController : ControllerBase
         intake.AdvancePaymentId = payment.Id;
         intake.UpdatedAtUtc = now;
         if (intake.Status == "PAYMENT_PENDING")
-            intake.Status = intake.HistoryVerifiedByClinician &&
-                (intake.MissingDocumentsJson == "[]" || intake.MissingDocumentsJson == "[ ]")
-                ? "ASSESSMENT_READY" : "RECORDS_PENDING";
+        {
+            // An authenticated clinician has to perform the final readiness
+            // review; payment receipt alone does not establish clinical safety.
+            intake.Status = "RECORDS_PENDING";
+            intake.NextAction = "Advance received. Assigned specialist must confirm the final readiness checklist.";
+        }
         try
         {
             await _db.SaveChangesAsync(ct);
