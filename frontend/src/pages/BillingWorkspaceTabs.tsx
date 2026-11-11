@@ -1,17 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
-  Check, ChevronDown, ClipboardCheck, ClipboardList, LayoutGrid, ShieldCheck, Wallet,
+  Check, ChevronDown, ClipboardCheck, LayoutGrid, ShieldCheck, Wallet,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import BillingTodayPage from './BillingTodayPage'
 import BillingCashDayClosePage from './BillingCashDayClosePage'
 import BillingMedicalAidDaySignoffPage from './BillingMedicalAidDaySignoffPage'
 import BillingExpenseDrawer from './BillingExpenseDrawer'
+import BillingDayCloseLandingPage from './BillingDayCloseLandingPage'
 import './BillingWorkspaceTabs.css'
 import './BillingClientGuide.css'
 
-export type BillingSection = 'today' | 'cashPrivate' | 'medicalAid' | 'cashClose' | 'aidClose'
+export type BillingSection = 'today' | 'cashPrivate' | 'medicalAid' | 'dayClose' | 'cashClose' | 'aidClose'
 type CashPrivateTab = 'checkout' | 'invoices' | 'plans' | 'balances' | 'ledger'
 
 type Props = {
@@ -41,8 +42,7 @@ const sections: BillingDestination[] = [
   { id: 'today', label: "Today's Billing", Icon: LayoutGrid },
   { id: 'cashPrivate', label: 'Cash & Private', Icon: Wallet },
   { id: 'medicalAid', label: 'Medical Aid', Icon: ShieldCheck },
-  { id: 'cashClose', label: 'Cash Day Close', Icon: ClipboardCheck },
-  { id: 'aidClose', label: 'Medical Aid Day Sign-Off', Icon: ClipboardList },
+  { id: 'dayClose', label: 'Day Close', Icon: ClipboardCheck },
 ]
 
 const privateSections: PrivateDestination[] = [
@@ -57,6 +57,7 @@ const descriptions: Record<BillingSection, string> = {
   today: 'Real receipts, expenses and medical-aid activity at a glance.',
   cashPrivate: 'Checkout, receipts, invoices and payment records for private patients.',
   medicalAid: 'Claims, authorisations and scheme settlement records.',
+  dayClose: 'Independent financial reconciliation and medical aid review.',
   cashClose: 'Blind physical cash count with audited manager review.',
   aidClose: 'Daily scheme activity sign-off, separate from money received.',
 }
@@ -167,6 +168,10 @@ export default function BillingWorkspaceTabs({
       </section>
     )}
     {section === 'medicalAid' && <section className="ct-billing-private-panel">{medicalAid}</section>}
+    {section === 'dayClose' && <BillingDayCloseLandingPage
+      openFinancial={() => goToSection('cashClose')}
+      openClaims={() => goToSection('aidClose')}
+    />}
     {section === 'cashClose' && <BillingCashDayClosePage isManager={isManager}/>}
     {section === 'aidClose' && <BillingMedicalAidDaySignoffPage/>}
 
