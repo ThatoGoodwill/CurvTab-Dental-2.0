@@ -133,3 +133,24 @@
 @media (max-width: 899px) {
   #root .app-shell { --ct-modal-nav: 0px; }
 }
+
+/* CT_NESTED_DIALOG_TRANSPARENT_BACKDROP_20261111
+   A smaller dialog opened inside an existing workspace must not add a
+   second grey/blurred curtain. The parent workspace remains visible. */
+html body #root .app-shell .ct-appointments-modal .ct-appt-booking-overlay,
+html body #root .app-shell .ct-module-popup-window .ct-guide-drawer-backdrop,
+html body #root .app-shell .ct-module-popup-window .ct-platform-recovery-overlay,
+html body #root .app-shell .ct-pv5-dialog .ct-guide-drawer-backdrop,
+html body #root .app-shell .ct-dir4-dialog .ct-guide-drawer-backdrop,
+html body #root .app-shell .ct-lab-floating-window .ct-guide-drawer-backdrop {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+}
+/* Keep appointment form fully opaque and legible over the calendar. */
+html body #root .app-shell .ct-appt-booking-dialog {
+  opacity: 1 !important;
+}
