@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Receipt } from 'lucide-react'
+import RandIcon from '../components/RandIcon'
 import './BillingClientGuide.css'
 
 const categories = ['Dental Supplies','Laboratory','Equipment','Utilities','Maintenance','Rent','Staff Costs','Other']
@@ -56,7 +56,7 @@ export default function BillingExpenseDrawer({ onClose, onRecorded }: {
   }
   return <div className="ct-guide-drawer-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)onClose()}}>
     <aside className="ct-guide-drawer" role="dialog" aria-modal="true" aria-label="Record daily expense">
-      <header><h3><Receipt size={18}/> Record Daily Expense</h3>
+      <header><h3><RandIcon size={18}/> Record Daily Expense</h3>
         <button type="button" className="secondary-button" disabled={busy} onClick={onClose}>Close ×</button></header>
       <p>One expense event shared by Billing and Finances. Do not enter already-posted laboratory payouts again.</p>
       {error && <p className="ct-guide-error" role="alert">{error}</p>}
