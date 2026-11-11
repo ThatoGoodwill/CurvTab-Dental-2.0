@@ -50,7 +50,7 @@ type HistoryRecord = {
 
 type PatientTab = 'Overview' | 'Treatment' | 'Consultations' | 'Medical Records' | 'Accounts' | 'Details' | 'Visit' | 'History'
 type Props = { role: string; onClose?: () => void; onOpenAppointments?: () => void; initialConsultationAppointmentId?: string | null; onConsultationOpened?: () => void }
-const tabs: PatientTab[] = ['Overview', 'Treatment', 'Consultations', 'Accounts', 'Details', 'Visit', 'History']
+const tabs: PatientTab[] = ['Overview', 'Treatment', 'Accounts', 'Details', 'Visit', 'History']
 
 function record(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -744,7 +744,6 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
                 ['Medical Records', 'Clinical history and allergies'],
                 ['Treatment Plan', 'Plan patient procedures'],
                 ['Clinical Notes & Encounters', 'Treatment notes and encounters'],
-                ['Consultations', 'Open this patient’s visits and clinical consultation editor'],
                 ['Clinical Images', 'Patient clinical images'],
                 ['Prescriptions', 'Review consultation prescription notes'],
               ] as const).map(([name, description]) => (
@@ -753,7 +752,7 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
                   type="button"
                   className="ct-pt-option"
                   onClick={() => {
-                    if (name === 'Consultations') { setTreatmentSection(null); setTab('Consultations') }
+                    if (name === 'Clinical Notes & Encounters') { setTreatmentSection(null); setTab('Consultations') }
                     else setTreatmentSection(name)
                   }}
                 >
