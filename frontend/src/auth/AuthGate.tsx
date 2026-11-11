@@ -112,7 +112,8 @@ function LoginScreen() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [recoveryLink] = useState(() => {
-    const qs = new URLSearchParams(window.location.search)
+    const hash = window.location.hash.startsWith('#reset-') ? window.location.hash.slice(1) : ''
+    const qs = new URLSearchParams(hash)
     return { email: qs.get('reset-email') || '', token: qs.get('reset-token') || '' }
   })
   const [recoveryMode, setRecoveryMode] = useState<'login' | 'request' | 'reset'>(
@@ -127,11 +128,7 @@ function LoginScreen() {
 
   useEffect(() => {
     if (!recoveryLink.token) return
-    const qs = new URLSearchParams(window.location.search)
-    qs.delete('reset-token')
-    qs.delete('reset-email')
-    const suffix = qs.toString()
-    window.history.replaceState(null, '', window.location.pathname + (suffix ? '?' + suffix : '') + window.location.hash)
+    window.history.replaceState(null, '', window.location.pathname + window.location.search)
   }, [recoveryLink.token])
 
   async function requestRecovery(event: FormEvent<HTMLFormElement>) {
