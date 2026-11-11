@@ -50,7 +50,6 @@ const initialList = ['New Assessments','Internal Referrals','Transfer-In Reviews
 
 export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
   const isManager = role === 'PracticeAdmin'
-  const isReception = role === 'Receptionist'
   const isDentist = role === 'Dentist'
   const [cases,setCases] = useState<Intake[]>([])
   const [clinicians,setClinicians] = useState<Clinician[]>([])
@@ -119,20 +118,26 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
       : c.status.toLowerCase().includes(lower))
   },[cases,filter])
 
-  async function run(action:()=>Promise<unknown>, successText:string) {
+  async function run(action:()=>Promise<unknown>, successText:string): Promise<boolean> {
     setWorking(true);setError('');setSuccess('')
-    try {await action();setSuccess(successText);setReload(i=>i+1)}
-    catch(cause) {setError(cause instanceof Error?cause.message:'Could not save orthodontic intake.')}
-    finally {setWorking(false)}
+    try {
+      await action()
+      setSuccess(successText)
+      setReload(i=>i+1)
+      return true
+    } catch(cause) {
+      setError(cause instanceof Error?cause.message:'Could not save orthodontic intake.')
+      return false
+    } finally {setWorking(false)}
   }
 
   async function create(event:FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if(!form.patientId) { setError('Select an existing patient first.');return }
-    await run(()=>apiRequest('/orthodontics/intakes','POST',{
+    const saved = await run(()=>apiRequest('/orthodontics/intakes','POST',{
       ...form,previousTreatmentStartDate:form.previousTreatmentStartDate||null
     }), 'Intake queued against the existing patient record. No treatment or payment was created.')
-    setView('queue')
+    if (saved) setView('queue')
   }
   async function inspect(item:Intake) {
     setSelected(item);setView('review');setError('');setSuccess('')
@@ -234,9 +239,10 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
           <select value={selected.assignedOrthodontistUserId??''} onChange={e=>{
             const value=e.target.value
             if (!value) return
-            run(()=>apiRequest('/orthodontics/intakes/'+selectedId+'/assign','PATCH',{orthodontistUserId:value}),
-              'Specialist assigned. Refresh to view updated queue.')
-            setSelected({...selected,assignedOrthodontistUserId:value})
+            void run(()=>apiRequest('/orthodontics/intakes/'+selectedId+'/assign','PATCH',{orthodontistUserId:value}),
+              'Specialist assigned. Refresh to view updated queue.').then(saved => {
+                if (saved) setSelected({...selected,assignedOrthodontistUserId:value})
+              })
           }}>
             <option value="">Select dentist</option>
             {clinicians.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
