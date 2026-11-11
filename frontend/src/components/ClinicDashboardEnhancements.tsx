@@ -17,6 +17,7 @@ type Props = {
   practiceName?: string | null
   onPrimaryAction: () => void
   showActivityCharts?: boolean
+  showKpis?: boolean
 }
 
 type AppointmentSnapshot = {
@@ -354,11 +355,11 @@ function PracticeActivityCharts({ role }: Pick<Props, 'role'>) {
   )
 }
 
-export default function ClinicDashboardEnhancements({ role, onPrimaryAction, showActivityCharts = true }: Props) {
+export default function ClinicDashboardEnhancements({ role, onPrimaryAction, showActivityCharts = true, showKpis = true }: Props) {
   return (
     <div className="ct-dashboard-enhancements">
       <DentalSlideshow role={role} onPrimaryAction={onPrimaryAction} />
-      <ClientDashboardKpis role={role} onPrimaryAction={onPrimaryAction} />
+      {showKpis && <ClientDashboardKpis role={role} onPrimaryAction={onPrimaryAction} />}
       {showActivityCharts && <PracticeActivityCharts role={role} />}
     </div>
   )
