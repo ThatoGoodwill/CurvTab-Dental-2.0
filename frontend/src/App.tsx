@@ -102,6 +102,7 @@ import './ThemeSurfaceFix20261111.css'
 import './ClientCompactDashboardAndButtons20261111.css'
 import './ClientDashboardSingleScreen20261111.css'
 import './ClientRequestedWorkflowPolish20261111.css'
+import './ClientWorkflowCorrections20261111.css'
 type Section =
   | 'Laboratory'
   | 'Dashboard' | 'Daily Patients' | 'Consultations' | 'Patient Medical Records' | 'Checkout & Payments' | 'Finance' | 'Audit Log' | 'Dental Charting' | 'Clinical Imaging' | 'Orthodontics'
