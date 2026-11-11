@@ -22,6 +22,7 @@ public class AuthController : ControllerBase
     private readonly IAuditService _audit;
     private readonly ICurrentUser _current;
     private readonly PasswordRecoveryMailService _recovery;
+    private readonly PasswordRecoveryTokenService _recoveryTokens;
     private readonly ILogger<AuthController> _logger;
 
     public AuthController(
@@ -31,6 +32,7 @@ public class AuthController : ControllerBase
         IAuditService audit,
         ICurrentUser current,
         PasswordRecoveryMailService recovery,
+        PasswordRecoveryTokenService recoveryTokens,
         ILogger<AuthController> logger)
     {
         _users = users;
@@ -39,6 +41,7 @@ public class AuthController : ControllerBase
         _audit = audit;
         _current = current;
         _recovery = recovery;
+        _recoveryTokens = recoveryTokens;
         _logger = logger;
     }
 
@@ -52,7 +55,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request, CancellationToken ct)
     {
         Response.Headers.CacheControl = "no-store";
-        if (!_recovery.IsConfigured)
+        if (!_recovery.IsConfigured || !_recoveryTokens.IsConfigured)
             return StatusCode(StatusCodes.Status503ServiceUnavailable,
                 new ProblemDetails { Status = 503, Title = "Password recovery email is not yet available. Contact your practice administrator." });
 
@@ -70,7 +73,7 @@ public class AuthController : ControllerBase
             {
                 try
                 {
-                    var token = await _users.GeneratePasswordResetTokenAsync(user);
+                    var token = _recoveryTokens.Generate(user);
                     var link = _recovery.BuildResetLink(user.Email!, token);
                     await _recovery.SendResetLinkAsync(user.Email!, link, ct);
                     await _audit.WriteAsync("AUTH_RECOVERY_LINK_REQUESTED",
@@ -108,7 +111,14 @@ public class AuthController : ControllerBase
         if (!practiceActive)
             return BadRequest(new ProblemDetails { Status = 400, Title = "The reset request is invalid or expired." });
 
-        var result = await _users.ResetPasswordAsync(user, request.Token, request.NewPassword);
+        if (!_recoveryTokens.Validate(user, request.Token))
+            return BadRequest(new ProblemDetails { Status = 400, Title = "The reset request is invalid or expired." });
+
+        // The persistent HMAC link is verified above. Mint a short-lived
+        // Identity token *now* for Identity's password-policy and stamp checks.
+        // No emailed token depends on Render's ephemeral data-protection keys.
+        var identityToken = await _users.GeneratePasswordResetTokenAsync(user);
+        var result = await _users.ResetPasswordAsync(user, identityToken, request.NewPassword);
         if (!result.Succeeded)
             return BadRequest(new ProblemDetails { Status = 400, Title = "The reset link is invalid or expired, or the new password does not meet security requirements." });
 
