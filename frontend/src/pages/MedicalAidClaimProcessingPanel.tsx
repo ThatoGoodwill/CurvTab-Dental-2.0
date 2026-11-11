@@ -74,7 +74,7 @@ const transitions: Record<string, string[]> = {
     'PartiallyApprovedReported',
     'RejectedReported',
   ],
-  RejectedReported: ['CorrectionApproved'],
+  RejectedReported: [], // Clinical correction is approved only by authenticated dentists.
   CorrectionApproved: ['ResubmittedExternallyReported'],
   ResubmittedExternallyReported: [
     'AcknowledgedReported','ApprovedReported',
@@ -398,7 +398,10 @@ export default function MedicalAidClaimProcessingPanel({
           )}
 
           {selected.status === 'RejectedReported' && <p className="ct-claims-info">
-            Rejection → verify the clinical source with the dentist, document the corrected code and evidence, obtain approval, then resubmit using a new attempt reference. No new claim or patient charge is created.
+            Rejection requires an authenticated dentist to open Clinical Claim Corrections,
+            verify the clinical record, enter the corrected code and record clinical approval.
+            Practice administrators cannot authorise this step. Once approved, record the
+            externally confirmed resubmission using the same claim and invoice.
           </p>}
           {canManage && nextStatuses.length > 0 && (
             <form className="ct-claims-form"
