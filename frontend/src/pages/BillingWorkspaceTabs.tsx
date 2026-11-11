@@ -57,7 +57,7 @@ const descriptions: Record<BillingSection, string> = {
   today: 'Real receipts, expenses and medical-aid activity at a glance.',
   cashPrivate: 'Checkout, receipts, invoices and payment records for private patients.',
   medicalAid: 'Claims, authorisations and scheme settlement records.',
-  dayClose: 'Independent financial reconciliation and medical aid review.',
+  dayClose: 'Separate cash reconciliation and medical aid claims review.',
   cashClose: 'Blind physical cash count with audited manager review.',
   aidClose: 'Daily scheme activity sign-off, separate from money received.',
 }
