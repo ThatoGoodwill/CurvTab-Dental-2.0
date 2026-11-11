@@ -67,6 +67,9 @@ export default function BillingWorkspaceTabs({
   checkout, invoices, plans, balances, medicalAid, ledger,
 }: Props) {
   const [cashTab, setCashTab] = useState<CashPrivateTab>('checkout')
+  const [closeDate, setCloseDate] = useState(() => new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Johannesburg', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date()))
   const [menuOpen, setMenuOpen] = useState(false)
   const [expenseOpen, setExpenseOpen] = useState(false)
   const [reload, setReload] = useState(0)
@@ -169,11 +172,13 @@ export default function BillingWorkspaceTabs({
     )}
     {section === 'medicalAid' && <section className="ct-billing-private-panel">{medicalAid}</section>}
     {section === 'dayClose' && <BillingDayCloseLandingPage
+      businessDate={closeDate}
+      onBusinessDateChange={setCloseDate}
       openFinancial={() => goToSection('cashClose')}
       openClaims={() => goToSection('aidClose')}
     />}
-    {section === 'cashClose' && <BillingCashDayClosePage isManager={isManager}/>}
-    {section === 'aidClose' && <BillingMedicalAidDaySignoffPage/>}
+    {section === 'cashClose' && <BillingCashDayClosePage businessDate={closeDate} isManager={isManager}/>}
+    {section === 'aidClose' && <BillingMedicalAidDaySignoffPage businessDate={closeDate}/>} 
 
     {expenseOpen && <BillingExpenseDrawer
       onClose={() => setExpenseOpen(false)}
