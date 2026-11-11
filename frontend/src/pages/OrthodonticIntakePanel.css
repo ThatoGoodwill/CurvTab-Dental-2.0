@@ -127,3 +127,10 @@
 @media(max-width:550px) {
  .ct-ortho-intake-doc-form,.ct-ortho-intake-payment {grid-template-columns:1fr;}
 }
+
+.ct-ortho-review-tabs {display:flex;flex-wrap:wrap;gap:5px;padding:5px;border:1px solid var(--border,#d6e4ee);border-radius:8px;background:var(--surface-soft,#f2f6fb)}
+.ct-ortho-review-tabs button {border:1px solid transparent;border-radius:7px;background:transparent;color:var(--text,#24415b);font-weight:650;font-size:11px;padding:6px 11px}
+.ct-ortho-review-tabs button.is-active {background:var(--practice-primary,#216ad4);color:#fff}
+.ct-ortho-intake-details details {margin:8px 0;border-top:1px solid var(--border,#d9e4ef);padding:7px 0}
+.ct-ortho-intake-details details summary {font-weight:750;cursor:pointer}
+.ct-ortho-intake-details details p {white-space:pre-wrap;overflow-wrap:anywhere}
