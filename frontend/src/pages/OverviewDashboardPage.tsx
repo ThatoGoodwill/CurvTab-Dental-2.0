@@ -67,6 +67,7 @@ type Dated = OverviewAppointment & { start: Date; end: Date }
 type ViewProps = {
   fullName: string
   practiceName: string | null
+  role?: 'PracticeAdmin' | 'Receptionist'
   now: Date
   appointments: OverviewAppointment[]
   patientTotal: number | null
@@ -197,7 +198,7 @@ export function OverviewDashboardView(props: ViewProps) {
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}>
         <div className="ov-carousel-heading-copy">
-          <span className="ov-carousel-eyebrow">PRACTICE OPERATIONS · LIVE DATA</span>
+          <span className="ov-carousel-eyebrow">{props.role === 'Receptionist' ? 'FRONT DESK · LIVE DATA' : 'PRACTICE MANAGEMENT · LIVE DATA'}</span>
           <h2>{panelNames[panel]}</h2>
           <p>Live practice reports, smoothly changing every 2 seconds. Hover or focus to pause.</p>
         </div>
@@ -373,6 +374,7 @@ export function OverviewDashboardView(props: ViewProps) {
 type Props = {
   fullName: string
   practiceName: string | null
+  role?: 'PracticeAdmin' | 'Receptionist'
   onNewAppointment: () => void
   onOpenQueue: () => void
   onOpenCheckout: () => void
