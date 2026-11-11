@@ -775,7 +775,15 @@ export default function PatientsPage({
                 <p>Enter the patient's information. An ID number is not required.</p>
 
 
-                <div className="ct-wizard-grid">
+                <div className="ct-wizard-grid ct-patient-personal-grid">
+                  <label className="ct-reg-label ct-personal-title">
+                    Title
+                    <select value={registrationExtras.title}
+                      onChange={event => setRegistrationExtras(value => ({...value, title:event.target.value}))}>
+                      <option value="">Select title</option>
+                      {['Mr','Mrs','Ms','Miss','Mx','Dr','Prof'].map(title => <option key={title}>{title}</option>)}
+                    </select>
+                  </label>
                   <label style={labelStyle}>
                     First name *
                     <input
@@ -794,6 +802,12 @@ export default function PatientsPage({
                       value={form.lastName}
                       onChange={event => updateField('lastName', event.target.value)}
                     />
+                  </label>
+
+                  <label className="ct-reg-label ct-personal-middle">
+                    Middle name(s) (optional)
+                    <input maxLength={200} value={registrationExtras.middleNames}
+                      onChange={event => setRegistrationExtras(value => ({...value, middleNames:event.target.value}))}/>
                   </label>
 
                   <div className="ct-wizard-dob-row">
@@ -855,6 +869,14 @@ export default function PatientsPage({
                       <option value="Female">Female</option>
                       <option value="Other">Other</option>
                       <option value="Prefer not to say">Prefer not to say</option>
+                    </select>
+                  </label>
+                  <label className="ct-reg-label ct-personal-pronouns">
+                    Preferred pronouns (optional)
+                    <select value={registrationExtras.pronouns}
+                      onChange={event => setRegistrationExtras(value => ({...value, pronouns:event.target.value}))}>
+                      {['','He / Him','She / Her','They / Them','Other','Prefer not to say'].map(option =>
+                        <option key={option} value={option}>{option || 'Not specified'}</option>)}
                     </select>
                   </label>
                 </div>
