@@ -6,6 +6,7 @@ using CurvTabDental.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace CurvTabDental.API.Controllers;
 
@@ -164,10 +165,51 @@ public class PatientsController : ControllerBase
             });
         }
 
+        // An orthodontic classification is intake routing, not a treatment
+        // plan. Create ONE linked queue record in the SAME transaction as the
+        // existing patient registration; no extra patient or invoice is made.
+        var orthodonticRequested = false;
+        if (request.Registration?.ProfileJson is { Length: > 0 } profileJson)
+        {
+            try
+            {
+                using var profile = JsonDocument.Parse(profileJson);
+                orthodonticRequested = profile.RootElement.ValueKind == JsonValueKind.Object &&
+                    profile.RootElement.TryGetProperty("orthodonticPatient", out var flag) &&
+                    flag.ValueKind == JsonValueKind.True;
+            }
+            catch (JsonException)
+            {
+                return BadRequest(new { title = "The patient registration profile is invalid JSON." });
+            }
+        }
+        OrthodonticIntakeCase? intake = null;
+        if (orthodonticRequested && _current.UserId is Guid intakeCreator)
+        {
+            intake = new OrthodonticIntakeCase
+            {
+                DentalPracticeId = practiceId,
+                PatientId = patient.Id,
+                CreatedByUserId = intakeCreator,
+                Source = "DIRECT",
+                Status = "RECORDS_PENDING",
+                AdvancePolicy = "STANDARD_R2500",
+                MissingDocumentsJson = "[\"Orthodontic assessment records\",\"Clinical history verification\",\"Guardian/payer review\",\"Approved intake terms\"]",
+                TermsApplicable = true,
+                NextAction = "Assign an orthodontist and verify records; no fee is charged until terms and payment are authorized.",
+                CreatedAtUtc = now,
+                UpdatedAtUtc = now
+            };
+            _db.OrthodonticIntakes.Add(intake);
+        }
+
         _db.Patients.Add(patient);
         await _db.SaveChangesAsync(ct);
 
         await _audit.WriteAsync("PATIENT_CREATED", "Patient", patient.Id.ToString(), ct: ct);
+        if (intake is not null)
+            await _audit.WriteAsync("ORTHODONTIC_INTAKE_QUEUED", "OrthodonticIntakeCase",
+                intake.Id.ToString(), detail: "source=DIRECT;no_payment_created", ct: ct);
         return CreatedAtAction(nameof(Get), new { id = patient.Id }, ToDto(patient, _current.Role));
     }
 
