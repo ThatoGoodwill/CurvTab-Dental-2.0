@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Banknote, CreditCard, Landmark, Receipt, RefreshCw } from 'lucide-react'
+import { ArrowDownToLine, Wallet, CreditCard, Landmark, Receipt, RefreshCw } from 'lucide-react'
 import './BillingLedgerPanel.css'
 
 type PaymentRow = {
@@ -190,7 +190,7 @@ export default function BillingLedgerPanel() {
         <>
           <div className="ct-billing-kpis">
             <article>
-              <Banknote size={21}/>
+              <Wallet size={21}/>
               <span>Actual cash &amp; card receipts</span>
               <strong>{money(ledger.cashReceived + ledger.cardReceived)}</strong>
             </article>
@@ -200,7 +200,7 @@ export default function BillingLedgerPanel() {
               <strong>{money(ledger.eftReceived)}</strong>
             </article>
             <article>
-              <Banknote size={21}/>
+              <ArrowDownToLine size={21}/>
               <span>Cash received</span>
               <strong>{money(ledger.cashReceived)}</strong>
             </article>
