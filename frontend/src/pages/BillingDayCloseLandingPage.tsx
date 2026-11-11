@@ -28,6 +28,15 @@ const todaySA = () => new Intl.DateTimeFormat('en-CA', {
   timeZone: 'Africa/Johannesburg', year: 'numeric', month: '2-digit', day: '2-digit',
 }).format(new Date())
 
+function financialStatus(status?: string) {
+  if (!status) return 'Unavailable'
+  if (status === 'CorrectionRequired') return 'Discrepancy — manager review required'
+  if (status === 'Approved') return 'Cash count approved'
+  if (status === 'Submitted') return 'Cash count submitted'
+  if (status === 'Open') return 'Open — count not submitted'
+  return status.replace(/([a-z])([A-Z])/g, '$1 $2')
+}
+
 const money = (amount: number) =>
   new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(amount)
 
@@ -89,7 +98,7 @@ export default function BillingDayCloseLandingPage({ businessDate: date, onBusin
     <div className="ct-guide-day-close-grid">
       <article className="ct-guide-day-close-card">
         <div className="ct-guide-day-close-card-title"><ClipboardCheck size={20}/><h3>Financial Reconciliation</h3></div>
-        <p className="ct-guide-status">Status: {loading ? 'Loading…' : financial?.status ?? 'Unavailable'}</p>
+        <p className="ct-guide-status">Status: {loading ? 'Loading…' : financialStatus(financial?.status)}</p>
         <p>Physical blind cash count, card and EFT evidence, expenses, variance and manager exceptions.</p>
         <div className="ct-guide-day-close-card-total"><RandIcon size={18}/><strong>
           {ledger ? money(ledger.totalReceived) : '—'}
