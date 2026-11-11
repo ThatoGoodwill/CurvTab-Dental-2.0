@@ -305,3 +305,62 @@
 @media (prefers-reduced-motion: reduce) {
   .ct-billing-menu-trigger svg:last-child { transition: none; }
 }
+
+/* CT_BILLING_MENU_LEFT_COMPACT_20261111
+   All Billing sits at the left immediately beneath its heading, like All Accounts.
+   Private cash/account views are a compact local select, not main-menu duplicates. */
+.ct-billing-client-module .ct-billing-compact-header {
+  display: block; margin: 0; padding: 0; border-bottom: 0;
+}
+.ct-billing-client-module .ct-billing-compact-title { width: 100%; flex: none; }
+.ct-billing-client-module .ct-billing-navigation-row {
+  position: relative; z-index: 20; display: flex;
+  justify-content: flex-start; align-items: center;
+  gap: 9px; min-height: 30px; padding: 0 0 9px;
+  border-bottom: 1px solid var(--border, rgba(136,162,195,.25));
+}
+.ct-billing-client-module .ct-billing-menu-tools {
+  display: inline-flex; justify-content: flex-start;
+  margin: 0 !important; flex: 0 0 auto;
+}
+.ct-billing-client-module .ct-billing-menu {
+  top: calc(100% + 5px); left: 0; right: auto;
+  width: min(244px, calc(100vw - 32px));
+  max-height: min(270px, 62dvh);
+  padding: 5px; gap: 2px;
+}
+.ct-billing-client-module .ct-billing-menu-item {
+  min-height: 30px !important; font-size: 11px !important;
+  padding: 6px 8px !important;
+}
+.ct-billing-client-module .ct-billing-current {
+  display: inline-flex; max-width: min(280px, 48vw);
+  padding: 5px 9px; border-radius: 7px;
+}
+.ct-billing-client-module .ct-billing-private-panel {
+  display: grid; gap: 9px; min-width: 0;
+}
+.ct-billing-client-module .ct-billing-private-picker {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 9px; border: 1px solid var(--border, rgba(136,162,195,.28));
+  border-radius: 8px; background: var(--surface, transparent);
+  width: fit-content; max-width: 100%;
+}
+.ct-billing-client-module .ct-billing-private-picker label {
+  font-size: 11px; font-weight: 700; color: var(--muted, inherit);
+}
+.ct-billing-client-module .ct-billing-private-picker select {
+  min-width: 155px; max-width: min(250px, 65vw);
+  min-height: 29px; padding: 5px 9px;
+  font-size: 11px; font-weight: 650; color: inherit;
+  background: var(--surface-soft, var(--surface, transparent));
+  border: 1px solid var(--border, rgba(136,162,195,.3));
+  border-radius: 6px; cursor: pointer;
+}
+.ct-billing-client-module .ct-billing-menu-trigger { min-height: 29px !important; }
+@media (max-width: 480px) {
+  .ct-billing-client-module .ct-billing-navigation-row { gap: 7px; }
+  .ct-billing-client-module .ct-billing-current {
+    max-width: calc(100vw - 190px); font-size: 10px;
+  }
+}
