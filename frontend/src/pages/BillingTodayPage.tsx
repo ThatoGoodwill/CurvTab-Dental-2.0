@@ -59,6 +59,9 @@ export default function BillingTodayPage() {
   useEffect(() => {
     let active = true
     setBusy(true)
+    setLedger(null)
+    setExpenses(null)
+    setAid(null)
     Promise.allSettled([
       get<Ledger>(`/api/finance/ledger?${period(date)}`),
       get<ExpenseSummary>(`/api/finance/operations?date=${date}`),
