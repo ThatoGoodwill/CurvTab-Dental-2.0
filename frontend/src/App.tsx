@@ -831,7 +831,6 @@ export default function App() {
   } as CSSProperties) : undefined
 
   const [section, setSection] = useState<Section>('Dashboard')
-  const [showDetailedDashboard, setShowDetailedDashboard] = useState(false)
   const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -1369,18 +1368,14 @@ export default function App() {
             />
           )}
           {section === 'Dashboard' && showOverview && (
-            <details className="ct-dashboard-details"
-              onToggle={event => setShowDetailedDashboard(event.currentTarget.open)}>
-              <summary>Detailed calendar, queue and appointment reports</summary>
-              {showDetailedDashboard && <OverviewDashboardPage
-                fullName={user?.fullName ?? ''}
-                practiceName={user?.practiceName ?? null}
-                onNewAppointment={() => openAppointmentTab('Appointments')}
-                onOpenQueue={() => openAppointmentTab('In Queue')}
-                onOpenCheckout={() => navigate('Billing')}
-                onOpenPatients={() => navigate('Patients')}
-              />}
-            </details>
+            <OverviewDashboardPage
+              fullName={user?.fullName ?? ''}
+              practiceName={user?.practiceName ?? null}
+              onNewAppointment={() => openAppointmentTab('Appointments')}
+              onOpenQueue={() => openAppointmentTab('In Queue')}
+              onOpenCheckout={() => navigate('Billing')}
+              onOpenPatients={() => navigate('Patients')}
+            />
           )}
           {section === 'Dashboard' && role !== 'Dentist' && !showOverview && (
             <>
