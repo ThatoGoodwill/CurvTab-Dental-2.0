@@ -1,0 +1,228 @@
+/* Client-requested compact controls and cohesive dashboard, 11 Nov 2026.
+   Uses existing theme tokens; leaves form inputs, sidebar and mobile touch
+   controls independent. No fake data or changed business actions. */
+
+/* Standard desktop actions across the practice, billing and staff modules. */
+@media (min-width: 700px) {
+  #root .app-shell :is(.primary-button,.secondary-button,.ct-hero-action) {
+    min-height: 30px !important;
+    padding: 5px 11px !important;
+    gap: 6px !important;
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+    border-radius: 7px !important;
+    width: fit-content;
+    max-width: 100%;
+  }
+  #root .app-shell :is(.primary-button,.secondary-button,.ct-hero-action) svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+  #root .app-shell :is(.ct-module-popup-close,.ct-guide-heading-tools button,.ct-employee-tabs button,.ct-guide-day-close-card button,.ct-financial-evidence button,.ct-employee-workspace button) {
+    font-size: 11px !important;
+    line-height: 1.3;
+    border-radius: 7px !important;
+  }
+  #root .app-shell :is(.ct-guide-day-close-card,.ct-financial-method-grid article) > .primary-button {
+    align-self: flex-start !important;
+    justify-self: start !important;
+    width: auto !important;
+    min-width: 0 !important;
+    padding: 6px 12px !important;
+  }
+  /* Non-primary application utilities also follow the compact sizing. */
+  #root .app-shell :is(.client-kpis-toolbar button,.ct-refresh,.ct-period button,.ct-employee-tabs button) {
+    min-height: 29px !important;
+    padding: 5px 9px !important;
+    font-size: 11px !important;
+    border-radius: 7px !important;
+  }
+  #root .app-shell .ct-refresh {
+    width: 32px !important;
+    height: 32px !important;
+    padding: 5px !important;
+  }
+  #root .app-shell .ct-guide-day-close-card {
+    padding: 13px !important;
+    gap: 9px !important;
+  }
+  #root .app-shell .ct-guide-day-close-card-title h3 { font-size: 13px !important; }
+  #root .app-shell .ct-guide-day-close-card-total strong { font-size: 18px !important; }
+  #root .app-shell .ct-guide-day-close-grid { gap: 10px !important; }
+}
+
+/* One coherent dashboard column, not an endless oversized marketing page. */
+#root .app-shell .main-content:has(> .ct-dashboard-enhancements) {
+  width: 100% !important;
+  max-width: 1180px !important;
+  margin-inline: auto !important;
+  padding: clamp(12px,1.4vw,19px) !important;
+  box-sizing: border-box !important;
+  gap: 0 !important;
+}
+#root .app-shell .main-content > .ct-dashboard-enhancements {
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  margin: 0 !important;
+}
+#root .app-shell .ct-dashboard-enhancements > .ct-hero {
+  min-height: 172px !important;
+  height: 172px !important;
+  border-radius: 13px !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  grid-template-columns: minmax(0, 1.28fr) minmax(180px, .72fr);
+}
+#root .app-shell .ct-dashboard-enhancements .ct-hero-copy {
+  padding: 17px 22px 40px !important;
+  justify-content: center;
+}
+#root .app-shell .ct-dashboard-enhancements .ct-hero h2 {
+  font-size: clamp(21px,2.3vw,29px) !important;
+  line-height: 1.1 !important;
+  margin: 8px 0 7px !important;
+  max-width: 460px;
+}
+#root .app-shell .ct-dashboard-enhancements .ct-hero p {
+  font-size: 11px !important;
+  line-height: 1.45 !important;
+  margin: 0 0 9px !important;
+  max-width: 440px;
+}
+#root .app-shell .ct-dashboard-enhancements .ct-hero-eyebrow {
+  font-size: 9px !important;
+  letter-spacing: .11em !important;
+}
+#root .app-shell .ct-dashboard-enhancements .ct-hero-art {
+  min-height: 0 !important;
+  height: 172px !important;
+}
+#root .app-shell .ct-dashboard-enhancements .ct-hero-controls {
+  bottom: 9px !important;
+  left: 22px !important;
+  gap: 7px !important;
+}
+#root .app-shell .ct-dashboard-enhancements .ct-hero-controls > button {
+  width: 24px !important;
+  height: 24px !important;
+}
+#root .app-shell .ct-dashboard-enhancements .client-kpis {
+  margin: 0 !important;
+}
+#root .app-shell .ct-dashboard-enhancements .client-kpis-toolbar {
+  margin: 0 0 8px !important;
+  font-size: 11px !important;
+}
+#root .app-shell .ct-dashboard-enhancements .client-kpis-grid {
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: 10px !important;
+}
+#root .app-shell .ct-dashboard-enhancements .client-kpi {
+  min-height: 70px !important;
+  padding: 10px 12px !important;
+  gap: 9px !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+#root .app-shell .ct-dashboard-enhancements .client-kpi-icon {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 9px !important;
+}
+#root .app-shell .ct-dashboard-enhancements .client-kpi-icon svg {
+  width: 17px !important; height: 17px !important;
+}
+#root .app-shell .ct-dashboard-enhancements .client-kpi-label {
+  font-size: 10px !important; line-height: 1.3 !important;
+}
+#root .app-shell .ct-dashboard-enhancements .client-kpi-value {
+  font-size: 21px !important; line-height: 1 !important;
+}
+#root .app-shell .ct-dashboard-enhancements .client-kpi-text {
+  gap: 4px !important;
+}
+#root .app-shell .ct-dashboard-enhancements .ct-analytics {
+  margin: 0 !important;
+  min-width: 0;
+}
+#root .app-shell .ct-dashboard-enhancements .ct-chart-grid {
+  grid-template-columns: minmax(0,1.18fr) minmax(0,1fr) !important;
+  gap: 10px !important;
+}
+#root .app-shell .ct-dashboard-enhancements .ct-chart-card {
+  padding: 13px 15px !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+  min-width: 0;
+}
+#root .app-shell .ct-dashboard-enhancements .ct-chart-card h3 {
+  font-size: 12px !important;
+}
+#root .app-shell .ct-dashboard-enhancements .ct-chart-card p {
+  font-size: 10px !important;
+}
+#root .app-shell .ct-dashboard-enhancements .ct-bars {
+  height: 118px !important; gap: 7px !important; margin-top: 10px !important;
+}
+#root .app-shell .ct-dashboard-enhancements .ct-donut-wrap {
+  min-height: 148px !important;
+  gap: 14px !important;
+}
+#root .app-shell .ct-dashboard-enhancements .ct-donut {
+  width: 120px !important; height: 120px !important;
+}
+#root .app-shell .ct-dashboard-enhancements .ct-donut > div {
+  width: 87px !important; height: 87px !important;
+}
+#root .app-shell .ct-dashboard-enhancements .ct-donut strong {
+  font-size: 22px !important;
+}
+#root .app-shell .ct-dashboard-enhancements .ct-chart-number {
+  font-size: 22px !important;
+}
+#root .app-shell .ct-dashboard-enhancements .ct-analytics-heading {
+  margin: 0 0 7px !important;
+}
+#root .app-shell .ct-dashboard-enhancements .ct-period {
+  padding: 2px !important;
+}
+/* Retain keyboard focus and readable controls; never shrink touch UIs on phones. */
+@media (max-width: 1050px) {
+  #root .app-shell .ct-dashboard-enhancements .client-kpis-grid {
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+  }
+  #root .app-shell .ct-dashboard-enhancements .ct-chart-grid {
+    grid-template-columns: minmax(0,1fr) !important;
+  }
+}
+@media (max-width: 699px) {
+  #root .app-shell .ct-dashboard-enhancements > .ct-hero {
+    height: auto !important; min-height: 0 !important;
+    grid-template-columns: minmax(0,1fr) !important;
+  }
+  #root .app-shell .ct-dashboard-enhancements .ct-hero-copy {
+    padding: 16px 17px 43px !important;
+  }
+  #root .app-shell .ct-dashboard-enhancements .ct-hero-art {
+    display: none;
+  }
+  #root .app-shell .ct-dashboard-enhancements .client-kpis-grid {
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+  }
+  #root .app-shell .ct-dashboard-enhancements .client-kpi {
+    padding: 9px !important; gap: 6px !important;
+  }
+  #root .app-shell .ct-dashboard-enhancements .client-kpi-icon {
+    width: 29px !important; height: 29px !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #root .app-shell .ct-dashboard-enhancements .ct-hero-copy,
+  #root .app-shell .ct-dashboard-enhancements .ct-hero-art {
+    animation: none !important;
+  }
+}
