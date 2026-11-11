@@ -11,6 +11,7 @@ import LiveClinicNotifications from './components/LiveClinicNotifications'
 import ClinicDashboardEnhancements from './components/ClinicDashboardEnhancements'
 import './CurvTabVisualUpgrade.css'
 import OrthodonticsPage from './pages/OrthodonticsPage'
+import OrthodonticIntakePanel from './pages/OrthodonticIntakePanel'
 import BillingLedgerPanel from './pages/BillingLedgerPanel'
 import './ClientThemeChoice.css'
 import AuditLogPage from './pages/AuditLogPage'
@@ -1205,6 +1206,10 @@ export default function App() {
               onClick={() => navigate('Laboratory')}><FlaskConical size={19}/><span>Lab</span></button>
           )}
           {role === 'PracticeAdmin' && (
+            <button type="button" className={section === 'Orthodontics' ? 'nav-item nav-active' : 'nav-item'}
+              onClick={() => navigate('Orthodontics')}><Stethoscope size={19}/><span>Orthodontic Intake</span></button>
+          )}
+          {role === 'PracticeAdmin' && (
             <button type="button" className={section === 'Management' ? 'nav-item nav-active' : 'nav-item'}
               onClick={() => navigate('Management')}><CtManagementIcon size={19}/><span>Staff Management</span></button>
           )}
@@ -1562,6 +1567,7 @@ export default function App() {
               role={role}
               onClose={() => navigate('Dashboard')}
               onOpenAppointments={() => openAppointmentTab('Appointments')}
+              onOpenOrthodonticIntake={() => navigate('Orthodontics')}
               initialConsultationAppointmentId={selectedConsultationId}
               onConsultationOpened={() => setSelectedConsultationId(null)}
             />
@@ -1676,6 +1682,8 @@ export default function App() {
             <ClinicalImagingPage />
           )}
           {section === 'Orthodontics' && role === 'Dentist' && <OrthodonticsPage />}
+          {section === 'Orthodontics' && (role === 'PracticeAdmin' || role === 'Receptionist') &&
+            <OrthodonticIntakePanel role={role} />}
 
           {/* PRACTICE SETTINGS — ONLY PracticeAdmin */}
           {section === 'Practice Settings' && canManageStaff && (
@@ -1719,7 +1727,7 @@ export default function App() {
             (section === 'Workspace' && isSuperAdmin) ||
             (section === 'Clinical Claim Corrections' && role !== 'Dentist') ||
             (section === 'Clinical Imaging' && role !== 'Dentist') ||
-            (section === 'Orthodontics' && role !== 'Dentist') ||
+            (section === 'Orthodontics' && !['Dentist','PracticeAdmin','Receptionist'].includes(role)) ||
             (section === 'Billing' && role !== 'Receptionist' && role !== 'PracticeAdmin') ||
             (section === 'Finance' && role !== 'Finance' && role !== 'PracticeAdmin') ||
             (section === 'Daily Patients' && role !== 'Dentist') ||
