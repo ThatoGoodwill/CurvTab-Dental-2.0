@@ -302,3 +302,30 @@
 #root .app-shell .ct-employee-empty button {
   justify-self: start;
 }
+
+/* Staff Management stays focused on the directory until HR tasks are needed. */
+#root .app-shell .ct-staff-hr-details {
+  margin: 10px 0;
+  border: 1px solid var(--border,#dbe5ef);
+  border-radius: 9px;
+  background: var(--surface,#fff);
+}
+#root .app-shell .ct-staff-hr-details > summary {
+  cursor: pointer;
+  padding: 10px 13px;
+  font-size: 12px;
+  font-weight: 700;
+}
+#root .app-shell .ct-staff-hr-details > .ct-employee-management {
+  padding: 12px;
+  border-top: 1px solid var(--border,#dbe5ef);
+}
+#root .app-shell .ct-staff-hr-details .ct-employee-form {
+  padding: 11px !important;
+  max-width: none !important;
+}
+#root .app-shell .ct-employee-workspace :is(input,select,textarea) {
+  min-height: 30px;
+  box-sizing: border-box;
+  font-size: 11px;
+}
