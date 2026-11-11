@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Banknote, ClipboardCheck, Plus, RefreshCw } from 'lucide-react'
+import { ArrowDownToLine, ArrowUpFromLine, ClipboardCheck, Plus, RefreshCw } from 'lucide-react'
 import './FinanceOperationsPanel.css'
 
 type Expense = {
@@ -237,13 +237,13 @@ export default function FinanceOperationsPanel({
         <>
           <div className="ct-finance-cards">
             <article>
-              <Banknote size={20}/>
+              <ArrowDownToLine size={20}/>
               <span>Cash receipts</span>
               <strong>{money(summary.cashReceived)}</strong>
               <small>{summary.cashReceiptCount} recorded payments</small>
             </article>
             <article>
-              <Banknote size={20}/>
+              <ArrowUpFromLine size={20}/>
               <span>Cash expenses</span>
               <strong>{money(summary.cashExpenses)}</strong>
               <small>{summary.cashExpenseCount} cash expenses</small>
