@@ -1941,6 +1941,27 @@ namespace CurvTabDental.Infrastructure.Migrations
                     b.ToTable("OrthodonticCases");
                 });
 
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.OrthodonticIntakeDocument", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<Guid>("DentalPracticeId").HasColumnType("uuid");
+                    b.Property<Guid>("PatientId").HasColumnType("uuid");
+                    b.Property<Guid>("IntakeId").HasColumnType("uuid");
+                    b.Property<Guid>("UploadedByUserId").HasColumnType("uuid");
+                    b.Property<string>("Category").IsRequired().HasMaxLength(40).HasColumnType("character varying(40)");
+                    b.Property<string>("OriginalFileName").IsRequired().HasMaxLength(200).HasColumnType("character varying(200)");
+                    b.Property<string>("ContentType").IsRequired().HasMaxLength(70).HasColumnType("character varying(70)");
+                    b.Property<long>("SizeBytes").HasColumnType("bigint");
+                    b.Property<string>("Sha256").IsRequired().HasMaxLength(64).HasColumnType("character varying(64)");
+                    b.Property<byte[]>("Content").IsRequired().HasColumnType("bytea");
+                    b.Property<DateTime>("UploadedAtUtc").HasColumnType("timestamp with time zone");
+                    b.HasKey("Id");
+                    b.HasIndex("IntakeId");
+                    b.HasIndex("PatientId");
+                    b.HasIndex("DentalPracticeId", "IntakeId", "UploadedAtUtc");
+                    b.ToTable("OrthodonticIntakeDocuments");
+                });
+
             modelBuilder.Entity("CurvTabDental.Domain.Entities.OrthodonticIntakeCase", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2162,6 +2183,20 @@ namespace CurvTabDental.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("OrthodonticInstallments");
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.OrthodonticIntakeDocument", b =>
+                {
+                    b.HasOne("CurvTabDental.Domain.Entities.OrthodonticIntakeCase", null)
+                        .WithMany()
+                        .HasForeignKey("IntakeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                    b.HasOne("CurvTabDental.Domain.Entities.Patient", null)
+                        .WithMany()
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("CurvTabDental.Domain.Entities.OrthodonticIntakeCase", b =>
