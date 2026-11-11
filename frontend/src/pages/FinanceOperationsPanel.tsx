@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { ArrowDownToLine, ArrowUpFromLine, ClipboardCheck, Plus, RefreshCw } from 'lucide-react'
+import { ClipboardCheck, Plus, RefreshCw } from 'lucide-react'
+import RandIcon from '../components/RandIcon'
 import './FinanceOperationsPanel.css'
 
 type Expense = {
@@ -237,13 +238,13 @@ export default function FinanceOperationsPanel({
         <>
           <div className="ct-finance-cards">
             <article>
-              <ArrowDownToLine size={20}/>
+              <RandIcon size={20}/>
               <span>Cash receipts</span>
               <strong>{money(summary.cashReceived)}</strong>
               <small>{summary.cashReceiptCount} recorded payments</small>
             </article>
             <article>
-              <ArrowUpFromLine size={20}/>
+              <RandIcon size={20}/>
               <span>Cash expenses</span>
               <strong>{money(summary.cashExpenses)}</strong>
               <small>{summary.cashExpenseCount} cash expenses</small>
