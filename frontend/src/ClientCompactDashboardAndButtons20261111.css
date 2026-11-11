@@ -329,3 +329,61 @@
   box-sizing: border-box;
   font-size: 11px;
 }
+
+/* Client's prominent / approaching dashboard request.
+   Depth belongs to the hero and small activity cards, never to patient forms. */
+#root .app-shell .ct-dashboard-enhancements > .ct-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid var(--border,#dce7f5) !important;
+  box-shadow: 0 8px 18px rgba(26,78,146,.11),0 2px 5px rgba(26,78,146,.06) !important;
+  transform-origin: center 70%;
+  animation: ct-dashboard-enter .7s cubic-bezier(.22,.85,.22,1) both;
+  transition: transform .38s cubic-bezier(.19,.8,.25,1),box-shadow .38s ease;
+}
+#root .app-shell .ct-dashboard-enhancements > .ct-hero:hover,
+#root .app-shell .ct-dashboard-enhancements > .ct-hero:focus-within {
+  transform: perspective(1200px) translateY(-3px) scale(1.012);
+  box-shadow: 0 17px 34px rgba(20,80,154,.18),0 4px 10px rgba(20,80,154,.06) !important;
+}
+#root .app-shell .ct-dashboard-enhancements .ct-hero-art img {
+  object-fit: cover;
+  object-position: center;
+  transform: scale(1.06);
+  transition: transform .8s cubic-bezier(.2,.85,.2,1);
+}
+#root .app-shell .ct-dashboard-enhancements .ct-hero:hover .ct-hero-art img {
+  transform: scale(1.13) translateX(-1%);
+}
+#root .app-shell .ct-dashboard-enhancements .client-kpi {
+  transform: none;
+  transition: transform .27s ease,box-shadow .27s ease,border-color .27s ease;
+}
+#root .app-shell .ct-dashboard-enhancements .client-kpi:hover,
+#root .app-shell .ct-dashboard-enhancements .client-kpi:focus-within {
+  transform: perspective(950px) translateY(-4px) scale(1.02) !important;
+  box-shadow: 0 13px 25px rgba(25,83,153,.13) !important;
+  border-color: var(--practice-accent,#bdd8f6) !important;
+}
+#root .app-shell .ct-dashboard-enhancements .ct-chart-card:hover {
+  transform: perspective(950px) translateY(-3px) scale(1.008) !important;
+  box-shadow: 0 13px 27px rgba(25,83,153,.11) !important;
+}
+@keyframes ct-dashboard-enter {
+  from { opacity: .25; transform: perspective(1300px) translateY(19px) scale(.97); }
+  to { opacity: 1; transform: perspective(1300px) translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #root .app-shell .ct-dashboard-enhancements > .ct-hero {
+    animation: none !important; transition: none !important;
+  }
+  #root .app-shell .ct-dashboard-enhancements > .ct-hero:hover,
+  #root .app-shell .ct-dashboard-enhancements .client-kpi:hover,
+  #root .app-shell .ct-dashboard-enhancements .ct-chart-card:hover {
+    transform: none !important;
+  }
+  #root .app-shell .ct-dashboard-enhancements .ct-hero-art img {
+    transform: none !important; transition: none !important;
+  }
+}
