@@ -1,0 +1,153 @@
+/* CurvTab client refinements — remove duplicated dashboard content and reveal
+   complete charts. Use scoped overrides instead of changing shared theme rules. */
+#root .app-shell .main-content:has(> .ov) > .ct-dashboard-enhancements {
+  flex: 0 0 auto !important;
+}
+@media (min-width: 900px) {
+  #root .app-shell .workspace > .main-content:has(> .ct-dashboard-enhancements):has(> .ov) {
+    height: auto !important;
+    max-height: calc(100dvh - 80px) !important;
+    min-height: min(560px, calc(100dvh - 85px)) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    scrollbar-width: thin;
+  }
+}
+#root .app-shell .main-content > .ov {
+  flex: 1 0 auto !important;
+  min-height: 260px !important;
+  overflow: visible !important;
+}
+#root .app-shell .main-content > .ov .ct-live-report {
+  flex: 1 0 auto !important;
+  height: auto !important;
+  min-height: 235px !important;
+  max-height: none !important;
+  overflow: visible !important;
+  align-items: stretch !important;
+  grid-template-rows: auto !important;
+}
+#root .app-shell .main-content > .ov .ct-live-report > .ov-card {
+  height: auto !important;
+  min-height: 235px !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+#root .app-shell .main-content > .ov .ct-live-report-2 .ov-trends {
+  display: flex !important; flex-direction: column !important;
+  align-items: stretch !important; justify-content: flex-start !important;
+}
+#root .app-shell .main-content > .ov .ct-live-report-2 .ov-trends svg {
+  display: block !important; width: 100% !important;
+  height: min(220px,29dvh) !important;
+  max-height: none !important;
+  flex: none !important;
+  margin: auto 0 !important;
+}
+#root .app-shell .main-content > .ov .ct-live-report-1 .ov-overview-body svg {
+  width: min(175px,100%) !important; height: 175px !important; flex: none;
+}
+#root .app-shell .main-content > .ov .ct-live-report-1 .ov-status-grid {
+  margin-top: 10px !important;
+  align-content: start !important;
+}
+#root .app-shell .main-content > .ov .ov-carousel-controls {
+  position: relative; z-index: 5; flex-wrap: wrap;
+}
+/* Management actions live in a compact anchored popover, not an extra KPI row. */
+#root .app-shell .ct-practice-actions { position: relative; z-index: 7; }
+#root .app-shell .ct-practice-actions > summary {
+  cursor: pointer; list-style: none;
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: 27px; font-size: 10px; font-weight: 700;
+  border: 1px solid var(--border,#dce6f4); border-radius: 7px;
+  background: var(--surface,#fff); color: var(--text,#233e5b);
+  padding: 5px 9px; white-space: nowrap;
+}
+#root .app-shell .ct-practice-actions > summary::-webkit-details-marker { display: none; }
+#root .app-shell .ct-practice-actions-menu {
+  position: absolute; right: 0; top: calc(100% + 5px);
+  width: 245px; max-width: calc(100vw - 300px);
+  padding: 9px; border: 1px solid var(--border,#d8e4f0);
+  border-radius: 10px; background: var(--surface,#fff);
+  box-shadow: 0 14px 35px rgba(20,42,86,.16); z-index: 99;
+}
+#root .app-shell .ct-practice-actions-title {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 5px; font-size: 11px;
+}
+#root .app-shell .ct-practice-actions-title button {
+  min-height: 26px; width: 26px; padding: 3px;
+  border: 1px solid var(--border,#dce6f4); border-radius: 6px;
+  background: transparent; color: inherit;
+}
+#root .app-shell .ct-practice-action {
+  width: 100%; display: flex; align-items: center; gap: 9px;
+  text-align: left; padding: 8px 7px; border: 0;
+  border-radius: 7px; background: transparent; color: var(--text,#233e5b);
+  cursor: pointer;
+}
+#root .app-shell .ct-practice-action:hover { background: var(--surface-soft,#f1f6fd); }
+#root .app-shell .ct-practice-action span { display:grid; gap: 3px; }
+#root .app-shell .ct-practice-action strong { font-size:11px; }
+#root .app-shell .ct-practice-action small { font-size: 9px; color:var(--text-muted,#62758a); }
+#root .app-shell .ct-clinical-bar-chart {
+  height: 200px; display: grid;
+  grid-template-columns: repeat(5,minmax(0,1fr));
+  gap: 10px; align-items: stretch;
+  padding: 10px 12px 4px;
+  min-width: 0;
+}
+#root .app-shell .ct-clinical-bar-column {
+  display: flex; flex-direction: column; align-items:center; gap:6px; min-width:0;
+}
+#root .app-shell .ct-clinical-bar-column strong {
+  font-size: 12px; color: var(--text,#193854);
+}
+#root .app-shell .ct-clinical-bar-track {
+  height: 140px; min-height:0;
+  width: min(55px,75%);
+  border-radius: 8px 8px 4px 4px;
+  background: var(--surface-soft,#eef3fa);
+  display: flex; flex-direction: column; justify-content: end; overflow: hidden;
+}
+#root .app-shell .ct-clinical-bar-fill {
+  width:100%; background: var(--practice-primary,#2678d4);
+  border-radius: 6px 6px 3px 3px;
+}
+#root .app-shell .ct-clinical-bar-column > span {
+  font-size: 10px; line-height: 1.2;
+  text-align: center; color: var(--text-muted,#61748d);
+}
+#root .app-shell .dentist-workspace .ct-role-carousel-body .ct-role-panel {
+  min-height: 245px;
+  max-height: none;
+  overflow: visible;
+}
+#root .app-shell .dentist-workspace > .page-heading h1 {
+  font-size: 21px !important;
+}
+/* Render the finance expense form in a body portal, not inside the clipped
+   transformed Finance workspace. The sidebar stays visible. */
+html body > .ct-finance-action-overlay {
+  position: fixed !important; inset: 0 0 0 258px !important;
+  z-index: 30000 !important; display: flex !important;
+  justify-content: center !important; align-items: center !important;
+  overflow-y: auto !important; padding: 12px !important;
+  background: rgba(10,26,48,.28) !important;
+}
+html body > .ct-finance-action-overlay .ct-finance-action-dialog {
+  flex: none; width: min(570px,calc(100vw - 290px)) !important;
+  max-height: calc(100dvh - 30px) !important;
+  overflow-y: auto !important;
+  margin: auto 0; box-sizing: border-box;
+}
+@media(max-width: 899px) {
+  html body > .ct-finance-action-overlay { inset: 0 !important; padding: 9px !important; }
+  html body > .ct-finance-action-overlay .ct-finance-action-dialog {
+    width: min(570px,calc(100vw - 18px)) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+ #root .app-shell .ct-clinical-bar-fill { transition: none !important; }
+}
