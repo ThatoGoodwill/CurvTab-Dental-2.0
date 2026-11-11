@@ -226,3 +226,46 @@
     animation: none !important;
   }
 }
+
+/* Detailed operational calendar remains one click away; never duplicate the
+   long calendar on the initial dashboard screen. Native details is keyboard accessible. */
+#root .app-shell .main-content > .ct-dashboard-details {
+  width: 100%;
+  margin: 13px 0 0 !important;
+  padding: 0 !important;
+  border: 1px solid var(--border,#dbe7f0);
+  background: var(--surface,#fff);
+  color: inherit;
+  border-radius: 10px;
+  overflow: visible;
+}
+#root .app-shell .ct-dashboard-details > summary {
+  display: list-item;
+  padding: 11px 15px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text,#223a59);
+}
+#root .app-shell .ct-dashboard-details > summary:hover {
+  background: var(--surface-soft,#f3f7fc);
+}
+#root .app-shell .ct-dashboard-details[open] > .ov {
+  padding: 12px !important;
+  margin: 0 !important;
+  max-width: 100%;
+  min-width: 0;
+  border-top: 1px solid var(--border,#dbe7f0);
+}
+/* The detailed dashboard already has a promotional banner; hide only that
+   secondary banner, not its calendar, stats, queue or action buttons. */
+#root .app-shell .ct-dashboard-details .ov-hero { display: none !important; }
+#root .app-shell .ct-dashboard-details .ov-quick-tile {
+  min-height: 48px !important;
+  padding: 7px !important;
+  font-size: 11px !important;
+  border-radius: 8px !important;
+}
+#root .app-shell .ct-dashboard-details .ov-quick-tile svg {
+  width: 18px; height: 18px;
+}
