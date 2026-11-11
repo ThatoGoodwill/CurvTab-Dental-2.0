@@ -525,7 +525,10 @@ export default function StaffPage() {
         <summary>Employee records, rosters and leave approvals</summary>
         <EmployeeWorkspaceManagementPanel />
       </details>
-      <LaboratoryAccountsPanel />
+      <details className="ct-staff-hr-details">
+        <summary>Laboratory accounts and technician assignments</summary>
+        <LaboratoryAccountsPanel />
+      </details>
     </div>
   )
 }
