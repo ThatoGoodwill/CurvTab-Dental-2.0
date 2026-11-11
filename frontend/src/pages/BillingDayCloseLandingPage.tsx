@@ -97,13 +97,13 @@ export default function BillingDayCloseLandingPage({ businessDate: date, onBusin
     {error && <p className="ct-guide-error" role="alert">{error}</p>}
     <div className="ct-guide-day-close-grid">
       <article className="ct-guide-day-close-card">
-        <div className="ct-guide-day-close-card-title"><ClipboardCheck size={20}/><h3>Financial Reconciliation</h3></div>
+        <div className="ct-guide-day-close-card-title"><ClipboardCheck size={20}/><h3>Cash Reconciliation</h3></div>
         <p className="ct-guide-status">Status: {loading ? 'Loading…' : financialStatus(financial?.status)}</p>
-        <p>Physical blind cash count, card and EFT evidence, expenses, variance and manager exceptions.</p>
+        <p>Cash drawer count and variance, card/EFT evidence, expenses and manager exceptions.</p>
         <div className="ct-guide-day-close-card-total"><RandIcon size={18}/><strong>
           {ledger ? money(ledger.totalReceived) : '—'}
         </strong><small>Actual receipts — cash, card and EFT; claims excluded</small></div>
-        <button type="button" className="primary-button" onClick={openFinancial}>Open Financial Reconciliation</button>
+        <button type="button" className="primary-button" onClick={openFinancial}>Open Cash Reconciliation</button>
       </article>
       <article className="ct-guide-day-close-card">
         <div className="ct-guide-day-close-card-title"><ShieldCheck size={20}/><h3>Medical Aid Claims Review</h3></div>
