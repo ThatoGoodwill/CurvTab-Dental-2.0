@@ -119,9 +119,17 @@ export function OverviewDashboardView(props: ViewProps) {
   const [cursor, setCursor] = useState(() => ({ y: now.getFullYear(), m: now.getMonth() }))
   const [selectedKey, setSelectedKey] = useState(() => dayKey(now))
   const [panel, setPanel] = useState(0)
+  const [paused, setPaused] = useState(false)
   const touchStart = useRef<number | null>(null)
   const panelNames = ['Quick Actions', 'Appointments Calendar', 'Status & Overview', 'Monthly Trends'] as const
   const navigatePanel = (offset: number) => setPanel(index => (index + offset + panelNames.length) % panelNames.length)
+  useEffect(() => {
+    if (paused || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const timer = window.setInterval(() => {
+      setPanel(index => (index + 1) % panelNames.length)
+    }, 9500)
+    return () => window.clearInterval(timer)
+  }, [paused, panelNames.length])
   const finishSwipe = (clientX: number) => {
     if (touchStart.current !== null) {
       const delta = clientX - touchStart.current
@@ -251,7 +259,13 @@ export function OverviewDashboardView(props: ViewProps) {
   ]
 
   return (
-    <div className="ov">
+    <div className="ov"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocusCapture={() => setPaused(true)}
+      onBlurCapture={event => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false)
+      }}>
       <div className="ov-carousel-heading">
         <div className="ov-carousel-heading-copy">
           <span className="ov-carousel-eyebrow">PRACTICE OPERATIONS · LIVE DATA</span>
