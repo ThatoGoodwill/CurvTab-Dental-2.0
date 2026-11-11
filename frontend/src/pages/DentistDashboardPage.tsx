@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { CalendarDays, ClipboardList, RefreshCw, Stethoscope, Users } from 'lucide-react'
 import { apiRequest } from '../services/api'
 import './DentistWorkspace.css'
+import RoleDashboardCarousel from './RoleDashboardCarousel'
 
 type DashboardStats = {
   scheduled: number
@@ -102,28 +103,45 @@ export default function DentistDashboardPage({
         </button>
       </div>
 
-      <section className="panel">
-        <div className="panel-header">
-          <div>
-            <h2>Waiting and Called Patients</h2>
-            <p>Open the queue to call patients or start consultations.</p>
-          </div>
-          <Users size={21} />
-        </div>
-        {loading && queue.length === 0 ? <p>Loading patient queue...</p> :
-          queue.length === 0 ? <p className="appointment-empty">No patients in the queue.</p> :
-          <div className="dentist-rows">
-            {queue.map((item) => (
-              <div className="dentist-row" key={item.id}>
-                <div>
-                  <strong>{item.patientName}</strong>
-                  <p>{item.reason || 'Dental appointment'}</p>
-                </div>
-                <span className="dentist-status"><Stethoscope size={15} /> {item.status}</span>
+      <RoleDashboardCarousel eyebrow="CLINICAL OPERATIONS · AUTHORISED DATA"
+        loading={loading} onRefresh={() => { setLoading(true); setReload(n => n + 1) }}
+        slides={[
+          { title: 'Patient Queue', content: (
+            <section className="ct-role-panel ct-dentist-report">
+              <header><div><h2>Waiting and Called Patients</h2>
+                <p>Live queue. Open the patient queue to call patients or begin consultations.</p></div>
+                <button type="button" className="secondary-button" onClick={onOpenAppointments}>
+                  <Users size={15}/> Open queue
+                </button>
+              </header>
+              {loading && queue.length === 0 ? <p className="ct-role-empty">Loading patient queue…</p> :
+                error && queue.length === 0 ? <p className="ct-role-empty">Queue information unavailable.</p> :
+                queue.length === 0 ? <p className="ct-role-empty">No patients are currently in the queue.</p> :
+                <div className="dentist-rows">
+                  {queue.map(item => <div className="dentist-row" key={item.id}>
+                    <div><strong>{item.patientName}</strong><p>{item.reason || 'Dental appointment'}</p></div>
+                    <span className="dentist-status"><Stethoscope size={15}/>{item.status}</span>
+                  </div>)}
+                </div>}
+            </section>
+          ) },
+          { title: "Today's Clinical Progress", content: (
+            <section className="ct-role-panel ct-dentist-report">
+              <header><div><h2>Patient flow</h2><p>Today's appointment and attendance counts from the clinical API.</p></div>
+                <button className="secondary-button" type="button" onClick={onOpenDailyPatients}>
+                  <ClipboardList size={15}/> Daily Patients
+                </button>
+              </header>
+              <div className="ct-clinical-progress">
+                {measures.map(item => <div key={item.label}>
+                  <span>{item.label}</span><strong>{loading && !stats ? '…' : error && !stats ? '—' : item.value}</strong>
+                </div>)}
               </div>
-            ))}
-          </div>}
-      </section>
+              <p className="ct-role-hint">Only records returned for your authorised clinical workspace appear here.</p>
+            </section>
+          ) }
+        ]}/>
+
     </div>
   )
 }
