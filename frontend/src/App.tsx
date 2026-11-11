@@ -24,7 +24,7 @@ import PatientBalancesPanel from './pages/PatientBalancesPanel'
 import InvoicesPanel from './pages/InvoicesPanel'
 import FinanceOperationsPanel from './pages/FinanceOperationsPanel'
 import ReceptionCheckoutPage from './pages/ReceptionCheckoutPage'
-import { Receipt as CheckoutIcon } from 'lucide-react'
+import RandIcon from './components/RandIcon'
 import { Wallet } from 'lucide-react'
 import DentistDashboardPage from './pages/DentistDashboardPage'
 import OverviewDashboardPage from './pages/OverviewDashboardPage'
@@ -942,7 +942,7 @@ export default function App() {
                   setBillingExpanded(open => !open)
                   navigate('Billing')
                 }}>
-                <CheckoutIcon size={19}/><span>Billing</span>
+                <RandIcon size={19}/><span>Billing</span>
                 {billingExpanded ? <ChevronDown size={16}/> : <ChevronRight size={16}/>}
               </button>
               {billingExpanded && (
