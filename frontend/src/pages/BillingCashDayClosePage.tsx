@@ -118,7 +118,7 @@ export default function BillingCashDayClosePage({ isManager, businessDate }: { i
   }
 
   return <section className="ct-guide-page">
-    <header className="ct-guide-heading"><div><small>BILLING / RECEPTION</small><h2>Cash Day Close</h2>
+    <header className="ct-guide-heading"><div><small>BILLING / RECEPTION</small><h2>Cash Reconciliation</h2>
       <p>Physical cash reconciliation and independent manager exception review.</p></div>
       <div className="ct-guide-heading-tools"><label>Business date<input type="date" max={today()}
         value={date} onChange={e=>{setDate(e.target.value);setCountVisible(false)}}/></label>
