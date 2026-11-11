@@ -169,7 +169,7 @@ public sealed class FinancialReconciliationController : ControllerBase
     }
 
     [HttpPost("signoff")]
-    [Authorize(Roles = "Receptionist,PracticeAdmin")]
+    [Authorize(Roles = "PracticeAdmin")]
     public async Task<IActionResult> FinancialSignoff([FromBody] FinancialSignoffRequest request, CancellationToken ct)
     {
         if (_current.PracticeId is not Guid practiceId) return Forbid();
@@ -190,6 +190,15 @@ public sealed class FinancialReconciliationController : ControllerBase
             return existing.RequestId == request.RequestId
                 ? Ok(new { existing.Id, alreadyRecorded = true })
                 : Conflict(new { message = "The financial handover has already been signed." });
+        // A manager must explicitly approve the physical count or its controlled
+        // recount before the final financial close can be signed.
+        var managerReview = await _db.Set<CashDayCloseReview>().AsNoTracking()
+            .Where(x => x.DentalPracticeId == practiceId && x.SubmissionId == count.Id)
+            .OrderByDescending(x => x.ReviewedAtUtc).ThenByDescending(x => x.Id)
+            .FirstOrDefaultAsync(ct);
+        if (managerReview?.Decision != "Approve")
+            return Conflict(new { message = "Practice manager cash-count approval is required before final financial sign-off." });
+
         var receipts = await Receipts(practiceId, count.BusinessDate, ct);
         if (count.CashReceived != receipts.Cash)
             return Conflict(new { message = "Cash receipts have changed since the original blind count. Manager investigation required." });
@@ -215,7 +224,8 @@ public sealed class FinancialReconciliationController : ControllerBase
             count.CashReceived, count.CashExpenses, count.ExpectedCash, count.Variance,
             receipts, totalReceipts = receipts.Cash + receipts.Card + receipts.Eft,
             netMovement = receipts.Cash + receipts.Card + receipts.Eft - expenses.Sum(x => x.Amount),
-            expenses, cardEvidenceId = card.Id, eftEvidenceId = eft.Id,
+            expenses, managerReviewId = managerReview.Id,
+            cardEvidenceId = card.Id, eftEvidenceId = eft.Id,
             expenseReviewConfirmed = true, refundsReviewed = true, labPayoutsReviewed = true,
             note = "An acknowledged shortage remains in the immutable count and is not a balancing receipt."
         });
