@@ -185,7 +185,7 @@ export default function BillingCashDayClosePage({ isManager }: { isManager:boole
         {!isManager&&<p>Only a Practice Manager can approve, reject or escalate the cash exception.</p>}
       </section>
     </div>}
-    {data?.submitted && data.cash && <FinancialReconciliationPanel businessDate={date} />}
+    {data?.submitted && data.cash && <FinancialReconciliationPanel businessDate={date} isManager={isManager} />}
     {recountVisible&&data?.cash&&<div className="ct-guide-drawer-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)setRecountVisible(false)}}>
       <aside className="ct-guide-drawer" role="dialog" aria-modal="true" aria-label="Corrected cash recount">
         <header><h3>Controlled cash recount</h3>
