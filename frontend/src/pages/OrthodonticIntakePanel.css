@@ -66,3 +66,16 @@
  .ct-ortho-intake-form,.ct-ortho-intake-clinical { grid-template-columns:1fr; }
  .ct-ortho-intake-form label:has(textarea) { grid-column:1; }
 }
+
+.ct-ortho-terms { border:1px solid var(--border,#d6e4ef); padding:9px 12px; border-radius:9px; background:var(--surface,#fff); }
+.ct-ortho-terms > summary { font-size:12px; font-weight:750; cursor:pointer; color:var(--text,#1c3c59); }
+.ct-ortho-terms-version { font-size:10px; overflow-wrap:anywhere; margin:12px 0 7px; color:var(--text-muted,#64758d); }
+.ct-ortho-terms-document { white-space:pre-wrap; max-height:185px; overflow-y:auto; padding:13px; font-size:11px; line-height:1.5; border:1px solid var(--border,#d6e4ef); border-radius:8px; background:var(--surface-soft,#f3f8fc); }
+.ct-ortho-terms-sign { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; margin:11px 0; }
+.ct-ortho-terms-sign label { display:grid; gap:5px; font-weight:650; font-size:11px; }
+.ct-ortho-terms .ct-reg-sign { width:min(100%,620px); margin:12px 0; }
+.ct-ortho-terms .ct-reg-sign canvas { width:100%; max-width:100%; height:95px; touch-action:none; border:1px solid var(--border,#cedeea); border-radius:7px; }
+.ct-ortho-terms .ct-ortho-intake-check { display:flex; gap:8px; align-items:flex-start; margin:9px 0; }
+.ct-ortho-terms .ct-ortho-intake-check input { flex:none; width:16px; height:16px; }
+.ct-ortho-terms .ct-ortho-intake-check span { font-size:11px; line-height:1.45; }
+@media(max-width:560px) { .ct-ortho-terms-sign { grid-template-columns:1fr; } }
