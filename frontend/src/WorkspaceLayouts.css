@@ -1,0 +1,70 @@
+/*
+ * CurvTab Dental - workspace layouts (navigation style + density).
+ *
+ * Imported LAST (see main.tsx). App.tsx puts these classes on .app-shell:
+ *   ct-nav-sidebar | ct-nav-top | ct-nav-rail      navigation style
+ *   ct-layout-classic | ct-layout-compact | ct-layout-clinical   density
+ * "ct-nav-top" keeps its existing rules (PracticeWorkspaceV2 / PracticeNavigationLayoutFix).
+ * This file adds the Icon Rail, the density presets, and the look of expandable sidebar groups.
+ */
+
+/* ---------------------------------------------------------------- Expandable groups (Scheduling, Billing, Finances) */
+
+#root div.app-shell .sidebar .nav-group{cursor:pointer}
+#root div.app-shell .sidebar .nav-group>svg:last-child{margin-left:auto;flex:0 0 auto;opacity:.75}
+#root div.app-shell .sidebar .nav-submenu{display:flex;flex-direction:column;gap:4px;margin:5px 0 12px;padding-left:21px}
+#root div.app-shell .sidebar .nav-submenu .nav-item{min-height:36px;padding-top:8px;padding-bottom:8px}
+/* Closed groups stay in the DOM (the top bar opens them on hover) but are hidden in the sidebar styles. */
+#root div.app-shell .sidebar .nav-submenu.nav-submenu-collapsed{display:none!important}
+
+/* Top navigation: groups become drop-downs instead of pushing the nav row apart. */
+@media (min-width:900px){
+  #root div.app-shell.ct-nav-top .sidebar .side-nav{overflow:visible!important;flex-wrap:wrap!important;row-gap:4px!important}
+  #root div.app-shell.ct-nav-top .sidebar .nav-group-wrap{position:relative;flex:0 0 auto!important;width:auto!important}
+  #root div.app-shell.ct-nav-top .sidebar .nav-group-wrap>.nav-group{width:auto!important}
+  #root div.app-shell.ct-nav-top .sidebar .nav-group-wrap>.nav-submenu{
+    display:none!important;position:absolute!important;top:100%;left:0;z-index:70;min-width:230px;
+    margin:4px 0 0!important;padding:8px!important;background:var(--ct-nav-surface,#fff)!important;
+    border:1px solid rgba(15,40,80,.16);border-radius:12px;box-shadow:0 18px 40px rgba(8,26,48,.28);
+  }
+  #root div.app-shell.ct-nav-top .sidebar .nav-group-wrap:is(:hover,:focus-within)>.nav-submenu{display:flex!important}
+}
+
+/* ---------------------------------------------------------------- Density */
+
+#root div.app-shell.ct-layout-compact .main-content{padding:20px!important}
+#root div.app-shell.ct-layout-compact .topbar{height:60px!important}
+#root div.app-shell.ct-layout-compact .page-heading{margin-bottom:16px!important}
+#root div.app-shell.ct-layout-compact .page-heading h1{font-size:clamp(21px,2.4vw,27px)!important;margin:4px 0!important}
+#root div.app-shell.ct-layout-compact .sidebar .nav-item{min-height:36px!important;padding-top:8px!important;padding-bottom:8px!important}
+#root div.app-shell.ct-layout-compact :is(.stats-grid){gap:10px!important}
+#root div.app-shell.ct-layout-compact :is(.stat-card){padding:14px!important}
+#root div.app-shell.ct-layout-compact :is(.panel){border-radius:13px!important}
+
+#root div.app-shell.ct-layout-clinical .main-content{max-width:1800px!important;padding:24px!important}
+#root div.app-shell.ct-layout-clinical .page-heading{margin-bottom:18px!important}
+#root div.app-shell.ct-layout-clinical :is(.stats-grid){grid-template-columns:repeat(auto-fit,minmax(190px,1fr))!important}
+
+/* ---------------------------------------------------------------- Icon Rail (desktop only) */
+
+@media (min-width:900px){
+  #root div.app-shell.ct-nav-rail .sidebar{
+    width:76px!important;padding:18px 10px!important;overflow:hidden!important;
+    transition:width .18s ease,box-shadow .18s ease;
+  }
+  #root div.app-shell.ct-nav-rail .sidebar:is(:hover,:focus-within){
+    width:258px!important;padding:24px 15px!important;z-index:60!important;
+    box-shadow:10px 0 34px rgba(8,26,48,.28)!important;
+  }
+  #root div.app-shell.ct-nav-rail .workspace{margin-left:76px!important;width:calc(100% - 76px)!important}
+
+  /* Collapsed: icons only. */
+  #root div.app-shell.ct-nav-rail .sidebar:not(:hover):not(:focus-within) .brand{justify-content:center!important;padding:0!important}
+  #root div.app-shell.ct-nav-rail .sidebar:not(:hover):not(:focus-within) .brand>div:not(.brand-icon){display:none!important}
+  #root div.app-shell.ct-nav-rail .sidebar:not(:hover):not(:focus-within) :is(.nav-heading,.sidebar-bottom,.practice-chip>div,.nav-submenu){display:none!important}
+  #root div.app-shell.ct-nav-rail .sidebar:not(:hover):not(:focus-within) .practice-chip{justify-content:center!important;padding:12px 0!important}
+  #root div.app-shell.ct-nav-rail .sidebar:not(:hover):not(:focus-within) .nav-item{justify-content:center!important;padding-left:0!important;padding-right:0!important}
+  #root div.app-shell.ct-nav-rail .sidebar:not(:hover):not(:focus-within) .nav-item>span{display:none!important}
+  #root div.app-shell.ct-nav-rail .sidebar:not(:hover):not(:focus-within) .nav-item>svg:not(:first-child){display:none!important}
+  #root div.app-shell.ct-nav-rail .sidebar .side-nav{overflow-x:hidden}
+}

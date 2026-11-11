@@ -1,0 +1,97 @@
+/*
+ * CurvTab Dental - colour themes (Blue & White, Dark Blue).
+ *
+ * Imported LAST (see main.tsx) so it wins over the older Practice*/Client* stylesheets, several of which
+ * use !important with very long selectors. Every rule here is anchored on the #root id, which outranks
+ * any number of classes in those older rules, so this file does not need to be fought with more !important.
+ *
+ * Which theme is active is decided in App.tsx (account choice > practice default) and written to
+ * <html data-surface="white|blue|dark">. "White Only" is the base look and needs no rules here.
+ *
+ * GENERATED from the same rules for each theme: edit the colour values, keep the structure.
+ */
+
+/* ---------------------------------------------------------------- Blue & White */
+
+/* Practice colours are replaced by the theme blues while this theme is on. */
+html[data-surface="blue"][data-theme="light"][data-surface="blue"]{
+  --ct-tenant-primary:#1769d1!important;--ct-tenant-accent:#2f8be6!important;
+  --primary:#1769d1;--primary-dark:#0f4fb0;--bg:#f3f6fb;--text:#13294b;--sidebar:#0d3f7c;
+}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell{
+  --practice-primary:#1769d1!important;--practice-accent:#2f8be6!important;--ct-nav-surface:#0d3f7c;
+  background:#f3f6fb!important;color:#13294b;
+}
+html[data-surface="blue"][data-theme="light"] body{background:#f3f6fb}
+
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .workspace{background:#f3f6fb!important;background-image:none!important}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .topbar{background:#fff!important;color:#13294b!important;border-bottom:1px solid #dce6f3!important;box-shadow:none!important}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .breadcrumb,html[data-surface="blue"][data-theme="light"] #root div.app-shell .breadcrumb>span{color:#5a7194!important}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .breadcrumb strong{color:#13294b!important}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell :is(.page-heading h1,.panel h2){color:#13294b!important}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .eyebrow{color:#1769d1!important}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .avatar{color:#1769d1!important;background:#eaf2fd!important;border-color:#cfe0f7!important}
+
+/* Navigation */
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .sidebar{
+  background:#0d3f7c!important;background-image:none!important;color:#eaf2ff!important;
+  border-right:0!important;box-shadow:4px 0 24px rgba(13,63,124,.18)!important;
+}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .sidebar :is(.brand strong,.brand-name){color:#fff!important}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .sidebar :is(.brand span,.nav-heading,.sidebar-bottom>p,.brand-subtitle){color:rgba(234,242,255,.66)!important}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .sidebar .brand-icon{background:rgba(255,255,255,.14)!important;border:1px solid rgba(255,255,255,.22)!important;color:#fff!important;box-shadow:none!important}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .sidebar :is(.practice-chip,.security-note){background:rgba(255,255,255,.08)!important;border:1px solid rgba(255,255,255,.14)!important;color:#eaf2ff!important;box-shadow:none!important}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .sidebar :is(.practice-chip,.security-note) strong{color:#fff!important}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .sidebar :is(.practice-chip,.security-note) span{color:rgba(234,242,255,.68)!important}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .sidebar :is(.practice-chip,.security-note) svg{color:#9cc7ff!important}
+
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .sidebar .nav-item{
+  background:transparent!important;background-image:none!important;border:1px solid transparent!important;
+  color:#d4e4fa!important;box-shadow:none!important;transform:none!important;
+}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .sidebar .nav-item :is(svg,span){color:inherit!important;opacity:1!important}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .sidebar .nav-item svg{color:#a9c8f2!important}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .sidebar .nav-item:hover:not(.nav-active){background:rgba(255,255,255,.12)!important;color:#fff!important}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .sidebar .nav-item:hover:not(.nav-active) svg{color:#fff!important}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .sidebar .nav-item.nav-group-active:not(.nav-active){background:rgba(255,255,255,.1)!important;color:#fff!important;box-shadow:inset 3px 0 0 #6fb1ff!important}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .sidebar .nav-item.nav-active,
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .sidebar .nav-item[aria-current="page"]{
+  background:#1769d1!important;background-image:none!important;border-color:#4d94ee!important;
+  color:#fff!important;box-shadow:0 6px 16px rgba(4,24,56,.32)!important;font-weight:700!important;
+}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .sidebar .nav-item.nav-active :is(svg,span),
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .sidebar .nav-item[aria-current="page"] :is(svg,span){color:#fff!important}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .sidebar .nav-item:focus-visible{outline:2px solid #9cc7ff!important;outline-offset:2px}
+
+/* Buttons and controls */
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .primary-button{background:#1769d1!important;background-image:none!important;border-color:#1769d1!important;color:#fff!important}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .primary-button:hover:not(:disabled){background:#0f4fb0!important;border-color:#0f4fb0!important}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .secondary-button{color:#1769d1!important;border-color:#cfe0f7!important;background:#fff!important}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell .secondary-button:hover:not(:disabled){background:#eef5fe!important}
+html[data-surface="blue"][data-theme="light"] #root div.app-shell :is(.panel,.stat-card){border-color:#dbe6f3!important}
+
+/* ---------------------------------------------------------------- Dark Blue */
+
+html[data-surface="dark"][data-theme="dark"][data-surface="dark"]{
+  --bg:#081a30;--surface:#0f2a4a;--surface-soft:#143458;--text:#eaf2ff;--muted:#9fb6d3;
+  --border:#1d3f66;--primary:#2f8be6;--primary-dark:#1769d1;--sidebar:#0a1d36;
+}
+html[data-surface="dark"][data-theme="dark"] #root div.app-shell{--practice-primary:#2f8be6!important;--practice-accent:#4aa3ff!important;--ct-nav-surface:#0a1d36}
+html[data-surface="dark"][data-theme="dark"] #root div.app-shell .workspace{background:#081a30!important;background-image:none!important}
+html[data-surface="dark"][data-theme="dark"] #root div.app-shell .topbar{background:#0f2a4a!important;color:#eaf2ff!important;border-bottom:1px solid #1d3f66!important}
+html[data-surface="dark"][data-theme="dark"] #root div.app-shell .breadcrumb,html[data-surface="dark"][data-theme="dark"] #root div.app-shell .breadcrumb>span{color:#9fb6d3!important}
+html[data-surface="dark"][data-theme="dark"] #root div.app-shell .breadcrumb strong{color:#eaf2ff!important}
+html[data-surface="dark"][data-theme="dark"] #root div.app-shell .sidebar{background:#0a1d36!important;background-image:none!important;border-right:1px solid #16345a!important;color:#d4e4fa!important}
+html[data-surface="dark"][data-theme="dark"] #root div.app-shell .sidebar :is(.brand strong,.brand-name){color:#fff!important}
+html[data-surface="dark"][data-theme="dark"] #root div.app-shell .sidebar :is(.brand span,.nav-heading,.sidebar-bottom>p){color:#8aa6c9!important}
+html[data-surface="dark"][data-theme="dark"] #root div.app-shell .sidebar :is(.practice-chip,.security-note){background:#0f2a4a!important;border:1px solid #1d3f66!important;color:#d4e4fa!important}
+html[data-surface="dark"][data-theme="dark"] #root div.app-shell .sidebar :is(.practice-chip,.security-note) strong{color:#fff!important}
+html[data-surface="dark"][data-theme="dark"] #root div.app-shell .sidebar .nav-item{background:transparent!important;background-image:none!important;border:1px solid transparent!important;color:#b9cfec!important;box-shadow:none!important}
+html[data-surface="dark"][data-theme="dark"] #root div.app-shell .sidebar .nav-item :is(svg,span){color:inherit!important}
+html[data-surface="dark"][data-theme="dark"] #root div.app-shell .sidebar .nav-item:hover:not(.nav-active){background:#0f2a4a!important;color:#fff!important}
+html[data-surface="dark"][data-theme="dark"] #root div.app-shell .sidebar .nav-item.nav-group-active:not(.nav-active){background:#0f2a4a!important;color:#fff!important;box-shadow:inset 3px 0 0 #4aa3ff!important}
+html[data-surface="dark"][data-theme="dark"] #root div.app-shell .sidebar .nav-item.nav-active,
+html[data-surface="dark"][data-theme="dark"] #root div.app-shell .sidebar .nav-item[aria-current="page"]{background:#1b4a7a!important;background-image:none!important;border-color:#2f8be6!important;color:#fff!important;box-shadow:none!important}
+html[data-surface="dark"][data-theme="dark"] #root div.app-shell .sidebar .nav-item.nav-active :is(svg,span){color:#fff!important}
+html[data-surface="dark"][data-theme="dark"] #root div.app-shell .primary-button{background:#2f8be6!important;background-image:none!important;border-color:#2f8be6!important;color:#fff!important}
+html[data-surface="dark"][data-theme="dark"] #root div.app-shell .secondary-button{background:#0f2a4a!important;border-color:#1d3f66!important;color:#9cc7ff!important}

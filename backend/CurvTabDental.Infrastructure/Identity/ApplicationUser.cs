@@ -22,4 +22,9 @@ public class ApplicationUser : IdentityUser<Guid>
     public bool MustChangePassword { get; set; }
 
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+
+    // Personal workspace appearance. Null means "follow the practice default" (PracticeAppearance).
+    public string? PreferredThemeSurface { get; set; }
+    public string? PreferredLayoutPreset { get; set; }
+    public string? PreferredNavigationMode { get; set; }
 }

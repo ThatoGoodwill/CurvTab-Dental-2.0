@@ -5,7 +5,6 @@ import {Settings2,
   Save,
   CheckCircle2,
   LayoutDashboard,
-  PanelTop,
   PanelLeft,
   Blocks,
   Images,
@@ -15,15 +14,22 @@ import { apiRequest } from '../services/api'
 import type { PracticeAppearance } from '../hooks/usePracticeAppearance'
 import PracticeBrandAssetsEditor from './PracticeBrandAssetsEditor'
 import PracticeSlidesEditor from './PracticeSlidesEditor'
+import MyWorkspacePreferences from './MyWorkspacePreferences'
+import { LayoutChoices, ThemeChoices } from './WorkspaceChoices'
+import { isThemeSurface } from '../workspace/workspacePrefs'
+import type { WorkspacePreferencesApi } from '../hooks/useWorkspacePreferences'
 import './AppearanceSettingsPage.css'
 import './AppearanceWorkspaceTabs.css'
 
 type Props = {
   appearance: PracticeAppearance | null
   onSaved: (value: PracticeAppearance) => void
+  // The signed-in admin's own theme/layout choice (shown under "My workspace").
+  workspace?: WorkspacePreferencesApi
 }
 
 type AppearanceTab =
+  | 'theme'
   | 'branding'
   | 'images'
   | 'slideshow'
@@ -47,6 +53,7 @@ const DEFAULT: PracticeAppearance = {
   accentColor: '#14B8A6',
   layoutPreset: 'Classic',
   navigationMode: 'Sidebar',
+  themeSurface: 'blue',
   enabledModules: [
     'Patients',
     'Appointments',
@@ -60,6 +67,7 @@ const DEFAULT: PracticeAppearance = {
 }
 
 const TABS = [
+  { id: 'theme', label: 'Theme & Layout', Icon: PanelLeft },
   { id: 'branding', label: 'Branding & Colours', Icon: Palette },
   { id: 'images', label: 'Logos & Images', Icon: ImageIcon },
   { id: 'slideshow', label: 'Dashboard Slideshow', Icon: Images },
@@ -69,12 +77,13 @@ const TABS = [
 export default function AppearanceSettingsPage({
   appearance,
   onSaved,
+  workspace,
 }: Props) {
   const [form, setForm] = useState<PracticeAppearance>(
     appearance ?? DEFAULT
   )
   const [activeTab, setActiveTab] =
-    useState<AppearanceTab>('branding')
+    useState<AppearanceTab>('theme')
 
   // CT_APPEARANCE_DROPDOWN_V3
   const [appearanceMenuOpen, setAppearanceMenuOpen] =
@@ -120,6 +129,9 @@ export default function AppearanceSettingsPage({
       setSaving(false)
     }
   }
+
+  // What accounts follow right now (the last SAVED practice default, not unsaved edits).
+  const savedDefault = appearance ?? DEFAULT
 
   const themeStyle = {
     '--appearance-accent': form.primaryColor,
@@ -255,13 +267,57 @@ export default function AppearanceSettingsPage({
         </div>
       )}
 
-      {(activeTab === 'branding' ||
+      {(activeTab === 'theme' ||
+        activeTab === 'branding' ||
         activeTab === 'workspace') && (
         <form
           onSubmit={event => void submit(event)}
           className="appearance-settings-grid ct-appearance-tab-panel"
         >
           <section className="panel appearance-editor">
+            {activeTab === 'theme' && (
+              <>
+                <h2>
+                  <PanelLeft size={20} />
+                  Practice default theme &amp; layout
+                </h2>
+
+                <p className="appearance-note">
+                  This is what every account in your practice sees until
+                  that person chooses their own under “My workspace” below.
+                </p>
+
+                <div className="ct-choice-section">
+                  <h3>Colour theme</h3>
+                  <ThemeChoices
+                    name="practice-theme"
+                    value={
+                      isThemeSurface(form.themeSurface)
+                        ? form.themeSurface
+                        : 'blue'
+                    }
+                    onChange={value =>
+                      update({ themeSurface: value ?? 'blue' })
+                    }
+                  />
+                </div>
+
+                <div className="ct-choice-section">
+                  <h3>Workspace layout</h3>
+                  <LayoutChoices
+                    name="practice-layout"
+                    value={{
+                      layoutPreset: form.layoutPreset,
+                      navigationMode: form.navigationMode,
+                    }}
+                    onChange={value => {
+                      if (value) update(value)
+                    }}
+                  />
+                </div>
+              </>
+            )}
+
             {activeTab === 'branding' && (
               <>
                 <h2>
@@ -341,70 +397,6 @@ export default function AppearanceSettingsPage({
                   <LayoutDashboard size={20} />
                   Workspace settings
                 </h2>
-
-                <label>
-                  Dashboard layout
-                  <select
-                    value={form.layoutPreset}
-                    onChange={event =>
-                      update({
-                        layoutPreset:
-                          event.target.value as
-                            PracticeAppearance['layoutPreset'],
-                      })
-                    }
-                  >
-                    <option value="Classic">
-                      Classic — spacious cards and charts
-                    </option>
-                    <option value="Compact">
-                      Compact — denser dashboard cards
-                    </option>
-                    <option value="Clinical">
-                      Clinical — focused clinical workspace
-                    </option>
-                  </select>
-                </label>
-
-                <fieldset className="ct-v2-fieldset">
-                  <legend>Navigation position</legend>
-
-                  <div className="ct-v2-choice-row">
-                    <label className="ct-v2-choice">
-                      <input
-                        type="radio"
-                        name="navigationMode"
-                        checked={
-                          form.navigationMode === 'Sidebar'
-                        }
-                        onChange={() =>
-                          update({
-                            navigationMode: 'Sidebar',
-                          })
-                        }
-                      />
-                      <PanelLeft size={18} />
-                      Left sidebar
-                    </label>
-
-                    <label className="ct-v2-choice">
-                      <input
-                        type="radio"
-                        name="navigationMode"
-                        checked={
-                          form.navigationMode === 'Topbar'
-                        }
-                        onChange={() =>
-                          update({
-                            navigationMode: 'Topbar',
-                          })
-                        }
-                      />
-                      <PanelTop size={18} />
-                      Upper navigation
-                    </label>
-                  </div>
-                </fieldset>
 
                 <fieldset className="ct-v2-fieldset">
                   <legend>
@@ -498,7 +490,9 @@ export default function AppearanceSettingsPage({
               <strong>
                 {form.navigationMode === 'Topbar'
                   ? 'Upper navigation'
-                  : 'Sidebar navigation'}
+                  : form.navigationMode === 'Rail'
+                    ? 'Icon rail navigation'
+                    : 'Sidebar navigation'}
               </strong>
               <span>Dashboard</span>
               {form.enabledModules
@@ -525,6 +519,21 @@ export default function AppearanceSettingsPage({
             </p>
           </section>
         </form>
+      )}
+
+      {activeTab === 'theme' && workspace && (
+        <div className="ct-appearance-tab-panel">
+          <MyWorkspacePreferences
+            workspace={workspace}
+            practiceDefault={{
+              themeSurface: isThemeSurface(savedDefault.themeSurface)
+                ? savedDefault.themeSurface
+                : 'blue',
+              layoutPreset: savedDefault.layoutPreset,
+              navigationMode: savedDefault.navigationMode,
+            }}
+          />
+        </div>
       )}
     </div>
   )

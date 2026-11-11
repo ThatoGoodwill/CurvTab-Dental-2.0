@@ -395,6 +395,9 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
         modelBuilder.Entity<ApplicationUser>(entity =>
         {
             entity.Property(u => u.FullName).IsRequired().HasMaxLength(200);
+            entity.Property(u => u.PreferredThemeSurface).HasMaxLength(10);
+            entity.Property(u => u.PreferredLayoutPreset).HasMaxLength(20);
+            entity.Property(u => u.PreferredNavigationMode).HasMaxLength(12);
             entity.HasIndex(u => u.DentalPracticeId);
             entity.HasOne<DentalPractice>()
                 .WithMany()
@@ -1350,6 +1353,7 @@ modelBuilder.Entity<Appointment>(entity =>
             entity.Property(x => x.AccentColor).IsRequired().HasMaxLength(7);
             entity.Property(x => x.LayoutPreset).IsRequired().HasMaxLength(20);
             entity.Property(x => x.NavigationMode).IsRequired().HasMaxLength(12);
+            entity.Property(x => x.ThemeSurface).IsRequired().HasMaxLength(10).HasDefaultValue("blue");
             entity.Property(x => x.EnabledModulesJson).IsRequired().HasColumnType("text");
             entity.HasOne<DentalPractice>().WithOne().HasForeignKey<PracticeAppearance>(x => x.DentalPracticeId)
                 .OnDelete(DeleteBehavior.Restrict);

@@ -1,0 +1,62 @@
+/* Theme + layout pickers (Configuration Center > Appearance, and My Profile). */
+.ct-choice-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:12px;
+}
+.ct-choice{
+  position:relative;display:flex;flex-direction:column;gap:6px;padding:10px 10px 12px;
+  border:1.5px solid var(--border,#dbe4ee);border-radius:14px;background:var(--surface,#fff);
+  color:var(--text,#182e38);cursor:pointer;
+  transition:border-color .15s,box-shadow .15s,transform .15s;
+}
+.ct-choice:hover{border-color:#8db6ea;transform:translateY(-1px)}
+.ct-choice input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.ct-choice:has(input:focus-visible){outline:3px solid rgba(23,105,209,.45);outline-offset:2px}
+.ct-choice.selected{border-color:#1769d1;box-shadow:0 0 0 3px rgba(23,105,209,.16)}
+.ct-choice.selected::after{
+  content:"✓";position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;
+  background:#1769d1;color:#fff;font-size:13px;font-weight:800;display:grid;place-items:center;
+}
+.ct-choice strong{font-size:13px;line-height:1.25}
+.ct-choice small{font-size:11.5px;line-height:1.4;color:var(--muted,#667993)}
+
+.ct-choice-thumb{
+  display:block;position:relative;height:84px;border-radius:9px;overflow:hidden;
+  border:1px solid rgba(15,40,80,.1);background:#f3f6fb;
+}
+.ct-choice-inherit{display:grid;place-items:center;font-size:30px;color:#1769d1;background:#eef4fc}
+
+/* Colour theme thumbnail: sidebar block, accent button, content card. */
+.ct-theme-thumb i{position:absolute;inset:0 auto 0 0;width:28%}
+.ct-theme-thumb b{position:absolute;left:38%;top:14px;width:30%;height:10px;border-radius:5px}
+.ct-theme-thumb em{
+  position:absolute;left:38%;right:10px;bottom:10px;height:34px;border-radius:7px;
+  background:rgba(255,255,255,.85);border:1px solid rgba(15,40,80,.1);
+}
+
+/* Layout thumbnail: navigation block + a grid of cards whose size follows the density. */
+.ct-layout-thumb{display:flex;background:#f3f6fb}
+.ct-layout-thumb > i{display:block;background:#0d3f7c;flex:0 0 28%}
+.ct-layout-thumb > span{
+  flex:1;display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:8px;align-content:start;
+}
+.ct-layout-thumb > span b{display:block;height:20px;border-radius:5px;background:#fff;border:1px solid rgba(15,40,80,.1)}
+.ct-layout-thumb.density-compact > span{gap:3px;padding:6px}
+.ct-layout-thumb.density-compact > span b{height:12px}
+.ct-layout-thumb.density-clinical > span{grid-template-columns:1fr}
+.ct-layout-thumb.density-clinical > span b{height:14px}
+.ct-layout-thumb.nav-topbar{flex-direction:column}
+.ct-layout-thumb.nav-topbar > i{flex:0 0 14px;width:100%}
+.ct-layout-thumb.nav-rail > i{flex:0 0 11%}
+
+.ct-choice-section{display:grid;gap:10px;margin-top:6px}
+.ct-choice-section h3{margin:0;font-size:15px}
+.ct-choice-section > p{margin:0;font-size:12.5px;color:var(--muted,#667993);line-height:1.5}
+.ct-choice-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:6px}
+.ct-choice-message{font-size:12.5px;margin:0}
+.ct-choice-message.ok{color:#14803c}
+.ct-choice-message.error{color:#b42318}
+@media(max-width:560px){.ct-choice-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+html[data-theme="dark"] .ct-choice{background:#0f2a4a;border-color:#1d3f66;color:#eaf2ff}
+html[data-theme="dark"] .ct-choice small{color:#9fb6d3}
+html[data-theme="dark"] .ct-choice-inherit{background:#143458}

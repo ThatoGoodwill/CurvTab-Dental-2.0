@@ -41,7 +41,12 @@ public sealed class PracticeAppearanceController : ControllerBase
         string[] EnabledModules,
         string? LogoUrl = null,
         string? BadgeUrl = null,
-        string? LoginBackgroundUrl = null);
+        string? LoginBackgroundUrl = null,
+        string? ThemeSurface = null);
+
+    public static readonly string[] ThemeSurfaces = ["white", "blue", "dark"];
+    public static readonly string[] LayoutPresets = ["Classic", "Compact", "Clinical"];
+    public static readonly string[] NavigationModes = ["Sidebar", "Topbar", "Rail"];
 
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken ct)
@@ -55,7 +60,8 @@ public sealed class PracticeAppearanceController : ControllerBase
             .Where(p => p.Id == practiceId && p.IsActive)
             .Select(p => new { p.Name }).SingleOrDefaultAsync(ct);
         if (practice is null) return NotFound();
-        return Ok(new AppearanceUpdate(practice.Name, "", "#126CE5", "#14B8A6", "Classic", "Sidebar", DefaultModules));
+        return Ok(new AppearanceUpdate(practice.Name, "", "#126CE5", "#14B8A6", "Classic", "Sidebar", DefaultModules,
+            ThemeSurface: "blue"));
     }
 
     [HttpPut]
@@ -74,10 +80,14 @@ public sealed class PracticeAppearanceController : ControllerBase
         if (!Regex.IsMatch(primary, "^#[0-9A-Fa-f]{6}$") ||
             !Regex.IsMatch(accent, "^#[0-9A-Fa-f]{6}$"))
             return BadRequest(new { message = "Use 6-digit hex colours." });
-        if (preset is not ("Classic" or "Compact" or "Clinical"))
+        if (!LayoutPresets.Contains(preset))
             return BadRequest(new { message = "Choose a supported layout preset." });
-        if (request.NavigationMode is not ("Sidebar" or "Topbar"))
-            return BadRequest(new { message = "Choose Sidebar or Topbar navigation." });
+        if (!NavigationModes.Contains(request.NavigationMode))
+            return BadRequest(new { message = "Choose Sidebar, Topbar or Rail navigation." });
+        // Null keeps the stored theme, so older clients that do not send it cannot reset it.
+        var theme = request.ThemeSurface?.Trim().ToLowerInvariant();
+        if (theme is not null && !ThemeSurfaces.Contains(theme))
+            return BadRequest(new { message = "Choose a supported colour theme." });
         if (request.EnabledModules is null || request.EnabledModules.Any(m => !AllowedModules.Contains(m)))
             return BadRequest(new { message = "Invalid module selection." });
         if (request.EnabledModules.Distinct(StringComparer.Ordinal).Count() != request.EnabledModules.Length)
@@ -99,6 +109,7 @@ public sealed class PracticeAppearanceController : ControllerBase
         row.AccentColor = accent.ToUpperInvariant();
         row.LayoutPreset = preset;
         row.NavigationMode = request.NavigationMode;
+        if (theme is not null) row.ThemeSurface = theme;
         row.EnabledModulesJson = JsonSerializer.Serialize(request.EnabledModules);
         row.UpdatedAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(ct);
@@ -108,8 +119,9 @@ public sealed class PracticeAppearanceController : ControllerBase
 
     private static AppearanceUpdate ToDto(PracticeAppearance row) => new(
         row.DisplayName, row.Tagline, row.PrimaryColor, row.AccentColor, row.LayoutPreset,
-        row.NavigationMode is "Topbar" ? "Topbar" : "Sidebar",
-        ReadModules(row.EnabledModulesJson), row.LogoUrl, row.BadgeUrl, row.LoginBackgroundUrl);
+        NavigationModes.Contains(row.NavigationMode) ? row.NavigationMode : "Sidebar",
+        ReadModules(row.EnabledModulesJson), row.LogoUrl, row.BadgeUrl, row.LoginBackgroundUrl,
+        ThemeSurfaces.Contains(row.ThemeSurface) ? row.ThemeSurface : "blue");
 
     private static string[] ReadModules(string? json)
     {

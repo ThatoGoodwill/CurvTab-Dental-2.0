@@ -31,14 +31,24 @@ import OverviewDashboardPage from './pages/OverviewDashboardPage'
 import DailyPatientsPage from './pages/DailyPatientsPage'
 import { ClipboardList as DailyPatientsIcon } from 'lucide-react'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 
 import { useAuth } from './auth/AuthContext'
-import type { CSSProperties } from 'react'
+import type { ComponentProps, CSSProperties } from 'react'
 import { usePracticeAppearance } from './hooks/usePracticeAppearance'
 // CT_CONFIGURATION_CENTER_V1
 import ConfigurationCenterPage from './pages/ConfigurationCenterPage'
+import MyWorkspacePreferences from './pages/MyWorkspacePreferences'
+import { useWorkspacePreferences } from './hooks/useWorkspacePreferences'
+import type { WorkspacePreferencesApi } from './hooks/useWorkspacePreferences'
+import {
+  applyTheme,
+  clearTheme,
+  isThemeSurface,
+  readCachedTheme,
+  resolveWorkspace,
+} from './workspace/workspacePrefs'
 import { apiRequest } from './services/api'
 
 import PatientExperiencePage from './pages/PatientExperiencePage'
@@ -100,7 +110,13 @@ type Section =
 // Uses the authenticated user's real details.
 // =========================================
 
-function ProfilePage() {
+function ProfilePage({
+  workspace,
+  practiceDefault,
+}: {
+  workspace: WorkspacePreferencesApi
+  practiceDefault: ComponentProps<typeof MyWorkspacePreferences>['practiceDefault']
+}) {
   const { user, changePassword } = useAuth()
 
   const [currentPassword, setCurrentPassword] = useState('')
@@ -267,6 +283,12 @@ function ProfilePage() {
           </form>
         </section>
       </div>
+
+      {/* Every account chooses its own theme and layout here (admins also find it in Configuration Center). */}
+      <MyWorkspacePreferences
+        workspace={workspace}
+        practiceDefault={practiceDefault}
+      />
     </>
   )
 }
@@ -668,20 +690,24 @@ export default function App() {
   const [appointmentTab, setAppointmentTab] =
     useState<AppointmentTab>('Appointments')
 
-  type ThemeChoice = 'white' | 'blue' | 'dark'
-  const [themeChoice, setThemeChoice] = useState<ThemeChoice>(() => {
-    const saved = localStorage.getItem('curvtab-theme-choice')
-    if (saved === 'white' || saved === 'blue' || saved === 'dark') return saved
-    return localStorage.getItem('curvtab-theme') === 'dark' ? 'dark' : 'white'
-  })
-  const darkMode = themeChoice === 'dark'
+  // Colour theme + layout: the account's own choice, else the practice default (Configuration Center
+  // > Appearance), else the built-in default. Saved on the server, so it follows the account.
+  const workspace = useWorkspacePreferences(user?.id)
+  const cachedTheme = useMemo(() => readCachedTheme(user?.id), [user?.id])
+  const effective = resolveWorkspace(workspace.prefs, appearance, cachedTheme)
 
   useEffect(() => {
-    document.documentElement.dataset.theme = darkMode ? 'dark' : 'light'
-    document.documentElement.dataset.surface = themeChoice
-    localStorage.setItem('curvtab-theme', darkMode ? 'dark' : 'light')
-    localStorage.setItem('curvtab-theme-choice', themeChoice)
-  }, [darkMode, themeChoice])
+    applyTheme(user?.id, effective.themeSurface)
+  }, [user?.id, effective.themeSurface])
+
+  useEffect(() => clearTheme, [])
+
+  const navClass =
+    effective.navigationMode === 'Topbar'
+      ? 'ct-nav-top'
+      : effective.navigationMode === 'Rail'
+        ? 'ct-nav-rail'
+        : 'ct-nav-sidebar'
 
   const role = user?.role ?? ''
   const isSuperAdmin = role === 'SuperAdmin'
@@ -765,7 +791,7 @@ export default function App() {
   }
 
   return (
-    <div className={`app-shell ${appearance ? `ct-layout-${appearance.layoutPreset.toLowerCase()} ${appearance.navigationMode === 'Topbar' ? 'ct-nav-top' : 'ct-nav-sidebar'}` : ''}`}
+    <div className={`app-shell ${appearance ? `ct-layout-${effective.layoutPreset.toLowerCase()} ${navClass}` : ''}`}
       data-practice-branded={appearance ? 'true' : undefined}
       style={practiceThemeStyle}>
 
@@ -825,20 +851,17 @@ export default function App() {
 
             if (item.name === 'Scheduling') {
               return (
-                <div key="Appointments">
+                <div key="Appointments" className="nav-group-wrap">
                   {/* Expand/collapse the Scheduling submenu */}
                   <button
                     type="button"
                     className={
                       section === 'Scheduling'
-                        ? 'nav-item nav-active'
-                        : 'nav-item'
+                        ? 'nav-item nav-group nav-group-active'
+                        : 'nav-item nav-group'
                     }
-                    onClick={() => {
-                      setSection('Scheduling')
-                      setAppointmentsExpanded((value) => !value)
-                      setMenuOpen(false)
-                    }}
+                    // Only opens/closes the submenu. The pages are the items inside it.
+                    onClick={() => setAppointmentsExpanded((value) => !value)}
                     aria-expanded={appointmentsExpanded}
                   >
                     <Icon size={19} />
@@ -849,8 +872,9 @@ export default function App() {
                     }
                   </button>
 
-                  {appointmentsExpanded && (
+                  {(
                     <div
+                      className={'nav-submenu' + (appointmentsExpanded ? '' : ' nav-submenu-collapsed')}
                       style={{
                         paddingLeft: 21,
                         display: 'flex',
@@ -934,19 +958,17 @@ export default function App() {
 
           {/* Client guide: one Billing parent, exactly five named children. */}
           {(role === 'Receptionist' || role === 'PracticeAdmin') && isModuleVisible('Billing') && (
-            <div className="ct-guide-sidebar-group">
+            <div className="ct-guide-sidebar-group nav-group-wrap">
               <button type="button"
-                className={section === 'Billing' ? 'nav-item nav-active' : 'nav-item'}
+                className={section === 'Billing' ? 'nav-item nav-group nav-group-active' : 'nav-item nav-group'}
                 aria-expanded={billingExpanded}
-                onClick={() => {
-                  setBillingExpanded(open => !open)
-                  navigate('Billing')
-                }}>
+                // Only opens/closes the submenu. The pages are the items inside it.
+                onClick={() => setBillingExpanded(open => !open)}>
                 <CheckoutIcon size={19}/><span>Billing</span>
                 {billingExpanded ? <ChevronDown size={16}/> : <ChevronRight size={16}/>}
               </button>
-              {billingExpanded && (
-                <div className="ct-guide-sidebar-items">
+              {(
+                <div className={'ct-guide-sidebar-items nav-submenu' + (billingExpanded ? '' : ' nav-submenu-collapsed')}>
                   {([
                     ['today', "Today's Billing"],
                     ['cashPrivate', 'Cash & Private'],
@@ -966,20 +988,17 @@ export default function App() {
             </div>
           )}
           {(role === 'PracticeAdmin' || role === 'Finance') && (
-            <div>
+            <div className="nav-group-wrap">
               <button type="button"
-                className={section === 'Finance' ? 'nav-item nav-active' : 'nav-item'}
+                className={section === 'Finance' ? 'nav-item nav-group nav-group-active' : 'nav-item nav-group'}
                 aria-expanded={financeExpanded}
-                onClick={() => {
-                  setSection('Finance')
-                  setFinanceExpanded(value => section === 'Finance' ? !value : true)
-                  setMenuOpen(false)
-                }}>
+                // Only opens/closes the submenu. The pages are the items inside it.
+                onClick={() => setFinanceExpanded(value => !value)}>
                 <Wallet size={19} /> <span>Finances</span>
                 {financeExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
               </button>
-              {financeExpanded && (
-                <div style={{ paddingLeft: 21, display: 'flex', flexDirection: 'column', gap: 4, margin: '5px 0 12px' }}>
+              {(
+                <div className={'nav-submenu' + (financeExpanded ? '' : ' nav-submenu-collapsed')} style={{ paddingLeft: 21, display: 'flex', flexDirection: 'column', gap: 4, margin: '5px 0 12px' }}>
                   {([['revenues', 'Revenues'], ['expenses', 'Expenses']] as const).map(([id, label]) => (
                     <button type="button" key={id}
                       className={section === 'Finance' && financeTab === id ? 'nav-item nav-active' : 'nav-item'}
@@ -1074,17 +1093,6 @@ export default function App() {
           </div>
 
           <div className="topbar-actions">
-            <select
-              aria-label="Theme"
-              className="ct-theme-select"
-              value={themeChoice}
-              onChange={event => setThemeChoice(event.target.value as ThemeChoice)}
-            >
-              <option value="white">White Only</option>
-              <option value="blue">Blue &amp; White</option>
-              <option value="dark">Dark Blue</option>
-            </select>
-
             <LiveClinicNotifications
               role={role}
               onOpen={() => {
@@ -1451,6 +1459,7 @@ export default function App() {
             <ConfigurationCenterPage
               appearance={appearance}
               onSaved={setAppearance}
+              workspace={workspace}
               onClose={() => navigate('Dashboard')}
               onOpenStaff={() => navigate('Management')}
             />
@@ -1458,7 +1467,20 @@ export default function App() {
 
           {/* PROFILE FOR ALL ROLES */}
           {section === 'My Profile' && (
-            <ProfilePage />
+            <ProfilePage
+              workspace={workspace}
+              practiceDefault={
+                appearance
+                  ? {
+                      themeSurface: isThemeSurface(appearance.themeSurface)
+                        ? appearance.themeSurface
+                        : 'blue',
+                      layoutPreset: appearance.layoutPreset,
+                      navigationMode: appearance.navigationMode,
+                    }
+                  : null
+              }
+            />
           )}
 
           {/* DENIED SECTIONS */}
