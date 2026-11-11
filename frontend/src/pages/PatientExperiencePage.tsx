@@ -444,9 +444,12 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
     return () => { cancelled = true }
   }, [selected?.id, isDentist, tab])
 
+  const saDate = (date: Date) => new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Johannesburg', year: 'numeric', month: '2-digit', day: '2-digit'
+  }).format(date)
   const appointmentToCheckIn = canManage ? visits.find(visit =>
     visit.status === 'Scheduled' &&
-    new Date(visit.startUtc).toDateString() === new Date().toDateString()) : undefined
+    saDate(new Date(visit.startUtc)) === saDate(new Date())) : undefined
 
   async function checkInPatient() {
     if (!appointmentToCheckIn) return
