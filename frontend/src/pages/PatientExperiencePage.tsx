@@ -49,7 +49,7 @@ type HistoryRecord = {
 }
 
 type PatientTab = 'Overview' | 'Treatment' | 'Consultations' | 'Medical Records' | 'Accounts' | 'Details' | 'Visit' | 'History'
-type Props = { role: string; onClose?: () => void; onOpenAppointments?: () => void; initialConsultationAppointmentId?: string | null; onConsultationOpened?: () => void }
+type Props = { role: string; onClose?: () => void; onOpenAppointments?: () => void; onOpenOrthodonticIntake?: () => void; initialConsultationAppointmentId?: string | null; onConsultationOpened?: () => void }
 const tabs: PatientTab[] = ['Overview', 'Treatment', 'Accounts', 'Details', 'Visit', 'History']
 
 function record(value: unknown): Record<string, unknown> | null {
@@ -232,7 +232,7 @@ function MiniVisitCalendar({
   )
 }
 
-export default function PatientExperiencePage({ role, onClose, onOpenAppointments, initialConsultationAppointmentId, onConsultationOpened }: Props) {
+export default function PatientExperiencePage({ role, onClose, onOpenAppointments, onOpenOrthodonticIntake, initialConsultationAppointmentId, onConsultationOpened }: Props) {
   const [patients, setPatients] = useState<Patient[]>([])
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<Patient | null>(null)
@@ -544,7 +544,11 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
 
       <div className="ct-patient-toolbar">
         <div><p className="ct-patient-eyebrow">PATIENT DIRECTORY</p><h1>Patients</h1><p>Open a patient card to view their full practice record.</p></div>
-        {canManage && <button type="button" className="primary-button" onClick={() => setQuickRegister(true)}><Plus size={17}/> Quick Register / Manage</button>}
+        <div className="ct-patient-directory-actions">
+          {(role === 'Receptionist' || role === 'PracticeAdmin') && onOpenOrthodonticIntake &&
+            <button type="button" className="secondary-button" onClick={onOpenOrthodonticIntake}>Orthodontic intake</button>}
+          {canManage && <button type="button" className="primary-button" onClick={() => setQuickRegister(true)}><Plus size={17}/> Quick Register / Manage</button>}
+        </div>
       </div>
       <div className="ct-patient-searchrow">
         <label className="ct-patient-search"><Search size={19}/><input aria-label="Search patients" value={query} placeholder="Search by name, phone or patient ID" onChange={event => setQuery(event.target.value)}/></label>
