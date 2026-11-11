@@ -304,6 +304,14 @@ type Practice = {
   isActive: boolean
 }
 
+type PracticeAdminAccount = {
+  id: string
+  fullName: string
+  email: string
+  isActive: boolean
+  mustChangePassword: boolean
+}
+
 // SuperAdmin only: the parent App controls access to this page.
 // The ASP.NET Core API also enforces SuperAdmin authorization.
 function DentalPracticesPage() {
@@ -322,6 +330,14 @@ function DentalPracticesPage() {
   // CT_SUPERADMIN_ACCESS_V1
   const [accessBusyId, setAccessBusyId] = useState<string | null>(null)
   const [accessError, setAccessError] = useState('')
+  const [recoveryPractice, setRecoveryPractice] = useState<Practice | null>(null)
+  const [recoveryAdmins, setRecoveryAdmins] = useState<PracticeAdminAccount[]>([])
+  const [recoveryAdminId, setRecoveryAdminId] = useState('')
+  const [recoveryPassword, setRecoveryPassword] = useState('')
+  const [recoveryConfirm, setRecoveryConfirm] = useState('')
+  const [recoveryBusy, setRecoveryBusy] = useState(false)
+  const [recoveryLoading, setRecoveryLoading] = useState(false)
+  const [recoveryError, setRecoveryError] = useState('')
 
   const [form, setForm] = useState({
     name: '',
@@ -409,6 +425,61 @@ function DentalPracticesPage() {
       )
     } finally {
       setAccessBusyId(null)
+    }
+  }
+
+  async function openPracticeRecovery(practice: Practice) {
+    setRecoveryPractice(practice)
+    setRecoveryAdmins([])
+    setRecoveryAdminId('')
+    setRecoveryPassword('')
+    setRecoveryConfirm('')
+    setRecoveryError('')
+    setRecoveryLoading(true)
+    try {
+      const admins = await apiRequest<PracticeAdminAccount[]>(
+        `/platform/practices/${encodeURIComponent(practice.id)}/administrators`
+      )
+      setRecoveryAdmins(admins)
+      setRecoveryAdminId(admins.find(item => item.isActive)?.id ?? '')
+    } catch (cause) {
+      setRecoveryError(cause instanceof Error ? cause.message : 'Could not load practice administrators.')
+    } finally {
+      setRecoveryLoading(false)
+    }
+  }
+
+  async function submitPracticeRecovery(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!recoveryPractice || !recoveryAdminId || recoveryBusy) return
+    if (recoveryPassword.length < 10 || recoveryPassword.length > 128 ||
+        !/[A-Z]/.test(recoveryPassword) || !/[a-z]/.test(recoveryPassword) ||
+        !/[0-9]/.test(recoveryPassword)) {
+      setRecoveryError('Use 10–128 characters including upper and lowercase letters and a digit.')
+      return
+    }
+    if (recoveryPassword !== recoveryConfirm) {
+      setRecoveryError('Temporary passwords do not match.')
+      return
+    }
+    setRecoveryBusy(true)
+    setRecoveryError('')
+    try {
+      await apiRequest<void>(
+        `/platform/practices/${encodeURIComponent(recoveryPractice.id)}/administrators/${encodeURIComponent(recoveryAdminId)}/reset-password`,
+        'POST',
+        { temporaryPassword: recoveryPassword }
+      )
+      setNotice(`Administrator access reset for "${recoveryPractice.name}". Share the one-time temporary password securely; the administrator must change it at login.`)
+      setRecoveryPractice(null)
+      setRecoveryAdmins([])
+      setRecoveryPassword('')
+      setRecoveryConfirm('')
+      setRecoveryAdminId('')
+    } catch (cause) {
+      setRecoveryError(cause instanceof Error ? cause.message : 'Unable to reset administrator password.')
+    } finally {
+      setRecoveryBusy(false)
     }
   }
 
@@ -610,6 +681,14 @@ function DentalPracticesPage() {
                     {practice.isActive ? 'Active' : 'Suspended'}
                   </span>
 
+                  <div className="ct-platform-card-actions">
+                    <button
+                      type="button" className="secondary-button"
+                      disabled={!practice.isActive || accessBusyId !== null || loading}
+                      onClick={() => void openPracticeRecovery(practice)}
+                    >
+                      Reset Admin Access
+                    </button>
                   <button
                     type="button"
                     className="secondary-button"
@@ -625,12 +704,82 @@ function DentalPracticesPage() {
                         ? 'Suspend Practice'
                         : 'Reactivate Practice'}
                   </button>
+                  </div>
                 </article>
               ))}
             </div>
           </div>
         )}
       </section>
+
+      {recoveryPractice && (
+        <div className="ct-platform-recovery-overlay"
+          onMouseDown={event => {
+            if (event.target === event.currentTarget && !recoveryBusy) {
+              setRecoveryPractice(null)
+            }
+          }}>
+          <section className="ct-platform-recovery-dialog"
+            role="dialog" aria-modal="true" aria-labelledby="ct-admin-recovery-title">
+            <header className="ct-platform-recovery-heading">
+              <div>
+                <small>SUPER ADMIN · ACCOUNT RECOVERY</small>
+                <h2 id="ct-admin-recovery-title">Reset Practice Administrator</h2>
+                <p>{recoveryPractice.name}</p>
+              </div>
+              <button type="button" className="secondary-button"
+                disabled={recoveryBusy} onClick={() => setRecoveryPractice(null)}
+                aria-label="Close administrator reset">Close</button>
+            </header>
+            <p className="ct-platform-recovery-note">
+              Confirm the administrator's identity before resetting. Their existing practice,
+              patients, invoices and records will not be recreated or changed.
+              This ends existing sessions and requires a password change at next login.
+            </p>
+            {recoveryLoading ? <p>Loading administrators…</p> : (
+              <form className="ct-platform-recovery-form" onSubmit={event => void submitPracticeRecovery(event)}>
+                <label>Practice administrator
+                  <select value={recoveryAdminId}
+                    required onChange={event => setRecoveryAdminId(event.target.value)}>
+                    <option value="">Select administrator</option>
+                    {recoveryAdmins.filter(admin => admin.isActive).map(admin => (
+                      <option key={admin.id} value={admin.id}>
+                        {admin.fullName} ({admin.email})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {!recoveryAdmins.some(admin => admin.isActive) && (
+                  <p>No active administrator found for this practice.</p>
+                )}
+                <label>New temporary password
+                  <input type="password" autoComplete="new-password" required
+                    minLength={10} maxLength={128} value={recoveryPassword}
+                    onChange={event => setRecoveryPassword(event.target.value)}/>
+                </label>
+                <label>Confirm temporary password
+                  <input type="password" autoComplete="new-password" required
+                    minLength={10} maxLength={128} value={recoveryConfirm}
+                    onChange={event => setRecoveryConfirm(event.target.value)}/>
+                </label>
+                {recoveryError && <p role="alert" className="ct-platform-recovery-error">{recoveryError}</p>}
+                <p className="ct-platform-recovery-note">Use at least 10 characters including uppercase, lowercase and a digit.
+                  Do not send the password through a public chat, screenshot or source code.</p>
+                <div className="ct-platform-recovery-actions">
+                  <button className="secondary-button" type="button" disabled={recoveryBusy}
+                    onClick={() => setRecoveryPractice(null)}>Cancel</button>
+                  <button className="primary-button" type="submit"
+                    disabled={recoveryBusy || !recoveryAdminId}>
+                    {recoveryBusy ? 'Resetting…' : 'Reset Administrator Password'}
+                  </button>
+                </div>
+              </form>
+            )}
+            {!recoveryLoading && recoveryError && !recoveryAdmins.length &&
+              <p role="alert" className="ct-platform-recovery-error">{recoveryError}</p>}
+          </section>
+        </div>
+      )}
     </>
   )
 }

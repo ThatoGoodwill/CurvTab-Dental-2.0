@@ -94,3 +94,34 @@
     align-items: flex-start;
   }
 }
+
+
+/* SuperAdmin recovery stays a compact modal and uses practice theme variables. */
+.ct-platform-card-actions {display:flex; flex-wrap:wrap; align-items:center; gap:8px;}
+.ct-platform-recovery-overlay {
+  position:fixed; inset:0; z-index:9900; background:rgba(7,19,35,.64);
+  display:grid; place-items:center; padding:14px; box-sizing:border-box;
+}
+.ct-platform-recovery-dialog {
+  width:min(480px,100%); max-height:min(84vh,700px); overflow-y:auto;
+  box-sizing:border-box; padding:19px; border-radius:14px;
+  border:1px solid var(--border,rgba(140,160,185,.3));
+  background:var(--surface,#fff); color:inherit; box-shadow:0 22px 60px rgba(0,0,0,.22);
+}
+.ct-platform-recovery-heading {display:flex; gap:12px; justify-content:space-between; align-items:flex-start}
+.ct-platform-recovery-heading small {font-size:10px; font-weight:700; letter-spacing:1px; opacity:.65}
+.ct-platform-recovery-heading h2 {font-size:17px; margin:6px 0 4px}
+.ct-platform-recovery-heading p {font-size:12px; opacity:.7; margin:0}
+.ct-platform-recovery-heading button {min-width:0!important}
+.ct-platform-recovery-form {display:grid; gap:11px; margin-top:15px}
+.ct-platform-recovery-form label {display:grid; gap:5px; font-size:12px; font-weight:650}
+.ct-platform-recovery-form input,.ct-platform-recovery-form select {
+  font:inherit; font-size:12px; padding:9px 10px; width:100%; min-width:0;
+  box-sizing:border-box; border-radius:8px; border:1px solid var(--border,rgba(140,160,185,.35));
+  background:var(--surface-soft,var(--surface,#fff)); color:inherit;
+}
+.ct-platform-recovery-note {font-size:11px; line-height:1.55; opacity:.8; margin:13px 0 0}
+.ct-platform-recovery-actions {display:flex; justify-content:flex-end; flex-wrap:wrap; gap:8px}
+.ct-platform-recovery-actions button {min-width:0!important; font-size:12px; padding:8px 12px}
+.ct-platform-recovery-error {font-size:12px; color:#cf4155; margin:5px 0}
+@media(max-width:520px){.ct-platform-recovery-dialog{padding:14px}.ct-platform-recovery-actions button{flex:1}}

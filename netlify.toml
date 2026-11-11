@@ -1,0 +1,23 @@
+# Emergency demo hosting for CurvTab Dental.
+# Netlify builds the React frontend; the real API remains on Render and Neon.
+# No API secrets or database credentials should be placed in this file.
+[build]
+  base = "frontend"
+  command = "npm ci && npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# IMPORTANT: This API proxy must come before the SPA fallback.
+# It preserves same-origin /api requests and the session cookie flow.
+[[redirects]]
+  from = "/api/*"
+  to = "https://curvtab-dental-2-0.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
