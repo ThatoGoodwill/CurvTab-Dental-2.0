@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowRight,
   CalendarDays,
@@ -124,6 +124,17 @@ export function OverviewDashboardView(props: ViewProps) {
   const { now } = props
   const [cursor, setCursor] = useState(() => ({ y: now.getFullYear(), m: now.getMonth() }))
   const [selectedKey, setSelectedKey] = useState(() => dayKey(now))
+  const [panel, setPanel] = useState(0)
+  const touchStart = useRef<number | null>(null)
+  const panelNames = ['Quick Actions', 'Appointments Calendar', 'Status & Overview', 'Monthly Trends'] as const
+  const navigatePanel = (offset: number) => setPanel(index => (index + offset + panelNames.length) % panelNames.length)
+  const finishSwipe = (clientX: number) => {
+    if (touchStart.current !== null) {
+      const delta = clientX - touchStart.current
+      if (Math.abs(delta) > 64) navigatePanel(delta < 0 ? 1 : -1)
+      touchStart.current = null
+    }
+  }
 
   const dated: Dated[] = useMemo(
     () =>
@@ -248,16 +259,29 @@ export function OverviewDashboardView(props: ViewProps) {
 
   return (
     <div className="ov">
-      <div className="ov-heading">
-        <div>
-          <h1>
-            {greetingFor(now.getHours())}, {first}
-          </h1>
-          <p>Here&apos;s what&apos;s happening at {props.practiceName ?? 'your practice'} today.</p>
+      <div className="ov-carousel-heading">
+        <div className="ov-carousel-heading-copy">
+          <span className="ov-carousel-eyebrow">PRACTICE OPERATIONS · LIVE DATA</span>
+          <h2>{panelNames[panel]}</h2>
+          <p>Swipe left or right to explore your practice. Each section stays in one compact view.</p>
         </div>
-        <button type="button" className="secondary-button" onClick={props.onRefresh} disabled={props.loading}>
-          <RefreshCw size={16} /> Refresh
-        </button>
+        <div className="ov-carousel-controls" role="group" aria-label="Dashboard report slides">
+          <button type="button" className="ov-carousel-arrow" aria-label="Previous report"
+            onClick={() => navigatePanel(-1)}><ChevronLeft size={19}/></button>
+          <span className="ov-carousel-count" aria-live="polite">{panel + 1} / {panelNames.length}</span>
+          <button type="button" className="ov-carousel-arrow" aria-label="Next report"
+            onClick={() => navigatePanel(1)}><ChevronRight size={19}/></button>
+          <button type="button" className="secondary-button" onClick={props.onRefresh}
+            disabled={props.loading}><RefreshCw size={14}/> Refresh</button>
+        </div>
+      </div>
+      <div className="ov-carousel-tabs" role="group" aria-label="Choose report">
+        {panelNames.map((name, index) => (
+          <button type="button" key={name}
+            aria-pressed={panel === index}
+            className={panel === index ? 'ov-carousel-tab active' : 'ov-carousel-tab'}
+            onClick={() => setPanel(index)}>{name}</button>
+        ))}
       </div>
 
       {props.error && (
@@ -266,7 +290,15 @@ export function OverviewDashboardView(props: ViewProps) {
         </div>
       )}
 
-      <div className="ov-grid">
+      <div key={panel} className={`ov-grid ov-slide-${panel}`}
+        onTouchStart={event => { touchStart.current = event.touches[0]?.clientX ?? null }}
+        onTouchEnd={event => finishSwipe(event.changedTouches[0]?.clientX ?? 0)}
+        onKeyDown={event => {
+          if (event.target !== event.currentTarget) return
+          if (event.key === 'ArrowRight') navigatePanel(1)
+          if (event.key === 'ArrowLeft') navigatePanel(-1)
+        }}
+        tabIndex={0} aria-label={`Dashboard report: ${panelNames[panel]}`}>
         <section className="ov-hero">
           <div className="ov-hero-copy">
             <h2>
