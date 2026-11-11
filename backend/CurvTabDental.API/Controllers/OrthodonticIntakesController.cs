@@ -351,6 +351,49 @@ public sealed class OrthodonticIntakesController : ControllerBase
         return Ok(new { intake.Id, intake.Status });
     }
 
+    // Recover orthodontic classifications registered before the intake table
+    // existed. Idempotent, manager-initiated, and never changes patient IDs.
+    [HttpPost("sync-classifications")]
+    [Authorize(Roles = "PracticeAdmin")]
+    public async Task<IActionResult> SyncClassifications(CancellationToken ct)
+    {
+        if (_current.PracticeId is not Guid practiceId || _current.UserId is not Guid actor) return Forbid();
+        var registrations = await (
+            from details in _db.PatientRegistrationDetails.AsNoTracking()
+            join patient in _db.Patients.AsNoTracking() on details.PatientId equals patient.Id
+            where details.DentalPracticeId == practiceId && patient.DentalPracticeId == practiceId && !patient.IsArchived
+            select new { details.PatientId, details.ProfileJson }
+        ).Take(1500).ToListAsync(ct);
+        var classifiedIds = registrations.Where(x => IsClassified(x.ProfileJson))
+            .Select(x => x.PatientId).Distinct().ToArray();
+        var existing = await _db.OrthodonticIntakes.AsNoTracking()
+            .Where(x => classifiedIds.Contains(x.PatientId) && x.ClosedAtUtc == null)
+            .Select(x => x.PatientId).ToListAsync(ct);
+        var missing = classifiedIds.Except(existing).ToArray();
+        foreach (var patientId in missing)
+        {
+            _db.OrthodonticIntakes.Add(new OrthodonticIntakeCase
+            {
+                DentalPracticeId = practiceId, PatientId = patientId, CreatedByUserId = actor,
+                Source = "DIRECT", Status = "RECORDS_PENDING",
+                TermsApplicable = true, AdvancePolicy = "STANDARD_R2500",
+                MissingDocumentsJson = JsonSerializer.Serialize(new[] {
+                    "Orthodontic assessment records", "Clinical history verification",
+                    "Guardian/payer review", "Approved intake terms"
+                }),
+                NextAction = "Previously registered orthodontic patient. Assign specialist and verify intake."
+            });
+        }
+        try { await _db.SaveChangesAsync(ct); }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: "23505" })
+        {
+            return Conflict(new { message = "A concurrent intake was created. Refresh and re-run the sync." });
+        }
+        await _audit.WriteAsync("ORTHO_CLASSIFICATION_SYNC", "OrthodonticIntakeCase",
+            practiceId.ToString(), detail: $"queued={missing.Length};no_patient_or_payment_created", ct: ct);
+        return Ok(new { queued = missing.Length, alreadyQueued = existing.Count, totalClassified = classifiedIds.Length });
+    }
+
     private static bool IsClassified(string? json)
     {
         if (string.IsNullOrWhiteSpace(json)) return false;
