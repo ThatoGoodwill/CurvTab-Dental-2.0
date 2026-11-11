@@ -2,14 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowRight,
   CalendarDays,
-  CalendarPlus,
   ChevronLeft,
   ChevronRight,
   CreditCard,
-  ListOrdered,
   Receipt,
   RefreshCw,
-  UserPlus,
   Users,
 } from 'lucide-react'
 import { apiRequest } from '../services/api'
@@ -121,13 +118,13 @@ export function OverviewDashboardView(props: ViewProps) {
   const [panel, setPanel] = useState(0)
   const [paused, setPaused] = useState(false)
   const touchStart = useRef<number | null>(null)
-  const panelNames = ['Quick Actions', 'Appointments Calendar', 'Status & Overview', 'Monthly Trends'] as const
+  const panelNames = ['Appointments Calendar', 'Status & Overview', 'Monthly Trends'] as const
   const navigatePanel = (offset: number) => setPanel(index => (index + offset + panelNames.length) % panelNames.length)
   useEffect(() => {
     if (paused || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const timer = window.setInterval(() => {
       setPanel(index => (index + 1) % panelNames.length)
-    }, 9500)
+    }, 2000)
     return () => window.clearInterval(timer)
   }, [paused, panelNames.length])
   const finishSwipe = (clientX: number) => {
@@ -251,13 +248,6 @@ export function OverviewDashboardView(props: ViewProps) {
     },
   ]
 
-  const quick = [
-    { label: 'New Appointment', icon: <CalendarPlus size={26} />, tone: 'blue', action: props.onNewAppointment },
-    { label: 'Patient Queue', icon: <ListOrdered size={26} />, tone: 'purple', action: props.onOpenQueue },
-    { label: 'Checkout & Payments', icon: <CreditCard size={26} />, tone: 'green', action: props.onOpenCheckout },
-    { label: 'Patients', icon: <UserPlus size={26} />, tone: 'indigo', action: props.onOpenPatients },
-  ]
-
   return (
     <div className="ov"
       onMouseEnter={() => setPaused(true)}
@@ -270,7 +260,7 @@ export function OverviewDashboardView(props: ViewProps) {
         <div className="ov-carousel-heading-copy">
           <span className="ov-carousel-eyebrow">PRACTICE OPERATIONS · LIVE DATA</span>
           <h2>{panelNames[panel]}</h2>
-          <p>Swipe left or right to explore your practice. Each section stays in one compact view.</p>
+          <p>Live practice reports, smoothly changing every 2 seconds. Hover or focus to pause.</p>
         </div>
         <div className="ov-carousel-controls" role="group" aria-label="Dashboard report slides">
           <button type="button" className="ov-carousel-arrow" aria-label="Previous report"
@@ -320,18 +310,6 @@ export function OverviewDashboardView(props: ViewProps) {
           </div>
           <div className="ov-hero-art" aria-hidden="true">
             <ToothArt />
-          </div>
-        </section>
-
-        <section className="ov-card ov-quick">
-          <h3>Quick Actions</h3>
-          <div className="ov-quick-grid">
-            {quick.map((item) => (
-              <button key={item.label} type="button" className={`ov-quick-tile ${item.tone}`} onClick={item.action}>
-                {item.icon}
-                <span>{item.label}</span>
-              </button>
-            ))}
           </div>
         </section>
 
