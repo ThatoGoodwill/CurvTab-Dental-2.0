@@ -1368,14 +1368,17 @@ export default function App() {
             />
           )}
           {section === 'Dashboard' && showOverview && (
-            <OverviewDashboardPage
-              fullName={user?.fullName ?? ''}
-              practiceName={user?.practiceName ?? null}
-              onNewAppointment={() => openAppointmentTab('Appointments')}
-              onOpenQueue={() => openAppointmentTab('In Queue')}
-              onOpenCheckout={() => navigate('Billing')}
-              onOpenPatients={() => navigate('Patients')}
-            />
+            <details className="ct-dashboard-details">
+              <summary>Detailed calendar, queue and appointment reports</summary>
+              <OverviewDashboardPage
+                fullName={user?.fullName ?? ''}
+                practiceName={user?.practiceName ?? null}
+                onNewAppointment={() => openAppointmentTab('Appointments')}
+                onOpenQueue={() => openAppointmentTab('In Queue')}
+                onOpenCheckout={() => navigate('Billing')}
+                onOpenPatients={() => navigate('Patients')}
+              />
+            </details>
           )}
           {section === 'Dashboard' && role !== 'Dentist' && !showOverview && (
             <>
