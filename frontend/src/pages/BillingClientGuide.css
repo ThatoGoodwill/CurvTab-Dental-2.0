@@ -61,3 +61,306 @@
 }
 .ct-guide-sidebar-items .nav-item span { white-space:normal; }
 @media(max-width:850px){ .ct-guide-sidebar-items { padding-left:11px; } }
+
+
+/* CT_BILLING_SINGLE_MENU_20261111
+   Accounts-style single menu, no change to the existing Billing sidebar. */
+.ct-billing-client-module {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  color: var(--text, inherit);
+}
+.ct-billing-compact-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+  padding: 1px 1px 10px;
+  border-bottom: 1px solid var(--border, rgba(136, 162, 195, .28));
+}
+.ct-billing-compact-title { flex: 1 1 310px; min-width: 0; }
+.ct-billing-compact-title small {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .9px;
+  color: var(--practice-primary, var(--primary, currentColor));
+}
+.ct-billing-compact-title h2 {
+  margin: 0 0 3px;
+  font-size: clamp(17px, 2vw, 20px);
+  line-height: 1.24;
+  letter-spacing: -.25px;
+  color: inherit;
+}
+.ct-billing-compact-title p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--muted, inherit);
+}
+.ct-billing-menu-tools {
+  position: relative;
+  z-index: 15;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: none;
+}
+.ct-billing-current {
+  display: inline-flex;
+  align-items: center;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 6px 9px;
+  border: 1px solid var(--border, rgba(136,162,195,.28));
+  border-radius: 15px;
+  background: var(--surface-soft, transparent);
+  color: var(--muted, inherit);
+  font-size: 10px;
+  font-weight: 650;
+}
+.ct-billing-menu-trigger {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  min-height: 32px !important;
+  padding: 6px 11px !important;
+  border: 1px solid var(--primary, var(--practice-primary, #2865db)) !important;
+  border-radius: 8px !important;
+  background: var(--primary, var(--practice-primary, #2865db)) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+  font-size: 11px !important;
+  font-weight: 750 !important;
+  cursor: pointer;
+}
+.ct-billing-menu-trigger:hover { filter: brightness(1.07); }
+.ct-billing-menu-trigger svg:last-child { transition: transform .15s ease; }
+.ct-billing-chevron-open { transform: rotate(180deg); }
+.ct-billing-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 50;
+  display: grid;
+  gap: 3px;
+  width: 258px;
+  max-width: calc(100vw - 32px);
+  max-height: min(426px, 65dvh);
+  box-sizing: border-box;
+  padding: 7px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--border, rgba(136,162,195,.35));
+  border-radius: 11px;
+  background: var(--surface, var(--card-bg, #fff));
+  color: var(--text, inherit);
+  box-shadow: 0 15px 44px rgba(4, 20, 43, .22);
+}
+.ct-billing-menu-heading {
+  padding: 8px 8px 5px;
+  margin-top: 2px;
+  border-bottom: 1px solid var(--border, rgba(136,162,195,.18));
+  color: var(--muted, inherit);
+  font-size: 9px;
+  line-height: 1.4;
+  letter-spacing: 1px;
+  font-weight: 800;
+}
+.ct-billing-menu-heading:first-child { margin-top: 0; }
+.ct-billing-menu-item {
+  width: 100%;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  min-height: 31px !important;
+  padding: 6px 9px !important;
+  text-align: left !important;
+  border: 1px solid transparent !important;
+  border-radius: 7px !important;
+  color: var(--text, inherit) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+}
+.ct-billing-menu-item > span { flex: 1; min-width: 0; }
+.ct-billing-menu-item > svg:first-child {
+  flex: none;
+  color: var(--practice-primary, var(--primary, currentColor));
+}
+.ct-billing-menu-item:hover {
+  background: var(--surface-soft, rgba(145,170,215,.10)) !important;
+  border-color: var(--border, rgba(136,162,195,.35)) !important;
+}
+.ct-billing-menu-item.active {
+  background: color-mix(in srgb, var(--practice-primary, var(--primary, #2865db)) 12%, var(--surface, #fff)) !important;
+  border-color: color-mix(in srgb, var(--practice-primary, var(--primary, #2865db)) 33%, var(--border, #dce6ef)) !important;
+}
+.ct-billing-menu-check {
+  flex: none;
+  margin-left: auto;
+  color: var(--practice-primary, var(--primary, currentColor));
+}
+.ct-billing-menu-trigger:focus-visible,
+.ct-billing-menu-item:focus-visible {
+  outline: 2px solid var(--practice-primary, var(--primary, #2865db)) !important;
+  outline-offset: 2px;
+}
+.ct-billing-client-module .ct-guide-page { gap: 10px; }
+.ct-billing-client-module .ct-guide-kpis { gap: 8px; }
+.ct-billing-client-module .ct-guide-kpis article {
+  gap: 5px;
+  padding: 10px 11px;
+  min-height: 100px;
+  box-sizing: border-box;
+  background: color-mix(in srgb, var(--practice-primary, var(--primary, #2865db)) 5%, var(--surface, #fff));
+  color: inherit;
+  border-color: var(--border, rgba(136,162,195,.3));
+  border-radius: 9px;
+}
+.ct-billing-client-module .ct-guide-kpis strong {
+  font-size: clamp(17px, 1.8vw, 21px);
+  line-height: 1.3;
+}
+.ct-billing-client-module .ct-guide-panel {
+  padding: 11px;
+  border-radius: 9px;
+  background: var(--surface, #fff);
+  color: inherit;
+}
+.ct-billing-client-module .ct-guide-columns { gap: 10px; }
+.ct-billing-client-module .ct-guide-panel :is(h2,h3) { margin-top: 0; }
+.ct-billing-client-module .ct-guide-scroll { max-height: 300px; }
+.ct-billing-client-module .ct-guide-panel :is(th,td) { padding: 8px 7px; }
+.ct-billing-client-module .ct-billing-private-panel { min-width: 0; }
+.ct-billing-datebar { align-items: end; }
+.ct-billing-datebar > div:first-child { min-width: 0; }
+.ct-billing-datebar p { margin-top: 3px; }
+
+/* Finance action forms and Billing transactions share the same small,
+   centered pop-up, not a full-height side drawer. */
+.ct-guide-drawer-backdrop {
+  display: grid !important;
+  place-items: center !important;
+  justify-content: center !important;
+  align-items: center !important;
+  padding: 12px !important;
+  box-sizing: border-box !important;
+  backdrop-filter: blur(2px);
+}
+.ct-guide-drawer {
+  width: min(520px, 100%) !important;
+  max-width: 520px !important;
+  height: auto !important;
+  max-height: min(82dvh, 620px) !important;
+  overflow-y: auto !important;
+  padding: 14px 16px !important;
+  border: 1px solid var(--border, rgba(136,162,195,.35)) !important;
+  border-radius: 12px !important;
+  background: var(--surface, var(--card-bg, #fff)) !important;
+  color: var(--text, inherit) !important;
+  box-shadow: 0 22px 64px rgba(5,20,45,.27) !important;
+}
+.ct-guide-drawer > header { margin-bottom: 10px; padding-bottom: 10px; }
+.ct-guide-drawer > header h3 { font-size: 15px; }
+.ct-guide-drawer .ct-guide-form { gap: 9px; }
+.ct-guide-drawer :is(input, select, textarea) {
+  width: 100%;
+  min-height: 33px;
+  border-radius: 8px;
+  background: var(--surface-soft, var(--surface, #fff));
+  color: inherit;
+  border-color: var(--border, rgba(136,162,195,.35));
+}
+.ct-guide-drawer textarea { min-height: 64px; resize: vertical; }
+
+@media (max-width: 680px) {
+  .ct-billing-current { display: none; }
+  .ct-billing-menu-tools { margin-left: auto; }
+  .ct-billing-menu { max-height: min(410px, 63dvh); }
+  .ct-billing-compact-title { flex-basis: 180px; }
+  .ct-billing-compact-title h2 { font-size: 17px; }
+  .ct-billing-compact-title p { font-size: 10px; }
+  .ct-billing-client-module .ct-guide-kpis article { min-height: 86px; }
+  .ct-guide-drawer { max-height: 93dvh !important; padding: 11px 12px !important; }
+}
+@media (max-width: 440px) {
+  .ct-billing-compact-header { align-items: start; }
+  .ct-billing-menu-tools { justify-content: flex-start; margin-left: 0; }
+  .ct-billing-menu { left: 0; right: auto; }
+  .ct-billing-client-module .ct-guide-kpis { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ct-billing-menu-trigger svg:last-child { transition: none; }
+}
+
+/* CT_BILLING_MENU_LEFT_COMPACT_20261111
+   All Billing sits at the left immediately beneath its heading, like All Accounts.
+   Private cash/account views are a compact local select, not main-menu duplicates. */
+.ct-billing-client-module .ct-billing-compact-header {
+  display: block; margin: 0; padding: 0; border-bottom: 0;
+}
+.ct-billing-client-module .ct-billing-compact-title { width: 100%; flex: none; }
+.ct-billing-client-module .ct-billing-navigation-row {
+  position: relative; z-index: 20; display: flex;
+  justify-content: flex-start; align-items: center;
+  gap: 9px; min-height: 30px; padding: 0 0 9px;
+  border-bottom: 1px solid var(--border, rgba(136,162,195,.25));
+}
+.ct-billing-client-module .ct-billing-menu-tools {
+  display: inline-flex; justify-content: flex-start;
+  margin: 0 !important; flex: 0 0 auto;
+}
+.ct-billing-client-module .ct-billing-menu {
+  top: calc(100% + 5px); left: 0; right: auto;
+  width: min(244px, calc(100vw - 32px));
+  max-height: min(270px, 62dvh);
+  padding: 5px; gap: 2px;
+}
+.ct-billing-client-module .ct-billing-menu-item {
+  min-height: 30px !important; font-size: 11px !important;
+  padding: 6px 8px !important;
+}
+.ct-billing-client-module .ct-billing-current {
+  display: inline-flex; max-width: min(280px, 48vw);
+  padding: 5px 9px; border-radius: 7px;
+}
+.ct-billing-client-module .ct-billing-private-panel {
+  display: grid; gap: 9px; min-width: 0;
+}
+.ct-billing-client-module .ct-billing-private-picker {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 9px; border: 1px solid var(--border, rgba(136,162,195,.28));
+  border-radius: 8px; background: var(--surface, transparent);
+  width: fit-content; max-width: 100%;
+}
+.ct-billing-client-module .ct-billing-private-picker label {
+  font-size: 11px; font-weight: 700; color: var(--muted, inherit);
+}
+.ct-billing-client-module .ct-billing-private-picker select {
+  min-width: 155px; max-width: min(250px, 65vw);
+  min-height: 29px; padding: 5px 9px;
+  font-size: 11px; font-weight: 650; color: inherit;
+  background: var(--surface-soft, var(--surface, transparent));
+  border: 1px solid var(--border, rgba(136,162,195,.3));
+  border-radius: 6px; cursor: pointer;
+}
+.ct-billing-client-module .ct-billing-menu-trigger { min-height: 29px !important; }
+@media (max-width: 480px) {
+  .ct-billing-client-module .ct-billing-navigation-row { gap: 7px; }
+  .ct-billing-client-module .ct-billing-current {
+    max-width: calc(100vw - 190px); font-size: 10px;
+  }
+}

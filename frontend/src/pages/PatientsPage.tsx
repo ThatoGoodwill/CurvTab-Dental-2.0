@@ -349,15 +349,7 @@ export default function PatientsPage({
   // =========================================
 
 
-  // CT_REGISTRATION_CLIENT_V3 — six compact stages per client review.
-  const registrationSteps = [
-    'Find patient',
-    'Personal details',
-    'Contact & emergency',
-    'Payment & medical aid',
-    'Medical history',
-    'Review & declaration',
-  ]
+  // The six-step workflow remains internal; client requested no visible progress strip.
   const [existingPatientSearch, setExistingPatientSearch] = useState('')
   const [cityTown, setCityTown] = useState('')
   const [suburb, setSuburb] = useState('')
@@ -750,29 +742,12 @@ export default function PatientsPage({
           <div className="panel-header">
             <div>
               <h2>Register New Patient</h2>
-              <p>Complete the six guided stages, including medical history and signed declaration.</p>
+              <p>Enter patient details, medical history and the signed declaration.</p>
             </div>
 
             <UserPlus size={22} />
           </div>
 
-
-          <div className="ct-wizard-progress" aria-label="Registration progress">
-            {registrationSteps.map((label, index) => (
-              <div
-                key={label}
-                className={
-                  'ct-wizard-progress-item' +
-                  (registrationStep === index ? ' active' : '') +
-                  (registrationStep > index ? ' completed' : '')
-                }
-                aria-current={registrationStep === index ? 'step' : undefined}
-              >
-                <span className="ct-wizard-number">{index + 1}</span>
-                <small>{label}</small>
-              </div>
-            ))}
-          </div>
 
           <form onSubmit={handleRegister} noValidate className="ct-wizard-form">
           <div className="ct-reg-v3-content">

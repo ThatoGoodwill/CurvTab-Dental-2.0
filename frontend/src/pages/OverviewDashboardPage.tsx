@@ -67,7 +67,7 @@ function parseUtc(value: string): Date {
 }
 
 function rand(amount: number): string {
-  return `R ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount)
 }
 
 function greetingFor(hour: number): string {
@@ -218,7 +218,7 @@ export function OverviewDashboardView(props: ViewProps) {
     },
     {
       label: 'Active Patients',
-      value: props.patientTotal === null ? '—' : props.patientTotal.toLocaleString('en-US'),
+      value: props.patientTotal === null ? '—' : props.patientTotal.toLocaleString('en-ZA'),
       icon: <Users size={26} />,
       tone: 'indigo',
       note: 'Registered in this practice',

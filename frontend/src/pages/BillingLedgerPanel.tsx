@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Banknote, CreditCard, Landmark, Receipt, RefreshCw } from 'lucide-react'
+import { CreditCard, Landmark, RefreshCw } from 'lucide-react'
+import RandIcon from '../components/RandIcon'
 import './BillingLedgerPanel.css'
 
 type PaymentRow = {
@@ -190,7 +191,7 @@ export default function BillingLedgerPanel() {
         <>
           <div className="ct-billing-kpis">
             <article>
-              <Banknote size={21}/>
+              <RandIcon size={21}/>
               <span>Actual cash &amp; card receipts</span>
               <strong>{money(ledger.cashReceived + ledger.cardReceived)}</strong>
             </article>
@@ -200,7 +201,7 @@ export default function BillingLedgerPanel() {
               <strong>{money(ledger.eftReceived)}</strong>
             </article>
             <article>
-              <Banknote size={21}/>
+              <RandIcon size={21}/>
               <span>Cash received</span>
               <strong>{money(ledger.cashReceived)}</strong>
             </article>
@@ -210,7 +211,7 @@ export default function BillingLedgerPanel() {
               <strong>{money(ledger.cardReceived)}</strong>
             </article>
             <article>
-              <Receipt size={21}/>
+              <RandIcon size={21}/>
               <span>Total received</span>
               <strong>{money(ledger.totalReceived)}</strong>
             </article>
