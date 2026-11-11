@@ -31,6 +31,7 @@ type FinancialSummary = {
     snapshotJson: string
   } | null
   canSubmit?: boolean
+  managerApproved?: boolean
   note?: string
 }
 const money = (n: number) => new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(n)
@@ -39,7 +40,7 @@ async function err(res: Response) {
   return body?.message ?? `Request failed (${res.status})`
 }
 
-export default function FinancialReconciliationPanel({ businessDate }: { businessDate: string }) {
+export default function FinancialReconciliationPanel({ businessDate, isManager }: { businessDate: string; isManager: boolean }) {
   const [summary, setSummary] = useState<FinancialSummary | null>(null)
   const [instrument, setInstrument] = useState<'Card' | 'EFT'>('Card')
   const [received, setReceived] = useState('')
@@ -169,9 +170,11 @@ export default function FinancialReconciliationPanel({ businessDate }: { busines
       Original count and shortage remain unchanged. Medical-aid sign-off is separate.
     </p> : <div className="ct-financial-final">
       <p>Review actual expenses, recorded refunds and source-linked lab payouts before handover. Do not re-enter an existing lab payout.</p>
-      <button type="button" className="primary-button" disabled={!summary.canSubmit}
+      <button type="button" className="primary-button" disabled={!summary.canSubmit || !isManager}
         onClick={() => setShowSignoff(true)}><ClipboardCheck size={15}/> Review final financial sign-off</button>
-      {!summary.canSubmit && <small>Both card and EFT evidence must match their ledger totals before sign-off.</small>}
+      {!summary.managerApproved && <small>The practice manager must approve the cash count before final financial sign-off.</small>}
+      {!summary.canSubmit && <small>Both card and EFT evidence must match the ledger and manager approval must be recorded.</small>}
+      {!isManager && <small>Only PracticeAdmin can submit the final financial sign-off.</small>}
     </div>}
     {showEvidence && !summary.financialSignoff && <div className="ct-guide-drawer-backdrop">
       <form className="ct-guide-drawer" onSubmit={event => void saveEvidence(event)}>
