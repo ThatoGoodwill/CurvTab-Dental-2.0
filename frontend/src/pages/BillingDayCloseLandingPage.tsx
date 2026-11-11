@@ -9,6 +9,7 @@ type FinancialDay = {
   status: string
   cash?: { cashReceived: number; countedCash: number; variance: number }
 }
+type ReceiptLedger = { totalReceived: number }
 type ClaimDay = {
   signed: boolean
   status: string
@@ -40,6 +41,7 @@ export default function BillingDayCloseLandingPage({ openFinancial, openClaims }
   const [reload, setReload] = useState(0)
   const [financial, setFinancial] = useState<FinancialDay | null>(null)
   const [claims, setClaims] = useState<ClaimDay | null>(null)
+  const [ledger, setLedger] = useState<ReceiptLedger | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -47,14 +49,19 @@ export default function BillingDayCloseLandingPage({ openFinancial, openClaims }
     let active = true
     setLoading(true)
     setError('')
+    const from = new Date(`${date}T00:00:00+02:00`)
+    const to = new Date(from.getTime() + 86400000)
+    const interval = new URLSearchParams({ fromUtc: from.toISOString(), toUtc: to.toISOString() })
     Promise.allSettled([
       readDay<FinancialDay>(`/api/billing/cash-day-close?date=${encodeURIComponent(date)}`),
       readDay<ClaimDay>(`/api/billing/medical-aid-day-signoff?date=${encodeURIComponent(date)}`),
-    ]).then(([cash, aid]) => {
+      readDay<ReceiptLedger>(`/api/finance/ledger?${interval.toString()}`),
+    ]).then(([cash, aid, receipts]) => {
       if (!active) return
       setFinancial(cash.status === 'fulfilled' ? cash.value : null)
       setClaims(aid.status === 'fulfilled' ? aid.value : null)
-      const failed = [cash, aid].filter(item => item.status === 'rejected')
+      setLedger(receipts.status === 'fulfilled' ? receipts.value : null)
+      const failed = [cash, aid, receipts].filter(item => item.status === 'rejected')
       if (failed.length) setError('One or more sign-off statuses could not be loaded. No sign-off was changed.')
     }).finally(() => { if (active) setLoading(false) })
     return () => { active = false }
@@ -84,8 +91,8 @@ export default function BillingDayCloseLandingPage({ openFinancial, openClaims }
         <p className="ct-guide-status">Status: {loading ? 'Loading…' : financial?.status ?? 'Unavailable'}</p>
         <p>Physical blind cash count, card and EFT evidence, expenses, variance and manager exceptions.</p>
         <div className="ct-guide-day-close-card-total"><RandIcon size={18}/><strong>
-          {financial?.cash ? money(financial.cash.cashReceived) : '—'}
-        </strong><small>Recorded cash receipts (not all methods)</small></div>
+          {ledger ? money(ledger.totalReceived) : '—'}
+        </strong><small>Actual receipts — cash, card and EFT; claims excluded</small></div>
         <button type="button" className="primary-button" onClick={openFinancial}>Open Financial Reconciliation</button>
       </article>
       <article className="ct-guide-day-close-card">
