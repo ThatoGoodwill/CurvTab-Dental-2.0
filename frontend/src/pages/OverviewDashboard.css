@@ -248,3 +248,118 @@
     transition: none; transform: none !important;
   }
 }
+
+/* 11 Nov client revision: one full-width, compact, animated report carousel
+   at the TOP of the main dashboard. Quick Actions are not a carousel slide. */
+#root .app-shell .main-content > .ov {
+  display: block !important;
+  width: 100% !important;
+  max-width: 1180px !important;
+  min-width: 0 !important;
+  margin: 0 auto 12px !important;
+  align-self: stretch !important;
+  box-sizing: border-box !important;
+}
+#root .app-shell .main-content > .ov .ov-carousel-heading {
+  padding: 11px 15px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 20px rgba(28,78,151,.08);
+}
+#root .app-shell .main-content > .ov .ov-carousel-heading h2 {
+  font-size: 17px !important;
+}
+#root .app-shell .main-content > .ov .ov-carousel-heading p {
+  font-size: 10px !important;
+}
+#root .app-shell .main-content > .ov .ov-carousel-tabs {
+  padding: 7px 1px 8px !important;
+}
+#root .app-shell .main-content > .ov .ov-carousel-tabs button {
+  min-height: 28px !important;
+  padding: 5px 10px !important;
+  font-size: 10px !important;
+}
+#root .app-shell .main-content > .ov .ov-quick { display: none !important; }
+#root .app-shell .main-content > .ov .ov-grid {
+  display: grid !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  min-height: 275px;
+  max-height: 370px;
+  overflow-y: auto;
+  border-radius: 12px;
+  transform-origin: 50% 55%;
+  animation: ct-report-approach 1.35s cubic-bezier(.17,.8,.23,1) both !important;
+  scrollbar-width: thin;
+}
+#root .app-shell .main-content > .ov .ov-grid.ov-slide-0 {
+  grid-template-columns: minmax(0,1fr) !important;
+  grid-template-areas: 'cal' !important;
+}
+#root .app-shell .main-content > .ov .ov-grid.ov-slide-1 {
+  grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+  grid-template-areas: 'status overview' !important;
+}
+#root .app-shell .main-content > .ov .ov-grid.ov-slide-2 {
+  grid-template-columns: minmax(0,1fr) !important;
+  grid-template-areas: 'trends' !important;
+}
+#root .app-shell .main-content > .ov .ov-grid.ov-slide-0 > :not(.ov-calendar),
+#root .app-shell .main-content > .ov .ov-grid.ov-slide-1 > :not(.ov-status):not(.ov-overview),
+#root .app-shell .main-content > .ov .ov-grid.ov-slide-2 > :not(.ov-trends) {
+  display: none !important;
+}
+#root .app-shell .main-content > .ov .ov-grid > .ov-card {
+  min-height: 270px;
+  min-width: 0;
+  padding: 12px 14px !important;
+  margin: 0 !important;
+}
+#root .app-shell .main-content > .ov .ov-slide-0 .ov-calendar-body {
+  grid-template-columns: minmax(270px,1.2fr) minmax(170px,.8fr);
+  gap: 12px !important;
+}
+#root .app-shell .main-content > .ov .ov-slide-0 .ov-cal-cell {
+  height: 31px !important;
+  min-height: 31px !important;
+  padding: 3px !important;
+}
+#root .app-shell .main-content > .ov .ov-slide-0 .ov-day-list {
+  max-height: 258px !important;
+  overflow-y: auto;
+}
+#root .app-shell .main-content > .ov .ov-slide-1 .ov-status-grid {
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 7px !important;
+}
+#root .app-shell .main-content > .ov .ov-slide-1 .ov-status-tile {
+  padding: 10px !important;
+  border-radius: 9px !important;
+}
+#root .app-shell .main-content > .ov .ov-slide-1 .ov-status-value {
+  font-size: 20px !important;
+}
+#root .app-shell .main-content > .ov .ov-slide-2 .ov-trends svg {
+  max-height: 240px;
+}
+@keyframes ct-report-approach {
+  0% { opacity: .55; transform: perspective(1200px) translateY(17px) scale(.94); }
+  65% { opacity: 1; transform: perspective(1200px) translateY(-3px) scale(1.015); }
+  100% { opacity: 1; transform: perspective(1200px) translateY(0) scale(1); }
+}
+@media (max-width: 850px) {
+  #root .app-shell .main-content > .ov .ov-grid.ov-slide-1 {
+    grid-template-columns: minmax(0,1fr) !important;
+    grid-template-areas: 'status' 'overview' !important;
+    max-height: 480px;
+  }
+  #root .app-shell .main-content > .ov .ov-slide-0 .ov-calendar-body {
+    grid-template-columns: minmax(0,1fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #root .app-shell .main-content > .ov .ov-grid {
+    animation: none !important; transform: none !important;
+  }
+}
