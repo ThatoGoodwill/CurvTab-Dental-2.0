@@ -339,6 +339,83 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
         {detail.previousRecordsSummary && <p><strong>Records supplied:</strong> {detail.previousRecordsSummary}</p>}
         {detail.urgentConcerns && <p><strong>Urgent concerns:</strong> {detail.urgentConcerns}</p>}
       </div>}
+      <details className="ct-ortho-intake-evidence" open>
+        <summary>Clinical documents ({documents.length})</summary>
+        <div className="ct-ortho-intake-doc-list">
+          {documents.length===0 && <p>No evidence uploaded yet. Missing items are not treated as negative findings.</p>}
+          {documents.map(doc=><div key={doc.id} className="ct-ortho-intake-document-row">
+            <div><strong>{doc.originalFileName}</strong>
+              <small>{doc.category.replaceAll('_',' ')} · {(doc.sizeBytes/1024).toFixed(0)} KB · SHA-256: {doc.sha256.slice(0,12)}…</small></div>
+            <button type="button" className="secondary-button"
+              onClick={()=>void downloadSecure('/orthodontics/intakes/'+selectedId+'/documents/'+doc.id,doc.originalFileName)}>
+              Download
+            </button>
+          </div>)}
+        </div>
+        <form className="ct-ortho-intake-upload" onSubmit={uploadEvidence}>
+          <label>Document type
+            <select value={docCategory} onChange={e=>setDocCategory(e.target.value)}>
+              <option value="XRAY">X-ray</option><option value="PHOTO">Photo</option>
+              <option value="REFERRAL">Referral</option><option value="PREVIOUS_RECORD">Previous clinical record</option>
+              <option value="CONSENT_EVIDENCE">Consent / guardian evidence</option>
+              <option value="OTHER">Other clinical document</option>
+            </select>
+          </label>
+          <label>PDF, PNG or JPEG (max 4 MB)
+            <input id="ct-ortho-document-input" type="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+              onChange={event=>setUploadFile(event.currentTarget.files?.[0]??null)}/>
+          </label>
+          <button type="submit" className="primary-button" disabled={working||!uploadFile}>Upload evidence</button>
+        </form>
+        <small>Documents are stored privately in the practice database, checked for integrity, and audited on download. Clinical verification remains a separate specialist action.</small>
+      </details>
+      {selected.termsAcceptedAtUtc && <div className="ct-ortho-signed-links">
+        <strong>Signed intake agreement</strong>
+        <button type="button" className="secondary-button"
+          onClick={()=>void downloadSecure('/orthodontics/intakes/'+selectedId+'/signed-terms/pdf',
+            'Orthodontic-Intake-'+selectedId+'.pdf')}>Download agreement PDF</button>
+        <button type="button" className="secondary-button"
+          onClick={()=>void downloadSecure('/orthodontics/intakes/'+selectedId+'/signed-terms/signature.png',
+            'Orthodontic-Intake-Signature-'+selectedId+'.png')}>Download signature evidence</button>
+      </div>}
+      {(isManager||role==='Receptionist') && <details className="ct-ortho-advance-panel">
+        <summary>Assessment advance · existing billing ledger</summary>
+        {receipt?.recorded && receipt.payment ? <div className="ct-ortho-receipt">
+          <strong>R {Number(receipt.payment.amount).toFixed(2)} received</strong>
+          <span>Receipt {receipt.payment.receiptNumber} · {receipt.payment.method} · {new Date(receipt.payment.receivedAtUtc).toLocaleString('en-ZA')}</span>
+          <small>Already entered in the existing appointment receipts ledger. Do not enter this payment again. It must be credited against the eventual accepted treatment quotation.</small>
+        </div> : selected.advancePolicy!=='STANDARD_R2500' ?
+          <p>Fee policy requires a manager decision or exemption. No automatic charge is allowed for transfer-in cases.</p>
+          : !selected.termsAcceptedAtUtc ?
+          <p>The R2,500 advance cannot be recorded until the approved intake terms are signed by an authorised person.</p>
+          : <div className="ct-ortho-advance-form">
+            <p>Only record money physically received or an EFT confirmed against the bank statement. This creates one real R2,500 receipt in the existing daily billing ledger.</p>
+            <label>Existing patient appointment
+              <select value={appointmentId} onChange={e=>setAppointmentId(e.target.value)}>
+                <option value="">Select appointment</option>
+                {appointments.map(ap=><option key={ap.id} value={ap.id}>
+                  {new Date(ap.startUtc).toLocaleDateString('en-ZA')} · {ap.reason||'Dental appointment'} ({ap.status})
+                </option>)}
+              </select>
+            </label>
+            <label>Payment received by
+              <select value={advanceMethod} onChange={e=>setAdvanceMethod(e.target.value as 'Cash'|'EFT')}>
+                <option value="Cash">Cash (physically counted)</option>
+                <option value="EFT">EFT (verified in bank)</option>
+              </select>
+            </label>
+            {advanceMethod==='EFT' && <label>Confirmed bank reference
+              <input value={bankReference} maxLength={55} onChange={e=>setBankReference(e.target.value)} />
+            </label>}
+            <label className="ct-ortho-intake-check">
+              <input type="checkbox" checked={fundsConfirmed} onChange={e=>setFundsConfirmed(e.target.checked)}/>
+              <span>I personally verified that R2,500 was actually received. I understand this creates an audited receipt and will appear in day close.</span>
+            </label>
+            <button type="button" className="primary-button" disabled={working||!appointmentId||!fundsConfirmed||
+              (advanceMethod==='EFT'&&!bankReference.trim())}
+              onClick={()=>void recordAdvance()}>Record R2,500 and issue receipt</button>
+          </div>}
+      </details>}
       {isManager && <>
         <label className="ct-ortho-intake-assign">Assign to an authorised dentist
           <select value={selected.assignedOrthodontistUserId??''} onChange={e=>{
