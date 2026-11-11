@@ -1356,7 +1356,18 @@ export default function App() {
               onOpenDailyPatients={() => navigate('Daily Patients')}
             />
           )}
-          {/* Live report carousel first: immediately visible, no scrolling required. */}
+          {/* Keep the client's original dental slideshow at the top.
+              Compact live reports appear directly beneath its KPI row. */}
+          {section === 'Dashboard' && (
+            <ClinicDashboardEnhancements
+              role={role}
+              showActivityCharts={!showOverview}
+              onPrimaryAction={() => {
+                if (role === 'SuperAdmin') navigate('Dental Practices')
+                else openAppointmentTab('Appointments')
+              }}
+            />
+          )}
           {section === 'Dashboard' && showOverview && (
             <OverviewDashboardPage
               fullName={user?.fullName ?? ''}
@@ -1365,17 +1376,6 @@ export default function App() {
               onOpenQueue={() => openAppointmentTab('In Queue')}
               onOpenCheckout={() => navigate('Billing')}
               onOpenPatients={() => navigate('Patients')}
-            />
-          )}
-
-          {/* Visual upgrade: slideshow and real-data appointment analytics. */}
-          {section === 'Dashboard' && (
-            <ClinicDashboardEnhancements
-              role={role}
-              onPrimaryAction={() => {
-                if (role === 'SuperAdmin') navigate('Dental Practices')
-                else openAppointmentTab('Appointments')
-              }}
             />
           )}
 
