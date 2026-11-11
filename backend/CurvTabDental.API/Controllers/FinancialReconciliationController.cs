@@ -101,6 +101,11 @@ public sealed class FinancialReconciliationController : ControllerBase
             .Where(x => x.DentalPracticeId == practiceId && x.SubmissionId == count.Id)
             .Select(x => new { x.Id, x.SnapshotJson, x.SignedAtUtc, x.SignedByUserId, x.HandoverReason })
             .FirstOrDefaultAsync(ct);
+        var managerReview = await _db.Set<CashDayCloseReview>().AsNoTracking()
+            .Where(x => x.DentalPracticeId == practiceId && x.SubmissionId == count.Id)
+            .OrderByDescending(x => x.ReviewedAtUtc).ThenByDescending(x => x.Id)
+            .Select(x => new { x.Decision, x.Id })
+            .FirstOrDefaultAsync(ct);
         var card = evidence.LastOrDefault(x => x.Instrument == "Card");
         var eft = evidence.LastOrDefault(x => x.Instrument == "EFT");
         return Ok(new {
@@ -109,7 +114,9 @@ public sealed class FinancialReconciliationController : ControllerBase
             originalExpectedCash = count.ExpectedCash, originalVariance = count.Variance,
             receipts = new { cash = receipts.Cash, card = receipts.Card, eft = receipts.Eft },
             evidence, latestCard = card, latestEft = eft, financialSignoff = signed,
-            canSubmit = signed is null && card is not null && eft is not null &&
+            managerApproved = managerReview?.Decision == "Approve",
+            canSubmit = signed is null && managerReview?.Decision == "Approve" &&
+                card is not null && eft is not null &&
                 card.ExternalSettlementConfirmed && eft.ExternalSettlementConfirmed &&
                 card.VerifiedReceived == receipts.Card && eft.VerifiedReceived == receipts.Eft &&
                 card.LedgerReceived == receipts.Card && eft.LedgerReceived == receipts.Eft,
