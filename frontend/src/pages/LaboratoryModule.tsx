@@ -315,8 +315,6 @@ export default function LaboratoryModule() {
     <header className="lab-head">
       <div><h1>Laboratory</h1><p>{isLab ? 'Assigned orders and production' : 'Cases, dispatches, deliveries and clinical outcomes'}</p></div>
       <div className="lab-head-actions">
-        {admin && <button type="button" className="lab-secondary" onClick={() => open('partner')}><Building2 size={15}/> Add laboratory</button>}
-        {admin && data.partners.length > 0 && <button type="button" className="lab-secondary" onClick={() => open('assign')}>Assign technician</button>}
         {dentist && <button type="button" className="lab-primary" disabled={!availablePartners.length} title={!availablePartners.length ? 'Practice administrator must add a laboratory first' : ''} onClick={() => open('order')}><Plus size={16}/> New prescription</button>}
         <button type="button" className="lab-secondary lab-refresh" disabled={busy} onClick={() => void load()}><RefreshCw size={16}/> Refresh</button>
       </div>
@@ -327,7 +325,7 @@ export default function LaboratoryModule() {
     {!loading && section !== 'orders' && data.partners.length === 0 && !isLab && <div className="lab-setup-banner">
       <div className="lab-setup-icon"><Building2 size={21}/></div><div className="lab-setup-text"><strong>{admin ? 'Add your first laboratory partner' : 'Laboratory setup required'}</strong>
         <p>{admin ? 'Enter the real laboratory name and contact details. No example records will be created.' : 'A practice administrator needs to add an active laboratory before a dentist can create a prescription.'}</p></div>
-        {admin && <button type="button" className="lab-primary" onClick={() => open('partner')}><Plus size={15}/> Add laboratory</button>}
+        {admin && <span className="lab-setup-settings-note">Set up partners in Settings → Laboratory Settings.</span>}
       </div>}
     {!loading && section !== 'orders' && isLab && data.partners.length === 0 && <div className="lab-setup-banner"><ShieldCheck size={21}/><div className="lab-setup-text"><strong>No laboratory assignment yet</strong><p>Ask the practice administrator to assign your account to your laboratory. No practice-wide cases are shown.</p></div></div>}
 
@@ -361,7 +359,7 @@ export default function LaboratoryModule() {
             <div className="lab-empty lab-empty-large"><ClipboardList size={27}/><strong>{caseSearch ? 'No matching laboratory orders' : 'No laboratory orders yet'}</strong>
               <p>{caseSearch ? 'Try a different patient, case reference or laboratory.' : isLab ? 'New work appears here after an assigned practice physically dispatches an order.' : !availablePartners.length ? 'Add an active laboratory first. Then the dentist can prescribe actual work.' : dentist ? 'Create a prescription for a registered patient to begin tracking the case.' : 'Dentists create and approve prescriptions. You can then dispatch them from this workspace.'}</p>
               {!caseSearch && dentist && availablePartners.length > 0 && <button className="lab-primary" type="button" onClick={()=>open('order')}><Plus size={15}/> Create prescription</button>}
-              {!caseSearch && admin && !availablePartners.length && <button className="lab-primary" type="button" onClick={()=>open('partner')}><Plus size={15}/> Add laboratory</button>}</div>}
+              {!caseSearch && admin && !availablePartners.length && <span className="lab-setup-settings-note">Add partners in Settings → Laboratory Settings.</span>}</div>}
         </section>
       </>}
 
