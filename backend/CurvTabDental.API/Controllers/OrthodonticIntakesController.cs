@@ -311,9 +311,21 @@ public sealed class OrthodonticIntakesController : ControllerBase
             return BadRequest(new { message = "The document version, signer details or signature is invalid." });
         var patient = await _db.Patients.AsNoTracking().FirstAsync(x => x.Id == intake.PatientId, ct);
         if (patient.DateOfBirth.HasValue &&
-            patient.DateOfBirth.Value > DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-18)) &&
-            req.SignerCapacity == "Patient")
-            return BadRequest(new { message = "A minor requires guardian/representative authority." });
+            patient.DateOfBirth.Value > DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-18)))
+        {
+            var guardian = await _db.PatientRegistrationDetails.AsNoTracking()
+                .Where(x => x.DentalPracticeId == practiceId && x.PatientId == intake.PatientId)
+                .Select(x => new { x.GuardianConsent, x.ResponsibleName, x.SignerCapacity })
+                .FirstOrDefaultAsync(ct);
+            // A checkbox on this request is not proof of guardian authority.
+            // Require an independently recorded responsible person and the same
+            // signatory; any dispute must be reviewed outside this endpoint.
+            if (req.SignerCapacity != "ParentOrGuardian" || guardian?.GuardianConsent != true ||
+                string.IsNullOrWhiteSpace(guardian.ResponsibleName) ||
+                !string.Equals(guardian.ResponsibleName.Trim(), req.SignerName.Trim(),
+                    StringComparison.OrdinalIgnoreCase))
+                return Conflict(new { message = "Guardian authority or identity has not been verified against patient registration. Review the responsible-person record before signing." });
+        }
         if (intake.TermsAcceptedAtUtc.HasValue)
             return Conflict(new { message = "Signed terms are immutable; use the case document history." });
         intake.TermsVersion = docVersion;
