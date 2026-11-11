@@ -60,3 +60,80 @@ html body .app-shell .workspace > main.main-content.ct-module-popup-window {
 @media(prefers-reduced-motion: reduce) {
   .ct-module-popup-window, .ct-module-popup-backdrop { animation: none !important; }
 }
+
+
+/* CT_UNIFIED_COMPACT_POPUP_20261111
+   Module windows share Laboratory's 1020 x 670 layout. Smaller booking,
+   registration and confirmation pop-ups retain their task-specific widths. */
+:root {
+  --ct-popup-workspace-width: 1020px;
+  --ct-popup-workspace-height: 670px;
+  --ct-popup-radius: 13px;
+  --ct-popup-shadow: 0 22px 72px rgba(5, 19, 42, .28);
+}
+html body .app-shell .workspace > main.main-content.ct-module-popup-window {
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  transform: translate(-50%, -50%) !important;
+  width: min(var(--ct-popup-workspace-width), calc(100vw - 28px)) !important;
+  max-width: var(--ct-popup-workspace-width) !important;
+  height: min(var(--ct-popup-workspace-height), calc(100dvh - 28px)) !important;
+  max-height: calc(100dvh - 28px) !important;
+  min-height: 0 !important;
+  padding: 11px 15px 15px !important;
+  border-radius: var(--ct-popup-radius) !important;
+  box-shadow: var(--ct-popup-shadow) !important;
+  scrollbar-gutter: stable;
+  isolation: isolate;
+}
+.ct-module-popup-toolbar {
+  top: -11px;
+  padding: 6px 0 10px;
+  margin-bottom: 10px;
+  gap: 8px;
+  background: var(--surface, var(--card-bg, #fff));
+}
+.ct-module-popup-toolbar strong { font-size: 14px; }
+.ct-module-popup-eyebrow { font-size: 9px; }
+.ct-module-popup-close {
+  min-height: 29px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  font-size: 11px;
+}
+.ct-module-popup-window :is(.page-heading, .panel-header) { gap: 8px; }
+.ct-module-popup-window :is(.panel, .card) { max-width: 100%; }
+.ct-module-popup-window :is(.panel, .ct-finance-ops) { border-radius: 9px; }
+.ct-module-popup-window :is(h1, h2, h3) { overflow-wrap: anywhere; }
+
+/* Consistent corners, borders and shadows across existing pop-up modules,
+   without forcing a booking form to be as wide as a patient/workspace page. */
+html body :is(.ct-lab-floating-window, .ct-appointments-modal,
+             .ct-dir4-dialog, .ct-pv5-dialog, .ct-reg-v3-modal) {
+  border-radius: var(--ct-popup-radius) !important;
+  box-shadow: var(--ct-popup-shadow) !important;
+}
+html body .ct-lab-floating-window {
+  width: min(var(--ct-popup-workspace-width), calc(100vw - 28px)) !important;
+  height: min(var(--ct-popup-workspace-height), calc(100dvh - 28px)) !important;
+}
+html body .ct-lab-floating-toolbar { padding: 9px 14px !important; }
+html body .ct-lab-floating-content { scrollbar-gutter: stable; }
+
+@media(max-width: 720px) {
+  html body .app-shell .workspace > main.main-content.ct-module-popup-window {
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: calc(100vw - 14px) !important;
+    max-width: calc(100vw - 14px) !important;
+    height: calc(100dvh - 14px) !important;
+    max-height: calc(100dvh - 14px) !important;
+    padding: 9px 10px 12px !important;
+  }
+  html body .ct-lab-floating-window {
+    width: calc(100vw - 14px) !important;
+    height: calc(100dvh - 14px) !important;
+  }
+}
