@@ -17,6 +17,7 @@ import AuditLogPage from './pages/AuditLogPage'
 import PlanAccountsPanel from './pages/PlanAccountsPanel'
 import FinanceWorkspaceTabs from './pages/FinanceWorkspaceTabs'
 import type { FinanceTab } from './pages/FinanceWorkspaceTabs'
+import type { ThemeSurface } from './workspace/workspacePrefs'
 import BillingWorkspaceTabs from './pages/BillingWorkspaceTabs'
 import type { BillingSection } from './pages/BillingWorkspaceTabs'
 import MedicalAidPanel from './pages/MedicalAidPanel'
@@ -843,7 +844,34 @@ export default function App() {
   // > Appearance), else the built-in default. Saved on the server, so it follows the account.
   const workspace = useWorkspacePreferences(user?.id)
   const cachedTheme = useMemo(() => readCachedTheme(user?.id), [user?.id])
-  const effective = resolveWorkspace(workspace.prefs, appearance, cachedTheme)
+  const [themeOverride, setThemeOverride] = useState<ThemeSurface | null>(null)
+  const [themeSaving, setThemeSaving] = useState(false)
+  const [themeError, setThemeError] = useState('')
+  const resolvedWorkspace = resolveWorkspace(workspace.prefs, appearance, cachedTheme)
+  const effective = { ...resolvedWorkspace, themeSurface: themeOverride ?? resolvedWorkspace.themeSurface }
+
+  useEffect(() => {
+    setThemeOverride(null)
+    setThemeError('')
+  }, [user?.id])
+
+  async function changeWorkspaceTheme(next: ThemeSurface) {
+    if (themeSaving || !user?.id) return
+    const previous = effective.themeSurface
+    setThemeError('')
+    setThemeOverride(next)
+    applyTheme(user.id, next)
+    setThemeSaving(true)
+    try {
+      await workspace.save({ ...workspace.prefs, themeSurface: next })
+    } catch (cause) {
+      setThemeOverride(previous)
+      applyTheme(user.id, previous)
+      setThemeError(cause instanceof Error ? cause.message : 'Unable to save theme. Please retry.')
+    } finally {
+      setThemeSaving(false)
+    }
+  }
 
   useEffect(() => {
     applyTheme(user?.id, effective.themeSurface)
@@ -1242,6 +1270,20 @@ export default function App() {
           </div>
 
           <div className="topbar-actions">
+            <label className="ct-theme-topbar-label" htmlFor="ct-workspace-theme">Theme</label>
+            <select
+              id="ct-workspace-theme"
+              className="ct-theme-select"
+              aria-label="Workspace colour theme"
+              value={effective.themeSurface}
+              onChange={event => void changeWorkspaceTheme(event.target.value as ThemeSurface)}
+              disabled={themeSaving}
+            >
+              <option value="white">White Only</option>
+              <option value="blue">Blue &amp; White</option>
+              <option value="dark">Dark Blue</option>
+            </select>
+            {themeError && <span role="alert" className="ct-theme-save-error" title={themeError}>Theme not saved</span>}
             <LiveClinicNotifications
               role={role}
               onOpen={() => {
