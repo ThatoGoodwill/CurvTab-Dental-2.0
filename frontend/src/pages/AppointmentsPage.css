@@ -1675,3 +1675,109 @@
     transition: none !important;
   }
 }
+
+
+/* CLIENT SCHEDULING REFINEMENT 2026-11-12
+   Comfortable medium-large popup, not a full-screen calendar.
+   Preserve the existing sidebar space and the selected-day controls. */
+@media (min-width: 900px) {
+  html body #root .app-shell .ct-appt-page-overlay .ct-appointments-modal-calendar {
+    width: min(790px, calc(100vw - var(--ct-modal-nav, 258px) - 56px)) !important;
+    max-width: min(790px, calc(100vw - var(--ct-modal-nav, 258px) - 56px)) !important;
+    height: auto !important;
+    max-height: min(600px, calc(100dvh - 60px)) !important;
+  }
+}
+@media (max-width: 899px) {
+  html body #root .app-shell .ct-appt-page-overlay .ct-appointments-modal-calendar {
+    width: min(790px, calc(100vw - 32px)) !important;
+    max-width: calc(100vw - 32px) !important;
+    max-height: calc(100dvh - 44px) !important;
+  }
+}
+
+/* Keep a complete month comfortably inside the narrower window. */
+.ct-appointments-modal-calendar .ct-appt-compact .ct-appt-calendar-panel {
+  padding: 13px 18px !important;
+}
+.ct-appointments-modal-calendar .ct-appt-compact .ct-appt-calendar-panel .panel-header {
+  margin-bottom: 6px !important;
+}
+.ct-appointments-modal-calendar .ct-appt-compact .appointment-month {
+  margin: 5px 0 7px !important;
+}
+.ct-appointments-modal-calendar .ct-appt-compact .appointment-calendar {
+  column-gap: 5px !important;
+  row-gap: 3px !important;
+  margin-bottom: 8px !important;
+}
+.ct-appointments-modal-calendar .ct-appt-compact .appointment-weekday {
+  padding: 3px 0 4px !important;
+}
+.ct-appointments-modal-calendar .ct-appt-compact .appointment-day {
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  font-size: 12px !important;
+}
+.ct-appointments-modal-calendar .ct-appt-compact .ct-calendar-legend {
+  margin-top: 4px !important;
+}
+.ct-appointments-modal-calendar .appointments-page {
+  gap: 12px !important;
+}
+
+/* Daily Appointments must look like an actionable button at a glance. */
+.ct-appointments-modal-calendar .appointment-tabs .ct-appt-daily-top-action {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-left: auto !important;
+  padding: 7px 12px !important;
+  min-height: 34px !important;
+  border: 1px solid var(--practice-primary, #1e6dd5) !important;
+  border-radius: 8px !important;
+  color: #fff !important;
+  background: var(--practice-primary, #1e6dd5) !important;
+  box-shadow: 0 3px 10px rgba(18, 87, 168, .18) !important;
+  font-size: 11px !important;
+  font-weight: 750 !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+}
+.ct-appointments-modal-calendar .appointment-tabs .ct-appt-daily-top-action:hover,
+.ct-appointments-modal-calendar .appointment-tabs .ct-appt-daily-top-action.is-open {
+  background: color-mix(in srgb, var(--practice-primary, #1e6dd5) 87%, #000) !important;
+  border-color: var(--practice-primary, #1e6dd5) !important;
+  box-shadow: 0 5px 15px rgba(18, 87, 168, .25) !important;
+}
+.ct-appointments-modal-calendar .appointment-tabs .ct-appt-daily-top-action small {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  border-radius: 999px;
+  color: #fff !important;
+  background: rgba(255,255,255,.2);
+  font-size: 10px !important;
+  font-weight: 650;
+  opacity: 1 !important;
+}
+.ct-appointments-modal-calendar .appointment-tabs .ct-appt-daily-top-action:disabled {
+  opacity: .55 !important;
+  cursor: wait !important;
+}
+@media (max-width: 620px) {
+  .ct-appointments-modal-calendar .appointment-tabs .ct-appt-daily-top-action {
+    margin-left: 0 !important;
+    flex-basis: 100% !important;
+  }
+  .ct-appointments-modal-calendar .ct-appt-compact .ct-appt-calendar-panel {
+    padding: 11px 9px !important;
+  }
+  .ct-appointments-modal-calendar .ct-appt-compact .appointment-day {
+    height: 34px !important;
+    min-height: 34px !important;
+    max-height: 34px !important;
+    font-size: 11px !important;
+  }
+}

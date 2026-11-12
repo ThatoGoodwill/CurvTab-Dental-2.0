@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import type { ComponentProps } from 'react'
 import {
-  Settings2, Tags, Building2, Palette, Receipt,
+  Settings2, Tags, Building2, Palette, SlidersHorizontal,
   Stethoscope, CalendarDays, FlaskConical,
   MessageSquare, ShieldCheck, ArrowLeft, X
 } from 'lucide-react'
@@ -49,7 +49,7 @@ const sections = [
     id: 'billing',
     title: 'Billing Settings',
     description: 'Invoices and payment configuration',
-    icon: Receipt
+    icon: SlidersHorizontal
   },
   {
     id: 'clinical',

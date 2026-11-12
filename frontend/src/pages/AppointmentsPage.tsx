@@ -466,7 +466,7 @@ export default function AppointmentsPage({
             onClick={() => setDailyOpen(value => !value)}
           >
             <CalendarDays size={16} />
-            <span>Daily Appointments</span>
+            <span>View Daily Appointments</span>
             <small>{selectedAppointments.length} booked</small>
             <ChevronRight size={15} className="ct-appt-daily-top-chevron" />
           </button>
