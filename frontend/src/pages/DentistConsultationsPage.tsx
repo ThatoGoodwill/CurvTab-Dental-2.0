@@ -423,7 +423,6 @@ export default function DentistConsultationsPage({
                           <option value="Ibuprofen" />
                           <option value="Amoxicillin" />
                           <option value="Chlorhexidine" />
-                          <option value="No medication prescribed" />
                         </datalist>
                         <input value={rxDose} maxLength={80} placeholder="Dose, e.g. 1 capsule 3 times daily"
                           disabled={saving} onChange={event => setRxDose(event.target.value)} />
