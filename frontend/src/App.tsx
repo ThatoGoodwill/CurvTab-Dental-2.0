@@ -1296,7 +1296,8 @@ export default function App() {
             <LiveClinicNotifications
               role={role}
               onOpen={(appointmentId, kind) => {
-                if (role === 'Dentist' || kind === 'PatientCalled') openAppointmentTab('In Queue')
+                if (kind === 'AppointmentScheduled') openAppointmentTab('Appointments')
+                else if (role === 'Dentist' || kind === 'PatientCalled') openAppointmentTab('In Queue')
                 else openCheckout(appointmentId)
               }}
             />
