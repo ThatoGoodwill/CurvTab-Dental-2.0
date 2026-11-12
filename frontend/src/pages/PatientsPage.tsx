@@ -270,7 +270,8 @@ export default function PatientsPage({
   // The backend is the final authority on permissions.
   const canRegister =
     user?.role === 'Receptionist' ||
-    user?.role === 'PracticeAdmin'
+    user?.role === 'PracticeAdmin' ||
+    user?.role === 'Dentist'
 
   const fieldStyle: CSSProperties = {
     width: '100%',
