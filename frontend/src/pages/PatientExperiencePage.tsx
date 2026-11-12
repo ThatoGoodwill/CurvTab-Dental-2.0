@@ -941,9 +941,9 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
               {isDentist && (
                 <button
                   type="button"
-                  onClick={() => { setTreatmentSection('Dental Chart'); setTab('Treatment') }}
+                  onClick={() => { setTreatmentSection('Consultation'); setTab('Treatment') }}
                 >
-                  Dental chart
+                  Start treatment
                 </button>
               )}
             </div>
