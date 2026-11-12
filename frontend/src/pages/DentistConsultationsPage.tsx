@@ -40,7 +40,7 @@ type Detail = {
 type Props = {
   patientId?: string
   selectedAppointmentId: string | null
-  onSelectAppointment: (id: string) => void
+  onSelectAppointment: (id: string | null) => void
   onOpenMedicalHistory: (patientId: string) => void
   onFinalized?: () => void
 }
@@ -255,11 +255,11 @@ export default function DentistConsultationsPage({
   useEffect(() => {
     if (!patientId || !detailOpen) return
     function onEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape' && !saving) setDetailOpen(false)
+      if (event.key === 'Escape' && !saving) { setDetailOpen(false); onSelectAppointment(null) }
     }
     document.addEventListener('keydown', onEscape)
     return () => document.removeEventListener('keydown', onEscape)
-  }, [patientId, detailOpen, saving])
+  }, [patientId, detailOpen, saving, onSelectAppointment])
 
   const detailsLoading = Boolean(selectedAppointmentId && detail?.appointmentId !== selectedAppointmentId)
   const editable = Boolean(detail && detail.appointmentStatus === 'InConsultation' && !detail.consultation?.isFinalized)
@@ -423,7 +423,7 @@ export default function DentistConsultationsPage({
                 </div>
                 <button type="button" className="secondary-button clinical-consultation-close"
                   disabled={saving} aria-label="Close consultation details"
-                  onClick={() => setDetailOpen(false)}>
+                  onClick={() => { setDetailOpen(false); onSelectAppointment(null) }}>
                   <X size={16} aria-hidden="true" />
                   <span>Close</span>
                 </button>
