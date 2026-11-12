@@ -56,7 +56,7 @@ const initialList = ['New Assessments','Internal Referrals','Transfer-In Reviews
 
 export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
   const isManager = role === 'PracticeAdmin'
-  const isDentist = role === 'Dentist'
+  const isDentist = role === 'Dentist' || role === 'Orthodontist'
   const [cases,setCases] = useState<Intake[]>([])
   const [clinicians,setClinicians] = useState<Clinician[]>([])
   const [patients,setPatients] = useState<PatientOption[]>([])
@@ -268,13 +268,13 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
       <div className="ct-ortho-intake-header-buttons">
         <button type="button" className="secondary-button" disabled={loading}
           onClick={()=>{setError('');setReload(i=>i+1)}}><RefreshCw size={14}/> Refresh</button>
-        <button type="button" className="primary-button"
-          onClick={()=>{setError('');setSuccess('');setForm({...newForm(),source:isDentist?'INTERNAL':'TRANSFER_IN'});setView('create')}}><Plus size={14}/> Add intake</button>
+        {role !== 'Orthodontist' && <button type="button" className="primary-button"
+          onClick={()=>{setError('');setSuccess('');setForm({...newForm(),source:isDentist?'INTERNAL':'TRANSFER_IN'});setView('create')}}><Plus size={14}/> Add intake</button>}
       </div>
     </header>
     {error && <div className="ct-ortho-intake-error" role="alert">{error}</div>}
     {success && <div className="ct-ortho-intake-success" role="status">{success}</div>}
-    {view==='create' && <section className="ct-ortho-intake-dialog">
+    {view==='create' && role !== 'Orthodontist' && <section className="ct-ortho-intake-dialog">
       <div className="ct-ortho-intake-section-title"><h3>New intake for an existing patient</h3>
         <button type="button" onClick={()=>setView('queue')}>Close</button></div>
       <form className="ct-ortho-intake-form" onSubmit={create}>
@@ -415,7 +415,7 @@ export default function OrthodonticIntakePanel({ role, onOpenPatient }: Props) {
           </div>}
       </details>}
       {isManager && <>
-        <label className="ct-ortho-intake-assign">Assign to an authorised dentist
+        <label className="ct-ortho-intake-assign">Assign to an orthodontist or authorised specialist dentist
           <select value={selected.assignedOrthodontistUserId??''} onChange={e=>{
             const value=e.target.value
             if (!value) return

@@ -29,7 +29,7 @@ interface StaffMember {
 
 // Our first UI supports the two main clinic roles.
 // The backend remains responsible for validating allowed roles.
-type StaffRole = 'Receptionist' | 'Dentist' | 'LabTechnician'
+type StaffRole = 'Receptionist' | 'Dentist' | 'Orthodontist' | 'LabTechnician'
 
 export default function StaffPage() {
   const [staff, setStaff] = useState<StaffMember[]>([])
@@ -341,6 +341,7 @@ export default function StaffPage() {
             >
               <option value="Receptionist">Receptionist</option>
               <option value="Dentist">Dentist</option>
+              <option value="Orthodontist">Orthodontist</option>
               <option value="LabTechnician">Lab Technician</option>
             </select>
 
