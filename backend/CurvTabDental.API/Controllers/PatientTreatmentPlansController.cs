@@ -105,19 +105,23 @@ public sealed class PatientTreatmentPlansController : ControllerBase
             p.Id == planId && p.PatientId == patientId && p.DentalPracticeId == practiceId, ct);
         if (plan is null) return NotFound();
         if (plan.ConsentRecordedAtUtc != null) return Conflict(new { message = "Plan is locked after acknowledgement." });
-        if (string.IsNullOrWhiteSpace(req.Description) || req.Description.Length > 1000 ||
-            !ValidTooth(req.ToothCode) || req.EstimatedCost is < 0 or > 10000000)
-            return BadRequest(new { message = "Invalid description, tooth or amount." });
-        var requiresLab = false;
-        if (req.ProcedurePriceId is Guid priceId)
-            requiresLab = await _db.ProcedurePrices.AsNoTracking()
-                .Where(x => x.Id == priceId && x.DentalPracticeId == practiceId)
-                .Select(x => x.RequiresLab).FirstOrDefaultAsync(ct);
+        // Clinical staff pick a procedure from the approved practice price list.
+        // Tooth/site is mandatory and estimated costs are authoritative snapshots.
+        if (req.ProcedurePriceId is not Guid priceId || priceId == Guid.Empty)
+            return BadRequest(new { message = "Choose a procedure from the approved practice price list." });
+        if (string.IsNullOrWhiteSpace(req.ToothCode) || !ValidTooth(req.ToothCode))
+            return BadRequest(new { message = "Select a valid FDI tooth code (for example, 11 or 32)." });
+        var selectedPrice = await _db.ProcedurePrices.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == priceId && x.DentalPracticeId == practiceId && x.IsActive, ct);
+        if (selectedPrice is null)
+            return Conflict(new { message = "Procedure or approved price is unavailable. Refresh the price list." });
+        if (req.EstimatedCost.HasValue && req.EstimatedCost.Value != selectedPrice.Price)
+            return Conflict(new { message = "Procedure price has changed. Refresh before confirming." });
         var procedure = new PatientTreatmentProcedure {
-            RequiresLab = requiresLab,
+            RequiresLab = selectedPrice.RequiresLab,
             DentalPracticeId = practiceId, PatientId = patientId, TreatmentPlanId = plan.Id,
-            Description = req.Description.Trim(), ToothCode = string.IsNullOrEmpty(req.ToothCode) ? null : req.ToothCode,
-            EstimatedCost = req.EstimatedCost
+            Description = selectedPrice.Name, ToothCode = req.ToothCode,
+            EstimatedCost = selectedPrice.Price
         };
         _db.PatientTreatmentProcedures.Add(procedure);
         plan.UpdatedAtUtc = DateTime.UtcNow;

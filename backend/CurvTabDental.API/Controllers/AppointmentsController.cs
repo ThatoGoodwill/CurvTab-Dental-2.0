@@ -200,7 +200,7 @@ public class AppointmentsController : ControllerBase
     // ============================================
 
     [HttpPost]
-    [Authorize(Roles = "PracticeAdmin,Receptionist")]
+    [Authorize(Roles = "PracticeAdmin,Receptionist,Dentist")]
     public async Task<IActionResult> Create(
         [FromBody] CreateAppointmentRequest request,
         CancellationToken ct)
@@ -323,7 +323,7 @@ public class AppointmentsController : ControllerBase
     // ============================================
 
     [HttpPost("{id:guid}/check-in")]
-    [Authorize(Roles = "PracticeAdmin,Receptionist")]
+    [Authorize(Roles = "PracticeAdmin,Receptionist,Dentist")]
     public async Task<IActionResult> CheckIn(
         Guid id,
         CancellationToken ct)

@@ -27,5 +27,5 @@ public static class StaffRoles
         // CT_LAB_PATIENT_READ_REMOVAL
         PracticeAdmin + "," + Receptionist + "," + Dentist + "," + Finance + "," + Orthodontist;
 
-    public const string PatientWrite = Receptionist + "," + Dentist;
+    public const string PatientWrite = Receptionist + "," + Dentist + "," + PracticeAdmin;
 }
