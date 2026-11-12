@@ -6,6 +6,7 @@ import './AuthPages.css'
 import { apiRequest } from '../services/api'
 import './PracticeAuthTheme.css'
 import PracticeBrandMark from './PracticeBrandMark'
+import PasswordInput from '../components/PasswordInput'
 import { usePracticeAppearance } from '../hooks/usePracticeAppearance'
 
 
@@ -231,8 +232,8 @@ function LoginScreen() {
                 placeholder="you@practice.com" required />
             </label>
             <label>Password
-              <input type="password" autoComplete="current-password" value={password}
-                onChange={e => setPassword(e.target.value)} required />
+              <PasswordInput autoComplete="current-password" value={password}
+                onChange={setPassword} required />
             </label>
             {error && <div className="auth-error" role="alert">{error}</div>}
             {recoveryMessage && <div className="ct-recovery-success" role="status">{recoveryMessage}</div>}
@@ -271,14 +272,14 @@ function LoginScreen() {
             <h2 className="ct-recovery-heading">Choose a new password</h2>
             <p className="ct-recovery-description">Resetting access for {recoveryLink.email}.</p>
             <label>New password
-              <input type="password" autoComplete="new-password" minLength={12}
+              <PasswordInput autoComplete="new-password" minLength={12}
                 maxLength={128} required value={newPassword}
-                onChange={e => setNewPassword(e.target.value)} />
+                onChange={setNewPassword} />
             </label>
             <label>Confirm new password
-              <input type="password" autoComplete="new-password" minLength={12}
+              <PasswordInput autoComplete="new-password" minLength={12}
                 maxLength={128} required value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)} />
+                onChange={setConfirmPassword} />
             </label>
             {error && <div className="auth-error" role="alert">{error}</div>}
             <button type="submit" className="auth-submit" disabled={recoveryBusy}>
@@ -377,22 +378,20 @@ function ChangePasswordScreen() {
         <form className="auth-form" onSubmit={handleSubmit}>
           <label>
             Current password
-            <input
-              type="password"
+            <PasswordInput
               autoComplete="current-password"
               value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
+              onChange={setCurrentPassword}
               required
             />
           </label>
 
           <label>
             New password
-            <input
-              type="password"
+            <PasswordInput
               autoComplete="new-password"
               value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
+              onChange={setNewPassword}
               minLength={12}
               required
             />
@@ -400,11 +399,10 @@ function ChangePasswordScreen() {
 
           <label>
             Confirm new password
-            <input
-              type="password"
+            <PasswordInput
               autoComplete="new-password"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={setConfirmPassword}
               minLength={12}
               required
             />
