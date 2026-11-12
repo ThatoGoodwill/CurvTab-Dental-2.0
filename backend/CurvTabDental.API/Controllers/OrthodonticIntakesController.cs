@@ -18,7 +18,7 @@ namespace CurvTabDental.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/orthodontics/intakes")]
-[Authorize(Roles = "PracticeAdmin,Receptionist,Dentist")]
+[Authorize(Roles = "PracticeAdmin,Receptionist,Dentist,Orthodontist")]
 public sealed class OrthodonticIntakesController : ControllerBase
 {
     private readonly DentalDbContext _db;
@@ -47,13 +47,14 @@ public sealed class OrthodonticIntakesController : ControllerBase
     private bool Manager => _current.Role == StaffRoles.PracticeAdmin;
     private bool Reception => _current.Role == StaffRoles.Receptionist;
     private bool Dentist => _current.Role == StaffRoles.Dentist;
+    private bool Specialist => Dentist || _current.Role == StaffRoles.Orthodontist;
 
     private IQueryable<OrthodonticIntakeCase> Visible()
     {
         var query = _db.OrthodonticIntakes.AsNoTracking();
         // Only the explicitly assigned clinician sees clinical cases. Managers
         // can route unassigned cases; reception can prepare missing intake data.
-        if (Dentist) query = query.Where(x => x.AssignedOrthodontistUserId == _current.UserId);
+        if (Specialist) query = query.Where(x => x.AssignedOrthodontistUserId == _current.UserId);
         return query;
     }
 
@@ -111,7 +112,7 @@ public sealed class OrthodonticIntakesController : ControllerBase
             from u in _db.Users.AsNoTracking()
             join ur in _db.UserRoles.AsNoTracking() on u.Id equals ur.UserId
             join role in _db.Roles.AsNoTracking() on ur.RoleId equals role.Id
-            where u.DentalPracticeId == practiceId && u.IsActive && role.Name == "Dentist"
+            where u.DentalPracticeId == practiceId && u.IsActive && (role.Name == StaffRoles.Orthodontist || role.Name == StaffRoles.Dentist)
             orderby u.FullName
             select new { id = u.Id, name = u.FullName }
         ).ToListAsync(ct);
@@ -222,10 +223,10 @@ public sealed class OrthodonticIntakesController : ControllerBase
             join ur in _db.UserRoles on user.Id equals ur.UserId
             join role in _db.Roles on ur.RoleId equals role.Id
             where user.Id == req.OrthodontistUserId && user.DentalPracticeId == practiceId &&
-                  user.IsActive && role.Name == StaffRoles.Dentist
+                  user.IsActive && (role.Name == StaffRoles.Orthodontist || role.Name == StaffRoles.Dentist)
             select user.Id
         ).AnyAsync(ct);
-        if (!valid) return BadRequest(new { message = "Select an active dentist in this practice." });
+        if (!valid) return BadRequest(new { message = "Select an active orthodontist or authorised specialist dentist in this practice." });
         var intake = await _db.OrthodonticIntakes.FirstOrDefaultAsync(x =>
             x.Id == id && x.DentalPracticeId == practiceId && x.ClosedAtUtc == null, ct);
         if (intake is null) return NotFound();
@@ -239,7 +240,7 @@ public sealed class OrthodonticIntakesController : ControllerBase
     }
 
     [HttpPatch("{id:guid}/review")]
-    [Authorize(Roles = "Dentist")]
+    [Authorize(Roles = "Dentist,Orthodontist")]
     public async Task<IActionResult> Review(Guid id, [FromBody] ReviewRequest req, CancellationToken ct)
     {
         if (_current.PracticeId is not Guid practiceId || _current.UserId is not Guid clinician) return Forbid();
@@ -323,7 +324,7 @@ public sealed class OrthodonticIntakesController : ControllerBase
         if (_current.PracticeId is not Guid practiceId) return Forbid();
         var intake = await _db.OrthodonticIntakes.FirstOrDefaultAsync(x => x.Id == id && x.DentalPracticeId == practiceId && x.ClosedAtUtc == null, ct);
         if (intake is null) return NotFound();
-        if (Dentist && intake.AssignedOrthodontistUserId != _current.UserId) return NotFound();
+        if (Specialist && intake.AssignedOrthodontistUserId != _current.UserId) return NotFound();
         var docVersion = _settings["Orthodontics:ApprovedIntakeTermsVersion"];
         var docText = _settings["Orthodontics:ApprovedIntakeTermsText"];
         if (string.IsNullOrWhiteSpace(docVersion) || string.IsNullOrWhiteSpace(docText))
@@ -370,7 +371,7 @@ public sealed class OrthodonticIntakesController : ControllerBase
     }
 
     [HttpPost("{id:guid}/begin-assessment")]
-    [Authorize(Roles = "Dentist")]
+    [Authorize(Roles = "Dentist,Orthodontist")]
     public async Task<IActionResult> BeginAssessment(Guid id, CancellationToken ct)
     {
         if (_current.PracticeId is not Guid practiceId || _current.UserId is not Guid clinician) return Forbid();

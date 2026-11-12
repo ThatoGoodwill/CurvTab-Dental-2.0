@@ -12,7 +12,7 @@ namespace CurvTabDental.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/dentist/orthodontics/overview")]
-[Authorize(Roles = "Dentist")]
+[Authorize(Roles = "Dentist,Orthodontist")]
 public sealed class OrthodonticsOverviewController : ControllerBase
 {
     private readonly DentalDbContext _db;

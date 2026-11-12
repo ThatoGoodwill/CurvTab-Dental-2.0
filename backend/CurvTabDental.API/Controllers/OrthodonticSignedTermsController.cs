@@ -16,7 +16,7 @@ namespace CurvTabDental.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/orthodontics/intakes/{intakeId:guid}/signed-terms")]
-[Authorize(Roles = "PracticeAdmin,Receptionist,Dentist")]
+[Authorize(Roles = "PracticeAdmin,Receptionist,Dentist,Orthodontist")]
 public sealed class OrthodonticSignedTermsController : ControllerBase
 {
     private readonly DentalDbContext _db;
@@ -30,7 +30,7 @@ public sealed class OrthodonticSignedTermsController : ControllerBase
         if (_current.PracticeId is not Guid practiceId) return null;
         var query = _db.OrthodonticIntakes.AsNoTracking().Where(x =>
             x.Id == id && x.DentalPracticeId == practiceId);
-        if (_current.Role == StaffRoles.Dentist)
+        if (_current.Role is StaffRoles.Dentist or StaffRoles.Orthodontist)
             query = query.Where(x => x.AssignedOrthodontistUserId == _current.UserId);
         return await query.FirstOrDefaultAsync(ct);
     }

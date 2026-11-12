@@ -8,7 +8,7 @@ namespace CurvTabDental.API.Controllers;
 
 [ApiController]
 [Route("api/dentist/orthodontics/cases")]
-[Authorize(Roles = "Dentist")]
+[Authorize(Roles = "Dentist,Orthodontist")]
 public sealed class OrthodonticCaseDashboardController : ControllerBase
 {
     private readonly DentalDbContext _db;
@@ -35,6 +35,9 @@ public sealed class OrthodonticCaseDashboardController : ControllerBase
             where c.DentalPracticeId == practiceId
                && p.DentalPracticeId == practiceId
                && !p.IsArchived
+               && _db.OrthodonticIntakes.Any(i => i.PatientId == c.PatientId &&
+                   i.DentalPracticeId == practiceId && i.ClosedAtUtc == null &&
+                   i.AssignedOrthodontistUserId == _current.UserId)
             orderby c.CreatedAtUtc descending
             select new
             {
