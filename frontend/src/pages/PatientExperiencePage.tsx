@@ -515,9 +515,22 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
           setReload(value => value + 1)
         }}
         onExistingPatientSelect={(patientId) => {
-          const existing = patients.find(item => item.id === patientId)
-          if (existing) openPatient(existing)
           setQuickRegister(false)
+          // A new registration was not in the previous patient-search results.
+          // Read the canonical record from the API before opening the workflow.
+          void apiRequest<unknown>(`/patients/${encodeURIComponent(patientId)}`)
+            .then(parsePatient)
+            .then(patient => {
+              if (!patient) throw new Error('Patient registration saved but record could not be loaded.')
+              openPatient(patient)
+              if (isDentist) setTab('Consultations')
+              setReload(value => value + 1)
+            })
+            .catch(cause => {
+              setError(cause instanceof Error ? cause.message : 'Unable to open the new patient.')
+              setLoading(true)
+              setReload(value => value + 1)
+            })
         }}
       />
     )
@@ -678,6 +691,13 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
     {/* Patient-scoped secure consultation history and editor */}
     {tab === 'Consultations' && isDentist && (
       <div className="ct-patient-consultations">
+        {!visitsLoading && !visits.some(visit => visit.status === 'InConsultation') && (
+          <div className="ct-patient-message" role="status">
+            <strong>Next: schedule and check in this patient</strong>
+            <p>To begin a clinical consultation, first book an appointment, check the patient in, then call and start the consultation from Scheduling. No clinical encounter or charge is created by registration alone.</p>
+            {onOpenAppointments && <button type="button" className="primary-button" onClick={onOpenAppointments}>Book appointment</button>}
+          </div>
+        )}
         <DentistConsultationsPage
           key={selected.id}
           patientId={selected.id}
