@@ -40,7 +40,7 @@ public sealed class ConsultationsController : ControllerBase
         string? DentalHistory,
         string? AdditionalNotes);
 
-    public record ChargeRequest(string Description, decimal Amount, Guid? ProcedurePriceId = null);
+    public record ChargeRequest(string Description, decimal Amount, Guid? ProcedurePriceId = null, Guid? TreatmentProcedureId = null);
 
     public record SaveConsultationRequest(
         string? ChiefComplaint,
@@ -142,7 +142,7 @@ public sealed class ConsultationsController : ControllerBase
                 .Where(c => c.DentalPracticeId == practiceId &&
                             c.ConsultationId == consultation.Id)
                 .OrderBy(c => c.Description)
-                .Select(c => new ChargeView(c.Id, c.Description, c.Amount))
+                .Select(c => new ChargeView(c.Id, c.Description, c.Amount, c.TreatmentProcedureId))
                 .ToListAsync(ct);
 
         return Ok(new
@@ -205,7 +205,7 @@ public sealed class ConsultationsController : ControllerBase
         return Ok(rows);
     }
 
-    private record ChargeView(Guid Id, string Description, decimal Amount);
+    private record ChargeView(Guid Id, string Description, decimal Amount, Guid? TreatmentProcedureId);
 
     // PUT /api/dentist/consultations/by-appointment/{appointmentId}
     // May be called repeatedly while the consultation is in progress.
@@ -282,12 +282,46 @@ public sealed class ConsultationsController : ControllerBase
         // New clinical charges must use the configured practice procedure list.
         // An unchanged historical draft line may still be saved, but it cannot
         // be used to invent or reprice a charge through an API request.
-        var verifiedCharges = new List<(string Description, decimal Amount)>();
+        var verifiedCharges = new List<(string Description, decimal Amount, Guid? TreatmentProcedureId)>();
+        // Reuse the existing clinical procedure identifiers, never invent a charge
+        // by name match or by a treatment-plan estimate alone.
+        var linkedIds = incoming.Where(c => c.TreatmentProcedureId.HasValue)
+            .Select(c => c.TreatmentProcedureId!.Value).ToArray();
+        if (linkedIds.Distinct().Count() != linkedIds.Length)
+            return Conflict(new { message = "A completed procedure can only be charged once per consultation." });
+
         // Consume historical entries one-by-one: resubmitting a duplicate cannot
         // multiply an unpriced charge that originally existed only once.
         var remainingHistorical = previousCharges.ToList();
         foreach (var charge in incoming)
         {
+            if (charge.TreatmentProcedureId is Guid treatmentProcedureId)
+            {
+                var procedure = await _db.PatientTreatmentProcedures.AsNoTracking()
+                    .FirstOrDefaultAsync(p => p.Id == treatmentProcedureId &&
+                        p.DentalPracticeId == practiceId &&
+                        p.PatientId == appointment.PatientId &&
+                        p.Status == "Completed", ct);
+                if (procedure is null || !procedure.EstimatedCost.HasValue || procedure.EstimatedCost.Value <= 0)
+                    return Conflict(new { message = "Select an actual completed, priced procedure linked to this patient." });
+                var agreement = await _db.PatientTreatmentPlans.AsNoTracking()
+                    .AnyAsync(p => p.Id == procedure.TreatmentPlanId &&
+                        p.PatientId == appointment.PatientId &&
+                        p.DentalPracticeId == practiceId &&
+                        p.ConsentRecordedAtUtc != null, ct);
+                if (!agreement)
+                    return Conflict(new { message = "This treatment procedure needs a recorded patient acknowledgement." });
+                if (charge.Description.Trim() != procedure.Description || charge.Amount != procedure.EstimatedCost.Value)
+                    return Conflict(new { message = "The selected procedure and its approved price no longer match. Refresh the treatment plan." });
+                var previouslyBilled = await _db.ConsultationCharges.AsNoTracking()
+                    .AnyAsync(c => c.DentalPracticeId == practiceId &&
+                        c.TreatmentProcedureId == treatmentProcedureId &&
+                        c.ConsultationId != consultation.Id, ct);
+                if (previouslyBilled)
+                    return Conflict(new { message = "This completed procedure was already linked to another consultation. It cannot be billed again." });
+                verifiedCharges.Add((procedure.Description, procedure.EstimatedCost.Value, treatmentProcedureId));
+                continue;
+            }
             if (charge.ProcedurePriceId is not Guid priceId)
             {
                 var matchingIndex = remainingHistorical.FindIndex(c =>
@@ -295,7 +329,7 @@ public sealed class ConsultationsController : ControllerBase
                 if (matchingIndex < 0)
                     return BadRequest(new { message = "Select each new treatment charge from the practice price list. Manual charge amounts are not accepted." });
                 remainingHistorical.RemoveAt(matchingIndex);
-                verifiedCharges.Add((charge.Description.Trim(), charge.Amount));
+                verifiedCharges.Add((charge.Description.Trim(), charge.Amount, remainingHistorical.Count >= 0 ? previousCharges.First(c => c.Description == charge.Description.Trim() && c.Amount == charge.Amount).TreatmentProcedureId : null));
                 continue;
             }
             var catalogue = await _db.ProcedurePrices.AsNoTracking()
@@ -305,7 +339,7 @@ public sealed class ConsultationsController : ControllerBase
                 return Conflict(new { message = "This procedure is not active in the practice price list. Refresh before billing." });
             if (catalogue.Price != charge.Amount)
                 return Conflict(new { message = "The approved procedure price changed. Refresh the price list before finalizing." });
-            verifiedCharges.Add((catalogue.Name, catalogue.Price));
+            verifiedCharges.Add((catalogue.Name, catalogue.Price, null));
         }
         _db.ConsultationCharges.RemoveRange(previousCharges);
         foreach (var charge in verifiedCharges)
@@ -314,6 +348,7 @@ public sealed class ConsultationsController : ControllerBase
             {
                 DentalPracticeId = practiceId,
                 ConsultationId = consultation.Id,
+                TreatmentProcedureId = charge.TreatmentProcedureId,
                 Description = charge.Description,
                 Amount = charge.Amount
             });
