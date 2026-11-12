@@ -539,7 +539,7 @@ export default function PatientsPage({
         ? '/patients?allowDuplicate=true'
         : '/patients'
 
-      await apiRequest<unknown>(
+      const created = await apiRequest<{ id: string }>(
         path,
         'POST',
         request
@@ -556,8 +556,10 @@ export default function PatientsPage({
       setShowRegistration(false)
       setSelectedPatient(null)
 
-      // Reload records from PostgreSQL.
-      refresh()
+      // Continue in the newly created patient record rather than
+      // losing the registration context. The patient ID comes from the API.
+      if (created?.id && onExistingPatientSelect) onExistingPatientSelect(created.id)
+      else refresh()
     } catch (cause: unknown) {
       if (
         cause instanceof ApiError &&
