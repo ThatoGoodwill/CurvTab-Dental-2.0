@@ -9,6 +9,28 @@ import { ApiError, authApi } from '../services/api'
 import type { UserProfile } from '../services/api'
 import { AuthContext } from './AuthContext'
 
+// A 429 can be imposed by the hosting edge even on the unthrottled /auth/me
+// endpoint. Retry ONLY this safe session GET with bounded backoff. Never
+// automatically retry login or payment mutations.
+async function fetchSessionWithBackoff(): Promise<UserProfile> {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return await authApi.me()
+    } catch (error) {
+      if (!(error instanceof ApiError) || error.status !== 429 || attempt === 2)
+        throw error
+      // Do not hammer a host that told us to wait longer than our retry
+      // budget. Show a recoverable message and leave the manual Retry option.
+      if (error.retryAfterMs !== null && error.retryAfterMs > 12000)
+        throw error
+      const base = attempt === 0 ? 2500 : 6500
+      const delay = Math.max(base, error.retryAfterMs ?? 0) + Math.floor(Math.random() * 450)
+      await new Promise<void>(resolve => setTimeout(resolve, delay))
+    }
+  }
+  throw new Error('Unable to check the current session.')
+}
+
 // This component provides authentication state to the application.
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null)
@@ -26,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStartupError(null)
 
     try {
-      const profile = await authApi.me()
+      const profile = await fetchSessionWithBackoff()
       setUser(profile)
     } catch (error) {
       if (isUnauthorized(error)) {
@@ -49,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let active = true
 
-    authApi.me()
+    fetchSessionWithBackoff()
       .then((profile) => {
         if (active) {
           setUser(profile)
