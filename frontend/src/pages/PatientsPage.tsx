@@ -660,7 +660,7 @@ export default function PatientsPage({
       {/* ======================================
           PAGE HEADER
           ====================================== */}
-      <div className="page-heading">
+      {!autoOpenRegistration && <div className="page-heading">
         <div>
           <div className="eyebrow">
             PATIENT MANAGEMENT
@@ -696,8 +696,10 @@ export default function PatientsPage({
             Register Patient
           </button>
         )}
-      </div>
+      </div>}
 
+      {/* The quick-register route renders only the six-step compact modal.
+          Never restore the duplicate full-page patient-management directory. */}
       {/* ======================================
           NOTIFICATIONS
           ====================================== */}
@@ -1181,7 +1183,7 @@ export default function PatientsPage({
           INDIVIDUAL PATIENT RECORD
           ====================================== */}
 
-      {selectedPatient && !showRegistration && (
+      {!autoOpenRegistration && selectedPatient && !showRegistration && (
         <section className="panel">
           <button
             type="button"
@@ -1241,7 +1243,7 @@ export default function PatientsPage({
       )}
 
       {/* CT_REGISTRATION_DECLARATION_REVIEW_V2: restrict signatures to Dentist and PracticeAdmin */}
-      {selectedPatient && (user?.role === 'Dentist' || user?.role === 'PracticeAdmin') && (
+      {!autoOpenRegistration && selectedPatient && (user?.role === 'Dentist' || user?.role === 'PracticeAdmin') && (
         <section className="panel ct-reg-declaration-review">
           <h3>Signed registration declaration</h3>
           <button className="secondary-button" type="button" disabled={declarationLoading}
@@ -1261,11 +1263,8 @@ export default function PatientsPage({
         </section>
       )}
 
-      {/* ======================================
-          PATIENT DIRECTORY
-          ====================================== */}
-
-      <section className="panel">
+      {/* The registration-only modal does not render the legacy patient directory. */}
+      {!autoOpenRegistration && <section className="panel">
         <div className="panel-header">
           <div>
             <h2>Patient Directory</h2>
@@ -1391,13 +1390,13 @@ export default function PatientsPage({
             ))}
           </div>
         )}
-      </section>
+      </section>}
 
-      <p className="panel-note">
+      {!autoOpenRegistration && <p className="panel-note">
         The directory loads through the authenticated
         CurvTab Dental API. Only use synthetic patient
         information while testing.
-      </p>
+      </p>}
     </div>
   )
 }
