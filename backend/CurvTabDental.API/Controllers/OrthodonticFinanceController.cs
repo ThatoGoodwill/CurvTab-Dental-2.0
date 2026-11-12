@@ -9,7 +9,7 @@ namespace CurvTabDental.API.Controllers;
 
 [ApiController]
 [Route("api/finance/orthodontics/{caseId:guid}/agreement")]
-[Authorize(Roles = "Dentist,Receptionist,PracticeAdmin")]
+[Authorize(Roles = "Dentist,Receptionist,PracticeAdmin,Orthodontist")]
 public sealed class OrthodonticFinanceController : ControllerBase
 {
     private readonly DentalDbContext _db;
@@ -55,6 +55,18 @@ public sealed class OrthodonticFinanceController : ControllerBase
 
         if (!belongsToPractice)
             return NotFound();
+        // Clinical users can read only their assigned orthodontic patient's agreement.
+        if (_current.Role is "Dentist" or "Orthodontist")
+        {
+            var assigned = await (
+                from c in _db.OrthodonticCases.AsNoTracking()
+                join intake in _db.OrthodonticIntakes.AsNoTracking() on c.PatientId equals intake.PatientId
+                where c.Id == caseId && c.DentalPracticeId == practiceId &&
+                      intake.DentalPracticeId == practiceId && intake.ClosedAtUtc == null &&
+                      intake.AssignedOrthodontistUserId == _current.UserId
+                select c.Id).AnyAsync(ct);
+            if (!assigned) return NotFound();
+        }
 
         var agreement =
             await _db.OrthodonticFinancialAgreements

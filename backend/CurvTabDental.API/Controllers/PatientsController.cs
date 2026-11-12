@@ -43,6 +43,16 @@ public class PatientsController : ControllerBase
 
         IQueryable<Patient> query = _db.Patients.AsNoTracking();
         if (!includeArchived) query = query.Where(p => !p.IsArchived);
+        // Scope the clinical directory in SQL so counts and pagination cannot leak patients.
+        // Reception and practice management retain shared registration and consent access.
+        if (_current.Role == StaffRoles.Orthodontist)
+            query = query.Where(p => _db.OrthodonticIntakes.Any(i =>
+                i.PatientId == p.Id && i.DentalPracticeId == p.DentalPracticeId &&
+                i.ClosedAtUtc == null && i.AssignedOrthodontistUserId == _current.UserId));
+        else if (_current.Role == StaffRoles.Dentist)
+            query = query.Where(p => !_db.OrthodonticIntakes.Any(i =>
+                i.PatientId == p.Id && i.DentalPracticeId == p.DentalPracticeId &&
+                i.ClosedAtUtc == null && i.ReferralAuthorUserId != _current.UserId));
 
         if (!string.IsNullOrWhiteSpace(q))
         {
@@ -70,6 +80,16 @@ public class PatientsController : ControllerBase
     {
         var patient = await _db.Patients.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id, ct);
         if (patient is null) return NotFound();
+        if (_current.Role == StaffRoles.Orthodontist &&
+            !await _db.OrthodonticIntakes.AnyAsync(i => i.PatientId == id &&
+                i.DentalPracticeId == patient.DentalPracticeId && i.ClosedAtUtc == null &&
+                i.AssignedOrthodontistUserId == _current.UserId, ct))
+            return NotFound();
+        if (_current.Role == StaffRoles.Dentist &&
+            await _db.OrthodonticIntakes.AnyAsync(i => i.PatientId == id &&
+                i.DentalPracticeId == patient.DentalPracticeId && i.ClosedAtUtc == null &&
+                i.ReferralAuthorUserId != _current.UserId, ct))
+            return NotFound();
 
         await _audit.WriteAsync("PATIENT_VIEWED", "Patient", id.ToString(), ct: ct);
         return Ok(ToDto(patient, _current.Role));

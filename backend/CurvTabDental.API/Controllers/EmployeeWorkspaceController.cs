@@ -15,7 +15,7 @@ namespace CurvTabDental.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/employee-workspace")]
-[Authorize(Roles = "Receptionist,Dentist,LabTechnician,Finance,PracticeAdmin")]
+[Authorize(Roles = "Receptionist,Dentist,LabTechnician,Finance,PracticeAdmin,Orthodontist")]
 public sealed class EmployeeWorkspaceController : ControllerBase
 {
     private readonly DentalDbContext _db;

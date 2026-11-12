@@ -11,7 +11,7 @@ namespace CurvTabDental.API.Controllers;
 
 [ApiController]
 [Route("api/practice/appearance")]
-[Authorize(Roles = "PracticeAdmin,Dentist,Receptionist,Finance,LabTechnician")]
+[Authorize(Roles = "PracticeAdmin,Dentist,Receptionist,Finance,LabTechnician,Orthodontist")]
 public sealed class PracticeAppearanceController : ControllerBase
 {
     private static readonly string[] DefaultModules = [

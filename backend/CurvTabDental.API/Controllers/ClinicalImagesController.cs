@@ -9,7 +9,7 @@ namespace CurvTabDental.API.Controllers;
 
 [ApiController]
 [Route("api/dentist/patients/{patientId:guid}/images")]
-[Authorize(Roles = "Dentist")]
+[Authorize(Roles = "Dentist,Orthodontist")]
 public sealed class ClinicalImagesController : ControllerBase
 {
     private const long MaximumSize = 10_000_000;
@@ -36,7 +36,14 @@ public sealed class ClinicalImagesController : ControllerBase
         _db.Patients.AsNoTracking().AnyAsync(
             p => p.Id == patientId &&
                  p.DentalPracticeId == practiceId &&
-                 !p.IsArchived, ct);
+                 !p.IsArchived &&
+                 (_current.Role == "Orthodontist"
+                     ? _db.OrthodonticIntakes.Any(i => i.PatientId == patientId &&
+                         i.DentalPracticeId == practiceId && i.ClosedAtUtc == null &&
+                         i.AssignedOrthodontistUserId == _current.UserId)
+                     : !_db.OrthodonticIntakes.Any(i => i.PatientId == patientId &&
+                         i.DentalPracticeId == practiceId && i.ClosedAtUtc == null &&
+                         i.ReferralAuthorUserId != _current.UserId)), ct);
 
     private static string Folder(Guid practiceId, Guid patientId) =>
         Path.Combine(
