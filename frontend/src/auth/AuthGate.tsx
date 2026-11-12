@@ -463,17 +463,24 @@ export function AuthGate({ children }: { children: ReactNode }) {
   }
 
   if (startupError) {
+    const isRateLimited = /limiting requests|429|too many requests/i.test(startupError)
     return (
       <div className="auth-screen">
-        <div className="auth-card">
-          <h1>Connection unavailable</h1>
+        <div className="auth-card" role="status">
+          <h1>{isRateLimited ? 'Service temporarily busy' : 'Connection unavailable'}</h1>
           <p>{startupError}</p>
-
+          {isRateLimited && (
+            <p className="auth-retry-guidance">
+              CurvTab is reducing requests to protect the service. Your current session
+              has not been cleared. Try again after the temporary limit resets.
+            </p>
+          )}
           <button
+            type="button"
             className="auth-submit"
             onClick={() => void refresh()}
           >
-            Retry
+            Try connecting again
           </button>
         </div>
       </div>
