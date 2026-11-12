@@ -28,3 +28,20 @@
 @keyframes ct-live-arrive { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
 @media (max-width: 600px) { .ct-live-menu { position: fixed; top: 68px; right: 12px; } .ct-live-toast { right: 12px; top: 76px; } }
 @media (prefers-reduced-motion: reduce) { .ct-live-toast,.ct-live-bell { animation: none; transition: none; } }
+
+/* Notifications are actual navigation actions; viewing clears unread indicators. */
+.ct-live-item-action {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+  font: inherit;
+  background: transparent;
+  color: inherit;
+  border: 0;
+  cursor: pointer;
+}
+.ct-live-item-action:hover {
+  background: color-mix(in srgb, #2b75da 8%, transparent);
+  border-radius: 8px;
+}
+.ct-live-item-action:focus-visible { outline: 2px solid #328ae8; outline-offset: -2px; }
