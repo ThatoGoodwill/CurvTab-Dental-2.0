@@ -1,1 +1,83 @@
 .ct-recovered-panel{margin:18px 0;padding:18px;background:#fff;color:#24313f;border:1px solid #e2e8f0;border-radius:12px;max-width:100%}.ct-recovered-heading,.ct-recovered-card-head,.ct-recovered-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.ct-recovered-heading h2,.ct-recovered-card h3{margin:0;font-size:1.1rem;color:#1d2b3a}.ct-recovered-heading p,.ct-recovered-card small{color:#687588;margin:4px 0}.ct-recovered-stack{display:grid;gap:14px;margin-top:16px}.ct-recovered-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px}.ct-recovered-card h4{font-size:.95rem}.ct-recovered-card-head strong{font-size:.78rem;font-weight:600;border:1px solid #d8e1eb;border-radius:100px;padding:5px 10px}.ct-recovered-actions{justify-content:flex-start;margin-top:16px}.ct-recovered-panel button{border:1px solid #cbd5e1;background:#fff;color:#233b50;padding:8px 12px;border-radius:8px;font-weight:600;font-size:.85rem;cursor:pointer}.ct-recovered-panel button:disabled{opacity:.55;cursor:not-allowed}.ct-recovered-panel .ct-recovered-primary{background:#2563a6;color:#fff;border-color:#2563a6}.ct-recovered-tabs{display:flex;gap:8px;flex-wrap:wrap;padding:12px 0}.ct-recovered-tabs button{border:1px solid #d2dbe7;border-radius:9px;padding:9px 12px;background:white;color:#344054;font-weight:600;cursor:pointer}.ct-recovered-tabs button[aria-pressed=true]{background:#eef5fd;border-color:#7fa6ce;color:#15517a}.ct-recovered-table-wrap{overflow-x:auto}.ct-recovered-panel table{width:100%;border-collapse:collapse;text-align:left;font-size:.85rem}.ct-recovered-panel th,.ct-recovered-panel td{padding:10px;border-bottom:1px solid #e2e8f0;white-space:normal}.ct-recovered-panel th{color:#475569}.ct-recovered-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:15px 0}.ct-recovered-facts dt{font-size:.78rem;color:#64748b;margin-bottom:3px}.ct-recovered-facts dd{margin:0;white-space:pre-line}.ct-recovered-empty{padding:15px;border:1px dashed #ccd5df;border-radius:9px}.ct-recovered-error{color:#ae2635;padding:10px;background:#fff1f2;border-radius:8px}.ct-recovered-notice{color:#14644a;padding:10px;background:#eef9f3;border-radius:8px}.ct-recovered-modal-backdrop{position:fixed;inset:0;z-index:10000;background:rgba(20,33,50,.52);display:flex;align-items:center;justify-content:center;padding:20px}.ct-recovered-modal{width:min(520px,100%);max-height:90vh;overflow-y:auto;background:#fff;color:#1e293b;border-radius:14px;padding:22px;box-shadow:0 24px 80px rgba(0,0,0,.2)}.ct-recovered-modal form{display:grid;gap:14px;margin-top:16px}.ct-recovered-modal form label{display:grid;gap:5px;font-size:.84rem;font-weight:600;color:#334155}.ct-recovered-modal input:not([type=checkbox]),.ct-recovered-modal textarea{width:100%;box-sizing:border-box;border:1px solid #cbd5e1;background:#fff;color:#142536;border-radius:8px;padding:10px;font:inherit}.ct-recovered-modal .ct-recovered-check{display:flex;flex-direction:row;align-items:start;gap:9px;font-weight:400}.ct-recovered-modal input[type=checkbox]{width:auto;margin-top:4px}
+
+
+/* Client review 2026-11-12: dense treatment-plan cards instead of tall pages.
+   These selectors are scoped to the existing patient Treatment view. */
+.ct-patient-treatment .ct-recovered-panel {
+  margin: 4px 0 10px !important;
+  padding: 12px !important;
+  border-radius: 10px !important;
+  background: var(--surface, var(--card-bg, #fff)) !important;
+  color: inherit !important;
+  border-color: var(--border-color, #dce5ef) !important;
+}
+.ct-patient-treatment .ct-recovered-heading {
+  gap: 8px !important;
+}
+.ct-patient-treatment .ct-recovered-heading h2 {
+  font-size: 14px !important;
+}
+.ct-patient-treatment .ct-recovered-heading p {
+  font-size: 11px !important;
+}
+.ct-patient-treatment .ct-recovered-stack {
+  gap: 8px !important;
+  margin-top: 10px !important;
+}
+.ct-patient-treatment .ct-recovered-card {
+  padding: 11px 12px !important;
+  border-radius: 9px !important;
+  color: inherit !important;
+  background: var(--surface-secondary, var(--card-bg, #fff)) !important;
+  border-color: var(--border-color, #dce5ef) !important;
+}
+.ct-patient-treatment .ct-recovered-card-head { gap: 6px !important; }
+.ct-patient-treatment .ct-recovered-card h3 { font-size: 13px !important; color: inherit !important; }
+.ct-patient-treatment .ct-recovered-card h4 {
+  margin: 8px 0 6px !important;
+  font-size: 11px !important;
+}
+.ct-patient-treatment .ct-recovered-card > p {
+  margin: 5px 0 8px !important;
+  font-size: 11px !important;
+}
+.ct-patient-treatment .ct-recovered-card small { font-size: 10px !important; }
+.ct-patient-treatment .ct-recovered-panel table { font-size: 11px !important; }
+.ct-patient-treatment .ct-recovered-panel th,
+.ct-patient-treatment .ct-recovered-panel td {
+  padding: 7px 8px !important;
+  border-color: var(--border-color, #dce5ef) !important;
+}
+.ct-patient-treatment .ct-recovered-card-head strong {
+  font-size: 10px !important;
+  padding: 3px 8px !important;
+  color: inherit !important;
+}
+.ct-patient-treatment .ct-recovered-notice {
+  margin: 8px 0 0 !important;
+  padding: 8px 10px !important;
+  border-radius: 8px !important;
+  font-size: 11px !important;
+  line-height: 1.4;
+}
+.ct-patient-treatment .ct-recovered-actions {
+  gap: 7px !important;
+  margin-top: 9px !important;
+}
+.ct-patient-treatment .ct-recovered-panel button {
+  min-height: 27px !important;
+  padding: 5px 8px !important;
+  font-size: 10px !important;
+}
+.ct-treatment-lab-note,
+.ct-patient-checkout-handoff {
+  padding: 9px 11px;
+  border: 1px solid var(--border-color, #dce5ef);
+  border-radius: 8px;
+  background: var(--surface-secondary, rgba(44, 125, 210, .05));
+  color: inherit;
+  font-size: 11px;
+  line-height: 1.45;
+  margin-bottom: 10px;
+}
+.ct-patient-checkout-handoff p { margin: 5px 0 8px; }

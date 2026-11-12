@@ -17,9 +17,14 @@ type FieldName =
   | 'chiefComplaint' | 'symptoms' | 'examinationFindings' | 'diagnosis'
   | 'treatmentPerformed' | 'treatmentPlan' | 'prescriptionNotes' | 'followUpAdvice'
 type ClinicalForm = Record<FieldName, string>
-type Charge = { description: string; amount: string; procedurePriceId?: string }
+type Charge = { description: string; amount: string; procedurePriceId?: string; treatmentProcedureId?: string }
+type CompletedProcedure = { id: string; description: string; estimatedCost: number; toothCode: string | null }
+type TreatmentPlanSummary = {
+  id: string; title: string; consentRecordedAtUtc: string | null
+  procedures: { id: string; description: string; status: string; estimatedCost: number | null; toothCode: string | null }[]
+}
 type CataloguePrice = { id: string; code: string; name: string; category: string; price: number; isActive: boolean }
-type StoredCharge = { id: string; description: string; amount: number }
+type StoredCharge = { id: string; description: string; amount: number; treatmentProcedureId?: string | null }
 type ConsultationRecord = Partial<ClinicalForm> & {
   isFinalized: boolean
   chargesConfirmed: boolean
@@ -180,9 +185,30 @@ export default function DentistConsultationsPage({
   const [chargesConfirmed, setChargesConfirmed] = useState(false)
   const [detailRevision, setDetailRevision] = useState(0)
   const [prices, setPrices] = useState<CataloguePrice[]>([])
+  const [completedProcedures, setCompletedProcedures] = useState<CompletedProcedure[]>([])
   const [rxDrug, setRxDrug] = useState('')
   const [rxDose, setRxDose] = useState('')
   const [rxDays, setRxDays] = useState('7')
+
+  // Completed treatment plans are NOT charges until a dentist links them to
+  // a live consultation, confirms them and finalizes the actual visit.
+  useEffect(() => {
+    if (!patientId) { setCompletedProcedures([]); return }
+    let active = true
+    apiRequest<TreatmentPlanSummary[]>(`/dentist/patients/${encodeURIComponent(patientId)}/treatment-plans`)
+      .then(plans => {
+        if (!active) return
+        setCompletedProcedures(plans
+          .filter(plan => Boolean(plan.consentRecordedAtUtc))
+          .flatMap(plan => plan.procedures
+            .filter(proc => proc.status === 'Completed' && proc.estimatedCost !== null && proc.estimatedCost > 0)
+            .map(proc => ({
+              id: proc.id, description: proc.description,
+              estimatedCost: Number(proc.estimatedCost), toothCode: proc.toothCode,
+            }))))
+      }).catch(() => { if (active) setCompletedProcedures([]) })
+    return () => { active = false }
+  }, [patientId])
 
   // Practice price list from Configuration Center > Procedure Pricing.
   useEffect(() => {
@@ -239,7 +265,10 @@ export default function DentistConsultationsPage({
         }
         setDetail(result)
         setForm(Object.fromEntries(fields.map(({ key }) => [key, result.consultation?.[key] ?? ''])) as ClinicalForm)
-        setCharges(result.charges.map(charge => ({ description: charge.description, amount: String(charge.amount) })))
+        setCharges(result.charges.map(charge => ({
+          description: charge.description, amount: String(charge.amount),
+          treatmentProcedureId: charge.treatmentProcedureId ?? undefined,
+        })))
         setChargesConfirmed(result.consultation?.chargesConfirmed ?? false)
         setDetailsError('')
       })
@@ -286,7 +315,7 @@ export default function DentistConsultationsPage({
 
   async function save(finish = false) {
     if (!selectedAppointmentId || !editable || saving) return
-    const prepared: { description: string; amount: number; procedurePriceId: string | null }[] = []
+    const prepared: { description: string; amount: number; procedurePriceId: string | null; treatmentProcedureId: string | null }[] = []
     for (const charge of charges) {
       const amount = charge.amount.trim()
       const description = charge.description.trim()
@@ -298,11 +327,17 @@ export default function DentistConsultationsPage({
       // Existing saved lines may be retained unchanged for legacy visits.
       // All new charges must use the approved practice price list.
       const selected = prices.find(price => price.id === charge.procedurePriceId)
+      const completed = completedProcedures.find(proc => proc.id === charge.treatmentProcedureId)
+      if (charge.treatmentProcedureId && (!completed ||
+        completed.description !== description || completed.estimatedCost !== Number(amount))) {
+        setError('The completed treatment procedure has changed. Refresh and select it again.')
+        return
+      }
       if (!selected && charge.procedurePriceId) {
         setError('This procedure is no longer active in the practice price list.')
         return
       }
-      if (!selected && !detail?.charges.some(saved =>
+      if (!selected && !completed && !detail?.charges.some(saved =>
         saved.description === description && Number(saved.amount) === Number(amount))) {
         setError('Choose each new charge from the approved price list. Manual prices are not allowed.')
         return
@@ -311,7 +346,10 @@ export default function DentistConsultationsPage({
         setError('The procedure amount has changed. Select it again from the price list.')
         return
       }
-      prepared.push({ description, amount: Number(amount), procedurePriceId: selected?.id ?? null })
+      prepared.push({
+        description, amount: Number(amount), procedurePriceId: completed ? null : selected?.id ?? null,
+        treatmentProcedureId: completed?.id ?? null,
+      })
     }
     if (finish && (!chargesConfirmed ||
       fields.some(field => field.required && !form[field.key].trim()))) {
@@ -504,6 +542,32 @@ export default function DentistConsultationsPage({
                     onClick={() => { setCharges(prev => [...prev, { description: '', amount: '' }]); setChargesConfirmed(false) }}>
                     <Plus size={16}/> Add Priced Procedure</button>}
                 </div>
+                {editable && completedProcedures.length > 0 && (
+                  <div className="clinical-completed-procedures">
+                    <strong>Completed procedures from this patient's treatment plan</strong>
+                    <p>Choose a procedure performed during this visit. Its original approved price is used and the same procedure cannot be billed on two visits.</p>
+                    <select aria-label="Add completed treatment plan procedure to this consultation"
+                      defaultValue="" onChange={event => {
+                        const procedure = completedProcedures.find(item => item.id === event.target.value)
+                        if (procedure && !charges.some(item => item.treatmentProcedureId === procedure.id)) {
+                          setCharges(previous => [...previous, {
+                            description: procedure.description,
+                            amount: procedure.estimatedCost.toFixed(2),
+                            treatmentProcedureId: procedure.id,
+                          }])
+                          setChargesConfirmed(false)
+                        }
+                        event.currentTarget.value = ''
+                      }}>
+                      <option value="">Add completed procedure to consultation…</option>
+                      {completedProcedures.filter(procedure =>
+                        !charges.some(item => item.treatmentProcedureId === procedure.id))
+                        .map(procedure => <option key={procedure.id} value={procedure.id}>
+                          {procedure.description} · tooth {procedure.toothCode || '—'} · R {procedure.estimatedCost.toFixed(2)}
+                        </option>)}
+                    </select>
+                  </div>
+                )}
                 {charges.length === 0 && <p className="clinical-muted">No treatment charges. For a free visit, confirm R0.00 below.</p>}
                 {prices.length === 0 && editable && <p className="clinical-notice" role="status">No active procedure prices found. Practice Admin must configure approved procedure prices before adding billable treatment.</p>}
                 {charges.map((row, index) => (
@@ -512,7 +576,7 @@ export default function DentistConsultationsPage({
                       <select
                         value={row.procedurePriceId ? `price:${row.procedurePriceId}` : ''}
                         aria-label={`Choose approved procedure for charge ${index + 1}`}
-                        disabled={!editable || saving}
+                        disabled={!editable || saving || Boolean(row.treatmentProcedureId)}
                         onChange={event => {
                           const choice = prices.find(price => 'price:' + price.id === event.target.value)
                           setCharges(previous => previous.map((item, i) =>
@@ -525,7 +589,8 @@ export default function DentistConsultationsPage({
                           setChargesConfirmed(false)
                         }}
                       >
-                        <option value="">{row.description && !row.procedurePriceId ? 'Saved historical charge' : 'Select approved procedure…'}</option>
+                        <option value="">{row.treatmentProcedureId ? 'Linked completed treatment procedure' :
+                          row.description && !row.procedurePriceId ? 'Saved historical charge' : 'Select approved procedure…'}</option>
                         {prices.map(price => (
                           <option key={price.id} value={`price:${price.id}`}>
                             {price.code} · {price.name} — R{price.price.toFixed(2)}

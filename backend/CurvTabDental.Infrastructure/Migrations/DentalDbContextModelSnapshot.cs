@@ -527,11 +527,20 @@ namespace CurvTabDental.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<Guid?>("TreatmentProcedureId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ConsultationId");
 
+                    b.HasIndex("TreatmentProcedureId");
+
                     b.HasIndex("DentalPracticeId", "ConsultationId");
+
+                    b.HasIndex("DentalPracticeId", "TreatmentProcedureId")
+                        .IsUnique()
+                        .HasFilter("\"TreatmentProcedureId\" IS NOT NULL");
 
                     b.ToTable("ConsultationCharges");
                 });
@@ -3625,6 +3634,11 @@ namespace CurvTabDental.Infrastructure.Migrations
                         .HasForeignKey("ConsultationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("CurvTabDental.Domain.Entities.PatientTreatmentProcedure", null)
+                        .WithMany()
+                        .HasForeignKey("TreatmentProcedureId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("CurvTabDental.Domain.Entities.DentalChartEntry", b =>
