@@ -4,7 +4,7 @@ import PatientAccountInvoiceView from './PatientAccountInvoiceView'
 import DentalChartingPage from './DentalChartingPage'
 import DentistConsultationsPage from './DentistConsultationsPage'
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, ArrowRight, ChevronRight, Mail, Phone, Plus, RefreshCw, Search, ShieldCheck, Users } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ChevronRight, Mail, Phone, Plus, RefreshCw, Search, ShieldCheck, UserPlus, Users } from 'lucide-react'
 import { apiRequest } from '../services/api'
 import PatientsPage from './PatientsPage'
 import PatientMedicalCards from './PatientMedicalCards'
@@ -49,7 +49,16 @@ type HistoryRecord = {
 }
 
 type PatientTab = 'Overview' | 'Treatment' | 'Medical Records' | 'Accounts' | 'Details' | 'Visit' | 'History'
-type Props = { role: string; onClose?: () => void; onOpenAppointments?: () => void; initialConsultationAppointmentId?: string | null; onConsultationOpened?: () => void }
+type Props = {
+  role: string
+  onClose?: () => void
+  onOpenAppointments?: (patientId?: string) => void
+  onOpenLaboratory?: (patientId: string) => void
+  onOpenCheckout?: (appointmentId?: string) => void
+  initialConsultationAppointmentId?: string | null
+  onConsultationOpened?: () => void
+}
+type LabRequirement = { patientId: string; procedureId: string; planId: string; description: string; toothCode: string | null }
 const tabs: PatientTab[] = ['Overview', 'Treatment', 'Accounts', 'Details', 'Visit', 'History']
 
 function record(value: unknown): Record<string, unknown> | null {
@@ -232,14 +241,13 @@ function MiniVisitCalendar({
   )
 }
 
-export default function PatientExperiencePage({ role, onClose, onOpenAppointments, initialConsultationAppointmentId, onConsultationOpened }: Props) {
+export default function PatientExperiencePage({ role, onClose, onOpenAppointments, onOpenLaboratory, onOpenCheckout, initialConsultationAppointmentId, onConsultationOpened }: Props) {
   const [patients, setPatients] = useState<Patient[]>([])
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<Patient | null>(null)
   const [tab, setTab] = useState<PatientTab>('Overview')
   const [consultationAppointmentId, setConsultationAppointmentId] = useState<string | null>(null)
   const [treatmentSection, setTreatmentSection] = useState<'Consultation' | 'Dental Chart' | 'Treatment Plan' | 'Clinical Notes & Encounters' | 'Medical Records' | 'Clinical Images' | 'Tooth History' | 'Prescriptions' | null>(null)
-  const [manage, setManage] = useState(false)
   // CT_PATIENT_ACCOUNTS_V1
   const [accountSection, setAccountSection] = useState<string | null>(null)
 
@@ -341,6 +349,8 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
   const [medicalLoading, setMedicalLoading] = useState(false)
   const [actionBusy, setActionBusy] = useState(false)
   const [actionNotice, setActionNotice] = useState('')
+  const [labNeeds, setLabNeeds] = useState<LabRequirement[]>([])
+  const [stepBusy, setStepBusy] = useState(false)
 
   const canManage = role === 'Receptionist' || role === 'PracticeAdmin' || role === 'Dentist'
   const isDentist = role === 'Dentist'
@@ -375,8 +385,7 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
         setTreatmentSection(null)
         setTab('Treatment')
         setConsultationAppointmentId(appointmentId)
-        setManage(false)
-        setDetailError('')
+            setDetailError('')
         setActionNotice('')
         setVisits([])
         setVisitsLoading(true)
@@ -489,8 +498,8 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
     setSelected(patient)
     setTab('Overview')
     setTreatmentSection(null)
+    setLabNeeds([])
     setConsultationAppointmentId(null)
-    setManage(false)
     setDetailError('')
     setActionNotice('')
     setDetailLoading(true)
@@ -500,9 +509,60 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
     setVisits([])
   }
 
+  const activeClinicalVisit = visits.find(visit => visit.status === 'InConsultation')
+  const checkoutVisit = visits.find(visit => visit.status === 'AwaitingCheckout')
+
+  // The next clinical step is resolved from saved appointment and lab data,
+  // never from a fictitious visit or manually entered balance.
+  async function advanceTreatment() {
+    if (!selected || stepBusy) return
+    if (treatmentSection === 'Consultation') { setTreatmentSection('Dental Chart'); return }
+    if (treatmentSection === 'Dental Chart') { setTreatmentSection('Treatment Plan'); return }
+    if (treatmentSection === 'Prescriptions') { setTab('Visit'); return }
+    if (treatmentSection !== 'Treatment Plan') { setTreatmentSection('Consultation'); return }
+
+    setStepBusy(true)
+    setActionNotice('')
+    try {
+      const required = await apiRequest<LabRequirement[]>('/laboratory/lab-required')
+      const thisPatient = required.filter(item => item.patientId === selected.id)
+      setLabNeeds(thisPatient)
+      if (thisPatient.length && onOpenLaboratory) {
+        onOpenLaboratory(selected.id)
+        return
+      }
+      if (activeClinicalVisit) {
+        setConsultationAppointmentId(activeClinicalVisit.id)
+        setTreatmentSection('Consultation')
+        return
+      }
+      if (checkoutVisit) {
+        setActionNotice('This consultation is already finalized. Reception can collect the verified balance in Checkout; do not bill a treatment plan a second time.')
+        setTab('Visit')
+        return
+      }
+      setActionNotice('A treatment plan alone is not a bill. Book the patient, check in on the visit day, and finalize the actual consultation before checkout.')
+      onOpenAppointments?.(selected.id)
+    } catch (cause) {
+      setActionNotice(cause instanceof Error
+        ? 'Unable to verify the next treatment step: ' + cause.message
+        : 'Unable to verify the next treatment step. Please retry.')
+    } finally {
+      setStepBusy(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!isDentist || !selected?.id || tab !== 'Treatment' || treatmentSection !== 'Treatment Plan') return
+    let active = true
+    apiRequest<LabRequirement[]>('/laboratory/lab-required')
+      .then(rows => { if (active) setLabNeeds(rows.filter(item => item.patientId === selected.id)) })
+      .catch(() => { if (active) setLabNeeds([]) })
+    return () => { active = false }
+  }, [isDentist, selected?.id, tab, treatmentSection])
+
   function backToCards() {
     setSelected(null)
-    setManage(false)
     setLoading(true)
     setReload(value => value + 1)
   }
@@ -540,16 +600,6 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
     )
   }
 
-  if (manage && canManage) {
-    return <div className="ct-patients-experience">
-      <div className="ct-patient-toolbar">
-        <div><p className="ct-patient-eyebrow">PATIENT MANAGEMENT</p><h1>Register or manage patients</h1></div>
-        <button type="button" className="secondary-button" onClick={backToCards}><ArrowLeft size={17}/> Back to patient cards</button>
-      </div>
-      <PatientsPage />
-    </div>
-  }
-
   if (!selected) {
     return (
       <div className="ct-dir4-overlay">
@@ -572,7 +622,7 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
       <div className="ct-patient-toolbar">
         <div><p className="ct-patient-eyebrow">PATIENT DIRECTORY</p><h1>Patients</h1><p>Open a patient card to view their full practice record.</p></div>
         <div className="ct-patient-directory-actions">
-          {canManage && <button type="button" className="primary-button" onClick={() => setQuickRegister(true)}><Plus size={17}/> Quick Register / Manage</button>}
+          {canManage && <button type="button" className="primary-button ct-patient-register-action" onClick={() => setQuickRegister(true)}><UserPlus size={17}/> Register Patient</button>}
         </div>
       </div>
       <div className="ct-patient-searchrow">
@@ -673,15 +723,6 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
             : detailValue(selected.paymentMethod)}
       </div>
 
-      {canManage && (
-        <button
-          type="button"
-          className="secondary-button ct-pv8-manage"
-          onClick={() => setManage(true)}
-        >
-          Manage record
-        </button>
-      )}
     </header>
 
     {detailError && <p className="ct-patient-message ct-patient-error" role="alert">{detailError}</p>}
@@ -797,30 +838,27 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
           </div>
         ) : (
           <>
+            {treatmentSection === 'Treatment Plan' && labNeeds.length > 0 && (
+              <div className="ct-treatment-lab-note" role="status">
+                <strong>{labNeeds.length} lab-required procedure(s)</strong> on this acknowledged patient plan.
+                The dentist must prescribe real lab work before technicians receive a job.
+              </div>
+            )}
             <div className="ct-treatment-progress-actions">
               <button type="button" className="secondary-button ct-pt-back"
                 onClick={() => setTreatmentSection(null)}>Treatment sections</button>
-              {treatmentSection !== 'Prescriptions' ? (
-                <button type="button" className="primary-button"
-                  onClick={() => {
-                    if (treatmentSection === 'Consultation') setTreatmentSection('Dental Chart')
-                    else if (treatmentSection === 'Dental Chart') setTreatmentSection('Treatment Plan')
-                    else if (treatmentSection === 'Treatment Plan') {
-                      setConsultationAppointmentId(previous =>
-                        previous ?? visits.find(visit => visit.status === 'InConsultation')?.id ?? null)
-                      setTreatmentSection('Consultation')
-                    } else setTreatmentSection('Consultation')
-                  }}>
-                  {treatmentSection === 'Consultation' ? 'Next: Dental Chart'
-                    : treatmentSection === 'Dental Chart' ? 'Next: Treatment Plan'
-                    : treatmentSection === 'Treatment Plan' ? 'Next: Complete Consultation'
-                    : 'Next: Consultation'} <ArrowRight size={15}/>
-                </button>
-              ) : (
-                <button type="button" className="primary-button" onClick={() => setTab('Visit')}>
-                  Next: Review Visit & Checkout Status <ArrowRight size={15}/>
-                </button>
-              )}
+              <button type="button" className="primary-button" disabled={stepBusy}
+                onClick={() => void advanceTreatment()}>
+                {stepBusy ? 'Checking next step…'
+                  : treatmentSection === 'Consultation' ? 'Next: Dental Chart'
+                  : treatmentSection === 'Dental Chart' ? 'Next: Treatment Plan'
+                  : treatmentSection === 'Treatment Plan' && labNeeds.length > 0 ? 'Next: Laboratory'
+                  : treatmentSection === 'Treatment Plan' && activeClinicalVisit ? 'Next: Finalize Consultation'
+                  : treatmentSection === 'Treatment Plan' && checkoutVisit ? 'Next: Checkout Status'
+                  : treatmentSection === 'Treatment Plan' ? 'Next: Book Visit'
+                  : treatmentSection === 'Prescriptions' ? 'Next: Visit & Checkout Status'
+                  : 'Next: Consultation'} <ArrowRight size={15}/>
+              </button>
             </div>
             {/* CT_TREATMENT_BREADCRUMB_V5 */}
             <nav
@@ -915,7 +953,7 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
               <button
                 type="button"
                 className="ct-pv5-link"
-                onClick={onOpenAppointments}
+                onClick={() => onOpenAppointments?.(selected.id)}
               >
                 Open appointments
               </button>
@@ -1169,7 +1207,19 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
       {patientField('Member number', selected.medicalAidMemberNumber)}
     </div></section>}
 
-    {tab === 'Visit' && <section className="ct-patient-panel"><div className="ct-patient-tab-heading"><div><h2>Appointments & visits</h2><p>Recent and upcoming bookings for this patient</p></div>{onOpenAppointments && <button type="button" className="primary-button" onClick={onOpenAppointments}><Plus size={16}/> Schedule visit</button>}</div>
+    {tab === 'Visit' && <section className="ct-patient-panel">
+      {checkoutVisit && (
+        <div className="ct-patient-checkout-handoff" role="status">
+          <strong>Ready for reception checkout</strong>
+          <p>This patient has a finalized consultation. Collect verified payment against that specific appointment, not against an unscheduled treatment plan.</p>
+          {role !== 'Dentist' && onOpenCheckout &&
+            <button type="button" className="primary-button" onClick={() => onOpenCheckout(checkoutVisit.id)}>
+              Open Patient Checkout <ArrowRight size={15}/>
+            </button>}
+          {role === 'Dentist' && <small>Reception or Practice Admin will complete payment and issue the receipt.</small>}
+        </div>
+      )}
+      <div className="ct-patient-tab-heading"><div><h2>Appointments & visits</h2><p>Recent and upcoming bookings for this patient</p></div>{onOpenAppointments && <button type="button" className="primary-button" onClick={() => onOpenAppointments(selected.id)}><Plus size={16}/> Schedule visit</button>}</div>
       {visitsLoading ? <p>Loading appointments…</p> : visits.length === 0 ? <p>No appointments found within the available date range.</p> : visits.map(visit => <div className="ct-patient-visit" key={visit.id}><div><strong>{formattedDate(visit.startUtc)} · {new Date(visit.startUtc).toLocaleTimeString('en-ZA',{hour:'2-digit',minute:'2-digit'})}</strong><p>{visit.reason || 'Dental appointment'}</p></div><span>{visit.status}</span></div>)}
       <p className="ct-patient-limit-note">Visit results cover approximately the past 90 days and next 60 days, subject to API limits.</p>
     </section>}

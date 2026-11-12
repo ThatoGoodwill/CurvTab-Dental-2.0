@@ -103,12 +103,18 @@ public sealed class LaboratoryController : ControllerBase
             join patient in _db.Patients.AsNoTracking() on proc.PatientId equals patient.Id
             where proc.DentalPracticeId == practiceId && proc.RequiresLab &&
                   proc.Status != "Completed" && proc.Status != "Cancelled" &&
-                  proc.Status != "Declined" && plan.ConsentRecordedAtUtc != null
+                  proc.Status != "Declined" && plan.ConsentRecordedAtUtc != null &&
+                  !_db.Set<LaboratoryOrder>().Any(o =>
+                      o.DentalPracticeId == practiceId && o.PatientId == patient.Id &&
+                      o.TreatmentPlanId == plan.Id && o.Status != "Closed" &&
+                      _db.Set<LaboratoryItem>().Any(i => i.LaboratoryOrderId == o.Id &&
+                          i.ToothCode == proc.ToothCode && i.Procedure == proc.Description))
             orderby plan.UpdatedAtUtc descending
             select new
             {
                 procedureId = proc.Id,
                 patientId = patient.Id,
+                planId = plan.Id,
                 patientName = patient.FirstName + " " + patient.LastName,
                 planTitle = plan.Title,
                 description = proc.Description,
@@ -238,11 +244,39 @@ public sealed class LaboratoryController : ControllerBase
         if (!Has(request.Instructions, 5000) || request.Items is null || request.Items.Count is < 1 or > 40 ||
             request.Items.Any(i => !Has(i.Procedure, 240) || !Has(i.ToothCode, 10)))
             return BadRequest(new { title = "Provide dentist instructions and 1–40 valid laboratory items." });
-        if (!await _db.Patients.AnyAsync(p => p.Id == request.PatientId && !p.IsArchived, ct)) return NotFound();
-        if (!await _db.Set<LaboratoryPartner>().AnyAsync(l => l.Id == request.LaboratoryPartnerId && l.IsActive, ct))
+        if (!await _db.Patients.AnyAsync(p =>
+                p.Id == request.PatientId && p.DentalPracticeId == practice && !p.IsArchived, ct)) return NotFound();
+        if (!await _db.Set<LaboratoryPartner>().AnyAsync(l =>
+                l.Id == request.LaboratoryPartnerId && l.DentalPracticeId == practice && l.IsActive, ct))
             return BadRequest(new { title = "Select an active laboratory for this practice." });
-        // Link identifier is preserved, but must be verified against the clinical plan
-        // in a later integration before showing as a verified treatment-plan link.
+        if (request.TreatmentPlanId is Guid planId)
+        {
+            var plan = await _db.PatientTreatmentPlans.AsNoTracking().FirstOrDefaultAsync(p =>
+                p.Id == planId && p.PatientId == request.PatientId &&
+                p.DentalPracticeId == practice, ct);
+            if (plan is null) return NotFound();
+            if (plan.ConsentRecordedAtUtc == null)
+                return Conflict(new { title = "A linked laboratory prescription requires recorded treatment-plan acknowledgement." });
+            var requestedProcedures = await _db.PatientTreatmentProcedures.AsNoTracking()
+                .Where(p => p.TreatmentPlanId == planId && p.DentalPracticeId == practice &&
+                            p.PatientId == request.PatientId && p.RequiresLab &&
+                            p.Status != "Cancelled" && p.Status != "Declined" && p.Status != "Completed")
+                .Select(p => new { p.Description, p.ToothCode }).ToListAsync(ct);
+            if (request.Items.Any(item => !requestedProcedures.Any(p =>
+                    p.Description == item.Procedure.Trim() &&
+                    p.ToothCode == item.ToothCode.Trim().ToUpperInvariant())))
+                return BadRequest(new { title = "Every lab item must match an active, lab-required procedure on this patient's acknowledged treatment plan." });
+            var alreadyPrescribed = await (
+                from existingOrder in _db.Set<LaboratoryOrder>().AsNoTracking()
+                join item in _db.Set<LaboratoryItem>().AsNoTracking() on existingOrder.Id equals item.LaboratoryOrderId
+                where existingOrder.DentalPracticeId == practice && existingOrder.PatientId == request.PatientId &&
+                      existingOrder.TreatmentPlanId == planId && existingOrder.Status != "Closed"
+                select new { item.Procedure, item.ToothCode }).ToListAsync(ct);
+            if (request.Items.Any(item => alreadyPrescribed.Any(p =>
+                p.Procedure == item.Procedure.Trim() &&
+                p.ToothCode == item.ToothCode.Trim().ToUpperInvariant())))
+                return Conflict(new { title = "This procedure already has an open laboratory order. Open its existing case instead of prescribing twice." });
+        }
         var order = new LaboratoryOrder { DentalPracticeId = practice, PatientId = request.PatientId,
             LaboratoryPartnerId = request.LaboratoryPartnerId, TreatmentPlanId = request.TreatmentPlanId,
             Instructions = Trim(request.Instructions), PrescribedByUserId = actor,

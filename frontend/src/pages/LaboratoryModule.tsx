@@ -73,7 +73,14 @@ function Dialog({ title, children, onClose }: { title: string; children: ReactNo
   </div>
 }
 
-export default function LaboratoryModule() {
+type LabNeed = {
+  procedureId: string; patientId: string; planId: string; patientName: string;
+  planTitle: string; description: string; toothCode: string | null
+}
+
+export default function LaboratoryModule({ initialPatientId, requestId }: {
+  initialPatientId?: string | null; requestId?: number | null
+}) {
   const { user } = useAuth()
   const role = user?.role ?? ''
   const isLab = role === 'LabTechnician'
@@ -81,7 +88,8 @@ export default function LaboratoryModule() {
   const admin = role === 'PracticeAdmin'
   const front = role === 'Receptionist' || admin
   const [data, setData] = useState<Dashboard>(empty)
-  const [labNeeded, setLabNeeded] = useState<{ procedureId: string; patientName: string; planTitle: string; description: string; toothCode: string | null }[]>([])
+  const [labNeeded, setLabNeeded] = useState<LabNeed[]>([])
+  const [labNeedsLoaded, setLabNeedsLoaded] = useState(false)
   const [section, setSection] = useState<Section>('orders') // CT_LAB_WORKBENCH_V3
   const [orderId, setOrderId] = useState('')
   const [itemId, setItemId] = useState('')
@@ -111,8 +119,12 @@ export default function LaboratoryModule() {
   }, [])
   useEffect(() => { void load() }, [load])
   useEffect(() => {
-    apiRequest<typeof labNeeded>('/laboratory/lab-required').then(setLabNeeded).catch(() => setLabNeeded([]))
-  }, [])
+    if (isLab) { setLabNeedsLoaded(true); return }
+    apiRequest<LabNeed[]>('/laboratory/lab-required')
+      .then(setLabNeeded)
+      .catch(() => setLabNeeded([]))
+      .finally(() => setLabNeedsLoaded(true))
+  }, [isLab])
   useEffect(() => {
     if (modal !== 'order' || isLab) return
     const t = setTimeout(() => {
@@ -144,6 +156,33 @@ export default function LaboratoryModule() {
     } catch (e) { setError(e instanceof Error ? e.message : 'Action failed') }
     finally { setBusy(false) }
   }
+  useEffect(() => {
+    if (!dentist || !initialPatientId || !requestId || !labNeedsLoaded) return
+    const pending = labNeeded.find(item => item.patientId === initialPatientId)
+    setSection('orders')
+    setForm({
+      patientId: initialPatientId,
+      treatmentPlanId: pending?.planId || '',
+      patientQuery: pending?.patientName || '',
+      instructions: '',
+    })
+    setDraftItems(pending
+      ? [{ toothCode: pending.toothCode || '', procedure: pending.description, isRemovable: false }]
+      : [{ toothCode: '', procedure: '', isRemovable: false }])
+    setModal('order')
+  // Only re-initialise on a new explicit request, not when forms are edited.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestId, labNeedsLoaded])
+
+  const openLabRequest = (item: LabNeed) => {
+    setSection('orders')
+    setForm({ patientId: item.patientId, treatmentPlanId: item.planId, patientQuery: item.patientName, instructions: '' })
+    setDraftItems([{ toothCode: item.toothCode || '', procedure: item.description, isRemovable: false }])
+    setError('')
+    setNotice('')
+    setModal('order')
+  }
+
   const open = (name: string, selectedItem?: string, selectedManifest?: string) => {
     if (selectedItem) setItemId(selectedItem)
     if (selectedManifest) setManifestId(selectedManifest)
@@ -341,10 +380,10 @@ export default function LaboratoryModule() {
           <div><strong>{clinicalQa.length}</strong><span>QA required</span></div>
           <div><strong>{fitmentQueue.length}</strong><span>Ready for fitment</span></div>
         </div>}
-        {front && labNeeded.length > 0 && <section className="lab-panel">
-          <div className="lab-section-head"><div><h2>Patients needing lab work</h2><p>Agreed treatment plans with procedures that require the laboratory. Create a laboratory order for each.</p></div></div>
-          <div className="lab-table-wrap"><table className="lab-table"><thead><tr><th>Patient</th><th>Procedure</th><th>Tooth</th><th>Plan</th></tr></thead><tbody>
-            {labNeeded.map(item => <tr key={item.procedureId}><td><strong>{item.patientName}</strong></td><td>{item.description}</td><td>{item.toothCode ?? '—'}</td><td>{item.planTitle}</td></tr>)}
+        {(front || dentist) && labNeeded.length > 0 && <section className="lab-panel">
+          <div className="lab-section-head"><div><h2>Lab work requiring a prescription</h2><p>These are agreed, patient-linked treatment procedures. A technician is notified only after a dentist prescribes a real laboratory order and the laboratory account is assigned.</p></div></div>
+          <div className="lab-table-wrap"><table className="lab-table"><thead><tr><th>Patient</th><th>Procedure</th><th>Tooth</th><th>Plan</th><th>Next step</th></tr></thead><tbody>
+            {labNeeded.map(item => <tr key={item.procedureId}><td><strong>{item.patientName}</strong></td><td>{item.description}</td><td>{item.toothCode ?? '—'}</td><td>{item.planTitle}</td><td>{dentist ? <button type="button" className="lab-primary" onClick={() => openLabRequest(item)}>Create linked lab order</button> : 'Dentist to prescribe'}</td></tr>)}
           </tbody></table></div>
         </section>}
         <section className="lab-panel">

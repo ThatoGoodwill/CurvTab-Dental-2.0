@@ -40,6 +40,8 @@ type Props = {
   onOpenConsultation: (appointmentId: string) => void
   onClose: () => void
   role: string
+  initialPatientId?: string | null
+  bookingRequest?: number | null
 }
 
 function dateKey(date: Date): string {
@@ -110,6 +112,8 @@ export default function AppointmentsPage({
   onOpenConsultation,
   onClose,
   role,
+  initialPatientId,
+  bookingRequest,
 }: Props) {
   const [selectedDate, setSelectedDate] = useState(
     () => new Date()
@@ -137,6 +141,19 @@ export default function AppointmentsPage({
   const [bookingOpen, setBookingOpen] = useState(false)
   const [dailyOpen, setDailyOpen] = useState(false)
 
+
+  // Book directly for the patient selected in Patients, but never invent a visit.
+  useEffect(() => {
+    if (!initialPatientId || !bookingRequest) return
+    const today = new Date()
+    setPatientId(initialPatientId)
+    setSelectedDate(today)
+    setDisplayMonth(new Date(today.getFullYear(), today.getMonth(), 1))
+    setDateChosen(true)
+    setBookingOpen(true)
+    setError('')
+    onTabChange('Appointments')
+  }, [bookingRequest, initialPatientId, onTabChange])
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
