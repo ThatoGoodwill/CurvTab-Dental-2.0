@@ -568,7 +568,7 @@ export default function DentistConsultationsPage({
                     </select>
                   </div>
                 )}
-                {charges.length === 0 && <p className="clinical-muted">No treatment charges. For a free visit, confirm R0.00 below.</p>
+                {charges.length === 0 && <p className="clinical-muted">No treatment charges. For a free visit, confirm R0.00 below.</p>}
                 {prices.length === 0 && editable && <p className="clinical-notice" role="status">No active procedure prices found. Practice Admin must configure approved procedure prices before adding billable treatment.</p>}
                 {charges.map((row, index) => (
                   <div className="clinical-charge" key={`${index}-${charges.length}`}>
