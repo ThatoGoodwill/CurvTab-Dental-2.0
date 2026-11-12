@@ -127,8 +127,18 @@ export default function RecoveredClinicalWorkspace({ patientId, panel }: { patie
     {loading && <p>Loading clinical records...</p>}
     {!loading && panel === 'Treatment Plan' && <div className="ct-recovered-stack">
       {plans.length === 0 && <p className="ct-recovered-empty">No treatment plan recorded for this patient. Create a plan to begin.</p>}
-      {plans.map(plan => <article className="ct-recovered-card" key={plan.id}>
-        <div className="ct-recovered-card-head"><div><h3>{plan.title}</h3><small>Revision {plan.revision} · {date(plan.createdAtUtc)}</small></div><strong>{plan.status}</strong></div>
+      {plans.map((plan, index) => <details className="ct-recovered-card ct-recovered-plan-disclosure" key={plan.id} defaultOpen={index === 0}>
+        <summary className="ct-recovered-card-head ct-recovered-plan-summary">
+          <div>
+            <h3>{plan.title}</h3>
+            <small>Revision {plan.revision} · {date(plan.createdAtUtc)} · {plan.procedures.length} {plan.procedures.length === 1 ? 'procedure' : 'procedures'}</small>
+          </div>
+          <div className="ct-recovered-plan-summary-end">
+            <strong>{plan.status}</strong>
+            <span aria-hidden="true" className="ct-recovered-plan-chevron">⌄</span>
+          </div>
+        </summary>
+        <div className="ct-recovered-plan-body">
         <p>{details(plan.clinicalRationale)}</p>
         <h4>Planned procedures</h4>
         {plan.procedures.length ? <div className="ct-recovered-table-wrap"><table><thead><tr><th>Procedure</th><th>Tooth</th><th>Estimated cost</th><th>Status</th></tr></thead><tbody>
@@ -140,7 +150,8 @@ export default function RecoveredClinicalWorkspace({ patientId, panel }: { patie
           <button onClick={() => openModal('revise', plan)}>Revise Plan</button>
           <button onClick={() => openModal('acknowledge', plan)} disabled={plan.procedures.length === 0}>Record Acknowledgement</button>
         </div>}
-      </article>)}
+        </div>
+      </details>)}
     </div>}
     {!loading && panel === 'Clinical Notes & Encounters' && <div className="ct-recovered-stack">
       {encounters.length === 0 && <p className="ct-recovered-empty">No previous consultations recorded. Create and edit encounters in the existing Consultations workspace.</p>}
