@@ -343,6 +343,10 @@ public sealed class ConsultationsController : ControllerBase
             verifiedCharges.Add((catalogue.Name, catalogue.Price, null));
         }
         _db.ConsultationCharges.RemoveRange(previousCharges);
+        // Delete prior draft rows before recreating their verified snapshots so
+        // the unique clinical-procedure key cannot conflict with itself.
+        // The outer transaction still rolls back the whole draft on failure.
+        await _db.SaveChangesAsync(ct);
         foreach (var charge in verifiedCharges)
         {
             _db.ConsultationCharges.Add(new ConsultationCharge
