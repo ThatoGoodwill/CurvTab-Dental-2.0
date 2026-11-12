@@ -120,6 +120,7 @@ public sealed class OrthodonticIntakesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "PracticeAdmin,Receptionist,Dentist")]
     public async Task<IActionResult> Create([FromBody] CreateIntakeRequest req, CancellationToken ct)
     {
         if (_current.PracticeId is not Guid practiceId) return Forbid();
