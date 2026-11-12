@@ -838,6 +838,7 @@ export default function App() {
   const [section, setSection] = useState<Section>('Dashboard')
   const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null)
   const [selectedCheckoutAppointmentId, setSelectedCheckoutAppointmentId] = useState<string | null>(null)
+  const [checkoutRequest, setCheckoutRequest] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
 
   // Sidebar Appointments submenu.
@@ -978,6 +979,7 @@ export default function App() {
 
   function openCheckout(appointmentId?: string) {
     setSelectedCheckoutAppointmentId(appointmentId ?? null)
+    setCheckoutRequest(value => value + 1)
     setBillingSection('cashPrivate')
     setBillingExpanded(true)
     navigate('Billing')
@@ -1588,6 +1590,7 @@ export default function App() {
             (role === 'Receptionist' || role === 'PracticeAdmin') && (
               <BillingWorkspaceTabs
                 section={billingSection}
+                checkoutRequest={checkoutRequest}
                 onSectionChange={setBillingSection}
                 isManager={role === 'PracticeAdmin'}
                 checkout={<ReceptionCheckoutPage initialAppointmentId={selectedCheckoutAppointmentId} />}
