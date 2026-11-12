@@ -4,7 +4,7 @@ import PatientAccountInvoiceView from './PatientAccountInvoiceView'
 import DentalChartingPage from './DentalChartingPage'
 import DentistConsultationsPage from './DentistConsultationsPage'
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, ArrowRight, ChevronRight, Mail, Phone, Plus, RefreshCw, Search, ShieldCheck, Users } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ChevronRight, Mail, Phone, Plus, RefreshCw, Search, ShieldCheck, UserPlus, Users } from 'lucide-react'
 import { apiRequest } from '../services/api'
 import PatientsPage from './PatientsPage'
 import PatientMedicalCards from './PatientMedicalCards'
@@ -239,7 +239,6 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
   const [tab, setTab] = useState<PatientTab>('Overview')
   const [consultationAppointmentId, setConsultationAppointmentId] = useState<string | null>(null)
   const [treatmentSection, setTreatmentSection] = useState<'Consultation' | 'Dental Chart' | 'Treatment Plan' | 'Clinical Notes & Encounters' | 'Medical Records' | 'Clinical Images' | 'Tooth History' | 'Prescriptions' | null>(null)
-  const [manage, setManage] = useState(false)
   // CT_PATIENT_ACCOUNTS_V1
   const [accountSection, setAccountSection] = useState<string | null>(null)
 
@@ -375,8 +374,7 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
         setTreatmentSection(null)
         setTab('Treatment')
         setConsultationAppointmentId(appointmentId)
-        setManage(false)
-        setDetailError('')
+            setDetailError('')
         setActionNotice('')
         setVisits([])
         setVisitsLoading(true)
@@ -490,7 +488,6 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
     setTab('Overview')
     setTreatmentSection(null)
     setConsultationAppointmentId(null)
-    setManage(false)
     setDetailError('')
     setActionNotice('')
     setDetailLoading(true)
@@ -502,7 +499,6 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
 
   function backToCards() {
     setSelected(null)
-    setManage(false)
     setLoading(true)
     setReload(value => value + 1)
   }
@@ -540,16 +536,6 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
     )
   }
 
-  if (manage && canManage) {
-    return <div className="ct-patients-experience">
-      <div className="ct-patient-toolbar">
-        <div><p className="ct-patient-eyebrow">PATIENT MANAGEMENT</p><h1>Register or manage patients</h1></div>
-        <button type="button" className="secondary-button" onClick={backToCards}><ArrowLeft size={17}/> Back to patient cards</button>
-      </div>
-      <PatientsPage />
-    </div>
-  }
-
   if (!selected) {
     return (
       <div className="ct-dir4-overlay">
@@ -572,7 +558,7 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
       <div className="ct-patient-toolbar">
         <div><p className="ct-patient-eyebrow">PATIENT DIRECTORY</p><h1>Patients</h1><p>Open a patient card to view their full practice record.</p></div>
         <div className="ct-patient-directory-actions">
-          {canManage && <button type="button" className="primary-button" onClick={() => setQuickRegister(true)}><Plus size={17}/> Quick Register / Manage</button>}
+          {canManage && <button type="button" className="primary-button ct-patient-register-action" onClick={() => setQuickRegister(true)}><UserPlus size={17}/> Register Patient</button>}
         </div>
       </div>
       <div className="ct-patient-searchrow">
@@ -673,15 +659,6 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
             : detailValue(selected.paymentMethod)}
       </div>
 
-      {canManage && (
-        <button
-          type="button"
-          className="secondary-button ct-pv8-manage"
-          onClick={() => setManage(true)}
-        >
-          Manage record
-        </button>
-      )}
     </header>
 
     {detailError && <p className="ct-patient-message ct-patient-error" role="alert">{detailError}</p>}
