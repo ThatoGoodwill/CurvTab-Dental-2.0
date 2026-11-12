@@ -135,6 +135,7 @@ export default function AppointmentsPage({
   // CT_APPOINTMENTS_COMPACT_V1
   const [dateChosen, setDateChosen] = useState(false)
   const [bookingOpen, setBookingOpen] = useState(false)
+  const [dailyOpen, setDailyOpen] = useState(false)
 
 
   const [loading, setLoading] = useState(true)
@@ -455,6 +456,21 @@ export default function AppointmentsPage({
           <ListOrdered size={18} />
           In Queue ({queue.length})
         </button>
+        {tab === 'Appointments' && (
+          <button
+            type="button"
+            className={'ct-appt-daily-top-action' + (dailyOpen ? ' is-open' : '')}
+            aria-expanded={dailyOpen}
+            aria-controls="ct-scheduling-daily-drawer"
+            disabled={loading}
+            onClick={() => setDailyOpen(value => !value)}
+          >
+            <CalendarDays size={16} />
+            <span>Daily Appointments</span>
+            <small>{selectedAppointments.length} booked</small>
+            <ChevronRight size={15} className="ct-appt-daily-top-chevron" />
+          </button>
+        )}
       </div>
 
       {error && (
@@ -546,6 +562,7 @@ export default function AppointmentsPage({
                     aria-describedby={dayPatients.length ? `ct-scheduling-hover-${key}` : undefined}
                     onClick={() => {
                       setSelectedDate(date)
+                      setDailyOpen(false)
                       setDateChosen(true)
                       setBookingOpen(false)
                       setError('')
@@ -767,24 +784,19 @@ export default function AppointmentsPage({
               </div>
             )}
 
-            {!loading && selectedAppointments.length > 0 && (
-            <details
-              key={selectedKey}
-              className="panel ct-appt-daily ct-appt-daily-fold"
+            {dailyOpen && (
+            <section
+              id="ct-scheduling-daily-drawer"
+              className="panel ct-appt-daily ct-appt-daily-panel"
+              aria-label="Daily appointments for selected date"
+              role="region"
             >
-              {/* CT_DAILY_APPOINTMENTS_EXPAND_V3 */}
-              <summary className="ct-appt-daily-trigger">
-                <span className="ct-appt-daily-trigger-icon">
-                  <CalendarDays size={16}/>
-                </span>
-                <span className="ct-appt-daily-trigger-text">
-                  <strong>Daily Appointments</strong>
-                  <small>{selectedAppointments.length} booked</small>
-                </span>
-                <span className="ct-appt-daily-chevron" aria-hidden="true">
-                  ›
-                </span>
-              </summary>
+              <button
+                type="button"
+                className="ct-appt-daily-panel-close"
+                aria-label="Close daily appointments"
+                onClick={() => setDailyOpen(false)}
+              >×</button>
               <div className="panel-header">
                 <div>
                   <h2>Daily Appointments</h2>
@@ -843,7 +855,7 @@ export default function AppointmentsPage({
                   ))}
                 </div>
               )}
-            </details>
+            </section>
             )}
           </div>
         </div>

@@ -1439,3 +1439,239 @@
 }
 
 /* CT_DAILY_APPOINTMENTS_EXPAND_V3_END */
+
+
+/* CT_CLIENT_WIDE_SCHEDULING_CALENDAR_20261112
+   Client-marked change: calendar fills the Scheduling workspace rather
+   than the old 440px chooser. Daily Appointments action belongs at
+   the upper right, with a compact independent detail panel. */
+.ct-appt-page-overlay .ct-appointments-modal-calendar,
+.ct-appt-page-overlay .ct-appointments-modal-calendar:not(:has(.ct-appt-daily[open])) {
+  width: min(1010px, calc(100vw - 28px)) !important;
+  max-width: calc(100vw - 28px) !important;
+  max-height: calc(100dvh - 28px) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+.ct-appointments-modal-calendar .appointment-layout.ct-appt-compact {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 7px 0 0 !important;
+  gap: 0 !important;
+}
+
+.ct-appointments-modal-calendar .ct-appt-compact .ct-appt-calendar-panel {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 17px 22px !important;
+  border-radius: 12px !important;
+}
+
+.ct-appointments-modal-calendar .ct-appt-compact .ct-appt-calendar-panel .panel-header {
+  margin-bottom: 12px !important;
+}
+
+.ct-appointments-modal-calendar .ct-appt-compact .ct-appt-calendar-panel .panel-header h2 {
+  font-size: 15px !important;
+}
+
+.ct-appointments-modal-calendar .ct-appt-compact .appointment-month {
+  margin: 8px 0 12px !important;
+}
+
+.ct-appointments-modal-calendar .ct-appt-compact .appointment-month strong {
+  font-size: 14px !important;
+}
+
+.ct-appointments-modal-calendar .ct-appt-compact .appointment-month button {
+  width: 32px !important;
+  min-width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+}
+
+.ct-appointments-modal-calendar .ct-appt-compact .appointment-calendar {
+  width: 100% !important;
+  max-width: none !important;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  column-gap: 8px !important;
+  row-gap: 5px !important;
+  margin: 0 0 12px !important;
+  overflow: visible !important;
+}
+
+.ct-appointments-modal-calendar .ct-appt-compact .appointment-weekday {
+  font-size: 11px !important;
+  padding: 4px 0 6px !important;
+}
+
+.ct-appointments-modal-calendar .ct-appt-compact .appointment-day {
+  width: 100% !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
+  font-size: 13px !important;
+  border-radius: 9px !important;
+}
+
+.ct-appointments-modal-calendar .ct-appt-compact .ct-calendar-legend {
+  gap: 7px 12px !important;
+  font-size: 10px !important;
+}
+
+.ct-appointments-modal-calendar .appointment-tabs {
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.ct-appointments-modal-calendar .ct-appt-daily-top-action {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-left: auto !important;
+  padding: 6px 12px !important;
+  min-height: 32px !important;
+  border: 1px solid var(--appt-dialog-border, currentColor) !important;
+  border-radius: 8px !important;
+  color: inherit !important;
+  background: color-mix(in srgb, currentColor 4%, transparent) !important;
+  cursor: pointer !important;
+  white-space: nowrap;
+}
+
+.ct-appointments-modal-calendar .ct-appt-daily-top-action:hover,
+.ct-appointments-modal-calendar .ct-appt-daily-top-action.is-open {
+  border-color: #438be7 !important;
+  background: color-mix(in srgb, #438be7 10%, transparent) !important;
+}
+
+.ct-appointments-modal-calendar .ct-appt-daily-top-action:focus-visible,
+.ct-appointments-modal-calendar .ct-appt-daily-panel-close:focus-visible {
+  outline: 2px solid #438be7;
+  outline-offset: 2px;
+}
+
+.ct-appointments-modal-calendar .ct-appt-daily-top-action:disabled {
+  opacity: .6 !important;
+  cursor: wait !important;
+}
+
+.ct-appt-daily-top-action small {
+  font-size: 10px;
+  opacity: .68;
+}
+
+.ct-appt-daily-top-action .ct-appt-daily-top-chevron {
+  transition: transform .18s ease;
+}
+
+.ct-appt-daily-top-action.is-open .ct-appt-daily-top-chevron {
+  transform: rotate(90deg);
+}
+
+/* The list slides over the right side only when requested.
+   It never changes the width of the large month calendar. */
+.ct-appointments-modal-calendar .ct-appt-daily.ct-appt-daily-panel {
+  position: absolute !important;
+  top: 120px !important;
+  right: 20px !important;
+  z-index: 85 !important;
+  width: min(350px, calc(100% - 40px)) !important;
+  max-width: 350px !important;
+  max-height: min(68dvh, 550px) !important;
+  overflow-y: auto !important;
+  margin: 0 !important;
+  padding: 14px !important;
+  border: 1px solid var(--appt-dialog-border, rgba(130, 160, 190, .3)) !important;
+  background: var(--appt-dialog-bg, #fff) !important;
+  color: var(--appt-dialog-text, inherit) !important;
+  box-shadow: 0 14px 44px rgba(0, 0, 0, .2) !important;
+  border-radius: 11px !important;
+  animation: ct-appt-daily-panel-in .18s ease both;
+}
+
+.ct-appointments-modal-calendar .ct-appt-daily-panel .panel-header {
+  display: flex !important;
+  padding-right: 26px !important;
+  margin-bottom: 9px !important;
+}
+
+.ct-appointments-modal-calendar .ct-appt-daily-panel-close {
+  position: absolute;
+  top: 9px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--appt-dialog-border, currentColor);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+@keyframes ct-appt-daily-panel-in {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@media (max-height: 690px) and (min-width: 761px) {
+  .ct-appointments-modal-calendar .ct-appt-compact .appointment-day {
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .ct-appt-page-overlay .ct-appointments-modal-calendar,
+  .ct-appt-page-overlay .ct-appointments-modal-calendar:not(:has(.ct-appt-daily[open])) {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+  }
+  .ct-appointments-modal-calendar .ct-appt-compact .ct-appt-calendar-panel {
+    padding: 12px 9px !important;
+  }
+  .ct-appointments-modal-calendar .ct-appt-compact .appointment-calendar {
+    column-gap: 3px !important;
+    row-gap: 4px !important;
+  }
+  .ct-appointments-modal-calendar .ct-appt-compact .appointment-day {
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    font-size: 11px !important;
+  }
+  .ct-appointments-modal-calendar .ct-appt-daily-top-action {
+    margin-left: 0 !important;
+  }
+  .ct-appointments-modal-calendar .ct-appt-daily.ct-appt-daily-panel {
+    top: 138px !important;
+    right: 9px !important;
+    width: calc(100% - 18px) !important;
+    max-width: none !important;
+    max-height: min(58dvh, 440px) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-appointments-modal-calendar .ct-appt-daily.ct-appt-daily-panel {
+    animation: none !important;
+  }
+  .ct-appt-daily-top-action .ct-appt-daily-top-chevron {
+    transition: none !important;
+  }
+}
