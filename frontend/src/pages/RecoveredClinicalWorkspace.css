@@ -81,3 +81,115 @@
   margin-bottom: 10px;
 }
 .ct-patient-checkout-handoff p { margin: 5px 0 8px; }
+
+
+/* Compact treatment-plan summaries with details on demand. This keeps
+   multiple historical plans visible without making each a full page. */
+.ct-patient-treatment .ct-recovered-stack {
+  width: min(750px, 100%) !important;
+  max-width: 100% !important;
+  margin: 8px auto 0 !important;
+  gap: 9px !important;
+}
+.ct-patient-treatment .ct-recovered-panel {
+  max-width: 100% !important;
+  overflow-x: hidden;
+}
+.ct-patient-treatment .ct-recovered-plan-disclosure {
+  padding: 0 !important;
+  overflow: hidden;
+  min-width: 0;
+}
+.ct-patient-treatment .ct-recovered-plan-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  gap: 10px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.ct-patient-treatment .ct-recovered-plan-summary::-webkit-details-marker { display: none; }
+.ct-patient-treatment .ct-recovered-plan-summary::marker { content: ''; }
+.ct-patient-treatment .ct-recovered-plan-summary:focus-visible {
+  outline: 2px solid #448bdd;
+  outline-offset: -2px;
+}
+.ct-patient-treatment .ct-recovered-plan-summary > div:first-child {
+  flex: 1;
+  min-width: 0;
+}
+.ct-patient-treatment .ct-recovered-plan-summary h3 {
+  margin: 0 0 3px !important;
+  font-size: 13px !important;
+  overflow-wrap: anywhere;
+}
+.ct-patient-treatment .ct-recovered-plan-summary small {
+  display: block;
+  margin: 0;
+  font-size: 10px !important;
+  line-height: 1.35;
+}
+.ct-patient-treatment .ct-recovered-plan-summary-end {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+  gap: 9px;
+}
+.ct-patient-treatment .ct-recovered-plan-summary-end > strong {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px !important;
+  border: 1px solid var(--border-color, #dce5ef);
+  border-radius: 99px;
+  font-size: 10px !important;
+  white-space: nowrap;
+  color: inherit;
+}
+.ct-patient-treatment .ct-recovered-plan-chevron {
+  display: inline-block;
+  font-size: 16px;
+  transition: transform .17s ease;
+}
+.ct-patient-treatment .ct-recovered-plan-disclosure[open] .ct-recovered-plan-chevron {
+  transform: rotate(180deg);
+}
+.ct-patient-treatment .ct-recovered-plan-body {
+  padding: 0 13px 12px;
+  border-top: 1px solid var(--border-color, #dce5ef);
+  min-width: 0;
+}
+.ct-patient-treatment .ct-recovered-plan-body > p {
+  margin: 9px 0 6px !important;
+  font-size: 11px !important;
+  line-height: 1.45;
+}
+.ct-patient-treatment .ct-recovered-plan-body h4 {
+  margin: 9px 0 6px !important;
+  font-size: 11px !important;
+}
+.ct-patient-treatment .ct-recovered-plan-body .ct-recovered-notice {
+  padding: 8px 10px !important;
+  margin-top: 8px !important;
+  font-size: 10px !important;
+}
+.ct-patient-treatment .ct-recovered-plan-body .ct-recovered-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.ct-patient-treatment .ct-recovered-plan-body table {
+  width: 100%;
+  min-width: 470px;
+  font-size: 10px !important;
+}
+.ct-patient-treatment .ct-recovered-plan-body :is(th, td) {
+  padding: 6px 8px !important;
+}
+.ct-patient-treatment .ct-recovered-plan-body .ct-recovered-actions {
+  margin-top: 10px !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ct-patient-treatment .ct-recovered-plan-chevron { transition: none; }
+}

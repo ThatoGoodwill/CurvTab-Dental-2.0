@@ -374,3 +374,149 @@
     transform: none !important;
   }
 }
+
+
+/* CT_CLINICAL_MODAL_PORTAL_20261112
+   A patient consultation must not live inside the scrollable patient
+   Treatment section. Centre the detail above the record with ONE scrollbar;
+   preserve the existing fixed sidebar and selected theme. */
+.ct-consultation-floating-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 8700;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 18px 20px 18px calc(var(--ct-modal-nav, 258px) + 20px);
+  box-sizing: border-box;
+  background: rgba(9, 24, 42, .28);
+  isolation: isolate;
+}
+
+.ct-consultation-floating-content {
+  width: min(680px, 100%);
+  max-width: 100%;
+  max-height: calc(100dvh - 36px);
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.ct-consultation-floating-content > .clinical-editor {
+  width: 100%;
+  min-width: 0;
+  max-height: min(680px, calc(100dvh - 36px));
+  padding: 14px !important;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  border: 1px solid var(--border-color, #dce5ef);
+  border-radius: 12px;
+  background: var(--surface, var(--card-bg, #fff));
+  color: var(--text-primary, var(--text, inherit));
+  box-shadow: 0 18px 52px rgba(6, 20, 44, .28);
+}
+
+.ct-consultation-floating-content .clinical-consultation-dialog-header {
+  position: sticky;
+  top: -14px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px;
+  margin: -14px -14px 1px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border-color, #dce5ef);
+  background: var(--surface, var(--card-bg, #fff));
+}
+
+.ct-consultation-floating-content .clinical-consultation-dialog-header > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.ct-consultation-floating-content .clinical-consultation-dialog-header span {
+  font-size: 10px;
+  font-weight: 750;
+}
+.ct-consultation-floating-content .clinical-consultation-dialog-header strong {
+  font-size: 13px;
+}
+.ct-consultation-floating-content .clinical-consultation-close {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 29px;
+  padding: 5px 10px;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+.ct-consultation-floating-content .clinical-form,
+.ct-consultation-floating-content .clinical-field-grid {
+  gap: 10px;
+}
+.ct-consultation-floating-content .clinical-form h3 {
+  margin: 5px 0 0;
+  font-size: 14px;
+}
+.ct-consultation-floating-content .clinical-form textarea {
+  min-height: 68px;
+}
+.ct-consultation-floating-content .clinical-notice,
+.ct-consultation-floating-content .clinical-error,
+.ct-consultation-floating-content .clinical-success {
+  padding: 9px 11px;
+  font-size: 11px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* Consultation cards should not become a huge blank container for one visit. */
+.ct-patient-consultations .clinical-patient-page .clinical-visit-list {
+  min-height: 0;
+  width: min(750px, 100%);
+  justify-self: center;
+  padding: 13px !important;
+}
+.ct-patient-consultations .clinical-patient-page .clinical-visits {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 225px), 1fr)) !important;
+  max-height: min(45dvh, 300px) !important;
+  gap: 8px !important;
+}
+.ct-patient-consultations .clinical-patient-page .clinical-visit {
+  min-height: 85px;
+  gap: 7px !important;
+  padding: 10px 12px !important;
+}
+.ct-patient-consultations .clinical-patient-page .clinical-consultation-empty {
+  min-height: 92px;
+  padding: 8px;
+}
+
+@media (max-width: 899px) {
+  .ct-consultation-floating-layer {
+    padding: 12px;
+  }
+  .ct-consultation-floating-content > .clinical-editor {
+    max-height: calc(100dvh - 24px);
+  }
+}
+@media (max-width: 620px) {
+  .ct-consultation-floating-content > .clinical-editor {
+    padding: 10px !important;
+  }
+  .ct-consultation-floating-content .clinical-field-grid {
+    grid-template-columns: 1fr;
+  }
+  .ct-consultation-floating-content .clinical-consultation-dialog-header {
+    top: -10px;
+    margin: -10px -10px 0;
+    padding: 9px 10px;
+  }
+}
