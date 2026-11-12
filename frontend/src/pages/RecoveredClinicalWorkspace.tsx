@@ -192,7 +192,7 @@ export default function RecoveredClinicalWorkspace({ patientId, panel }: { patie
               </select>
             </label>
             <label>Estimated cost (approved ZAR)<input readOnly type="text" value={cost ? 'R ' + cost : ''} placeholder="Select a procedure first" /></label>
-          </>
+          </>}
           {modal === 'acknowledge' && <><p>This records that the treatment plan was discussed and acknowledged. It does not replace a signed consent form or the dentist's clinical consent process.</p><label>Patient or representative name<input required maxLength={200} value={consentName} onChange={e => setConsentName(e.target.value)} /></label><label className="ct-recovered-check"><input type="checkbox" required checked={acknowledged} onChange={e => setAcknowledged(e.target.checked)} /> I confirm acknowledgement was obtained from the named person.</label></>}
           <div className="ct-recovered-actions"><button type="button" onClick={() => setModal(null)} disabled={busy}>Cancel</button><button type="submit" className="ct-recovered-primary" disabled={busy}>{busy ? 'Saving...' : 'Save'}</button></div>
         </form>
