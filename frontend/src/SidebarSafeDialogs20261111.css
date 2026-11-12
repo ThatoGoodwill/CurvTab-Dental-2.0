@@ -111,8 +111,10 @@
     min-width: 0 !important;
     box-sizing: border-box !important;
   }
+  /* Wide enough for real appointments, but not another full-screen workspace. */
   html body #root .app-shell .ct-appointments-modal-calendar {
-    width: min(1020px, calc(100vw - var(--ct-modal-nav) - 32px)) !important;
+    width: min(790px, calc(100vw - var(--ct-modal-nav) - 56px)) !important;
+    max-width: min(790px, calc(100vw - var(--ct-modal-nav) - 56px)) !important;
   }
   html body #root .app-shell .ct-appointments-modal-queue {
     width: min(720px, calc(100vw - var(--ct-modal-nav) - 32px)) !important;
