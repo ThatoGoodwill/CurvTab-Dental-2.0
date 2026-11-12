@@ -42,7 +42,7 @@ type PendingVisit = {
 
 type Props = {
   role: string
-  onOpen: () => void
+  onOpen: (appointmentId?: string, kind?: ClinicEvent['kind']) => void
 }
 
 const money = (amount: number) =>
@@ -78,6 +78,7 @@ export default function LiveClinicNotifications({ role, onOpen }: Props) {
   const [rows, setRows] = useState<PendingVisit[]>([])
   const [recentAlerts, setRecentAlerts] = useState<RecentAlert[]>([])
   const [open, setOpen] = useState(false)
+  const [seenKeys, setSeenKeys] = useState<Set<string>>(() => new Set())
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'live' | 'offline'>('connecting')
   const [toast, setToast] = useState<string | null>(null)
 
@@ -231,6 +232,21 @@ export default function LiveClinicNotifications({ role, onOpen }: Props) {
     return () => window.clearTimeout(id)
   }, [toast])
 
+  const currentKeys = [
+    ...rows.map(item => `visit:${item.appointmentId}:${item.status}`),
+    ...recentAlerts.map(item => `alert:${item.id}`),
+  ]
+  const unreadCount = currentKeys.filter(key => !seenKeys.has(key)).length
+  function acknowledge() {
+    setSeenKeys(previous => new Set([...previous, ...currentKeys]))
+    setToast(null)
+  }
+  function openNotification(appointmentId: string, kind: ClinicEvent['kind']) {
+    acknowledge()
+    setOpen(false)
+    onOpen(appointmentId, kind)
+  }
+
   if (!enabled) return null
 
   return (
@@ -238,13 +254,13 @@ export default function LiveClinicNotifications({ role, onOpen }: Props) {
       <button
         type="button"
         className={`ct-live-bell ${open ? 'ct-live-bell-open' : ''}`}
-        aria-label={`Notifications: ${rows.length + recentAlerts.length} ${isDentist ? 'patients in queue' : 'awaiting checkout'}`}
+        aria-label={`Notifications: ${unreadCount} unread. ${rows.length} active visits.`}
         aria-expanded={open}
         aria-haspopup="true"
-        onClick={() => setOpen(current => !current)}
+        onClick={() => { acknowledge(); setOpen(current => !current) }}
       >
         <Bell size={20} aria-hidden="true" />
-        {rows.length + recentAlerts.length > 0 && <span className="ct-live-badge">{rows.length + recentAlerts.length > 99 ? '99+' : rows.length + recentAlerts.length}</span>}
+        {unreadCount > 0 && <span className="ct-live-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>}
       </button>
 
       {open && createPortal((
@@ -260,22 +276,24 @@ export default function LiveClinicNotifications({ role, onOpen }: Props) {
           <div className="ct-live-items">
             {rows.length === 0 && recentAlerts.length === 0 && <p className="ct-live-empty"><CheckCircle2 size={19}/> All caught up</p>}
             {recentAlerts.map(item => (
-              <div className="ct-live-item" key={item.id}>
+              <button type="button" className="ct-live-item ct-live-item-action" key={item.id}
+                onClick={() => openNotification(item.id.split(':')[1], item.kind)}>
                 <strong>{item.kind === 'AppointmentScheduled' ? 'New appointment' : 'Patient called'}</strong>
                 <span>{item.message}</span>
                 <small>{time(item.occurredAtUtc)}</small>
-              </div>
+              </button>
             ))}
             {rows.slice(0, 12).map(item => (
-              <div className="ct-live-item" key={item.appointmentId}>
+              <button type="button" className="ct-live-item ct-live-item-action" key={item.appointmentId}
+                onClick={() => openNotification(item.appointmentId, isDentist ? 'PatientWaiting' : 'CheckoutReady')}>
                 <strong>{item.patientName}</strong>
                 <span>{isDentist ? item.status : 'Dentist finished · Awaiting checkout'}</span>
                 {!isDentist && typeof item.amountDue === 'number' && <b>{money(item.amountDue)} billed</b>}
                 <small>{time(item.completedAtUtc ?? item.checkedInAtUtc)}</small>
-              </div>
+              </button>
             ))}
           </div>
-          <button type="button" className="ct-live-open" onClick={() => { setOpen(false); onOpen() }}>
+          <button type="button" className="ct-live-open" onClick={() => { acknowledge(); setOpen(false); onOpen() }}>
             {isDentist ? 'Open Patient Queue' : 'Open Checkout & Payments'}
           </button>
         </div>
