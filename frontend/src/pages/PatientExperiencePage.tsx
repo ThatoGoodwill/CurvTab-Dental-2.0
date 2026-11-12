@@ -48,9 +48,9 @@ type HistoryRecord = {
   additionalNotes?: string | null
 }
 
-type PatientTab = 'Overview' | 'Treatment' | 'Consultations' | 'Medical Records' | 'Accounts' | 'Details' | 'Visit' | 'History'
+type PatientTab = 'Overview' | 'Treatment' | 'Medical Records' | 'Accounts' | 'Details' | 'Visit' | 'History'
 type Props = { role: string; onClose?: () => void; onOpenAppointments?: () => void; initialConsultationAppointmentId?: string | null; onConsultationOpened?: () => void }
-const tabs: PatientTab[] = ['Overview', 'Consultations', 'Treatment', 'Accounts', 'Details', 'Visit', 'History']
+const tabs: PatientTab[] = ['Overview', 'Treatment', 'Accounts', 'Details', 'Visit', 'History']
 
 function record(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -238,7 +238,7 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
   const [selected, setSelected] = useState<Patient | null>(null)
   const [tab, setTab] = useState<PatientTab>('Overview')
   const [consultationAppointmentId, setConsultationAppointmentId] = useState<string | null>(null)
-  const [treatmentSection, setTreatmentSection] = useState<'Dental Chart' | 'Treatment Plan' | 'Clinical Notes & Encounters' | 'Medical Records' | 'Clinical Images' | 'Tooth History' | 'Prescriptions' | null>(null)
+  const [treatmentSection, setTreatmentSection] = useState<'Consultation' | 'Dental Chart' | 'Treatment Plan' | 'Clinical Notes & Encounters' | 'Medical Records' | 'Clinical Images' | 'Tooth History' | 'Prescriptions' | null>(null)
   const [manage, setManage] = useState(false)
   // CT_PATIENT_ACCOUNTS_V1
   const [accountSection, setAccountSection] = useState<string | null>(null)
@@ -371,7 +371,8 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
         if (cancelled) return
         if (!patient) throw new Error('The patient record could not be opened.')
         setSelected(patient)
-        setTab('Consultations')
+        setTreatmentSection('Consultation')
+        setTab('Treatment')
         setConsultationAppointmentId(appointmentId)
         setManage(false)
         setDetailError('')
@@ -431,9 +432,10 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
       const linkedVisits = Array.from(byId.values()).sort((a,b) => b.startUtc.localeCompare(a.startUtc))
       setVisits(linkedVisits)
       const currentClinicalVisit = linkedVisits.find(visit => visit.status === 'InConsultation')
-      if (isDentist && tab === 'Overview' && currentClinicalVisit) {
-        setConsultationAppointmentId(currentClinicalVisit.id)
-        setTab('Consultations')
+      // Keep the active visit ready for the Treatment > Consultation step,
+      // but never change tabs automatically after registration or opening a record.
+      if (isDentist && currentClinicalVisit) {
+        setConsultationAppointmentId(previous => previous ?? currentClinicalVisit.id)
       }
     }).catch(() => { if (!cancelled) setVisits([]) })
       .finally(() => { if (!cancelled) setVisitsLoading(false) })
@@ -485,6 +487,7 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
     setAccountSection(null)
     setSelected(patient)
     setTab('Overview')
+    setTreatmentSection(null)
     setConsultationAppointmentId(null)
     setManage(false)
     setDetailError('')
@@ -523,7 +526,7 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
             .then(patient => {
               if (!patient) throw new Error('Patient registration saved but record could not be loaded.')
               openPatient(patient)
-              if (isDentist) setTab('Consultations')
+              setActionNotice('Patient registered successfully. Review the patient record or book an appointment when needed.')
               setReload(value => value + 1)
             })
             .catch(cause => {
@@ -684,35 +687,9 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
     {actionNotice && <p className="ct-patient-message" role="status">{actionNotice}</p>}
     {detailLoading && <p className="ct-patient-loading">Refreshing patient details…</p>}
     <div className="ct-patient-tabs" role="tablist" aria-label="Patient record sections">
-      {tabs.filter(item => (item !== 'Medical Records' && item !== 'Treatment' && item !== 'Consultations') || isDentist).map(item => <button type="button" key={item} role="tab" aria-selected={item === tab} className={tab === item ? 'ct-patient-tab selected' : 'ct-patient-tab'} onClick={() => { if (item === 'Treatment') setTreatmentSection(null); setTab(item) }}>{item}</button>)}
+      {tabs.filter(item => item !== 'Treatment' || isDentist).map(item => <button type="button" key={item} role="tab" aria-selected={item === tab} className={tab === item ? 'ct-patient-tab selected' : 'ct-patient-tab'} onClick={() => { if (item === 'Treatment') setTreatmentSection('Consultation'); setTab(item) }}>{item}</button>)}
     </div>
 
-
-    {/* Patient-scoped secure consultation history and editor */}
-    {tab === 'Consultations' && isDentist && (
-      <div className="ct-patient-consultations">
-        {!visitsLoading && !visits.some(visit => visit.status === 'InConsultation') && (
-          <div className="ct-patient-message" role="status">
-            <strong>Next: schedule and check in this patient</strong>
-            <p>To begin a clinical consultation, first book an appointment, check the patient in, then call and start the consultation from Scheduling. No clinical encounter or charge is created by registration alone.</p>
-            {onOpenAppointments && <button type="button" className="primary-button" onClick={onOpenAppointments}>Book appointment</button>}
-          </div>
-        )}
-        <DentistConsultationsPage
-          key={selected.id}
-          patientId={selected.id}
-          selectedAppointmentId={consultationAppointmentId}
-          onSelectAppointment={setConsultationAppointmentId}
-          onOpenMedicalHistory={() => { setTreatmentSection('Medical Records'); setTab('Treatment') }}
-          onFinalized={() => {
-            setActionNotice('Consultation finalized. Checkout is now available to authorised reception or management.')
-            setTreatmentSection('Prescriptions')
-            setTab('Treatment')
-            setReload(count => count + 1)
-          }}
-        />
-      </div>
-    )}
 
     {/* CT_PATIENT_OVERVIEW_V5 */}
 
@@ -778,6 +755,7 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
             </div>
             <div className="ct-pt-menu">
               {([
+                ['Consultation', 'Start or continue the patient consultation'],
                 ['Dental Chart', 'Select a tooth and view its findings'],
                 ['Medical Records', 'Clinical history and allergies'],
                 ['Treatment Plan', 'Plan patient procedures'],
@@ -790,8 +768,7 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
                   type="button"
                   className="ct-pt-option"
                   onClick={() => {
-                    if (name === 'Clinical Notes & Encounters') { setTreatmentSection(null); setTab('Consultations') }
-                    else setTreatmentSection(name)
+                    setTreatmentSection(name)
                   }}
                 >
                   <strong>{name}</strong>
@@ -825,15 +802,18 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
               {treatmentSection !== 'Prescriptions' ? (
                 <button type="button" className="primary-button"
                   onClick={() => {
-                    if (treatmentSection === 'Dental Chart') setTreatmentSection('Treatment Plan')
+                    if (treatmentSection === 'Consultation') setTreatmentSection('Dental Chart')
+                    else if (treatmentSection === 'Dental Chart') setTreatmentSection('Treatment Plan')
                     else if (treatmentSection === 'Treatment Plan') {
-                      setConsultationAppointmentId(visits.find(visit => visit.status === 'InConsultation')?.id ?? consultationAppointmentId)
-                      setTab('Consultations')
-                    } else setTreatmentSection('Dental Chart')
+                      setConsultationAppointmentId(previous =>
+                        previous ?? visits.find(visit => visit.status === 'InConsultation')?.id ?? null)
+                      setTreatmentSection('Consultation')
+                    } else setTreatmentSection('Consultation')
                   }}>
-                  {treatmentSection === 'Dental Chart' ? 'Next: Treatment Plan'
-                    : treatmentSection === 'Treatment Plan' ? 'Next: Clinical Consultation'
-                    : 'Next: Dental Chart'} <ArrowRight size={15}/>
+                  {treatmentSection === 'Consultation' ? 'Next: Dental Chart'
+                    : treatmentSection === 'Dental Chart' ? 'Next: Treatment Plan'
+                    : treatmentSection === 'Treatment Plan' ? 'Next: Complete Consultation'
+                    : 'Next: Consultation'} <ArrowRight size={15}/>
                 </button>
               ) : (
                 <button type="button" className="primary-button" onClick={() => setTab('Visit')}>
@@ -853,8 +833,23 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
               <strong>{treatmentSection}</strong>
             </nav>
 
-            {/* CT_TREATMENT_PRESCRIPTIONS_V1 */}
-            {treatmentSection === 'Prescriptions' ? (
+            {/* Consultation is always the first clinical section, within Treatment. */}
+            {treatmentSection === 'Consultation' ? (
+              <div className="ct-patient-consultations">
+        <DentistConsultationsPage
+          key={selected.id}
+          patientId={selected.id}
+          selectedAppointmentId={consultationAppointmentId}
+          onSelectAppointment={setConsultationAppointmentId}
+          onOpenMedicalHistory={() => setTreatmentSection('Medical Records')}
+          onFinalized={() => {
+            setActionNotice('Consultation finalized. Checkout is now available to authorised reception or management.')
+            setTreatmentSection('Prescriptions')
+            setReload(count => count + 1)
+          }}
+        />
+              </div>
+            ) : treatmentSection === 'Prescriptions' ? (
               <PatientPrescriptionNotes patientId={selected.id} />
             ) : (
               <DentalChartingPage
