@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { FormEvent, ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { CalendarDays, ChevronRight, Plus, RefreshCw, Save, Stethoscope, Trash2, X } from 'lucide-react'
 import { apiRequest } from '../services/api'
 import './DentistClinical.css'
@@ -163,6 +164,24 @@ function rand(value: number): string {
 }
 function errorText(error: unknown): string {
   return error instanceof Error ? error.message : 'Unable to complete the request.'
+}
+
+/** Renders the patient consultation over the patient dialog, not inside
+ * its scrollable Treatment grid. This prevents cropped pop-ups and two
+ * competing scrollbars while keeping the practice sidebar accessible. */
+function ConsultationDetailSurface({ patientMode, children }: {
+  patientMode: boolean; children: ReactNode
+}) {
+  if (!patientMode) return <div className="clinical-detail-inline">{children}</div>
+  const host = document.querySelector('#root .app-shell') ?? document.body
+  return createPortal(
+    <div className="ct-consultation-floating-layer" role="presentation">
+      <div className="ct-patient-consultations ct-consultation-floating-content">
+        {children}
+      </div>
+    </div>,
+    host,
+  )
 }
 
 export default function DentistConsultationsPage({
@@ -450,7 +469,7 @@ export default function DentistConsultationsPage({
         </aside>
 
         {selectedAppointmentId && (!patientId || detailOpen) && (
-          <div className={patientId ? 'clinical-consultation-layer' : 'clinical-detail-inline'}>
+          <ConsultationDetailSurface patientMode={Boolean(patientId)}>
             <section className="panel clinical-editor" role={patientId ? 'dialog' : undefined}
               aria-modal={patientId ? true : undefined}
               aria-label={patientId ? 'Consultation clinical record' : undefined}>
@@ -629,7 +648,7 @@ export default function DentistConsultationsPage({
             </>
           ) : <p>Record not found.</p>}
             </section>
-          </div>
+          </ConsultationDetailSurface>
         )}
       </div>
     </div>
