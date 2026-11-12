@@ -837,6 +837,8 @@ export default function App() {
 
   const [section, setSection] = useState<Section>('Dashboard')
   const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null)
+  const [bookingTarget, setBookingTarget] = useState<{ patientId: string; request: number } | null>(null)
+  const [laboratoryTarget, setLaboratoryTarget] = useState<{ patientId: string; request: number } | null>(null)
   const [selectedCheckoutAppointmentId, setSelectedCheckoutAppointmentId] = useState<string | null>(null)
   const [checkoutRequest, setCheckoutRequest] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -983,6 +985,14 @@ export default function App() {
     setBillingSection('cashPrivate')
     setBillingExpanded(true)
     navigate('Billing')
+  }
+  function openPatientBooking(patientId: string) {
+    setBookingTarget(previous => ({ patientId, request: (previous?.request ?? 0) + 1 }))
+    openAppointmentTab('Appointments')
+  }
+  function openPatientLaboratory(patientId: string) {
+    setLaboratoryTarget(previous => ({ patientId, request: (previous?.request ?? 0) + 1 }))
+    navigate('Laboratory')
   }
   function openAppointmentTab(tab: AppointmentTab) {
     setAppointmentTab(tab)
@@ -1547,7 +1557,9 @@ export default function App() {
             <PatientExperiencePage
               role={role}
               onClose={() => navigate('Dashboard')}
-              onOpenAppointments={() => openAppointmentTab('Appointments')}
+              onOpenAppointments={patientId => patientId ? openPatientBooking(patientId) : openAppointmentTab('Appointments')}
+              onOpenLaboratory={openPatientLaboratory}
+              onOpenCheckout={openCheckout}
               initialConsultationAppointmentId={selectedConsultationId}
               onConsultationOpened={() => setSelectedConsultationId(null)}
             />
@@ -1559,6 +1571,8 @@ export default function App() {
               onClose={() => navigate('Dashboard')}
               tab={appointmentTab}
               onTabChange={setAppointmentTab}
+              initialPatientId={bookingTarget?.patientId}
+              bookingRequest={bookingTarget?.request}
               onOpenPatients={() => navigate('Patients')}
               onOpenConsultation={(appointmentId) => {
                 setSelectedConsultationId(appointmentId)
@@ -1654,7 +1668,7 @@ export default function App() {
       </div>
 
       <div className="ct-lab-floating-content">
-        <LaboratoryModule />
+        <LaboratoryModule initialPatientId={laboratoryTarget?.patientId} requestId={laboratoryTarget?.request} />
       </div>
     </section>
   </div>
