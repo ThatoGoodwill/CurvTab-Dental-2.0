@@ -267,10 +267,10 @@ public sealed class LaboratoryController : ControllerBase
                     p.ToothCode == item.ToothCode.Trim().ToUpperInvariant())))
                 return BadRequest(new { title = "Every lab item must match an active, lab-required procedure on this patient's acknowledged treatment plan." });
             var alreadyPrescribed = await (
-                from order in _db.Set<LaboratoryOrder>().AsNoTracking()
-                join item in _db.Set<LaboratoryItem>().AsNoTracking() on order.Id equals item.LaboratoryOrderId
-                where order.DentalPracticeId == practice && order.PatientId == request.PatientId &&
-                      order.TreatmentPlanId == planId && order.Status != "Closed"
+                from existingOrder in _db.Set<LaboratoryOrder>().AsNoTracking()
+                join item in _db.Set<LaboratoryItem>().AsNoTracking() on existingOrder.Id equals item.LaboratoryOrderId
+                where existingOrder.DentalPracticeId == practice && existingOrder.PatientId == request.PatientId &&
+                      existingOrder.TreatmentPlanId == planId && existingOrder.Status != "Closed"
                 select new { item.Procedure, item.ToothCode }).ToListAsync(ct);
             if (request.Items.Any(item => alreadyPrescribed.Any(p =>
                 p.Procedure == item.Procedure.Trim() &&
