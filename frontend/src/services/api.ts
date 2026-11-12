@@ -14,13 +14,15 @@ export interface UserProfile {
 export class ApiError extends Error {
   // Stores the HTTP status code, such as 401, 403 or 500.
   status: number
+  retryAfterMs: number | null
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, retryAfterMs: number | null = null) {
     // Pass the error message to the built-in Error class.
     super(message)
 
     // Save the HTTP status code on this object.
     this.status = status
+    this.retryAfterMs = retryAfterMs
 
     // Identify this error type.
     this.name = 'ApiError'
@@ -55,9 +57,23 @@ export async function apiRequest<T>(
   if (!response.ok) {
     const problem = await response.json().catch(() => null)
 
+    // Respect the server's Retry-After when it limits requests. A transient
+    // 429 must never be mistaken for an invalid password or lost patient data.
+    let retryAfterMs: number | null = null
+    const retryAfter = response.headers.get('Retry-After')
+    if (retryAfter) {
+      const seconds = Number(retryAfter)
+      const date = Date.parse(retryAfter)
+      if (Number.isFinite(seconds) && seconds >= 0) retryAfterMs = seconds * 1000
+      else if (Number.isFinite(date)) retryAfterMs = Math.max(0, date - Date.now())
+    }
+
     throw new ApiError(
       response.status,
-      problem?.message || problem?.title || problem?.detail || `Request failed: ${response.status}`
+      response.status === 429
+        ? 'The service is temporarily limiting requests. Your records are safe. Please try again shortly.'
+        : problem?.message || problem?.title || problem?.detail || `Request failed: ${response.status}`,
+      retryAfterMs
     )
   }
 
