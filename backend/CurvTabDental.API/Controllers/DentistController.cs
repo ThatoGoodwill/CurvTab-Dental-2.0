@@ -152,7 +152,10 @@ public class DentistController : ControllerBase
             from a in appointments
             join p in _db.Patients.AsNoTracking()
                 on a.PatientId equals p.Id
-            where p.DentalPracticeId == practiceId
+            where p.DentalPracticeId == practiceId &&
+                !_db.OrthodonticIntakes.Any(i => i.PatientId == p.Id &&
+                    i.DentalPracticeId == practiceId && i.ClosedAtUtc == null &&
+                    i.ReferralAuthorUserId != _current.UserId)
             select new
             {
                 appointmentId = a.Id,

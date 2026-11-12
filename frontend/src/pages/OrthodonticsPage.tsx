@@ -50,7 +50,7 @@ function nextStatuses(status: OrthoStatus): OrthoStatus[] {
   return []
 }
 
-export default function OrthodonticsPage() {
+export default function OrthodonticsPage({ role = 'Dentist' }: { role?: string }) {
   // CT_ORTHO_FINANCIALS_TAB
   // CT_ORTHO_DASHBOARD_V1
   const [activeTab, setActiveTab] = useState<
@@ -296,7 +296,7 @@ export default function OrthodonticsPage() {
 
       {/* CT_ORTHO_CASE_CARDS_V1 */}
 
-      {activeTab === 'Intake' && <OrthodonticIntakePanel role="Dentist"
+      {activeTab === 'Intake' && <OrthodonticIntakePanel role={role}
         onOpenPatient={(id) => {
           selectPatient(id)
           setActiveTab('Patients')

@@ -907,6 +907,7 @@ export default function App() {
     !isSuperAdmin &&
     role !== 'LabTechnician' &&
     role !== 'Finance' &&
+    role !== 'Orthodontist' &&
     Boolean(user?.practiceId)
 
   const canManageStaff = isPracticeAdmin
@@ -949,6 +950,7 @@ export default function App() {
     PracticeAdmin: 'Practice Management',
     Receptionist: 'Front Desk Workspace',
     Dentist: 'Clinical Workspace',
+    Orthodontist: 'Orthodontic Specialist Workspace',
   }
 
   const dashboardTitle =
@@ -1205,6 +1207,10 @@ export default function App() {
             <button type="button" className={section === 'Laboratory' ? 'nav-item nav-active' : 'nav-item'}
               onClick={() => navigate('Laboratory')}><FlaskConical size={19}/><span>Lab</span></button>
           )}
+          {role === 'Orthodontist' && isModuleVisible('Orthodontics') && (
+            <button type="button" className={section === 'Orthodontics' ? 'nav-item nav-active' : 'nav-item'}
+              onClick={() => navigate('Orthodontics')}><Stethoscope size={19}/><span>Orthodontics</span></button>
+          )}
           {role === 'PracticeAdmin' && (
             <button type="button" className={section === 'Orthodontics' ? 'nav-item nav-active' : 'nav-item'}
               onClick={() => navigate('Orthodontics')}><Stethoscope size={19}/><span>Orthodontic Intake</span></button>
@@ -1362,7 +1368,7 @@ export default function App() {
               DASHBOARD
               ================================ */}
           {/* Shared compact slideshow; each account sees only role-authorised reports below. */}
-          {section === 'Dashboard' && (
+          {section === 'Dashboard' && role !== 'Orthodontist' && (
             <ClinicDashboardEnhancements
               role={role}
               showActivityCharts={isSuperAdmin}
@@ -1375,6 +1381,7 @@ export default function App() {
               }}
             />
           )}
+          {section === 'Dashboard' && role === 'Orthodontist' && <OrthodonticIntakePanel role="Orthodontist" />}
           {section === 'Dashboard' && role === 'Dentist' && (
             <DentistDashboardPage
               onOpenAppointments={() => openAppointmentTab('In Queue')}
@@ -1407,7 +1414,7 @@ export default function App() {
             />
           )}
 
-          {section === 'Dashboard' && !isSuperAdmin && role !== 'Dentist' && role !== 'LabTechnician' && role !== 'Finance' && !showOverview && (
+          {section === 'Dashboard' && !isSuperAdmin && role !== 'Dentist' && role !== 'Orthodontist' && role !== 'LabTechnician' && role !== 'Finance' && !showOverview && (
             <>
               <div className="page-heading">
                 <div>
@@ -1681,7 +1688,7 @@ export default function App() {
           {section === 'Clinical Imaging' && role === 'Dentist' && (
             <ClinicalImagingPage />
           )}
-          {section === 'Orthodontics' && role === 'Dentist' && <OrthodonticsPage />}
+          {section === 'Orthodontics' && (role === 'Dentist' || role === 'Orthodontist') && <OrthodonticsPage role={role} />}
           {section === 'Orthodontics' && (role === 'PracticeAdmin' || role === 'Receptionist') &&
             <OrthodonticIntakePanel role={role} />}
 
@@ -1727,7 +1734,7 @@ export default function App() {
             (section === 'Workspace' && isSuperAdmin) ||
             (section === 'Clinical Claim Corrections' && role !== 'Dentist') ||
             (section === 'Clinical Imaging' && role !== 'Dentist') ||
-            (section === 'Orthodontics' && !['Dentist','PracticeAdmin','Receptionist'].includes(role)) ||
+            (section === 'Orthodontics' && !['Dentist','Orthodontist','PracticeAdmin','Receptionist'].includes(role)) ||
             (section === 'Billing' && role !== 'Receptionist' && role !== 'PracticeAdmin') ||
             (section === 'Finance' && role !== 'Finance' && role !== 'PracticeAdmin') ||
             (section === 'Daily Patients' && role !== 'Dentist') ||

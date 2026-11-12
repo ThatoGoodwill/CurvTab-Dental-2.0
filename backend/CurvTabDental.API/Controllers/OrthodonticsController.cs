@@ -10,7 +10,7 @@ namespace CurvTabDental.API.Controllers;
 // Orthodontic plans and progress notes are clinical information.
 [ApiController]
 [Route("api/dentist/patients/{patientId:guid}/orthodontics")]
-[Authorize(Roles = "Dentist")]
+[Authorize(Roles = "Dentist,Orthodontist")]
 public sealed class OrthodonticsController : ControllerBase
 {
     private readonly DentalDbContext _db;
