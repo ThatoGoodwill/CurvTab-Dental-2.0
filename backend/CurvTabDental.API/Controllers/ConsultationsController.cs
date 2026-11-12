@@ -283,13 +283,18 @@ public sealed class ConsultationsController : ControllerBase
         // An unchanged historical draft line may still be saved, but it cannot
         // be used to invent or reprice a charge through an API request.
         var verifiedCharges = new List<(string Description, decimal Amount)>();
+        // Consume historical entries one-by-one: resubmitting a duplicate cannot
+        // multiply an unpriced charge that originally existed only once.
+        var remainingHistorical = previousCharges.ToList();
         foreach (var charge in incoming)
         {
             if (charge.ProcedurePriceId is not Guid priceId)
             {
-                if (!previousCharges.Any(c => c.Description == charge.Description.Trim() &&
-                                               c.Amount == charge.Amount))
+                var matchingIndex = remainingHistorical.FindIndex(c =>
+                    c.Description == charge.Description.Trim() && c.Amount == charge.Amount);
+                if (matchingIndex < 0)
                     return BadRequest(new { message = "Select each new treatment charge from the practice price list. Manual charge amounts are not accepted." });
+                remainingHistorical.RemoveAt(matchingIndex);
                 verifiedCharges.Add((charge.Description.Trim(), charge.Amount));
                 continue;
             }
