@@ -76,7 +76,7 @@ function todayRange() {
   return `fromUtc=${encodeURIComponent(start.toISOString())}&toUtc=${encodeURIComponent(end.toISOString())}`
 }
 
-export default function ReceptionCheckoutPage() {
+export default function ReceptionCheckoutPage({ initialAppointmentId }: { initialAppointmentId?: string | null }) {
   const [tab, setTab] = useState<'ready' | 'completed'>('ready')
   const [ready, setReady] = useState<WaitingCheckout[]>([])
   const [completed, setCompleted] = useState<HistoryRow[]>([])
@@ -116,6 +116,13 @@ export default function ReceptionCheckoutPage() {
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [revision])
+
+  // A checkout notification opens the matching patient's invoice, not Today's Billing.
+  useEffect(() => {
+    if (!initialAppointmentId) return
+    setSelectedId(initialAppointmentId)
+    setTab('ready')
+  }, [initialAppointmentId])
 
   useEffect(() => {
     if (!selectedId) return
