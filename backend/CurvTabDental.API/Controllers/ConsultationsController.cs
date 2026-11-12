@@ -328,8 +328,9 @@ public sealed class ConsultationsController : ControllerBase
                     c.Description == charge.Description.Trim() && c.Amount == charge.Amount);
                 if (matchingIndex < 0)
                     return BadRequest(new { message = "Select each new treatment charge from the practice price list. Manual charge amounts are not accepted." });
+                var originalCharge = remainingHistorical[matchingIndex];
                 remainingHistorical.RemoveAt(matchingIndex);
-                verifiedCharges.Add((charge.Description.Trim(), charge.Amount, remainingHistorical.Count >= 0 ? previousCharges.First(c => c.Description == charge.Description.Trim() && c.Amount == charge.Amount).TreatmentProcedureId : null));
+                verifiedCharges.Add((charge.Description.Trim(), charge.Amount, originalCharge.TreatmentProcedureId));
                 continue;
             }
             var catalogue = await _db.ProcedurePrices.AsNoTracking()
