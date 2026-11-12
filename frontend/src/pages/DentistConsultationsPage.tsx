@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { CalendarDays, ChevronRight, ClipboardList, Plus, RefreshCw, Save, Stethoscope, Trash2, X } from 'lucide-react'
+import { CalendarDays, ChevronRight, Plus, RefreshCw, Save, Stethoscope, Trash2, X } from 'lucide-react'
 import { apiRequest } from '../services/api'
 import './DentistClinical.css'
 
