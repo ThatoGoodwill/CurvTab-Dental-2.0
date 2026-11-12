@@ -49,8 +49,8 @@ type HistoryRecord = {
 }
 
 type PatientTab = 'Overview' | 'Treatment' | 'Consultations' | 'Medical Records' | 'Accounts' | 'Details' | 'Visit' | 'History'
-type Props = { role: string; onClose?: () => void; onOpenAppointments?: () => void; onOpenOrthodonticIntake?: () => void; initialConsultationAppointmentId?: string | null; onConsultationOpened?: () => void }
-const tabs: PatientTab[] = ['Overview', 'Treatment', 'Accounts', 'Details', 'Visit', 'History']
+type Props = { role: string; onClose?: () => void; onOpenAppointments?: () => void; initialConsultationAppointmentId?: string | null; onConsultationOpened?: () => void }
+const tabs: PatientTab[] = ['Overview', 'Consultations', 'Treatment', 'Accounts', 'Details', 'Visit', 'History']
 
 function record(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -232,7 +232,7 @@ function MiniVisitCalendar({
   )
 }
 
-export default function PatientExperiencePage({ role, onClose, onOpenAppointments, onOpenOrthodonticIntake, initialConsultationAppointmentId, onConsultationOpened }: Props) {
+export default function PatientExperiencePage({ role, onClose, onOpenAppointments, initialConsultationAppointmentId, onConsultationOpened }: Props) {
   const [patients, setPatients] = useState<Patient[]>([])
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<Patient | null>(null)
@@ -342,7 +342,7 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
   const [actionBusy, setActionBusy] = useState(false)
   const [actionNotice, setActionNotice] = useState('')
 
-  const canManage = role === 'Receptionist' || role === 'PracticeAdmin'
+  const canManage = role === 'Receptionist' || role === 'PracticeAdmin' || role === 'Dentist'
   const isDentist = role === 'Dentist'
 
   useEffect(() => {
@@ -428,7 +428,13 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
           }
         }
       }
-      setVisits(Array.from(byId.values()).sort((a,b) => b.startUtc.localeCompare(a.startUtc)))
+      const linkedVisits = Array.from(byId.values()).sort((a,b) => b.startUtc.localeCompare(a.startUtc))
+      setVisits(linkedVisits)
+      const currentClinicalVisit = linkedVisits.find(visit => visit.status === 'InConsultation')
+      if (isDentist && tab === 'Overview' && currentClinicalVisit) {
+        setConsultationAppointmentId(currentClinicalVisit.id)
+        setTab('Consultations')
+      }
     }).catch(() => { if (!cancelled) setVisits([]) })
       .finally(() => { if (!cancelled) setVisitsLoading(false) })
     return () => { cancelled = true }
@@ -503,7 +509,11 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
     return (
       <PatientsPage
         autoOpenRegistration
-        onRegistrationExit={() => setQuickRegister(false)}
+        onRegistrationExit={() => {
+          setQuickRegister(false)
+          setLoading(true)
+          setReload(value => value + 1)
+        }}
         onExistingPatientSelect={(patientId) => {
           const existing = patients.find(item => item.id === patientId)
           if (existing) openPatient(existing)
@@ -545,8 +555,6 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
       <div className="ct-patient-toolbar">
         <div><p className="ct-patient-eyebrow">PATIENT DIRECTORY</p><h1>Patients</h1><p>Open a patient card to view their full practice record.</p></div>
         <div className="ct-patient-directory-actions">
-          {(role === 'Receptionist' || role === 'PracticeAdmin') && onOpenOrthodonticIntake &&
-            <button type="button" className="secondary-button" onClick={onOpenOrthodonticIntake}>Orthodontic intake</button>}
           {canManage && <button type="button" className="primary-button" onClick={() => setQuickRegister(true)}><Plus size={17}/> Quick Register / Manage</button>}
         </div>
       </div>
@@ -676,6 +684,12 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
           selectedAppointmentId={consultationAppointmentId}
           onSelectAppointment={setConsultationAppointmentId}
           onOpenMedicalHistory={() => { setTreatmentSection('Medical Records'); setTab('Treatment') }}
+          onFinalized={() => {
+            setActionNotice('Consultation finalized. Checkout is now available to authorised reception or management.')
+            setTreatmentSection('Prescriptions')
+            setTab('Treatment')
+            setReload(count => count + 1)
+          }}
         />
       </div>
     )}
@@ -785,13 +799,28 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
           </div>
         ) : (
           <>
-            <button
-              type="button"
-              className="secondary-button ct-pt-back"
-              onClick={() => setTreatmentSection(null)}
-            >
-              ← Treatment sections
-            </button>
+            <div className="ct-treatment-progress-actions">
+              <button type="button" className="secondary-button ct-pt-back"
+                onClick={() => setTreatmentSection(null)}>Treatment sections</button>
+              {treatmentSection !== 'Prescriptions' ? (
+                <button type="button" className="primary-button"
+                  onClick={() => {
+                    if (treatmentSection === 'Dental Chart') setTreatmentSection('Treatment Plan')
+                    else if (treatmentSection === 'Treatment Plan') {
+                      setConsultationAppointmentId(visits.find(visit => visit.status === 'InConsultation')?.id ?? consultationAppointmentId)
+                      setTab('Consultations')
+                    } else setTreatmentSection('Dental Chart')
+                  }}>
+                  {treatmentSection === 'Dental Chart' ? 'Next: Treatment Plan'
+                    : treatmentSection === 'Treatment Plan' ? 'Next: Clinical Consultation'
+                    : 'Next: Dental Chart'} <ArrowRight size={15}/>
+                </button>
+              ) : (
+                <button type="button" className="primary-button" onClick={() => setTab('Visit')}>
+                  Next: Review Visit & Checkout Status <ArrowRight size={15}/>
+                </button>
+              )}
+            </div>
             {/* CT_TREATMENT_BREADCRUMB_V5 */}
             <nav
               className="ct-pt-breadcrumb"
