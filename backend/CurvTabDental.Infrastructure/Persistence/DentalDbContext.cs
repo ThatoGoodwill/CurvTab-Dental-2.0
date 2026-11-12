@@ -469,6 +469,10 @@ modelBuilder.Entity<Appointment>(entity =>
             entity.HasKey(c => c.Id);
             entity.HasQueryFilter(c => c.DentalPracticeId == CurrentPracticeId);
             entity.HasIndex(c => new { c.DentalPracticeId, c.ConsultationId });
+            entity.HasIndex(c => new { c.DentalPracticeId, c.TreatmentProcedureId })
+                .IsUnique().HasFilter("\"TreatmentProcedureId\" IS NOT NULL");
+            entity.HasOne<PatientTreatmentProcedure>().WithMany()
+                .HasForeignKey(c => c.TreatmentProcedureId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Consultation>().WithMany().HasForeignKey(c => c.ConsultationId)
                 .OnDelete(DeleteBehavior.Restrict);
             entity.Property(c => c.Description).IsRequired().HasMaxLength(200);
