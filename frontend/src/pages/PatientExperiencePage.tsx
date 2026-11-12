@@ -371,7 +371,8 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
         if (cancelled) return
         if (!patient) throw new Error('The patient record could not be opened.')
         setSelected(patient)
-        setTreatmentSection('Consultation')
+        // Let the clinician choose Consultation from the compact treatment menu.
+        setTreatmentSection(null)
         setTab('Treatment')
         setConsultationAppointmentId(appointmentId)
         setManage(false)
@@ -687,7 +688,7 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
     {actionNotice && <p className="ct-patient-message" role="status">{actionNotice}</p>}
     {detailLoading && <p className="ct-patient-loading">Refreshing patient details…</p>}
     <div className="ct-patient-tabs" role="tablist" aria-label="Patient record sections">
-      {tabs.filter(item => item !== 'Treatment' || isDentist).map(item => <button type="button" key={item} role="tab" aria-selected={item === tab} className={tab === item ? 'ct-patient-tab selected' : 'ct-patient-tab'} onClick={() => { if (item === 'Treatment') setTreatmentSection('Consultation'); setTab(item) }}>{item}</button>)}
+      {tabs.filter(item => item !== 'Treatment' || isDentist).map(item => <button type="button" key={item} role="tab" aria-selected={item === tab} className={tab === item ? 'ct-patient-tab selected' : 'ct-patient-tab'} onClick={() => { if (item === 'Treatment') setTreatmentSection(null); setTab(item) }}>{item}</button>)}
     </div>
 
 
@@ -751,7 +752,7 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
               </div>
 <div className="ct-pt-heading">
               <h2 id="ct-pt-chooser-title">Treatment</h2>
-              <p>Select the clinical section you want to open.</p>
+              <p>Choose a treatment section. Consultation is the first step for new visits.</p>
             </div>
             <div className="ct-pt-menu">
               {([
@@ -941,7 +942,7 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
               {isDentist && (
                 <button
                   type="button"
-                  onClick={() => { setTreatmentSection('Consultation'); setTab('Treatment') }}
+                  onClick={() => { setTreatmentSection(null); setTab('Treatment') }}
                 >
                   Start treatment
                 </button>
