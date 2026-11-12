@@ -80,3 +80,297 @@
   .ct-patient-consultations .clinical-field-grid,
   .ct-patient-consultations .clinical-charge { grid-template-columns: 1fr; }
 }
+
+
+/* CT_CONSULTATIONS_CARDS_AND_FOREGROUND_PANEL_20261112
+   Patient-specific consultation list, with the opened record layered in
+   front of the cards. No empty second column, no new full-screen modal,
+   no layout changes to unrelated clinical pages. */
+.ct-patient-consultations .clinical-patient-page {
+  gap: 12px !important;
+  min-width: 0;
+}
+
+.ct-patient-consultations .clinical-patient-page > .page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 !important;
+}
+
+.ct-patient-consultations .clinical-patient-page > .page-heading h1 {
+  margin: 3px 0 4px !important;
+  font-size: 18px !important;
+}
+
+.ct-patient-consultations .clinical-patient-page > .page-heading p {
+  margin: 0 !important;
+  font-size: 11px !important;
+  line-height: 1.45;
+}
+
+.ct-patient-consultations .clinical-patient-page .clinical-columns {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-rows: auto;
+  gap: 0 !important;
+  min-width: 0;
+  position: relative;
+  isolation: isolate;
+}
+
+.ct-patient-consultations .clinical-visit-list {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: start;
+  width: 100%;
+  max-width: none !important;
+  min-width: 0;
+  min-height: 175px;
+  box-sizing: border-box;
+  padding: 16px !important;
+  border: 1px solid var(--border-color, #dce5ef);
+  border-radius: 12px !important;
+  background: var(--surface, var(--card-bg, #fff));
+}
+
+.ct-patient-consultations .clinical-visit-list > .panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.ct-patient-consultations .clinical-visit-list > .panel-header h2 {
+  font-size: 15px !important;
+  margin: 0 0 3px !important;
+}
+
+.ct-patient-consultations .clinical-visit-list > .panel-header p {
+  font-size: 11px !important;
+  margin: 0 !important;
+}
+
+.ct-patient-consultations .clinical-list-summary {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #2879d7 10%, transparent);
+  color: var(--text-primary, inherit);
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ct-patient-consultations .clinical-visits {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(205px, 1fr)) !important;
+  max-height: 340px !important;
+  overflow-y: auto !important;
+  gap: 10px !important;
+  padding: 5px 2px 7px !important;
+}
+
+.ct-patient-consultations .clinical-visit {
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 112px;
+  gap: 9px !important;
+  padding: 13px 14px !important;
+  border: 1px solid var(--border-color, #dce5ef) !important;
+  border-radius: 10px !important;
+  background: color-mix(in srgb, #4b96e9 3%, var(--surface, #fff)) !important;
+  box-shadow: 0 2px 8px rgba(35, 75, 125, .055);
+  color: var(--text-primary, inherit);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+
+.ct-patient-consultations .clinical-visit:hover,
+.ct-patient-consultations .clinical-visit-active {
+  border-color: #4589df !important;
+  box-shadow: 0 5px 17px rgba(35, 90, 165, .13);
+  transform: translateY(-1px);
+}
+
+.ct-patient-consultations .clinical-visit:focus-visible,
+.ct-patient-consultations .clinical-consultation-close:focus-visible {
+  outline: 2px solid #3b87e5 !important;
+  outline-offset: 2px;
+}
+
+.ct-patient-consultations .clinical-visit-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ct-patient-consultations .clinical-visit-top strong {
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.ct-patient-consultations .clinical-visit-status {
+  display: inline-block;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #d59c30 16%, transparent);
+  color: inherit;
+  font-size: 10px !important;
+  font-weight: 700;
+}
+
+.ct-patient-consultations .clinical-visit-status.is-finalized {
+  background: color-mix(in srgb, #26a77e 14%, transparent);
+}
+
+.ct-patient-consultations .clinical-visit-reason {
+  overflow-wrap: anywhere;
+  color: inherit !important;
+  font-size: 12px !important;
+  line-height: 1.4;
+}
+
+.ct-patient-consultations .clinical-visit-open {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  margin-top: auto;
+  color: #216dc5 !important;
+  font-size: 10px !important;
+  font-weight: 800;
+}
+
+.ct-patient-consultations .clinical-consultation-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 130px;
+  padding: 15px;
+  gap: 7px;
+  color: var(--text-secondary, #67819c);
+  text-align: center;
+}
+
+.ct-patient-consultations .clinical-consultation-empty strong {
+  color: var(--text-primary, inherit);
+  font-size: 13px;
+}
+
+.ct-patient-consultations .clinical-consultation-empty span {
+  max-width: 420px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* The record appears above its cards, without covering the practice sidebar. */
+.ct-patient-consultations .clinical-consultation-layer {
+  grid-column: 1;
+  grid-row: 1;
+  z-index: 9;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-width: 0;
+  min-height: 330px;
+  padding: 12px;
+  border-radius: 12px;
+  box-sizing: border-box;
+  background: rgba(14, 29, 49, .40);
+}
+
+.ct-patient-consultations .clinical-consultation-layer > .clinical-editor {
+  position: relative;
+  width: min(720px, 100%);
+  max-width: 100%;
+  min-width: 0;
+  max-height: min(69dvh, 540px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 15px !important;
+  border: 1px solid var(--border-color, #dce5ef);
+  border-radius: 12px !important;
+  background: var(--surface, var(--card-bg, #fff));
+  box-shadow: 0 14px 38px rgba(10, 27, 51, .26);
+  color: var(--text-primary, inherit);
+  scrollbar-width: thin;
+}
+
+.ct-patient-consultations .clinical-consultation-dialog-header {
+  position: sticky;
+  top: -15px;
+  z-index: 5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: -15px -15px 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-color, #dce5ef);
+  background: var(--surface, var(--card-bg, #fff));
+}
+
+.ct-patient-consultations .clinical-consultation-dialog-header > div {
+  display: grid;
+  gap: 2px;
+}
+.ct-patient-consultations .clinical-consultation-dialog-header > div > span {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .11em;
+  color: #2879d7;
+}
+.ct-patient-consultations .clinical-consultation-dialog-header strong {
+  font-size: 13px;
+}
+
+.ct-patient-consultations .clinical-consultation-close {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 29px !important;
+  padding: 5px 9px !important;
+  font-size: 11px !important;
+}
+
+.ct-patient-consultations .clinical-consultation-layer .clinical-editor > .panel-header {
+  margin-bottom: 0;
+}
+
+.ct-patient-consultations .clinical-consultation-layer .clinical-editor > .panel-header h2 {
+  font-size: 14px !important;
+}
+
+@media (max-width: 620px) {
+  .ct-patient-consultations .clinical-visits {
+    grid-template-columns: 1fr !important;
+  }
+  .ct-patient-consultations .clinical-consultation-layer {
+    padding: 7px;
+  }
+  .ct-patient-consultations .clinical-consultation-layer > .clinical-editor {
+    padding: 11px !important;
+    max-height: min(72dvh, 570px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-patient-consultations .clinical-visit {
+    transition: none !important;
+    transform: none !important;
+  }
+}

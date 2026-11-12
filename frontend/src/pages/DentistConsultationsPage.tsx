@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { ClipboardList, Plus, RefreshCw, Save, Stethoscope, Trash2 } from 'lucide-react'
+import { CalendarDays, ChevronRight, Plus, RefreshCw, Save, Stethoscope, Trash2, X } from 'lucide-react'
 import { apiRequest } from '../services/api'
 import './DentistClinical.css'
 
@@ -40,7 +40,7 @@ type Detail = {
 type Props = {
   patientId?: string
   selectedAppointmentId: string | null
-  onSelectAppointment: (id: string) => void
+  onSelectAppointment: (id: string | null) => void
   onOpenMedicalHistory: (patientId: string) => void
   onFinalized?: () => void
 }
@@ -169,6 +169,9 @@ export default function DentistConsultationsPage({
   const [listRevision, setListRevision] = useState(0)
   const [detail, setDetail] = useState<Detail | null>(null)
   const [detailsError, setDetailsError] = useState('')
+  // Patient records show the consultation list first; the selected encounter
+  // opens as a focused panel in front of that list, not a blank second column.
+  const [detailOpen, setDetailOpen] = useState(Boolean(patientId && selectedAppointmentId))
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
@@ -244,11 +247,26 @@ export default function DentistConsultationsPage({
     return () => { cancelled = true }
   }, [selectedAppointmentId, detailRevision, patientId])
 
+  useEffect(() => {
+    // A consultation launched directly from Scheduling may arrive after mount.
+    if (patientId && selectedAppointmentId) setDetailOpen(true)
+  }, [patientId, selectedAppointmentId])
+
+  useEffect(() => {
+    if (!patientId || !detailOpen) return
+    function onEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape' && !saving) { setDetailOpen(false); onSelectAppointment(null) }
+    }
+    document.addEventListener('keydown', onEscape)
+    return () => document.removeEventListener('keydown', onEscape)
+  }, [patientId, detailOpen, saving, onSelectAppointment])
+
   const detailsLoading = Boolean(selectedAppointmentId && detail?.appointmentId !== selectedAppointmentId)
   const editable = Boolean(detail && detail.appointmentStatus === 'InConsultation' && !detail.consultation?.isFinalized)
   const total = charges.reduce((sum, row) => sum + (Number(row.amount) || 0), 0)
 
   function chooseAppointment(id: string) {
+    if (patientId) setDetailOpen(true)
     onSelectAppointment(id)
     setError('')
     setMessage('')
@@ -329,12 +347,14 @@ export default function DentistConsultationsPage({
   }
 
   return (
-    <div className="clinical-page">
+    <div className={patientId ? 'clinical-page clinical-patient-page' : 'clinical-page'}>
       <div className="page-heading">
         <div>
           <div className="eyebrow">CLINICAL WORKSPACE</div>
-          <h1>{patientId ? 'Patient Consultations' : 'Consultations'}</h1>
-          <p>Review saved visits, document the encounter, and confirm treatment charges before completion.</p>
+          <h1>{patientId ? 'Consultations' : 'Consultations'}</h1>
+          <p>{patientId
+            ? 'Select a saved consultation to review the clinical record. Treatment remains linked to this patient.'
+            : 'Review saved visits, document the encounter, and confirm treatment charges before completion.'}</p>
         </div>
         <button type="button" className="secondary-button"
           onClick={() => { setListLoading(true); setListRevision(v => v + 1) }}>
@@ -344,27 +364,70 @@ export default function DentistConsultationsPage({
 
       <div className="clinical-columns">
         <aside className="panel clinical-visit-list">
-          <div className="panel-header"><div><h2>{patientId ? 'Visit history' : 'Daily Visits'}</h2><p>{patientId ? 'Only this patient’s recorded consultations' : 'Patients with started consultations'}</p></div><ClipboardList size={20}/></div>
+          <div className="panel-header">
+            <div>
+              <h2>{patientId ? 'Consultations' : 'Daily Visits'}</h2>
+              <p>{patientId ? 'Select a consultation to open its clinical record.' : 'Patients with started consultations'}</p>
+            </div>
+            <span className="clinical-list-summary">
+              {listLoading ? 'Loading' : `${visits.length} ${visits.length === 1 ? 'record' : 'records'}`}
+            </span>
+          </div>
           {!patientId && <label className="clinical-label">Visit date
             <input type="date" value={day} onChange={event => {
               setDay(event.target.value)
               setListLoading(true)
             }} />
           </label>}
-          {listLoading ? <p>Loading visits...</p> : visits.length === 0
-            ? <p className="clinical-muted">{patientId ? 'No consultation records for this patient yet.' : 'No consultations started on this date.'}</p>
-            : <div className="clinical-visits">{visits.map(visit => (
-              <button type="button" key={visit.appointmentId}
-                className={`clinical-visit ${selectedAppointmentId === visit.appointmentId ? 'clinical-visit-active' : ''}`}
-                onClick={() => chooseAppointment(visit.appointmentId)}>
-                <strong>{patientId && visit.consultationStartedAtUtc ? new Date(visit.consultationStartedAtUtc).toLocaleDateString('en-ZA') : visit.patientName}</strong>
-                <span>{visit.reason || 'Dental visit'}</span>
-                <small>{visit.status.replace(/([a-z])([A-Z])/g, '$1 $2')}</small>
-              </button>
-            ))}</div>}
+          {listLoading ? <p className="clinical-muted" role="status">Loading consultations…</p> : visits.length === 0
+            ? <div className="clinical-consultation-empty" role="status">
+                <CalendarDays size={24} aria-hidden="true" />
+                <strong>{patientId ? 'No consultations recorded yet' : 'No consultations started on this date'}</strong>
+                <span>{patientId
+                  ? 'Recorded consultations will appear here once the clinician starts a visit from Scheduling.'
+                  : 'Choose another date or refresh the list to see started visits.'}</span>
+              </div>
+            : <div className="clinical-visits">{visits.map(visit => {
+              const visitDate = visit.consultationStartedAtUtc
+                ? new Date(visit.consultationStartedAtUtc).toLocaleDateString('en-ZA', {
+                    day: '2-digit', month: 'short', year: 'numeric',
+                  })
+                : 'Date not recorded'
+              const statusLabel = visit.status.replace(/([a-z])([A-Z])/g, '$1 $2')
+              return (
+                <button type="button" key={visit.appointmentId}
+                  className={`clinical-visit ${selectedAppointmentId === visit.appointmentId && (!patientId || detailOpen) ? 'clinical-visit-active' : ''}`}
+                  aria-haspopup={patientId ? 'dialog' : undefined}
+                  aria-label={patientId ? `Open consultation from ${visitDate}` : undefined}
+                  onClick={() => chooseAppointment(visit.appointmentId)}>
+                  <span className="clinical-visit-top">
+                    <strong>{patientId ? visitDate : visit.patientName}</strong>
+                    <small className={`clinical-visit-status ${visit.status === 'Finalized' ? 'is-finalized' : ''}`}>{statusLabel}</small>
+                  </span>
+                  <span className="clinical-visit-reason">{visit.reason || 'Dental consultation'}</span>
+                  <span className="clinical-visit-open">View consultation <ChevronRight size={14} aria-hidden="true" /></span>
+                </button>
+              )
+            })}</div>}
         </aside>
 
-        {selectedAppointmentId && <section className="panel clinical-editor">
+        {selectedAppointmentId && (!patientId || detailOpen) && (
+          <div className={patientId ? 'clinical-consultation-layer' : 'clinical-detail-inline'}>
+            <section className="panel clinical-editor" role={patientId ? 'dialog' : undefined}
+              aria-modal={patientId ? true : undefined}
+              aria-label={patientId ? 'Consultation clinical record' : undefined}>
+              {patientId && <div className="clinical-consultation-dialog-header">
+                <div>
+                  <span>CONSULTATION RECORD</span>
+                  <strong>Clinical details</strong>
+                </div>
+                <button type="button" className="secondary-button clinical-consultation-close"
+                  disabled={saving} aria-label="Close consultation details"
+                  onClick={() => { setDetailOpen(false); onSelectAppointment(null) }}>
+                  <X size={16} aria-hidden="true" />
+                  <span>Close</span>
+                </button>
+              </div>}
           {detailsError ? (
             <div role="alert" className="clinical-error">{detailsError}</div>
           ) : detailsLoading ? (
@@ -500,7 +563,9 @@ export default function DentistConsultationsPage({
               </form>
             </>
           ) : <p>Record not found.</p>}
-        </section>}
+            </section>
+          </div>
+        )}
       </div>
     </div>
   )
