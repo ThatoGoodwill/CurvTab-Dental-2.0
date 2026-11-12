@@ -14,6 +14,7 @@ import {
 
 import { apiRequest } from '../services/api'
 import LaboratoryAccountsPanel from './LaboratoryAccountsPanel'
+import PasswordInput from '../components/PasswordInput'
 import EmployeeWorkspaceManagementPanel from './EmployeeWorkspaceManagementPanel'
 import './StaffPage.css'
 
@@ -349,15 +350,14 @@ export default function StaffPage() {
               Temporary password
             </label>
 
-            <input
+            <PasswordInput
               id="staff-password"
-              type="password"
               required
               minLength={10}
               maxLength={128}
               autoComplete="new-password"
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={setPassword}
               placeholder="At least 10 characters"
             />
 
@@ -481,17 +481,14 @@ export default function StaffPage() {
                         New temporary password
                       </label>
 
-                      <input
+                      <PasswordInput
                         id={`reset-${person.id}`}
-                        type="password"
                         minLength={10}
                         maxLength={128}
                         required
                         autoComplete="new-password"
                         value={resetPassword}
-                        onChange={(event) =>
-                          setResetPassword(event.target.value)
-                        }
+                        onChange={setResetPassword}
                       />
 
                       <div className="staff-actions">
