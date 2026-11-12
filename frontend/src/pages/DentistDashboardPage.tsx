@@ -21,7 +21,7 @@ type QueuePatient = {
 
 type Props = {
   onOpenAppointments: () => void
-  onOpenDailyPatients: () => void
+  onOpenPatients: () => void
 }
 
 function todayRange(): { fromUtc: string; toUtc: string } {
@@ -34,7 +34,7 @@ function todayRange(): { fromUtc: string; toUtc: string } {
 
 export default function DentistDashboardPage({
   onOpenAppointments,
-  onOpenDailyPatients,
+  onOpenPatients,
 }: Props) {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [queue, setQueue] = useState<QueuePatient[]>([])
@@ -110,8 +110,8 @@ export default function DentistDashboardPage({
           { title: "Today's Clinical Progress", content: (
             <section className="ct-role-panel ct-dentist-report">
               <header><div><h2>Patient flow</h2><p>Today's appointment and attendance counts from the clinical API.</p></div>
-                <button className="secondary-button" type="button" onClick={onOpenDailyPatients}>
-                  <ClipboardList size={15}/> Daily Patients
+                <button className="secondary-button" type="button" onClick={onOpenPatients}>
+                  <ClipboardList size={15}/> Patients & Consultations
                 </button>
               </header>
               <div className="ct-clinical-bar-chart" role="img"

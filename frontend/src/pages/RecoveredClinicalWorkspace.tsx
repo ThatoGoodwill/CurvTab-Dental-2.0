@@ -10,6 +10,16 @@ type History = { allergies: string | null; currentMedications: string | null; me
 
 type CataloguePrice = { id: string; name: string; price: number; isActive: boolean; requiresLab?: boolean }
 
+const planTitles = [
+  'Routine dental treatment', 'Restorative treatment', 'Extraction / oral surgery',
+  'Endodontic treatment', 'Periodontal treatment', 'Preventive care',
+  'Orthodontic referral / assessment', 'Other clinical treatment',
+]
+const fdiCodes = [
+  ...[1, 2, 3, 4].flatMap(quadrant => Array.from({ length: 8 }, (_, index) => `${quadrant}${index + 1}`)),
+  ...[5, 6, 7, 8].flatMap(quadrant => Array.from({ length: 5 }, (_, index) => `${quadrant}${index + 1}`)),
+]
+
 type Panel = 'Treatment Plan' | 'Clinical Notes & Encounters' | 'Medical Records'
 
 const date = (v?: string | null) => v ? new Date(v).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
@@ -88,6 +98,10 @@ export default function RecoveredClinicalWorkspace({ patientId, panel }: { patie
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!modal || busy) return
+    if (modal === 'procedure' && (!priceId || !tooth)) {
+      setError('Choose an approved priced procedure and its FDI tooth before saving.')
+      return
+    }
     setBusy(true)
     setError('')
     try {
@@ -146,8 +160,39 @@ export default function RecoveredClinicalWorkspace({ patientId, panel }: { patie
       <div className="ct-recovered-modal" role="dialog" aria-modal="true" aria-label={modal === 'new' ? 'New treatment plan' : modal === 'procedure' ? 'Add treatment procedure' : modal === 'revise' ? 'Revise treatment plan' : 'Record patient acknowledgement'}>
         <div className="ct-recovered-card-head"><h3>{modal === 'new' ? 'New Treatment Plan' : modal === 'procedure' ? 'Add Procedure' : modal === 'revise' ? 'Revise Treatment Plan' : 'Record Acknowledgement'}</h3><button type="button" onClick={() => setModal(null)} disabled={busy} aria-label="Close">×</button></div>
         <form onSubmit={e => void submit(e)}>
-          {(modal === 'new' || modal === 'revise') && <><label>Plan title<input required maxLength={200} value={title} onChange={e => setTitle(e.target.value)} /></label><label>Clinical rationale<textarea maxLength={4000} rows={4} value={rationale} onChange={e => setRationale(e.target.value)} /></label></>}
-          {modal === 'procedure' && <><label>Pick from practice price list<select value="" onChange={e => { const f = prices.find(x => x.id === e.target.value); if (f) { setDescription(f.name); setCost(f.price.toFixed(2)); setPriceId(f.id) } }}><option value="">{prices.length ? 'Choose procedure…' : 'No price list configured'}</option>{prices.map(x => <option key={x.id} value={x.id}>{x.name} — R{x.price.toFixed(2)}{x.requiresLab ? ' (lab)' : ''}</option>)}</select></label><label>Procedure description<input required maxLength={1000} value={description} onChange={e => setDescription(e.target.value)} /></label><label>FDI tooth code (optional)<input maxLength={2} value={tooth} onChange={e => setTooth(e.target.value)} placeholder="e.g. 11" /></label><label>Estimated cost (ZAR, optional)<input type="number" min="0" max="10000000" step="0.01" value={cost} onChange={e => setCost(e.target.value)} /></label></>}
+          {(modal === 'new' || modal === 'revise') && <>
+            <label>Plan title
+              <select required value={title} onChange={e => setTitle(e.target.value)}>
+                <option value="">Select treatment plan type…</option>
+                {planTitles.map(item => <option key={item} value={item}>{item}</option>)}
+                {title && !planTitles.includes(title) && <option value={title}>{title}</option>}
+              </select>
+            </label>
+            <label>Clinical rationale<textarea maxLength={4000} rows={4} value={rationale} onChange={e => setRationale(e.target.value)} /></label>
+          </>}
+          {modal === 'procedure' && <>
+            <label>Procedure from approved practice price list
+              <select required value={priceId} onChange={e => {
+                const selected = prices.find(x => x.id === e.target.value)
+                setPriceId(selected?.id ?? '')
+                setDescription(selected?.name ?? '')
+                setCost(selected ? selected.price.toFixed(2) : '')
+              }}>
+                <option value="">Choose procedure…</option>
+                {prices.map(x => <option key={x.id} value={x.id}>{x.name} — R{x.price.toFixed(2)}{x.requiresLab ? ' (lab)' : ''}</option>)}
+              </select>
+            </label>
+            {!prices.length && <p role="alert">No approved procedure prices are configured. Ask Practice Admin to publish prices in Configuration Center.</p>}
+            <label>Procedure description<input readOnly required value={description} /></label>
+            <label>FDI tooth code (required)
+              <select required value={tooth} onChange={e => setTooth(e.target.value)}>
+                <option value="">Select tooth…</option>
+                <optgroup label="Permanent teeth">{fdiCodes.slice(0, 32).map(code => <option key={code} value={code}>{code}</option>)}</optgroup>
+                <optgroup label="Primary teeth">{fdiCodes.slice(32).map(code => <option key={code} value={code}>{code}</option>)}</optgroup>
+              </select>
+            </label>
+            <label>Estimated cost (approved ZAR)<input readOnly type="text" value={cost ? 'R ' + cost : ''} placeholder="Select a procedure first" /></label>
+          </>}
           {modal === 'acknowledge' && <><p>This records that the treatment plan was discussed and acknowledged. It does not replace a signed consent form or the dentist's clinical consent process.</p><label>Patient or representative name<input required maxLength={200} value={consentName} onChange={e => setConsentName(e.target.value)} /></label><label className="ct-recovered-check"><input type="checkbox" required checked={acknowledged} onChange={e => setAcknowledged(e.target.checked)} /> I confirm acknowledgement was obtained from the named person.</label></>}
           <div className="ct-recovered-actions"><button type="button" onClick={() => setModal(null)} disabled={busy}>Cancel</button><button type="submit" className="ct-recovered-primary" disabled={busy}>{busy ? 'Saving...' : 'Save'}</button></div>
         </form>

@@ -290,8 +290,9 @@ export default function DentalChartingPage({
       await apiRequest(`/dentist/patients/${encodeURIComponent(patientId)}/chart`, 'POST', {
         toothCode, surface, finding, notes: notes.trim() || null, consultationId: null,
       })
-      setSuccess(`Observation for tooth ${toothCode} saved to the clinical chart.`)
+      setSuccess(`Observation for tooth ${toothCode} saved to the clinical chart. Continue to Treatment Plan when ready.`)
       setNotes('')
+      setToothChosen(false)
       setLoading(true)
       setReload((value) => value + 1)
     } catch (cause) {

@@ -40,7 +40,7 @@ public sealed class ConsultationsController : ControllerBase
         string? DentalHistory,
         string? AdditionalNotes);
 
-    public record ChargeRequest(string Description, decimal Amount);
+    public record ChargeRequest(string Description, decimal Amount, Guid? ProcedurePriceId = null);
 
     public record SaveConsultationRequest(
         string? ChiefComplaint,
@@ -279,14 +279,42 @@ public sealed class ConsultationsController : ControllerBase
             .Where(c => c.DentalPracticeId == practiceId &&
                         c.ConsultationId == consultation.Id)
             .ToListAsync(ct);
-        _db.ConsultationCharges.RemoveRange(previousCharges);
+        // New clinical charges must use the configured practice procedure list.
+        // An unchanged historical draft line may still be saved, but it cannot
+        // be used to invent or reprice a charge through an API request.
+        var verifiedCharges = new List<(string Description, decimal Amount)>();
+        // Consume historical entries one-by-one: resubmitting a duplicate cannot
+        // multiply an unpriced charge that originally existed only once.
+        var remainingHistorical = previousCharges.ToList();
         foreach (var charge in incoming)
+        {
+            if (charge.ProcedurePriceId is not Guid priceId)
+            {
+                var matchingIndex = remainingHistorical.FindIndex(c =>
+                    c.Description == charge.Description.Trim() && c.Amount == charge.Amount);
+                if (matchingIndex < 0)
+                    return BadRequest(new { message = "Select each new treatment charge from the practice price list. Manual charge amounts are not accepted." });
+                remainingHistorical.RemoveAt(matchingIndex);
+                verifiedCharges.Add((charge.Description.Trim(), charge.Amount));
+                continue;
+            }
+            var catalogue = await _db.ProcedurePrices.AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == priceId &&
+                    x.DentalPracticeId == practiceId && x.IsActive, ct);
+            if (catalogue is null)
+                return Conflict(new { message = "This procedure is not active in the practice price list. Refresh before billing." });
+            if (catalogue.Price != charge.Amount)
+                return Conflict(new { message = "The approved procedure price changed. Refresh the price list before finalizing." });
+            verifiedCharges.Add((catalogue.Name, catalogue.Price));
+        }
+        _db.ConsultationCharges.RemoveRange(previousCharges);
+        foreach (var charge in verifiedCharges)
         {
             _db.ConsultationCharges.Add(new ConsultationCharge
             {
                 DentalPracticeId = practiceId,
                 ConsultationId = consultation.Id,
-                Description = charge.Description.Trim(),
+                Description = charge.Description,
                 Amount = charge.Amount
             });
         }

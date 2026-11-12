@@ -17,7 +17,7 @@ type FieldName =
   | 'chiefComplaint' | 'symptoms' | 'examinationFindings' | 'diagnosis'
   | 'treatmentPerformed' | 'treatmentPlan' | 'prescriptionNotes' | 'followUpAdvice'
 type ClinicalForm = Record<FieldName, string>
-type Charge = { description: string; amount: string }
+type Charge = { description: string; amount: string; procedurePriceId?: string }
 type CataloguePrice = { id: string; code: string; name: string; category: string; price: number; isActive: boolean }
 type StoredCharge = { id: string; description: string; amount: number }
 type ConsultationRecord = Partial<ClinicalForm> & {
@@ -42,6 +42,7 @@ type Props = {
   selectedAppointmentId: string | null
   onSelectAppointment: (id: string) => void
   onOpenMedicalHistory: (patientId: string) => void
+  onFinalized?: () => void
 }
 
 const emptyForm = (): ClinicalForm => ({
@@ -143,21 +144,6 @@ const clinicalSuggestions: Record<FieldName, readonly string[]> = {
   ],
 }
 
-// Charges are service descriptions only; pricing is entered and verified by staff.
-const commonTreatments: readonly string[] = [
-  'Dental consultation / examination',
-  'Emergency dental consultation',
-  'Scaling and polishing',
-  'Composite filling / restoration — specify tooth',
-  'Tooth extraction — specify tooth',
-  'Root canal treatment — specify tooth and stage',
-  'Dental radiograph / X-ray — specify type',
-  'Temporary restoration — specify tooth',
-  'Orthodontic consultation',
-  'Orthodontic adjustment / follow-up',
-  'Other service — specify details',
-]
-
 function localDate(day: Date): string {
   return `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`
 }
@@ -175,7 +161,7 @@ function errorText(error: unknown): string {
 }
 
 export default function DentistConsultationsPage({
-  patientId, selectedAppointmentId, onSelectAppointment, onOpenMedicalHistory,
+  patientId, selectedAppointmentId, onSelectAppointment, onOpenMedicalHistory, onFinalized,
 }: Props) {
   const [day, setDay] = useState(() => localDate(new Date()))
   const [visits, setVisits] = useState<Visit[]>([])
@@ -282,7 +268,7 @@ export default function DentistConsultationsPage({
 
   async function save(finish = false) {
     if (!selectedAppointmentId || !editable || saving) return
-    const prepared: { description: string; amount: number }[] = []
+    const prepared: { description: string; amount: number; procedurePriceId: string | null }[] = []
     for (const charge of charges) {
       const amount = charge.amount.trim()
       const description = charge.description.trim()
@@ -291,7 +277,23 @@ export default function DentistConsultationsPage({
         setError('Every charge must have a description and a positive amount with at most two decimal places.')
         return
       }
-      prepared.push({ description, amount: Number(amount) })
+      // Existing saved lines may be retained unchanged for legacy visits.
+      // All new charges must use the approved practice price list.
+      const selected = prices.find(price => price.id === charge.procedurePriceId)
+      if (!selected && charge.procedurePriceId) {
+        setError('This procedure is no longer active in the practice price list.')
+        return
+      }
+      if (!selected && !detail?.charges.some(saved =>
+        saved.description === description && Number(saved.amount) === Number(amount))) {
+        setError('Choose each new charge from the approved price list. Manual prices are not allowed.')
+        return
+      }
+      if (selected && (selected.name !== description || selected.price !== Number(amount))) {
+        setError('The procedure amount has changed. Select it again from the price list.')
+        return
+      }
+      prepared.push({ description, amount: Number(amount), procedurePriceId: selected?.id ?? null })
     }
     if (finish && (!chargesConfirmed ||
       fields.some(field => field.required && !form[field.key].trim()))) {
@@ -306,7 +308,8 @@ export default function DentistConsultationsPage({
       await apiRequest(path, 'PUT', { ...form, charges: prepared, chargesConfirmed })
       if (finish) {
         await apiRequest(`${path}/finish`, 'POST')
-        setMessage('Consultation finalized. Reception can now see the checkout amount.')
+        setMessage('Consultation finalized. Reception has been notified and can complete checkout.')
+        onFinalized?.()
       } else {
         setMessage('Clinical draft and charges saved successfully.')
       }
@@ -413,8 +416,14 @@ export default function DentistConsultationsPage({
                     {field.key === 'prescriptionNotes' && editable && (
                       <div className="clinical-label" role="group" aria-label="Prescription builder">
                         <span>Add prescription line</span>
-                        <input value={rxDrug} maxLength={80} placeholder="Medicine, e.g. Amoxil 500 mg"
+                        <input value={rxDrug} list="ct-prescription-medicine-options" maxLength={80} placeholder="Select or type medicine"
                           disabled={saving} onChange={event => setRxDrug(event.target.value)} />
+                        <datalist id="ct-prescription-medicine-options">
+                          <option value="Paracetamol" />
+                          <option value="Ibuprofen" />
+                          <option value="Amoxicillin" />
+                          <option value="Chlorhexidine" />
+                        </datalist>
                         <input value={rxDose} maxLength={80} placeholder="Dose, e.g. 1 capsule 3 times daily"
                           disabled={saving} onChange={event => setRxDose(event.target.value)} />
                         <input value={rxDays} inputMode="numeric" maxLength={3} placeholder="Days"
@@ -428,58 +437,44 @@ export default function DentistConsultationsPage({
                 </div>
                 <div className="clinical-charge-heading"><div><h3>Treatment Charges</h3>
                   <p>These charges are sent to reception after you finalize, but they are not payment receipts.</p></div>
-                  {editable && <button type="button" className="secondary-button" disabled={saving || charges.length >= 50}
+                  {editable && <button type="button" className="secondary-button" disabled={saving || charges.length >= 50 || prices.length === 0}
                     onClick={() => { setCharges(prev => [...prev, { description: '', amount: '' }]); setChargesConfirmed(false) }}>
-                    <Plus size={16}/> Add Charge</button>}
+                    <Plus size={16}/> Add Priced Procedure</button>}
                 </div>
                 {charges.length === 0 && <p className="clinical-muted">No treatment charges. For a free visit, confirm R0.00 below.</p>}
+                {prices.length === 0 && editable && <p className="clinical-notice" role="status">No active procedure prices found. Practice Admin must configure approved procedure prices before adding billable treatment.</p>}
                 {charges.map((row, index) => (
                   <div className="clinical-charge" key={`${index}-${charges.length}`}>
                     <label className="clinical-label">Treatment / service
                       <select
-                        defaultValue=""
-                        aria-label={`Choose treatment/service for charge ${index + 1}`}
+                        value={row.procedurePriceId ? `price:${row.procedurePriceId}` : ''}
+                        aria-label={`Choose approved procedure for charge ${index + 1}`}
                         disabled={!editable || saving}
                         onChange={event => {
-                          const selected = event.currentTarget.value
-                          if (selected.startsWith('price:')) {
-                            const found = prices.find(price => price.id === selected.slice(6))
-                            if (found) {
-                              setCharges(prev => prev.map((item, i) =>
-                                i === index ? { description: found.name, amount: found.price.toFixed(2) } : item))
-                              setChargesConfirmed(false)
-                            }
-                          } else if (selected) {
-                            setCharges(prev => prev.map((item, i) =>
-                              i === index ? { ...item, description: selected } : item))
-                            setChargesConfirmed(false)
-                          }
-                          event.currentTarget.value = ''
+                          const choice = prices.find(price => 'price:' + price.id === event.target.value)
+                          setCharges(previous => previous.map((item, i) =>
+                            i === index ? {
+                              description: choice?.name ?? '',
+                              amount: choice ? choice.price.toFixed(2) : '',
+                              procedurePriceId: choice?.id,
+                            } : item
+                          ))
+                          setChargesConfirmed(false)
                         }}
                       >
-                        <option value="">{prices.length ? 'Choose from practice price list' : 'Choose common service (optional)'}</option>
+                        <option value="">{row.description && !row.procedurePriceId ? 'Saved historical charge' : 'Select approved procedure…'}</option>
                         {prices.map(price => (
                           <option key={price.id} value={`price:${price.id}`}>
-                            {price.name} — R{price.price.toFixed(2)}
+                            {price.code} · {price.name} — R{price.price.toFixed(2)}
                           </option>
                         ))}
-                        {prices.length === 0 && commonTreatments.map(treatment => (
-                          <option key={treatment} value={treatment}>{treatment}</option>
-                        ))}
                       </select>
-                      <input value={row.description} maxLength={200} disabled={!editable || saving}
-                        placeholder="Describe treatment; include tooth/site if relevant"
-                        onChange={event => { const value = event.target.value;
-                          setCharges(prev => prev.map((item, i) => i === index ? { ...item, description: value } : item))
-                          setChargesConfirmed(false)
-                        }} />
+                      <input readOnly value={row.description} maxLength={200}
+                        placeholder="Select a procedure from the price list" />
                     </label>
-                    <label className="clinical-label">Amount (ZAR)
-                      <input type="text" inputMode="decimal" placeholder="350.00" value={row.amount}
-                        disabled={!editable || saving} onChange={event => { const value = event.target.value;
-                          setCharges(prev => prev.map((item, i) => i === index ? { ...item, amount: value } : item))
-                          setChargesConfirmed(false)
-                        }}/>
+                    <label className="clinical-label">Approved amount (ZAR)
+                      <input type="text" readOnly value={row.amount ? 'R ' + row.amount : ''}
+                        placeholder="Selected automatically from practice price list" />
                     </label>
                     {editable && <button type="button" className="secondary-button"
                       aria-label={`Remove charge ${index + 1}`} disabled={saving}

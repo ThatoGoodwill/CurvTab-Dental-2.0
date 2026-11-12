@@ -17,6 +17,7 @@ type CashPrivateTab = 'checkout' | 'invoices' | 'plans' | 'balances' | 'ledger'
 
 type Props = {
   section: BillingSection
+  checkoutRequest?: number
   onSectionChange: (section: BillingSection) => void
   isManager: boolean
   checkout: ReactNode
@@ -63,7 +64,7 @@ const descriptions: Record<BillingSection, string> = {
 }
 
 export default function BillingWorkspaceTabs({
-  section, onSectionChange, isManager,
+  section, onSectionChange, isManager, checkoutRequest = 0,
   checkout, invoices, plans, balances, medicalAid, ledger,
 }: Props) {
   const [cashTab, setCashTab] = useState<CashPrivateTab>('checkout')
@@ -104,6 +105,12 @@ export default function BillingWorkspaceTabs({
   }, [menuOpen])
 
   useEffect(() => { setMenuOpen(false) }, [section])
+
+  // Explicit checkout actions, including notification clicks, must never
+  // strand staff on Today's Billing, invoices, or an old financial tab.
+  useEffect(() => {
+    if (checkoutRequest > 0) setCashTab('checkout')
+  }, [checkoutRequest])
 
   function goToSection(destination: BillingSection) {
     onSectionChange(destination)

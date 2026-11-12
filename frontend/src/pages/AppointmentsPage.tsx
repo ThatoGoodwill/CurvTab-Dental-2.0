@@ -156,7 +156,8 @@ export default function AppointmentsPage({
 
   const canBook =
     role === 'Receptionist' ||
-    role === 'PracticeAdmin'
+    role === 'PracticeAdmin' ||
+    role === 'Dentist'
 
   const canCall = role === 'Dentist'
 

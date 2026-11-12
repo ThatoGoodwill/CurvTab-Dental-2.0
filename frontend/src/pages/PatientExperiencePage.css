@@ -5863,3 +5863,23 @@ span:last-child {
 }
 
 /* CT_PATIENT_CIRCLES_BORDERLESS_V2_END */
+
+/* Patient-scoped clinical journey: the next step stays visible without returning to the chooser. */
+.ct-treatment-progress-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  margin: 5px 0 12px;
+}
+.ct-treatment-progress-actions .primary-button,
+.ct-treatment-progress-actions .secondary-button {
+  min-height: 31px;
+  padding: 6px 11px;
+  font-size: 11px;
+  border-radius: 7px;
+}
+.ct-treatment-progress-actions .primary-button { margin-left: auto; }
+@media (max-width: 580px) {
+  .ct-treatment-progress-actions .primary-button { margin-left: 0; }
+}

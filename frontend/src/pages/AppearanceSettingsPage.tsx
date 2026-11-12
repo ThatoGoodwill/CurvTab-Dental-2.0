@@ -38,11 +38,9 @@ type AppearanceTab =
 const OPTIONAL_MODULES = [
   'Patients',
   'Appointments',
-  'Daily Patients',
   'Consultations',
   'Checkout & Payments',
   'Dental Charting',
-  'Clinical Imaging',
   'Orthodontics',
 ] as const
 
@@ -57,12 +55,10 @@ const DEFAULT: PracticeAppearance = {
   enabledModules: [
     'Patients',
     'Appointments',
-    'Daily Patients',
-    'Consultations',
+      'Consultations',
     'Checkout & Payments',
     'Dental Charting',
-    'Clinical Imaging',
-    'Orthodontics',
+      'Orthodontics',
   ],
 }
 
