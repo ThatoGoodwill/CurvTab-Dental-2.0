@@ -2750,6 +2750,29 @@ namespace CurvTabDental.Infrastructure.Migrations
                     b.ToTable("PaymentAllocationReversal");
                 });
 
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.PlanAdvanceTransfer", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<decimal>("Amount").HasPrecision(12, 2).HasColumnType("numeric(12,2)");
+                    b.Property<DateTime>("AuthorizedAtUtc").HasColumnType("timestamp with time zone");
+                    b.Property<string>("AuthorizedByPatientName").IsRequired().HasMaxLength(200).HasColumnType("character varying(200)");
+                    b.Property<Guid>("DentalPracticeId").HasColumnType("uuid");
+                    b.Property<Guid>("FromProcedureId").HasColumnType("uuid");
+                    b.Property<Guid>("PatientId").HasColumnType("uuid");
+                    b.Property<Guid>("RecordedByUserId").HasColumnType("uuid");
+                    b.Property<string>("Reason").IsRequired().HasMaxLength(2000).HasColumnType("character varying(2000)");
+                    b.Property<Guid>("RequestId").HasColumnType("uuid");
+                    b.Property<Guid>("ToProcedureId").HasColumnType("uuid");
+                    b.Property<Guid>("TreatmentPlanId").HasColumnType("uuid");
+                    b.HasKey("Id");
+                    b.HasIndex("FromProcedureId");
+                    b.HasIndex("ToProcedureId");
+                    b.HasIndex("TreatmentPlanId");
+                    b.HasIndex("DentalPracticeId", "PatientId", "TreatmentPlanId");
+                    b.HasIndex("DentalPracticeId", "RequestId").IsUnique();
+                    b.ToTable("PlanAdvanceTransfers");
+                });
+
             modelBuilder.Entity("CurvTabDental.Domain.Entities.PlanPayment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2839,6 +2862,26 @@ namespace CurvTabDental.Infrastructure.Migrations
                     b.HasIndex("DentalPracticeId", "TreatmentPlanId");
 
                     b.ToTable("PlanPaymentAllocations", (string)null);
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.TreatmentProcedureDecision", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<string>("Decision").IsRequired().HasMaxLength(20).HasColumnType("character varying(20)");
+                    b.Property<Guid>("DentalPracticeId").HasColumnType("uuid");
+                    b.Property<Guid>("DentistUserId").HasColumnType("uuid");
+                    b.Property<Guid>("PatientId").HasColumnType("uuid");
+                    b.Property<string>("PatientOrRepresentativeName").IsRequired().HasMaxLength(200).HasColumnType("character varying(200)");
+                    b.Property<Guid>("ProcedureId").HasColumnType("uuid");
+                    b.Property<DateTime>("RecordedAtUtc").HasColumnType("timestamp with time zone");
+                    b.Property<string>("Reason").IsRequired().HasMaxLength(2000).HasColumnType("character varying(2000)");
+                    b.Property<string>("RisksAndAlternativesExplained").IsRequired().HasMaxLength(4000).HasColumnType("character varying(4000)");
+                    b.Property<Guid>("TreatmentPlanId").HasColumnType("uuid");
+                    b.HasKey("Id");
+                    b.HasIndex("ProcedureId");
+                    b.HasIndex("TreatmentPlanId");
+                    b.HasIndex("DentalPracticeId", "PatientId", "ProcedureId");
+                    b.ToTable("TreatmentProcedureDecisions");
                 });
 
             modelBuilder.Entity("CurvTabDental.Domain.Entities.PracticeAppearance", b =>
@@ -3952,6 +3995,24 @@ namespace CurvTabDental.Infrastructure.Migrations
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.PlanAdvanceTransfer", b =>
+                {
+                    b.HasOne("CurvTabDental.Domain.Entities.PatientTreatmentProcedure", null)
+                        .WithMany().HasForeignKey("FromProcedureId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+                    b.HasOne("CurvTabDental.Domain.Entities.PatientTreatmentProcedure", null)
+                        .WithMany().HasForeignKey("ToProcedureId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+                    b.HasOne("CurvTabDental.Domain.Entities.PatientTreatmentPlan", null)
+                        .WithMany().HasForeignKey("TreatmentPlanId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.TreatmentProcedureDecision", b =>
+                {
+                    b.HasOne("CurvTabDental.Domain.Entities.PatientTreatmentProcedure", null)
+                        .WithMany().HasForeignKey("ProcedureId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+                    b.HasOne("CurvTabDental.Domain.Entities.PatientTreatmentPlan", null)
+                        .WithMany().HasForeignKey("TreatmentPlanId").OnDelete(DeleteBehavior.Restrict).IsRequired();
                 });
 
             modelBuilder.Entity("CurvTabDental.Domain.Entities.PatientTreatmentPlan", b =>
