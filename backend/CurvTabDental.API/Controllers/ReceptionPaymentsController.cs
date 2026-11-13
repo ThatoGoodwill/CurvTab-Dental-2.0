@@ -1,4 +1,5 @@
 using CurvTabDental.Application.Abstractions;
+using CurvTabDental.API.Services;
 using CurvTabDental.Domain.Entities;
 using CurvTabDental.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
@@ -146,7 +147,9 @@ public sealed class ReceptionPaymentsController : ControllerBase
             .Where(p => p.DentalPracticeId == practiceId &&
                         p.AppointmentId == appointmentId)
             .SumAsync(p => (decimal?)p.Amount, ct) ?? 0m;
-        var balance = charged - paid;
+        var advanceApplied = await TreatmentAdvanceCredit.ForConsultation(
+            _db, practiceId, consultation.Id, ct);
+        var balance = charged - paid - advanceApplied;
         if (balance <= 0m || request.Amount > balance)
             return Conflict(new { message = "Payment exceeds the outstanding balance or no amount is due.", balance });
 
@@ -251,7 +254,9 @@ public sealed class ReceptionPaymentsController : ControllerBase
         var paid = await _db.Payments
             .Where(p => p.DentalPracticeId == practiceId && p.AppointmentId == appointmentId)
             .SumAsync(p => (decimal?)p.Amount, ct) ?? 0m;
-        var balance = charged - paid;
+        var advanceApplied = await TreatmentAdvanceCredit.ForConsultation(
+            _db, practiceId, consultation.Id, ct);
+        var balance = charged - paid - advanceApplied;
         if (balance <= 0m || total > balance)
             return Conflict(new { message = "The split total exceeds the outstanding balance.", balance });
         if (request.CompleteCheckout && total != balance)
@@ -331,11 +336,14 @@ public sealed class ReceptionPaymentsController : ControllerBase
             .Where(p => p.DentalPracticeId == practiceId &&
                         p.AppointmentId == appointmentId)
             .SumAsync(p => (decimal?)p.Amount, ct) ?? 0m;
-        if (charged != paid)
+        var advanceApplied = await TreatmentAdvanceCredit.ForConsultation(
+            _db, practiceId, consultation.Id, ct);
+        if (charged != paid + advanceApplied)
             return Conflict(new
             {
                 message = "Outstanding balance must be zero to complete checkout.",
-                balance = charged - paid
+                balance = charged - paid - advanceApplied,
+                advanceApplied
             });
 
         appointment.Status = "CheckedOut";
@@ -365,7 +373,7 @@ public sealed class ReceptionPaymentsController : ControllerBase
         var previouslyPaid = details.Payments
             .TakeWhile(p => p.Id != payment.Id)
             .Sum(p => p.Amount);
-        var paidAtReceipt = previouslyPaid + payment.Amount;
+        var paidAtReceipt = previouslyPaid + payment.Amount + details.PlanAdvanceApplied;
 
         return Ok(new
         {
@@ -381,6 +389,7 @@ public sealed class ReceptionPaymentsController : ControllerBase
             currency = "ZAR",
             amountBilled = details.AmountDue,
             totalPaid = paidAtReceipt,
+            planAdvanceApplied = details.PlanAdvanceApplied,
             balance = details.AmountDue - paidAtReceipt,
             details.Status
         });
@@ -392,7 +401,8 @@ public sealed class ReceptionPaymentsController : ControllerBase
         Guid AppointmentId, Guid PatientId, string PatientName, string Status,
         DateTime? CompletedAtUtc, DateTime? CheckedOutAtUtc,
         decimal AmountDue, decimal AmountPaid, decimal Balance,
-        string Currency, List<PaymentRow> Payments);
+        string Currency, List<PaymentRow> Payments,
+        decimal PlanAdvanceApplied);
 
     private async Task<CheckoutDetails?> LoadDetails(
         Guid appointmentId, Guid practiceId, CancellationToken ct)
@@ -422,9 +432,12 @@ public sealed class ReceptionPaymentsController : ControllerBase
                 p.Method, p.Reference, p.ReceivedAtUtc))
             .ToListAsync(ct);
         var paid = payments.Sum(p => p.Amount);
+        var advanceApplied = await TreatmentAdvanceCredit.ForConsultation(
+            _db, practiceId, consultation.Id, ct);
         return new CheckoutDetails(appointment.Id, patient.Id,
             patient.FirstName + " " + patient.LastName, appointment.Status,
             appointment.ConsultationEndedAtUtc, appointment.CheckedOutAtUtc,
-            due, paid, due - paid, "ZAR", payments);
+            due, paid + advanceApplied, due - paid - advanceApplied,
+            "ZAR", payments, advanceApplied);
     }
 }
