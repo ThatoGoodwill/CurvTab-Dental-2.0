@@ -217,7 +217,8 @@ public sealed class PlanAccountsController : ControllerBase
             };
         }).ToList();
         var total = procRows.Sum(p => p.cost);
-        var totalPaid = procRows.Sum(p => p.paid);
+        var totalPaid = procRows.Where(p => p.Status is not ("Cancelled" or "Declined")).Sum(p => p.paid);
+        var heldAdvance = procRows.Where(p => p.Status is "Cancelled" or "Declined").Sum(p => p.paid);
         var allDone = procRows.Count > 0 &&
             procedures.Where(IsBillable).All(p => p.Status == "Completed");
 
@@ -233,6 +234,7 @@ public sealed class PlanAccountsController : ControllerBase
             procedures = procRows,
             total,
             totalPaid,
+            heldAdvance,
             balance = total - totalPaid,
             allProceduresCompleted = allDone,
             settled = allDone && total - totalPaid == 0m,
@@ -249,8 +251,7 @@ public sealed class PlanAccountsController : ControllerBase
                 t.Id, t.FromProcedureId, t.ToProcedureId, t.Amount,
                 t.PatientAuthorization, t.Reason, t.AuthorizedByUserId, t.CreatedAtUtc
             }),
-            unallocatedAdvance = procRows.Where(p => p.Status is "Cancelled" or "Declined")
-                .Sum(p => p.paid)
+            unallocatedAdvance = heldAdvance
         });
     }
 
