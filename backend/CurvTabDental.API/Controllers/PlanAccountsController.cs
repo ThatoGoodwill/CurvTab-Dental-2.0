@@ -243,6 +243,25 @@ public sealed class PlanAccountsController : ControllerBase
             return Conflict(new { message = "Destination procedure is cancelled or declined." });
         if (!destination.EstimatedCost.HasValue)
             return Conflict(new { message = "Destination requires an approved procedure price." });
+        // A late transfer after checkout cash has been taken would silently
+        // turn an already paid visit into a credit. Send that case for a
+        // separate audited refund/correction workflow instead.
+        var destinationConsultations = await _db.ConsultationCharges.AsNoTracking()
+            .Where(c => c.DentalPracticeId == practiceId &&
+                        c.TreatmentProcedureId == destination.Id)
+            .Select(c => c.ConsultationId).ToListAsync(ct);
+        if (destinationConsultations.Count > 0)
+        {
+            var paidForVisits = await (
+                from c in _db.Consultations.AsNoTracking()
+                join receipt in _db.Payments.AsNoTracking() on c.AppointmentId equals receipt.AppointmentId
+                where c.DentalPracticeId == practiceId && receipt.DentalPracticeId == practiceId &&
+                      destinationConsultations.Contains(c.Id)
+                select receipt.Id
+            ).AnyAsync(ct);
+            if (paidForVisits)
+                return Conflict(new { message = "Checkout receipts already exist for this completed visit. Do not transfer an advance after a checkout payment without an audited correction/refund process." });
+        }
 
         var allocations = await _db.PlanPaymentAllocations.AsNoTracking()
             .Where(a => a.DentalPracticeId == practiceId && a.TreatmentPlanId == planId)
