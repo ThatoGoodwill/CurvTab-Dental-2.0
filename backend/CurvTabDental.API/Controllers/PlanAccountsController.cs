@@ -338,8 +338,20 @@ public sealed class PlanAccountsController : ControllerBase
             .ToListAsync(ct);
         if (existing.Count > 0)
         {
-            if (existing.Count != tenders.Count || existing.Any(e => e.TreatmentPlanId != planId))
-                return Conflict(new { message = "This payment batch ID was already used." });
+            if (existing.Count != tenders.Count ||
+                existing.Any(e => e.TreatmentPlanId != planId ||
+                    !tenders.Any(t => t.RequestId == e.RequestId &&
+                        t.Method == e.Method && t.Amount == e.Amount &&
+                        t.Reference == e.Reference)))
+                return Conflict(new { message = "This payment batch ID was already used for different tender details." });
+            var priorAllocations = await _db.PlanPaymentAllocations.AsNoTracking()
+                .Where(a => a.DentalPracticeId == practiceId &&
+                            a.TreatmentPlanId == planId && a.BatchId == request.BatchId)
+                .ToListAsync(ct);
+            if (priorAllocations.Count != request.Allocations.Count ||
+                priorAllocations.Any(a => !request.Allocations.Any(req =>
+                    req.ProcedureId == a.ProcedureId && req.Amount == a.Amount)))
+                return Conflict(new { message = "This payment batch ID was already used for different allocations." });
             return Ok(new { alreadyRecorded = true, paymentIds = existing.Select(e => e.Id), total = tenderTotal });
         }
 
@@ -359,7 +371,12 @@ public sealed class PlanAccountsController : ControllerBase
         {
             var proc = procedures.FirstOrDefault(p => p.Id == a.ProcedureId);
             if (proc is null || !IsBillable(proc))
-                return BadRequest(new { message = "A selected procedure is not part of this plan." });
+                return BadRequest(new { message = "A selected procedure is not active on this plan." });
+            if (await _db.ConsultationCharges.AsNoTracking().AnyAsync(c =>
+                c.DentalPracticeId == practiceId && c.TreatmentProcedureId == proc.Id &&
+                _db.Consultations.Any(v => v.Id == c.ConsultationId &&
+                    v.DentalPracticeId == practiceId && v.IsFinalized), ct))
+                return Conflict(new { message = "This procedure is already billed by a finalized consultation. Any remaining payment must be collected at Checkout, not as a second plan receipt." });
             // Transfers can move advances into this procedure without creating
             // another receipt. Count both original and transferred allocations.
             var sent = await _db.PlanAdvanceTransfers.AsNoTracking()
