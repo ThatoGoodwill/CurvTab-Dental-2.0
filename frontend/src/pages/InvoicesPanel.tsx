@@ -13,6 +13,7 @@ type InvoiceRow = {
   totalAmount: number
   allocatedAmount: number
   creditedAmount: number
+  planAdvanceApplied: number
   netAmount: number
   balance: number
   issuedAtUtc: string
@@ -376,7 +377,8 @@ export default function InvoicesPanel({ canIssue }: Props) {
           <h3>Invoice details — {details.invoiceNumber}</h3>
           <div className="ct-invoices-totals">
             <span>Billed: <strong>{money(details.totalAmount)}</strong></span>
-            <span>Credits: <strong>{money(details.creditedAmount)}</strong></span>
+            <span>Credit notes: <strong>{money(details.creditedAmount)}</strong></span>
+            {details.planAdvanceApplied > 0 && <span>Previously received plan advances: <strong>{money(details.planAdvanceApplied)}</strong></span>}
             <span>Net invoiced: <strong>{money(details.netAmount)}</strong></span>
             <span>Allocated: <strong>{money(details.allocatedAmount)}</strong></span>
             <span>Balance: <strong>{money(details.balance)}</strong></span>
@@ -391,7 +393,7 @@ export default function InvoicesPanel({ canIssue }: Props) {
             </strong>
             <span>
               {details.balance <= 0
-                ? 'Fully allocated — no remaining invoice balance.'
+                ? 'Settled by existing receipts, plan advances or credits — no remaining invoice balance.'
                 : 'Allocate an eligible existing receipt to reduce this balance.'}
             </span>
           </div>
