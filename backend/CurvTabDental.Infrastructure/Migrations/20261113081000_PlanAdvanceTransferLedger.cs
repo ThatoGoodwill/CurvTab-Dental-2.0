@@ -52,6 +52,23 @@ public sealed class PlanAdvanceTransferLedger : Migration
               CONSTRAINT "CK_PlanAdvanceTransfers_Positive" CHECK ("Amount" > 0),
               CONSTRAINT "CK_PlanAdvanceTransfers_Distinct" CHECK ("FromProcedureId" <> "ToProcedureId")
             );
+            CREATE TABLE IF NOT EXISTS "PatientProcedureDecisions" (
+              "Id" uuid NOT NULL PRIMARY KEY,
+              "DentalPracticeId" uuid NOT NULL,
+              "PatientId" uuid NOT NULL,
+              "TreatmentPlanId" uuid NOT NULL,
+              "ProcedureId" uuid NOT NULL,
+              "AppointmentId" uuid NULL,
+              "Decision" varchar(24) NOT NULL,
+              "ClinicalReason" varchar(3000) NOT NULL,
+              "RisksExplained" varchar(3000) NOT NULL,
+              "AlternativesExplained" varchar(3000) NOT NULL,
+              "PatientResponse" varchar(3000) NOT NULL,
+              "RecordedByUserId" uuid NOT NULL,
+              "RecordedAtUtc" timestamptz NOT NULL DEFAULT now()
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS "IX_PatientProcedureDecisions_DentalPracticeId_ProcedureId"
+              ON "PatientProcedureDecisions" ("DentalPracticeId", "ProcedureId");
             CREATE UNIQUE INDEX IF NOT EXISTS "IX_PlanAdvanceTransfers_DentalPracticeId_RequestId"
               ON "PlanAdvanceTransfers" ("DentalPracticeId", "RequestId");
             CREATE INDEX IF NOT EXISTS "IX_PlanAdvanceTransfers_DentalPracticeId_TreatmentPlanId"
