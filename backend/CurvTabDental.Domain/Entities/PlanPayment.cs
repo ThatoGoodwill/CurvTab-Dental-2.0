@@ -31,3 +31,22 @@ public sealed class PlanPaymentAllocation : IPracticeOwned
     public decimal Amount { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 }
+
+
+// Append-only, authorised movement of EXISTING money between procedures.
+// It is never a cash/card/EFT receipt and must not appear in collections.
+public sealed class PlanAdvanceTransfer : IPracticeOwned
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid DentalPracticeId { get; set; }
+    public Guid PatientId { get; set; }
+    public Guid TreatmentPlanId { get; set; }
+    public Guid RequestId { get; set; }
+    public Guid FromProcedureId { get; set; }
+    public Guid ToProcedureId { get; set; }
+    public decimal Amount { get; set; }
+    public string AuthorizationName { get; set; } = string.Empty;
+    public string AuthorizationNote { get; set; } = string.Empty;
+    public Guid AuthorizedByUserId { get; set; }
+    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+}
