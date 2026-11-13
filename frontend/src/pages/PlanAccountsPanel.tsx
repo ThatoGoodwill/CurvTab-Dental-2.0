@@ -23,13 +23,28 @@ type AdvanceTransfer = {
   reason: string; authorizedByPatientName: string; authorizedAtUtc: string
 }
 type Detail = {
-  planId: string; title: string; planStatus: string; agreed: boolean
+  planId: string; patientId: string; title: string; planStatus: string; agreed: boolean
   patientName: string; practiceName: string; procedures: Proc[]
   total: number; totalPaid: number; heldAdvance: number; balance: number
   allProceduresCompleted: boolean; settled: boolean
   payments: Pay[]; allocations: Alloc[]; transfers: AdvanceTransfer[]
 }
 
+type PatientStatement = {
+  currency: string; patientName: string
+  originalPlannedValue: number; completedTreatmentValue: number
+  finalizedConsultationCharges: number
+  planAdvanceReceipts: number; planAdvancesApplied: number
+  unappliedPlanAdvances: number; checkoutReceipts: number
+  actualCollections: number; currentFinalizedBalance: number
+  transfers: AdvanceTransfer[]
+}
+type MonthlySummary = {
+  year: number; month: number; actualCollections: number
+  cashReceived: number; cardReceived: number; eftReceived: number
+  completedTreatmentValue: number; labExpensesActuallyRecorded: number
+  proceduresDeclinedOrCancelled: number; unappliedPlanAdvancesAtPeriodEnd: number
+}
 const zar = (v: number) =>
   new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(v)
 const when = (v: string) =>
@@ -54,6 +69,9 @@ export default function PlanAccountsPanel({ isManager = false }: { isManager?: b
   const [alloc, setAlloc] = useState<Record<string, string>>({})
   const [printing, setPrinting] = useState<'statement' | 'receipt' | null>(null)
   const [receiptBatch, setReceiptBatch] = useState<string | null>(null)
+  const [statement, setStatement] = useState<PatientStatement | null>(null)
+  const [monthly, setMonthly] = useState<MonthlySummary | null>(null)
+  const [reportMonth, setReportMonth] = useState(() => new Date().toISOString().slice(0, 7))
   const batchId = useRef<string | null>(null)
   const transferRequestId = useRef<string | null>(null)
   const [transferFrom, setTransferFrom] = useState('')
@@ -107,7 +125,7 @@ export default function PlanAccountsPanel({ isManager = false }: { isManager?: b
   }, [detail])
 
   function choose(id: string) {
-    setSelected(id); setDetail(null); setError(''); setOk('')
+    setSelected(id); setDetail(null); setStatement(null); setError(''); setOk('')
     setCash(''); setCard(''); setEft(''); setCardRef(''); setEftRef('')
     batchId.current = null
     transferRequestId.current = null
@@ -177,6 +195,25 @@ export default function PlanAccountsPanel({ isManager = false }: { isManager?: b
     } catch (e) { setError(msg(e)) } finally { setBusy(false) }
   }
 
+  async function loadStatement() {
+    if (!detail) return
+    setBusy(true); setError('')
+    try {
+      const value = await apiRequest<PatientStatement>(
+        `/billing/reports/patients/${encodeURIComponent(detail.patientId)}/statement`)
+      setStatement(value)
+    } catch (e) { setError(msg(e)) } finally { setBusy(false) }
+  }
+
+  async function loadMonthly() {
+    if (!isManager || !/^\d{4}-\d{2}$/.test(reportMonth)) return
+    const [year, month] = reportMonth.split('-').map(Number)
+    setBusy(true); setError('')
+    try {
+      setMonthly(await apiRequest<MonthlySummary>(`/billing/reports/monthly?year=${year}&month=${month}`))
+    } catch (e) { setError(msg(e)) } finally { setBusy(false) }
+  }
+
   function print(kind: 'statement' | 'receipt', batch?: string) {
     setReceiptBatch(batch ?? null)
     setPrinting(kind)
@@ -209,6 +246,29 @@ export default function PlanAccountsPanel({ isManager = false }: { isManager?: b
         {ok && <p role="status" className="pa-alert pa-ok">{ok}</p>}
       </div>
 
+      {isManager && (
+        <section className="pa-card pa-monthly-report">
+          <div className="pa-actions">
+            <label>Monthly clinical/financial report
+              <input type="month" value={reportMonth} onChange={e => setReportMonth(e.target.value)} />
+            </label>
+            <button type="button" className="secondary-button" disabled={busy} onClick={() => void loadMonthly()}>
+              View monthly summary
+            </button>
+          </div>
+          {monthly && <div className="pa-totals" role="region" aria-label="Monthly financial summary">
+            <div><span>Cash receipts</span><strong>{zar(monthly.cashReceived)}</strong></div>
+            <div><span>Card receipts</span><strong>{zar(monthly.cardReceived)}</strong></div>
+            <div><span>EFT receipts</span><strong>{zar(monthly.eftReceived)}</strong></div>
+            <div><span>Total actual collections</span><strong>{zar(monthly.actualCollections)}</strong></div>
+            <div><span>Completed clinical treatment value</span><strong>{zar(monthly.completedTreatmentValue)}</strong></div>
+            <div><span>Recorded lab expenses</span><strong>{zar(monthly.labExpensesActuallyRecorded)}</strong></div>
+            <div><span>Unapplied advances at month end</span><strong>{zar(monthly.unappliedPlanAdvancesAtPeriodEnd)}</strong></div>
+            <div><span>Declined / cancelled procedures</span><strong>{monthly.proceduresDeclinedOrCancelled}</strong></div>
+          </div>}
+        </section>
+      )}
+
       <div className="pa-grid">
         <div className="pa-card">
           <label className="pa-form"><span><Search size={14} /> Find patient or plan</span>
@@ -240,11 +300,31 @@ export default function PlanAccountsPanel({ isManager = false }: { isManager?: b
                   <h3 style={{ margin: 0 }}>{detail.patientName}</h3>
                   <small>{detail.title} · {detail.planStatus}</small>
                 </div>
-                <button type="button" className="secondary-button" onClick={() => print('statement')}>
-                  <Printer size={16} /> Statement
-                </button>
+                <div className="pa-actions">
+                  <button type="button" className="secondary-button" onClick={() => print('statement')}>
+                    <Printer size={14} /> Plan statement
+                  </button>
+                  <button type="button" className="secondary-button" disabled={busy} onClick={() => void loadStatement()}>
+                    Complete patient statement
+                  </button>
+                </div>
               </div>
 
+              {statement && (
+                <section className="pa-card pa-consolidated-statement" role="region" aria-label="Consolidated patient statement">
+                  <h4 style={{ margin: 0 }}>Consolidated statement · {statement.patientName}</h4>
+                  <div className="pa-totals">
+                    <div><span>Completed treatment value</span><strong>{zar(statement.completedTreatmentValue)}</strong></div>
+                    <div><span>Finalized consultation charges</span><strong>{zar(statement.finalizedConsultationCharges)}</strong></div>
+                    <div><span>Existing plan advances credited</span><strong>{zar(statement.planAdvancesApplied)}</strong></div>
+                    <div><span>Checkout receipts</span><strong>{zar(statement.checkoutReceipts)}</strong></div>
+                    <div><span>Total actual receipts (all dates)</span><strong>{zar(statement.actualCollections)}</strong></div>
+                    <div><span>Unapplied advance liability</span><strong>{zar(statement.unappliedPlanAdvances)}</strong></div>
+                    <div><span>Finalized balance</span><strong>{zar(statement.currentFinalizedBalance)}</strong></div>
+                  </div>
+                  <small>Advances and transfers are not counted as extra cash receipts. Cancellation and transfer history is preserved in the plan account.</small>
+                </section>
+              )}
               {detail.settled && <p className="pa-alert pa-ok">Treatment completed — account settled in full.</p>}
               {!detail.agreed && <p className="pa-alert pa-warn">The Dentist must record the patient's agreement to this plan before payments can be taken.</p>}
 
