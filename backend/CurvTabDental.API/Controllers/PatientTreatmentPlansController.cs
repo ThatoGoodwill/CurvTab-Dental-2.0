@@ -146,6 +146,10 @@ public sealed class PatientTreatmentPlansController : ControllerBase
             p.Id == procedureId && p.TreatmentPlanId == planId && p.DentalPracticeId == practiceId, ct);
         if (procedure is null) return NotFound();
         if (procedure.Status == "Completed") return NoContent();
+        if (!await _db.Appointments.AsNoTracking().AnyAsync(a =>
+            a.DentalPracticeId == practiceId && a.PatientId == patientId &&
+            a.Status == "InConsultation", ct))
+            return Conflict(new { message = "A clinician must start a real patient consultation before recording a procedure as performed." });
         if (procedure.Status is "Declined" or "Cancelled")
             return Conflict(new { message = "A cancelled or declined procedure cannot be completed. Retain the refusal history." });
         if (procedure.RequiresLab)
