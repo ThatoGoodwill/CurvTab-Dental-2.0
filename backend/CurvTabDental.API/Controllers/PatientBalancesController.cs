@@ -1,4 +1,5 @@
 using CurvTabDental.Application.Abstractions;
+using CurvTabDental.API.Services;
 using CurvTabDental.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -121,6 +122,24 @@ public sealed class PatientBalancesController : ControllerBase
             }
         ).ToListAsync(ct);
 
+        var finishedVisits = await (
+            from c in _db.Consultations.AsNoTracking()
+            join a in _db.Appointments.AsNoTracking() on c.AppointmentId equals a.Id
+            where c.DentalPracticeId == practiceId && a.DentalPracticeId == practiceId &&
+                c.IsFinalized && ids.Contains(a.PatientId)
+            select new { c.Id, a.PatientId }
+        ).ToListAsync(ct);
+        var credits = await TreatmentAdvanceCredit.ForConsultations(
+            _db, practiceId, finishedVisits.Select(v => v.Id).ToArray(), ct);
+        var appliedByPatient = finishedVisits.GroupBy(v => v.PatientId)
+            .ToDictionary(g => g.Key, g => g.Sum(v => credits.GetValueOrDefault(v.Id)));
+        var planCollections = await _db.PlanPayments.AsNoTracking()
+            .Where(p => p.DentalPracticeId == practiceId && ids.Contains(p.PatientId))
+            .GroupBy(p => p.PatientId)
+            .Select(g => new { PatientId = g.Key, Amount = g.Sum(p => p.Amount) })
+            .ToListAsync(ct);
+        var planReceived = planCollections.ToDictionary(x => x.PatientId, x => x.Amount);
+
         var chargedByPatient = charges.ToDictionary(
             x => x.PatientId, x => x.Amount);
 
@@ -130,7 +149,10 @@ public sealed class PatientBalancesController : ControllerBase
         var rows = selected.Select(p =>
         {
             var charged = chargedByPatient.GetValueOrDefault(p.Id);
-            var paid = paidByPatient.GetValueOrDefault(p.Id);
+            var checkoutReceived = paidByPatient.GetValueOrDefault(p.Id);
+            var advanceApplied = appliedByPatient.GetValueOrDefault(p.Id);
+            var paid = checkoutReceived + advanceApplied;
+            var unappliedAdvance = planReceived.GetValueOrDefault(p.Id) - advanceApplied;
 
             return new
             {
@@ -138,8 +160,11 @@ public sealed class PatientBalancesController : ControllerBase
                 patientName = p.FirstName + " " + p.LastName,
                 totalCharges = charged,
                 totalPayments = paid,
+                checkoutReceipts = checkoutReceived,
+                planAdvancesApplied = advanceApplied,
+                unappliedAdvances = decimal.Max(0m, unappliedAdvance),
                 balance = charged - paid,
-                requiresReview = paid > charged
+                requiresReview = paid > charged || unappliedAdvance < 0m
             };
         }).ToList();
 
@@ -156,10 +181,8 @@ public sealed class PatientBalancesController : ControllerBase
             displayedPayments = rows.Sum(x => x.totalPayments),
             displayedBalance = rows.Sum(x => x.balance),
             patients = rows,
-            scope = "Finalized consultation charges and " +
-                    "existing appointment payment receipts only.",
-            note = "This is not an issued-invoice or " +
-                   "complete accounts-receivable ledger."
+            scope = "Finalized consultation charges, checkout receipts and verified plan advances applied to those charges.",
+            note = "Unapplied advances remain patient liabilities, not earned revenue. This is not a complete issued-invoice/accounts-receivable ledger."
         });
     }
 }

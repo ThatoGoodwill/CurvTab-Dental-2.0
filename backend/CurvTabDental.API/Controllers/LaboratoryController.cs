@@ -517,12 +517,45 @@ public sealed class LaboratoryController : ControllerBase
         if (item.CustodyStatus != "AtPractice" || item.QaStatus != "Passed" ||
             item.ClinicalStatus == "Completed" || item.ManufacturingStatus != "Complete")
             return Invalid("Only uncompleted, QA-passed items physically at the practice may be fitted.");
+        if (!await _db.Appointments.AsNoTracking().AnyAsync(a =>
+            a.DentalPracticeId == order.DentalPracticeId && a.PatientId == order.PatientId &&
+            a.Status == "InConsultation", ct))
+            return Conflict(new { title = "Clinical fitting requires an active patient consultation for the dentist to document the actual fitting." });
         if (request.Outcome is not ("Fitted" or "NotFitted") || !Has(request.Notes, 2000) || request.GuaranteeNote?.Length > 1000)
             return BadRequest(new { title = "Record fitment outcome and clinical findings; any guarantee must be expressly agreed." });
+        // When fitted gold is linked to a patient treatment plan, the same
+        // authorized clinical event completes that exact planned procedure.
+        // This never creates a charge or a receipt; only the consultation can.
+        PatientTreatmentProcedure? matchingProcedure = null;
+        PatientTreatmentPlan? matchingPlan = null;
+        if (request.Outcome == "Fitted" && order.TreatmentPlanId.HasValue)
+        {
+            var candidates = await _db.PatientTreatmentProcedures
+                .Where(p => p.DentalPracticeId == order.DentalPracticeId &&
+                            p.PatientId == order.PatientId &&
+                            p.TreatmentPlanId == order.TreatmentPlanId.Value &&
+                            p.ToothCode == item.ToothCode && p.Description == item.Procedure)
+                .ToListAsync(ct);
+            if (candidates.Count != 1 || candidates[0].Status is "Declined" or "Cancelled")
+                return Conflict(new { title = "Cannot safely link this fitting to exactly one active patient plan procedure." });
+            matchingPlan = await _db.PatientTreatmentPlans.FirstOrDefaultAsync(p =>
+                p.Id == order.TreatmentPlanId.Value &&
+                p.DentalPracticeId == order.DentalPracticeId &&
+                p.PatientId == order.PatientId, ct);
+            if (matchingPlan?.ConsentRecordedAtUtc is null)
+                return Conflict(new { title = "Patient plan acknowledgement is required before linking fitted treatment." });
+            matchingProcedure = candidates[0];
+        }
         item.ClinicalStatus = request.Outcome == "Fitted" ? "Completed" : "NotFitted";
         if (request.Outcome == "Fitted")
         {
             item.CompletedAtUtc = DateTime.UtcNow;
+            if (matchingProcedure is not null && matchingPlan is not null)
+            {
+                matchingProcedure.Status = "Completed";
+                matchingProcedure.CompletedAtUtc = item.CompletedAtUtc;
+                matchingPlan.UpdatedAtUtc = DateTime.UtcNow;
+            }
             item.GuaranteeNote = Trim(request.GuaranteeNote);
             // New append-only dental-chart observation. Does not overwrite historical charting.
             if (item.ToothCode.Length == 2 && item.ToothCode.All(char.IsDigit))
@@ -535,6 +568,15 @@ public sealed class LaboratoryController : ControllerBase
         }
         Log(order, request.Outcome == "Fitted" ? "CLINICAL_FITMENT_ACCEPTED" : "CLINICAL_FITMENT_FAILED", Trim(request.Notes), id);
         await _db.SaveChangesAsync(ct);
+        if (matchingPlan is not null)
+        {
+            var statuses = await _db.PatientTreatmentProcedures.AsNoTracking()
+                .Where(p => p.DentalPracticeId == order.DentalPracticeId &&
+                            p.TreatmentPlanId == matchingPlan.Id)
+                .Select(p => p.Status).ToListAsync(ct);
+            if (statuses.Count > 0 && statuses.All(st => st is "Completed" or "Cancelled" or "Declined"))
+                matchingPlan.Status = "Completed";
+        }
         await RefreshOrder(order.Id, ct);
         await _db.SaveChangesAsync(ct);
         await _audit.WriteAsync("LAB_CLINICAL_FITMENT", "LaboratoryItem", id.ToString(), ct: ct);

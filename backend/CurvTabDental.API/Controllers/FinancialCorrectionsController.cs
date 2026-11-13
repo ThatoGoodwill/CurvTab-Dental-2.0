@@ -1,5 +1,6 @@
 // CT_PHASE7E3_REVERSAL_AWARE
 using CurvTabDental.Application.Abstractions;
+using CurvTabDental.API.Services;
 using CurvTabDental.Domain.Entities;
 using CurvTabDental.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
@@ -173,8 +174,11 @@ public sealed class FinancialCorrectionsController : ControllerBase
                 x.InvoiceId == invoiceId)
             .SumAsync(x => (decimal?)x.Amount, ct) ?? 0m;
 
+        var appliedAdvances = invoice.ConsultationId.HasValue
+            ? await TreatmentAdvanceCredit.ForConsultation(
+                _db, practiceId, invoice.ConsultationId.Value, ct) : 0m;
         var availableCredit =
-            invoice.TotalAmount - credits - allocated - schemePaid;
+            invoice.TotalAmount - credits - allocated - schemePaid - appliedAdvances;
 
         if (request.Amount > availableCredit)
             return Conflict(new {

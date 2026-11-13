@@ -33,7 +33,7 @@ export default function RecoveredClinicalWorkspace({ patientId, panel }: { patie
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
-  const [modal, setModal] = useState<'new' | 'procedure' | 'revise' | 'acknowledge' | null>(null)
+  const [modal, setModal] = useState<'new' | 'procedure' | 'revise' | 'acknowledge' | 'decision' | null>(null)
   const [activePlan, setActivePlan] = useState<Plan | null>(null)
   const [busy, setBusy] = useState(false)
   const [reload, setReload] = useState(0)
@@ -45,6 +45,11 @@ export default function RecoveredClinicalWorkspace({ patientId, panel }: { patie
   const [priceId, setPriceId] = useState('')
   const [consentName, setConsentName] = useState('')
   const [acknowledged, setAcknowledged] = useState(false)
+  const [decisionProcedure, setDecisionProcedure] = useState<Procedure | null>(null)
+  const [decisionStatus, setDecisionStatus] = useState<'Deferred' | 'Declined' | 'Cancelled'>('Deferred')
+  const [decisionReason, setDecisionReason] = useState('')
+  const [decisionExplanation, setDecisionExplanation] = useState('')
+  const [decisionPerson, setDecisionPerson] = useState('')
   const [prices, setPrices] = useState<CataloguePrice[]>([])
   const path = `/dentist/patients/${encodeURIComponent(patientId)}/treatment-plans`
 
@@ -81,10 +86,16 @@ export default function RecoveredClinicalWorkspace({ patientId, panel }: { patie
     } finally { setBusy(false) }
   }
 
-  function openModal(type: 'new' | 'procedure' | 'revise' | 'acknowledge', plan?: Plan) {
+  function openModal(type: 'new' | 'procedure' | 'revise' | 'acknowledge' | 'decision',
+    plan?: Plan, procedure?: Procedure) {
     setError('')
     setNotice('')
     setActivePlan(plan || null)
+    setDecisionProcedure(procedure || null)
+    setDecisionStatus('Deferred')
+    setDecisionReason('')
+    setDecisionExplanation('')
+    setDecisionPerson('')
     setTitle(type === 'revise' ? plan?.title || '' : '')
     setRationale(type === 'revise' ? plan?.clinicalRationale || '' : '')
     setDescription('')
@@ -110,6 +121,13 @@ export default function RecoveredClinicalWorkspace({ patientId, panel }: { patie
       if (modal === 'revise' && activePlan) await apiRequest(`${path}/${activePlan.id}`, 'PUT', { title, clinicalRationale: rationale })
       if (modal === 'procedure' && activePlan) await apiRequest(`${path}/${activePlan.id}/procedures`, 'POST', { description, toothCode: tooth || null, estimatedCost: cost.trim() === '' ? null : Number(cost), procedurePriceId: priceId || null })
       if (modal === 'acknowledge' && activePlan) await apiRequest(`${path}/${activePlan.id}/consent`, 'POST', { patientOrRepresentativeName: consentName, acknowledged })
+      if (modal === 'decision' && activePlan && decisionProcedure) {
+        await apiRequest(`${path}/${activePlan.id}/procedures/${decisionProcedure.id}/decision`, 'POST', {
+          decision: decisionStatus, reason: decisionReason.trim(),
+          risksAndAlternativesExplained: decisionExplanation.trim(),
+          patientOrRepresentativeName: decisionPerson.trim(),
+        })
+      }
       setNotice('Saved successfully. The clinical record has been updated.')
       setModal(null)
       setReload(n => n + 1)
@@ -146,7 +164,13 @@ export default function RecoveredClinicalWorkspace({ patientId, panel }: { patie
         <p>{details(plan.clinicalRationale)}</p>
         <h4>Planned procedures</h4>
         {plan.procedures.length ? <div className="ct-recovered-table-wrap"><table><thead><tr><th>Procedure</th><th>Tooth</th><th>Estimated cost</th><th>Status</th></tr></thead><tbody>
-          {plan.procedures.map(p => <tr key={p.id}><td>{p.description}{p.requiresLab && <> <strong title="Needs a laboratory order">· LAB REQUIRED</strong></>}</td><td>{p.toothCode || '—'}</td><td>{p.estimatedCost === null ? '—' : `R ${p.estimatedCost.toFixed(2)}`}</td><td>{p.status}{plan.consentRecordedAtUtc && p.status !== 'Completed' && p.status !== 'Cancelled' && <> <button type="button" disabled={busy} onClick={() => void completeProcedure(plan.id, p.id)}>Mark completed</button></>}</td></tr>)}
+          {plan.procedures.map(p => <tr key={p.id}><td>{p.description}{p.requiresLab && <> <strong title="Needs a laboratory order">· LAB REQUIRED</strong></>}</td><td>{p.toothCode || '—'}</td><td>{p.estimatedCost === null ? '—' : `R ${p.estimatedCost.toFixed(2)}`}</td><td>
+            <span>{p.status}</span>
+            {plan.consentRecordedAtUtc && p.status !== 'Completed' && p.status !== 'Cancelled' && p.status !== 'Declined' && <>
+              <button type="button" disabled={busy} onClick={() => void completeProcedure(plan.id, p.id)}>Mark completed</button>
+              <button type="button" disabled={busy} onClick={() => openModal('decision', plan, p)}>Defer / Decline</button>
+            </>}
+            </td></tr>)}
         </tbody></table></div> : <p>No procedures added.</p>}
         {plan.consentRecordedAtUtc && <p className="ct-recovered-notice">Acknowledgement recorded for {plan.consentName} on {date(plan.consentRecordedAtUtc)}. This is a recorded acknowledgement, not a digital signature.</p>}
         {!plan.consentRecordedAtUtc && <div className="ct-recovered-actions">
@@ -172,8 +196,8 @@ export default function RecoveredClinicalWorkspace({ patientId, panel }: { patie
     </article>}
 
     {modal && <div className="ct-recovered-modal-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget && !busy) setModal(null) }}>
-      <div className="ct-recovered-modal" role="dialog" aria-modal="true" aria-label={modal === 'new' ? 'New treatment plan' : modal === 'procedure' ? 'Add treatment procedure' : modal === 'revise' ? 'Revise treatment plan' : 'Record patient acknowledgement'}>
-        <div className="ct-recovered-card-head"><h3>{modal === 'new' ? 'New Treatment Plan' : modal === 'procedure' ? 'Add Procedure' : modal === 'revise' ? 'Revise Treatment Plan' : 'Record Acknowledgement'}</h3><button type="button" onClick={() => setModal(null)} disabled={busy} aria-label="Close">×</button></div>
+      <div className="ct-recovered-modal" role="dialog" aria-modal="true" aria-label={modal === 'new' ? 'New treatment plan' : modal === 'procedure' ? 'Add treatment procedure' : modal === 'revise' ? 'Revise treatment plan' : modal === 'decision' ? 'Clinical procedure decision' : 'Record patient acknowledgement'}>
+        <div className="ct-recovered-card-head"><h3>{modal === 'new' ? 'New Treatment Plan' : modal === 'procedure' ? 'Add Procedure' : modal === 'revise' ? 'Revise Treatment Plan' : modal === 'decision' ? 'Defer / Decline Procedure' : 'Record Acknowledgement'}</h3><button type="button" onClick={() => setModal(null)} disabled={busy} aria-label="Close">×</button></div>
         <form onSubmit={e => void submit(e)}>
           {(modal === 'new' || modal === 'revise') && <>
             <label>Plan title
@@ -208,6 +232,27 @@ export default function RecoveredClinicalWorkspace({ patientId, panel }: { patie
             </label>
             <label>Estimated cost (approved ZAR)<input readOnly type="text" value={cost ? 'R ' + cost : ''} placeholder="Select a procedure first" /></label>
           </>}
+          {modal === 'decision' && <div className="ct-clinical-decision-fields">
+            <p><strong>{decisionProcedure?.description}</strong> — tooth {decisionProcedure?.toothCode || '—'}. A declined/cancelled procedure is never marked completed. Any advance remains held until separately resolved by an authorised manager.</p>
+            <label>Clinical decision
+              <select value={decisionStatus} onChange={e => setDecisionStatus(e.target.value as 'Deferred' | 'Declined' | 'Cancelled')}>
+                <option value="Deferred">Deferred — treatment planned for later</option>
+                <option value="Declined">Declined — patient refuses proposed treatment</option>
+                <option value="Cancelled">Cancelled — planned treatment not performed</option>
+              </select>
+            </label>
+            <label>Reason / clinical notes
+              <textarea required minLength={8} maxLength={2000} rows={3} value={decisionReason} onChange={e => setDecisionReason(e.target.value)} />
+            </label>
+            {(decisionStatus === 'Declined' || decisionStatus === 'Cancelled') && <>
+              <label>Risks, alternatives and consequences explained
+                <textarea required minLength={12} maxLength={4000} rows={3} value={decisionExplanation} onChange={e => setDecisionExplanation(e.target.value)} />
+              </label>
+              <label>Patient / representative who declined or agreed to cancellation
+                <input required minLength={2} maxLength={200} value={decisionPerson} onChange={e => setDecisionPerson(e.target.value)} />
+              </label>
+            </>}
+          </div>}
           {modal === 'acknowledge' && <><p>This records that the treatment plan was discussed and acknowledged. It does not replace a signed consent form or the dentist's clinical consent process.</p><label>Patient or representative name<input required maxLength={200} value={consentName} onChange={e => setConsentName(e.target.value)} /></label><label className="ct-recovered-check"><input type="checkbox" required checked={acknowledged} onChange={e => setAcknowledged(e.target.checked)} /> I confirm acknowledgement was obtained from the named person.</label></>}
           <div className="ct-recovered-actions"><button type="button" onClick={() => setModal(null)} disabled={busy}>Cancel</button><button type="submit" className="ct-recovered-primary" disabled={busy}>{busy ? 'Saving...' : 'Save'}</button></div>
         </form>

@@ -7,25 +7,44 @@ import './PlanAccountsPanel.css'
 type PlanRow = {
   planId: string; patientId: string; patientName: string; title: string
   status: string; agreed: boolean; total: number; paid: number; balance: number
-  procedureCount: number; completedCount: number
+  procedureCount: number; completedCount: number; heldAdvance?: number
 }
 type Proc = {
   id: string; description: string; toothCode: string | null; status: string
-  cost: number; paid: number; due: number; completedAtUtc: string | null
+  cost: number; paid: number; due: number; heldAdvance?: number; completedAtUtc: string | null
 }
 type Pay = {
   id: string; batchId: string; receiptNumber: string; amount: number
   method: string; reference: string | null; receivedAtUtc: string
 }
 type Alloc = { batchId: string; procedureId: string; amount: number; createdAtUtc: string }
+type AdvanceTransfer = {
+  id: string; fromProcedureId: string; toProcedureId: string; amount: number
+  reason: string; authorizedByPatientName: string; authorizedAtUtc: string
+}
 type Detail = {
-  planId: string; title: string; planStatus: string; agreed: boolean
+  planId: string; patientId: string; title: string; planStatus: string; agreed: boolean
   patientName: string; practiceName: string; procedures: Proc[]
-  total: number; totalPaid: number; balance: number
+  total: number; totalPaid: number; heldAdvance: number; balance: number
   allProceduresCompleted: boolean; settled: boolean
-  payments: Pay[]; allocations: Alloc[]
+  payments: Pay[]; allocations: Alloc[]; transfers: AdvanceTransfer[]
 }
 
+type PatientStatement = {
+  currency: string; patientName: string
+  originalPlannedValue: number; completedTreatmentValue: number
+  finalizedConsultationCharges: number
+  planAdvanceReceipts: number; planAdvancesApplied: number
+  unappliedPlanAdvances: number; checkoutReceipts: number
+  actualCollections: number; currentFinalizedBalance: number
+  transfers: AdvanceTransfer[]
+}
+type MonthlySummary = {
+  year: number; month: number; actualCollections: number
+  cashReceived: number; cardReceived: number; eftReceived: number
+  completedTreatmentValue: number; labExpensesActuallyRecorded: number
+  proceduresDeclinedOrCancelled: number; unappliedPlanAdvancesAtPeriodEnd: number
+}
 const zar = (v: number) =>
   new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(v)
 const when = (v: string) =>
@@ -33,7 +52,7 @@ const when = (v: string) =>
 const cents = (v: string) => Math.round((Number(v) || 0) * 100)
 const msg = (e: unknown) => (e instanceof Error ? e.message : 'Request failed.')
 
-export default function PlanAccountsPanel() {
+export default function PlanAccountsPanel({ isManager = false }: { isManager?: boolean }) {
   const [rows, setRows] = useState<PlanRow[]>([])
   const [q, setQ] = useState('')
   const [selected, setSelected] = useState<string | null>(null)
@@ -50,7 +69,17 @@ export default function PlanAccountsPanel() {
   const [alloc, setAlloc] = useState<Record<string, string>>({})
   const [printing, setPrinting] = useState<'statement' | 'receipt' | null>(null)
   const [receiptBatch, setReceiptBatch] = useState<string | null>(null)
+  const [statement, setStatement] = useState<PatientStatement | null>(null)
+  const [monthly, setMonthly] = useState<MonthlySummary | null>(null)
+  const [reportMonth, setReportMonth] = useState(() => new Date().toISOString().slice(0, 7))
   const batchId = useRef<string | null>(null)
+  const transferRequestId = useRef<string | null>(null)
+  const [transferFrom, setTransferFrom] = useState('')
+  const [transferTo, setTransferTo] = useState('')
+  const [transferAmount, setTransferAmount] = useState('')
+  const [transferReason, setTransferReason] = useState('')
+  const [transferPerson, setTransferPerson] = useState('')
+  const [transferAuthorized, setTransferAuthorized] = useState(false)
 
   useEffect(() => {
     let live = true
@@ -96,9 +125,12 @@ export default function PlanAccountsPanel() {
   }, [detail])
 
   function choose(id: string) {
-    setSelected(id); setDetail(null); setError(''); setOk('')
+    setSelected(id); setDetail(null); setStatement(null); setError(''); setOk('')
     setCash(''); setCard(''); setEft(''); setCardRef(''); setEftRef('')
     batchId.current = null
+    transferRequestId.current = null
+    setTransferFrom(''); setTransferTo(''); setTransferAmount('')
+    setTransferReason(''); setTransferPerson(''); setTransferAuthorized(false)
   }
   const touch = () => { batchId.current = null }
 
@@ -137,6 +169,51 @@ export default function PlanAccountsPanel() {
     } catch (e) { setError(msg(e)) } finally { setBusy(false) }
   }
 
+  async function submitTransfer(ev: FormEvent) {
+    ev.preventDefault()
+    if (!isManager || !detail || busy) return
+    if (!transferAuthorized || !transferPerson.trim() || transferReason.trim().length < 8 ||
+        !transferFrom || !transferTo || transferFrom === transferTo ||
+        !(Number(transferAmount) > 0)) {
+      setError('Select two different procedures and record the patient’s express authorization and reason.')
+      return
+    }
+    setBusy(true); setError(''); setOk('')
+    try {
+      if (!transferRequestId.current) transferRequestId.current = crypto.randomUUID()
+      await apiRequest(`/billing/plan-accounts/${encodeURIComponent(detail.planId)}/transfers`, 'POST', {
+        requestId: transferRequestId.current, fromProcedureId: transferFrom,
+        toProcedureId: transferTo, amount: Number(transferAmount),
+        patientAuthorized: transferAuthorized, authorizedByPatientName: transferPerson.trim(),
+        reason: transferReason.trim(),
+      })
+      transferRequestId.current = null
+      setTransferFrom(''); setTransferTo(''); setTransferAmount('')
+      setTransferReason(''); setTransferPerson(''); setTransferAuthorized(false)
+      setOk('Advance reallocated with patient authorization. No new cash receipt was created.')
+      setRevision(n => n + 1)
+    } catch (e) { setError(msg(e)) } finally { setBusy(false) }
+  }
+
+  async function loadStatement() {
+    if (!detail) return
+    setBusy(true); setError('')
+    try {
+      const value = await apiRequest<PatientStatement>(
+        `/billing/reports/patients/${encodeURIComponent(detail.patientId)}/statement`)
+      setStatement(value)
+    } catch (e) { setError(msg(e)) } finally { setBusy(false) }
+  }
+
+  async function loadMonthly() {
+    if (!isManager || !/^\d{4}-\d{2}$/.test(reportMonth)) return
+    const [year, month] = reportMonth.split('-').map(Number)
+    setBusy(true); setError('')
+    try {
+      setMonthly(await apiRequest<MonthlySummary>(`/billing/reports/monthly?year=${year}&month=${month}`))
+    } catch (e) { setError(msg(e)) } finally { setBusy(false) }
+  }
+
   function print(kind: 'statement' | 'receipt', batch?: string) {
     setReceiptBatch(batch ?? null)
     setPrinting(kind)
@@ -169,6 +246,29 @@ export default function PlanAccountsPanel() {
         {ok && <p role="status" className="pa-alert pa-ok">{ok}</p>}
       </div>
 
+      {isManager && (
+        <section className="pa-card pa-monthly-report">
+          <div className="pa-actions">
+            <label>Monthly clinical/financial report
+              <input type="month" value={reportMonth} onChange={e => setReportMonth(e.target.value)} />
+            </label>
+            <button type="button" className="secondary-button" disabled={busy} onClick={() => void loadMonthly()}>
+              View monthly summary
+            </button>
+          </div>
+          {monthly && <div className="pa-totals" role="region" aria-label="Monthly financial summary">
+            <div><span>Cash receipts</span><strong>{zar(monthly.cashReceived)}</strong></div>
+            <div><span>Card receipts</span><strong>{zar(monthly.cardReceived)}</strong></div>
+            <div><span>EFT receipts</span><strong>{zar(monthly.eftReceived)}</strong></div>
+            <div><span>Total actual collections</span><strong>{zar(monthly.actualCollections)}</strong></div>
+            <div><span>Completed clinical treatment value</span><strong>{zar(monthly.completedTreatmentValue)}</strong></div>
+            <div><span>Recorded lab expenses</span><strong>{zar(monthly.labExpensesActuallyRecorded)}</strong></div>
+            <div><span>Unapplied advances at month end</span><strong>{zar(monthly.unappliedPlanAdvancesAtPeriodEnd)}</strong></div>
+            <div><span>Declined / cancelled procedures</span><strong>{monthly.proceduresDeclinedOrCancelled}</strong></div>
+          </div>}
+        </section>
+      )}
+
       <div className="pa-grid">
         <div className="pa-card">
           <label className="pa-form"><span><Search size={14} /> Find patient or plan</span>
@@ -200,11 +300,31 @@ export default function PlanAccountsPanel() {
                   <h3 style={{ margin: 0 }}>{detail.patientName}</h3>
                   <small>{detail.title} · {detail.planStatus}</small>
                 </div>
-                <button type="button" className="secondary-button" onClick={() => print('statement')}>
-                  <Printer size={16} /> Statement
-                </button>
+                <div className="pa-actions">
+                  <button type="button" className="secondary-button" onClick={() => print('statement')}>
+                    <Printer size={14} /> Plan statement
+                  </button>
+                  <button type="button" className="secondary-button" disabled={busy} onClick={() => void loadStatement()}>
+                    Complete patient statement
+                  </button>
+                </div>
               </div>
 
+              {statement && (
+                <section className="pa-card pa-consolidated-statement" role="region" aria-label="Consolidated patient statement">
+                  <h4 style={{ margin: 0 }}>Consolidated statement · {statement.patientName}</h4>
+                  <div className="pa-totals">
+                    <div><span>Completed treatment value</span><strong>{zar(statement.completedTreatmentValue)}</strong></div>
+                    <div><span>Finalized consultation charges</span><strong>{zar(statement.finalizedConsultationCharges)}</strong></div>
+                    <div><span>Existing plan advances credited</span><strong>{zar(statement.planAdvancesApplied)}</strong></div>
+                    <div><span>Checkout receipts</span><strong>{zar(statement.checkoutReceipts)}</strong></div>
+                    <div><span>Total actual receipts (all dates)</span><strong>{zar(statement.actualCollections)}</strong></div>
+                    <div><span>Unapplied advance liability</span><strong>{zar(statement.unappliedPlanAdvances)}</strong></div>
+                    <div><span>Finalized balance</span><strong>{zar(statement.currentFinalizedBalance)}</strong></div>
+                  </div>
+                  <small>Advances and transfers are not counted as extra cash receipts. Cancellation and transfer history is preserved in the plan account.</small>
+                </section>
+              )}
               {detail.settled && <p className="pa-alert pa-ok">Treatment completed — account settled in full.</p>}
               {!detail.agreed && <p className="pa-alert pa-warn">The Dentist must record the patient's agreement to this plan before payments can be taken.</p>}
 
@@ -225,8 +345,53 @@ export default function PlanAccountsPanel() {
               <div className="pa-totals">
                 <div><span>Total treatment</span><strong>{zar(detail.total)}</strong></div>
                 <div><span>Paid so far</span><strong>{zar(detail.totalPaid)}</strong></div>
-                <div><span>Outstanding balance</span><strong>{zar(detail.balance)}</strong></div>
+                <div><span>Outstanding planned value</span><strong>{zar(detail.balance)}</strong></div>
+                {detail.heldAdvance > 0 && <div><span>Advance held for cancelled/declined work</span><strong>{zar(detail.heldAdvance)}</strong></div>}
               </div>
+              {isManager && detail.heldAdvance > 0 && (
+                <form className="pa-form" onSubmit={e => void submitTransfer(e)}>
+                  <h4 style={{ margin: 0 }}>Authorised advance transfer</h4>
+                  <p style={{ margin: 0, fontSize: 11 }}>Move an existing receipt allocation from a declined/cancelled procedure. No cash is recorded again.</p>
+                  <div className="pa-row2">
+                    <label>From declined/cancelled procedure
+                      <select required value={transferFrom} onChange={e => { setTransferFrom(e.target.value); transferRequestId.current = null }}>
+                        <option value="">Choose source…</option>
+                        {detail.procedures.filter(p => (p.status === 'Declined' || p.status === 'Cancelled') && (p.heldAdvance ?? p.paid) > 0)
+                          .map(p => <option key={p.id} value={p.id}>{p.description} · {zar(p.heldAdvance ?? p.paid)} held</option>)}
+                      </select>
+                    </label>
+                    <label>To active procedure
+                      <select required value={transferTo} onChange={e => { setTransferTo(e.target.value); transferRequestId.current = null }}>
+                        <option value="">Choose destination…</option>
+                        {detail.procedures.filter(p => p.cost > 0 && p.due > 0 && p.status !== 'Declined' && p.status !== 'Cancelled')
+                          .map(p => <option key={p.id} value={p.id}>{p.description} · {zar(p.due)} due</option>)}
+                      </select>
+                    </label>
+                  </div>
+                  <div className="pa-row2">
+                    <label>Amount (R)<input type="number" required min="0.01" step="0.01" value={transferAmount} onChange={e => { setTransferAmount(e.target.value); transferRequestId.current = null }} /></label>
+                    <label>Patient or representative name<input required maxLength={200} value={transferPerson} onChange={e => { setTransferPerson(e.target.value); transferRequestId.current = null }} /></label>
+                  </div>
+                  <label>Recorded reason and authorization evidence
+                    <textarea required minLength={8} maxLength={2000} rows={2} value={transferReason} onChange={e => { setTransferReason(e.target.value); transferRequestId.current = null }} />
+                  </label>
+                  <label className="pa-advance-authorization">
+                    <input type="checkbox" required checked={transferAuthorized} onChange={e => { setTransferAuthorized(e.target.checked); transferRequestId.current = null }} />
+                    I confirm the named patient/representative authorized this exact transfer.
+                  </label>
+                  <button type="submit" className="primary-button" disabled={busy || !transferAuthorized}>{busy ? 'Recording…' : 'Transfer existing advance'}</button>
+                </form>
+              )}
+              {(detail.transfers?.length ?? 0) > 0 && (
+                <section className="pa-advance-history">
+                  <h4>Audited advance transfers (no new receipt)</h4>
+                  {detail.transfers.map(t => <p key={t.id}>
+                    {when(t.authorizedAtUtc)} · {zar(t.amount)} ·
+                    {procById.get(t.fromProcedureId)?.description} → {procById.get(t.toProcedureId)?.description}
+                    <small> · authorized by {t.authorizedByPatientName}</small>
+                  </p>)}
+                </section>
+              )}
 
               {detail.agreed && detail.balance > 0 && (
                 <form className="pa-form" onSubmit={submit}>

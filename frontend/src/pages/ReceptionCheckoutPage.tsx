@@ -11,6 +11,8 @@ type WaitingCheckout = {
   status: string
   completedAtUtc: string | null
   amountDue: number
+  advanceApplied: number
+  remainingBalance: number
   currency: string
 }
 type HistoryRow = {
@@ -36,6 +38,7 @@ type Details = {
   checkedOutAtUtc: string | null
   amountDue: number
   amountPaid: number
+  planAdvanceApplied: number
   balance: number
   currency: string
   payments: Payment[]
@@ -53,6 +56,7 @@ type Receipt = {
   currency: string
   amountBilled: number
   totalPaid: number
+  planAdvanceApplied: number
   balance: number
   status: string
 }
@@ -273,7 +277,7 @@ export default function ReceptionCheckoutPage({ initialAppointmentId }: { initia
                 onClick={() => choose(row.appointmentId)}>
                 <strong>{row.patientName}</strong>
                 <small>Consultation completed {when(row.completedAtUtc)}</small>
-                <span>{money(row.amountDue)} billed</span>
+                <span>{money(row.remainingBalance)} outstanding{row.advanceApplied > 0 ? ` · ${money(row.advanceApplied)} advance applied` : ''}</span>
               </button>)
             )
           ) : completed.length === 0 ? (
@@ -298,7 +302,8 @@ export default function ReceptionCheckoutPage({ initialAppointmentId }: { initia
               </div>
               <div className="checkout-amounts">
                 <div><span>Amount charged by Dentist</span><strong>{money(detail.amountDue)}</strong></div>
-                <div><span>Payments received</span><strong>{money(detail.amountPaid)}</strong></div>
+                {detail.planAdvanceApplied > 0 && <div><span>Plan advances already received</span><strong>{money(detail.planAdvanceApplied)}</strong></div>}
+                <div><span>Total applied to visit</span><strong>{money(detail.amountPaid)}</strong></div>
                 <div className="checkout-due"><span>Remaining balance</span><strong>{money(detail.balance)}</strong></div>
               </div>
               {detail.status === 'AwaitingCheckout' && detail.balance > 0 && (
@@ -358,7 +363,7 @@ export default function ReceptionCheckoutPage({ initialAppointmentId }: { initia
                 <CheckCircle2 size={17}/> Checked out: {when(detail.checkedOutAtUtc)}</p>}
               <div className="checkout-received">
                 <h3>Payment history & receipts</h3>
-                {detail.payments.length === 0 ? <p>No payments recorded for this visit.</p>
+                {detail.payments.length === 0 ? <p>No new checkout receipts for this visit. Earlier plan advance receipts remain in the Plan Account.</p>
                   : detail.payments.map(item => <div className="checkout-payment-row" key={item.id}>
                     <div><strong>{money(item.amount)} · {item.method}</strong>
                       <small>{when(item.receivedAtUtc)} · {item.receiptNumber}</small></div>
@@ -390,7 +395,8 @@ export default function ReceptionCheckoutPage({ initialAppointmentId }: { initia
           <hr/>
           <p><strong>Amount received:</strong> {money(receipt.amount)}</p>
           <p><strong>Total billed for visit:</strong> {money(receipt.amountBilled)}</p>
-          <p><strong>Total received for visit:</strong> {money(receipt.totalPaid)}</p>
+          {receipt.planAdvanceApplied > 0 && <p><strong>Previously received plan advances:</strong> {money(receipt.planAdvanceApplied)}</p>}
+           <p><strong>Total applied to visit:</strong> {money(receipt.totalPaid)}</p>
           <p><strong>Outstanding balance:</strong> {money(receipt.balance)}</p>
           <p className="checkout-receipt-note">Payment acknowledgement only. Not a tax invoice or medical-aid claim.</p>
         </div>

@@ -1,4 +1,5 @@
 using CurvTabDental.Application.Abstractions;
+using CurvTabDental.API.Services;
 using CurvTabDental.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -59,6 +60,15 @@ public sealed class FrontDeskCheckoutController : ControllerBase
             .ToDictionary(g => g.Key, g => g.Sum(c => c.Amount));
         var consultationByAppointment = consultations
             .ToDictionary(c => c.AppointmentId, c => c.Id);
+        var advanceCredits = await TreatmentAdvanceCredit.ForConsultations(
+            _db, practiceId, consultationIds, ct);
+        var checkoutReceived = await _db.Payments.AsNoTracking()
+            .Where(p => p.DentalPracticeId == practiceId &&
+                        appointmentIds.Contains(p.AppointmentId))
+            .GroupBy(p => p.AppointmentId)
+            .Select(g => new { AppointmentId = g.Key, Paid = g.Sum(p => p.Amount) })
+            .ToListAsync(ct);
+        var paidByAppointment = checkoutReceived.ToDictionary(p => p.AppointmentId, p => p.Paid);
 
         return Ok(waiting
             .Where(v => consultationByAppointment.ContainsKey(v.appointmentId))
@@ -71,6 +81,12 @@ public sealed class FrontDeskCheckoutController : ControllerBase
                 v.completedAtUtc,
                 amountDue = totals.GetValueOrDefault(
                     consultationByAppointment[v.appointmentId], 0m),
+                advanceApplied = advanceCredits.GetValueOrDefault(
+                    consultationByAppointment[v.appointmentId]),
+                remainingBalance = totals.GetValueOrDefault(
+                    consultationByAppointment[v.appointmentId], 0m) -
+                    advanceCredits.GetValueOrDefault(consultationByAppointment[v.appointmentId]) -
+                    paidByAppointment.GetValueOrDefault(v.appointmentId),
                 currency = "ZAR"
             })
             .ToList());
