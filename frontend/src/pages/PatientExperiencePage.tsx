@@ -1,4 +1,5 @@
 import PatientPrescriptionNotes from './PatientPrescriptionNotes'
+import ClinicalDocumentsPanel from './ClinicalDocumentsPanel'
 import PatientAccountActivityView from './PatientAccountActivityView'
 import PatientAccountInvoiceView from './PatientAccountInvoiceView'
 import DentalChartingPage from './DentalChartingPage'
@@ -803,7 +804,7 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
                 ['Treatment Plan', 'Plan patient procedures'],
                 ['Clinical Notes & Encounters', 'Treatment notes and encounters'],
                 ['Clinical Images', 'Patient clinical images'],
-                ['Prescriptions', 'Review consultation prescription notes'],
+                ['Prescriptions', 'Issue prescriptions and certificates, review notes'],
               ] as const).map(([name, description]) => (
                 <button
                   key={name}
@@ -889,7 +890,13 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
         />
               </div>
             ) : treatmentSection === 'Prescriptions' ? (
-              <PatientPrescriptionNotes patientId={selected.id} />
+              <>
+                <ClinicalDocumentsPanel patientId={selected.id} />
+                <details className="ct-clinical-legacy-notes">
+                  <summary>Earlier consultation prescription notes (not prescriptions)</summary>
+                  <PatientPrescriptionNotes patientId={selected.id} />
+                </details>
+              </>
             ) : (
               <DentalChartingPage
                 key={`${selected.id}-${treatmentSection}`}
