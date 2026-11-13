@@ -2750,6 +2750,89 @@ namespace CurvTabDental.Infrastructure.Migrations
                     b.ToTable("PaymentAllocationReversal");
                 });
 
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.PlanAllocationTransfer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<Guid>("AuthorizedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DentalPracticeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("FromProcedureId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PatientAuthorization")
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ToProcedureId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TreatmentPlanId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DentalPracticeId", "RequestId").IsUnique();
+
+                    b.HasIndex("DentalPracticeId", "TreatmentPlanId");
+
+                    b.ToTable("PlanAllocationTransfers", (string)null);
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.TreatmentProcedureRefusal", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClinicalNotes")
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<Guid>("ClinicianUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DentalPracticeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PatientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PatientOrRepresentative")
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("ProcedureId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("RecordedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RisksAndAlternatives")
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<Guid>("TreatmentPlanId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DentalPracticeId", "ProcedureId").IsUnique();
+
+                    b.ToTable("TreatmentProcedureRefusals", (string)null);
+                });
+
             modelBuilder.Entity("CurvTabDental.Domain.Entities.PlanPayment", b =>
                 {
                     b.Property<Guid>("Id")
