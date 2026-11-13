@@ -33,7 +33,7 @@ const when = (v: string) =>
 const cents = (v: string) => Math.round((Number(v) || 0) * 100)
 const msg = (e: unknown) => (e instanceof Error ? e.message : 'Request failed.')
 
-export default function PlanAccountsPanel() {
+export default function PlanAccountsPanel({ canTransfer = false }: { canTransfer?: boolean }) {
   const [rows, setRows] = useState<PlanRow[]>([])
   const [q, setQ] = useState('')
   const [selected, setSelected] = useState<string | null>(null)
