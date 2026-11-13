@@ -14,12 +14,14 @@ public static class PlanCreditCalculator
     public sealed record CreditSnapshot(decimal Total, IReadOnlyList<AppliedCredit> Items);
 
     public static async Task<CreditSnapshot> ForConsultation(
-        DentalDbContext db, Guid practiceId, Guid patientId, Guid consultationId,
+        DentalDbContext db, Guid practiceId, Guid patientId, Guid? consultationId,
         CancellationToken ct)
     {
+        if (consultationId is not Guid linkedConsultation)
+            return new CreditSnapshot(0m, Array.Empty<AppliedCredit>());
         var charges = await db.ConsultationCharges.AsNoTracking()
             .Where(c => c.DentalPracticeId == practiceId &&
-                c.ConsultationId == consultationId && c.TreatmentProcedureId != null)
+                c.ConsultationId == linkedConsultation && c.TreatmentProcedureId != null)
             .Select(c => new { c.TreatmentProcedureId, c.Amount }).ToListAsync(ct);
         var ids = charges.Where(c => c.TreatmentProcedureId.HasValue)
             .Select(c => c.TreatmentProcedureId!.Value).Distinct().ToList();
