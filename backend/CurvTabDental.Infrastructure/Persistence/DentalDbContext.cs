@@ -43,6 +43,8 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
     public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
     public DbSet<PracticeAppearance> PracticeAppearances => Set<PracticeAppearance>();
     public DbSet<Consultation> Consultations => Set<Consultation>();
+    public DbSet<ClinicalPrescription> ClinicalPrescriptions => Set<ClinicalPrescription>();
+    public DbSet<PatientMedicalCertificate> PatientMedicalCertificates => Set<PatientMedicalCertificate>();
     public DbSet<PatientMedicalHistory> PatientMedicalHistories => Set<PatientMedicalHistory>();
     // CT_REGISTRATION_COMPLETE_V2
     public DbSet<PatientRegistrationDetails> PatientRegistrationDetails => Set<PatientRegistrationDetails>();
@@ -99,6 +101,33 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
             e.Property(x => x.Amount).HasPrecision(12, 2);
             e.HasIndex(x => new { x.DentalPracticeId, x.TreatmentPlanId });
             e.HasIndex(x => new { x.DentalPracticeId, x.ProcedureId });
+        });
+
+        modelBuilder.Entity<ClinicalPrescription>(e =>
+        {
+            e.ToTable("ClinicalPrescriptions");
+            e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.Property(x => x.Medication).IsRequired().HasMaxLength(200);
+            e.Property(x => x.Dose).IsRequired().HasMaxLength(200);
+            e.Property(x => x.Route).IsRequired().HasMaxLength(120);
+            e.Property(x => x.Frequency).IsRequired().HasMaxLength(200);
+            e.Property(x => x.Duration).IsRequired().HasMaxLength(200);
+            e.Property(x => x.Quantity).IsRequired().HasMaxLength(200);
+            e.Property(x => x.Directions).IsRequired().HasMaxLength(2000);
+            e.Property(x => x.ClinicalRationale).IsRequired().HasMaxLength(3000);
+            e.HasIndex(x => new { x.DentalPracticeId, x.RequestId }).IsUnique();
+            e.HasIndex(x => new { x.DentalPracticeId, x.PatientId, x.ConsultationId });
+        });
+        modelBuilder.Entity<PatientMedicalCertificate>(e =>
+        {
+            e.ToTable("PatientMedicalCertificates");
+            e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.Property(x => x.ClinicalJustification).IsRequired().HasMaxLength(3000);
+            e.Property(x => x.WorkAdvice).IsRequired().HasMaxLength(2000);
+            e.HasIndex(x => new { x.DentalPracticeId, x.RequestId }).IsUnique();
+            e.HasIndex(x => new { x.DentalPracticeId, x.PatientId, x.ConsultationId });
         });
 
         // CT_PROCEDURE_PRICING_V1
