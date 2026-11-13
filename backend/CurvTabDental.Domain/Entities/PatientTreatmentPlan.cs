@@ -34,3 +34,20 @@ public sealed class PatientTreatmentProcedure : IPracticeOwned
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime? CompletedAtUtc { get; set; }
 }
+
+
+// Clinical refusal is retained separately from the planned procedure,
+// including explanation of risks/alternatives and the authorising clinician.
+public sealed class TreatmentProcedureRefusal : IPracticeOwned
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid DentalPracticeId { get; set; }
+    public Guid PatientId { get; set; }
+    public Guid TreatmentPlanId { get; set; }
+    public Guid ProcedureId { get; set; }
+    public Guid ClinicianUserId { get; set; }
+    public string PatientOrRepresentative { get; set; } = string.Empty;
+    public string RisksAndAlternatives { get; set; } = string.Empty;
+    public string ClinicalNotes { get; set; } = string.Empty;
+    public DateTime RecordedAtUtc { get; set; } = DateTime.UtcNow;
+}
