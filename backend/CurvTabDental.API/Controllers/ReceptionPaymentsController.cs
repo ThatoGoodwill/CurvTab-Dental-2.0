@@ -27,6 +27,30 @@ public sealed class ReceptionPaymentsController : ControllerBase
         _audit = audit;
     }
 
+    // Advance allocations belong to patient plan procedures, not an arbitrary
+    // visit. Only a completed, explicitly linked consultation charge consumes
+    // the allocated advance. A transfer changes the allocation but not cash.
+    private async Task<decimal> LinkedPlanAdvance(Guid consultationId, Guid practiceId,
+        CancellationToken ct)
+    {
+        var ids = await _db.ConsultationCharges.AsNoTracking()
+            .Where(c => c.DentalPracticeId == practiceId &&
+                        c.ConsultationId == consultationId &&
+                        c.TreatmentProcedureId.HasValue)
+            .Select(c => c.TreatmentProcedureId!.Value).ToListAsync(ct);
+        if (ids.Count == 0) return 0m;
+        var applied = await _db.PlanPaymentAllocations.AsNoTracking()
+            .Where(a => a.DentalPracticeId == practiceId && ids.Contains(a.ProcedureId))
+            .SumAsync(a => (decimal?)a.Amount, ct) ?? 0m;
+        var incoming = await _db.PlanAllocationTransfers.AsNoTracking()
+            .Where(t => t.DentalPracticeId == practiceId && ids.Contains(t.ToProcedureId))
+            .SumAsync(t => (decimal?)t.Amount, ct) ?? 0m;
+        var outgoing = await _db.PlanAllocationTransfers.AsNoTracking()
+            .Where(t => t.DentalPracticeId == practiceId && ids.Contains(t.FromProcedureId))
+            .SumAsync(t => (decimal?)t.Amount, ct) ?? 0m;
+        return applied + incoming - outgoing;
+    }
+
     public record RecordPaymentRequest(
         Guid RequestId, decimal Amount, string Method, string? Reference);
 
@@ -146,7 +170,8 @@ public sealed class ReceptionPaymentsController : ControllerBase
             .Where(p => p.DentalPracticeId == practiceId &&
                         p.AppointmentId == appointmentId)
             .SumAsync(p => (decimal?)p.Amount, ct) ?? 0m;
-        var balance = charged - paid;
+        var advanceApplied = await LinkedPlanAdvance(consultation.Id, practiceId, ct);
+        var balance = charged - advanceApplied - paid;
         if (balance <= 0m || request.Amount > balance)
             return Conflict(new { message = "Payment exceeds the outstanding balance or no amount is due.", balance });
 
@@ -251,7 +276,8 @@ public sealed class ReceptionPaymentsController : ControllerBase
         var paid = await _db.Payments
             .Where(p => p.DentalPracticeId == practiceId && p.AppointmentId == appointmentId)
             .SumAsync(p => (decimal?)p.Amount, ct) ?? 0m;
-        var balance = charged - paid;
+        var advanceApplied = await LinkedPlanAdvance(consultation.Id, practiceId, ct);
+        var balance = charged - advanceApplied - paid;
         if (balance <= 0m || total > balance)
             return Conflict(new { message = "The split total exceeds the outstanding balance.", balance });
         if (request.CompleteCheckout && total != balance)
@@ -331,11 +357,12 @@ public sealed class ReceptionPaymentsController : ControllerBase
             .Where(p => p.DentalPracticeId == practiceId &&
                         p.AppointmentId == appointmentId)
             .SumAsync(p => (decimal?)p.Amount, ct) ?? 0m;
-        if (charged != paid)
+        var advanceApplied = await LinkedPlanAdvance(consultation.Id, practiceId, ct);
+        if (charged != paid + advanceApplied)
             return Conflict(new
             {
                 message = "Outstanding balance must be zero to complete checkout.",
-                balance = charged - paid
+                balance = charged - paid - advanceApplied
             });
 
         appointment.Status = "CheckedOut";
@@ -422,9 +449,10 @@ public sealed class ReceptionPaymentsController : ControllerBase
                 p.Method, p.Reference, p.ReceivedAtUtc))
             .ToListAsync(ct);
         var paid = payments.Sum(p => p.Amount);
+        var advanceApplied = await LinkedPlanAdvance(consultation.Id, practiceId, ct);
         return new CheckoutDetails(appointment.Id, patient.Id,
             patient.FirstName + " " + patient.LastName, appointment.Status,
             appointment.ConsultationEndedAtUtc, appointment.CheckedOutAtUtc,
-            due, paid, due - paid, "ZAR", payments);
+            due, paid + advanceApplied, due - paid - advanceApplied, "ZAR", payments);
     }
 }
