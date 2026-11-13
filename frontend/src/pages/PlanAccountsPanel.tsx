@@ -18,12 +18,13 @@ type Pay = {
   method: string; reference: string | null; receivedAtUtc: string
 }
 type Alloc = { batchId: string; procedureId: string; amount: number; createdAtUtc: string }
+type Transfer = { id: string; fromProcedureId: string; toProcedureId: string; amount: number; reason: string; createdAtUtc: string }
 type Detail = {
   planId: string; title: string; planStatus: string; agreed: boolean
   patientName: string; practiceName: string; procedures: Proc[]
-  total: number; totalPaid: number; balance: number
+  total: number; totalPaid: number; heldAdvance: number; balance: number
   allProceduresCompleted: boolean; settled: boolean
-  payments: Pay[]; allocations: Alloc[]
+  payments: Pay[]; allocations: Alloc[]; transfers: Transfer[]
 }
 
 const zar = (v: number) =>
@@ -33,7 +34,7 @@ const when = (v: string) =>
 const cents = (v: string) => Math.round((Number(v) || 0) * 100)
 const msg = (e: unknown) => (e instanceof Error ? e.message : 'Request failed.')
 
-export default function PlanAccountsPanel() {
+export default function PlanAccountsPanel({ canTransfer = false }: { canTransfer?: boolean }) {
   const [rows, setRows] = useState<PlanRow[]>([])
   const [q, setQ] = useState('')
   const [selected, setSelected] = useState<string | null>(null)
@@ -50,6 +51,12 @@ export default function PlanAccountsPanel() {
   const [alloc, setAlloc] = useState<Record<string, string>>({})
   const [printing, setPrinting] = useState<'statement' | 'receipt' | null>(null)
   const [receiptBatch, setReceiptBatch] = useState<string | null>(null)
+  const [source, setSource] = useState('')
+  const [destination, setDestination] = useState('')
+  const [amountToTransfer, setAmountToTransfer] = useState('')
+  const [patientApproval, setPatientApproval] = useState('')
+  const [transferReason, setTransferReason] = useState('')
+  const requestTransferId = useRef<string | null>(null)
   const batchId = useRef<string | null>(null)
 
   useEffect(() => {
@@ -133,6 +140,26 @@ export default function PlanAccountsPanel() {
       batchId.current = null
       setOk('Payment recorded. Cash was saved as Cash and card as Card.')
       setCash(''); setCard(''); setEft(''); setCardRef(''); setEftRef('')
+      setRevision(n => n + 1)
+    } catch (e) { setError(msg(e)) } finally { setBusy(false) }
+  }
+
+  async function postTransfer(ev: FormEvent) {
+    ev.preventDefault()
+    if (!detail || !canTransfer || busy) return
+    setBusy(true); setError(''); setOk('')
+    try {
+      if (!requestTransferId.current) requestTransferId.current = crypto.randomUUID()
+      await apiRequest(`/billing/plan-accounts/${encodeURIComponent(detail.planId)}/transfers`, 'POST', {
+        requestId: requestTransferId.current,
+        fromProcedureId: source, toProcedureId: destination,
+        amount: Number(amountToTransfer),
+        patientAuthorization: patientApproval.trim(), reason: transferReason.trim(),
+      })
+      requestTransferId.current = null
+      setSource(''); setDestination(''); setAmountToTransfer('')
+      setPatientApproval(''); setTransferReason('')
+      setOk('Authorised advance transfer saved. No new money was received.')
       setRevision(n => n + 1)
     } catch (e) { setError(msg(e)) } finally { setBusy(false) }
   }
@@ -228,7 +255,41 @@ export default function PlanAccountsPanel() {
                 <div><span>Outstanding balance</span><strong>{zar(detail.balance)}</strong></div>
               </div>
 
-              {detail.agreed && detail.balance > 0 && (
+              {detail.heldAdvance > 0 && <p className="pa-alert pa-warn">
+                 Held advance: {zar(detail.heldAdvance)}. This is not completed-treatment revenue.
+               </p>}
+               {canTransfer && detail.heldAdvance > 0 && <form className="pa-form" onSubmit={postTransfer}>
+                 <h4>Authorise internal advance transfer</h4>
+                 <label>From declined procedure<select required value={source}
+                   onChange={e => { setSource(e.target.value); requestTransferId.current = null }}>
+                   <option value="">Select declined procedure…</option>
+                   {detail.procedures.filter(p => ['Declined','Cancelled'].includes(p.status) && p.paid > 0)
+                     .map(p => <option key={p.id} value={p.id}>{p.description} — {zar(p.paid)}</option>)}
+                 </select></label>
+                 <label>To active procedure<select required value={destination}
+                   onChange={e => { setDestination(e.target.value); requestTransferId.current = null }}>
+                   <option value="">Select destination…</option>
+                   {detail.procedures.filter(p => !['Declined','Cancelled'].includes(p.status) && p.due > 0)
+                     .map(p => <option key={p.id} value={p.id}>{p.description} — due {zar(p.due)}</option>)}
+                 </select></label>
+                 <label>Amount (R)<input required min="0.01" step="0.01" type="number"
+                   max={Math.min(detail.procedures.find(p => p.id === source)?.paid ?? 0,
+                     detail.procedures.find(p => p.id === destination)?.due ?? 0)}
+                   value={amountToTransfer} onChange={e => { setAmountToTransfer(e.target.value); requestTransferId.current = null }} /></label>
+                 <label>Patient authorisation<input required maxLength={200} value={patientApproval}
+                   onChange={e => { setPatientApproval(e.target.value); requestTransferId.current = null }} /></label>
+                 <label>Document reason<textarea required minLength={10} rows={2} maxLength={1000}
+                   value={transferReason} onChange={e => { setTransferReason(e.target.value); requestTransferId.current = null }} /></label>
+                 <button type="submit" className="primary-button" disabled={busy ||
+                   !source || !destination || source === destination || Number(amountToTransfer) <= 0}>Transfer existing advance</button>
+               </form>}
+               {detail.transfers?.length > 0 && <div className="pa-form">
+                 <h4>Internal transfer audit (not new receipts)</h4>
+                 {detail.transfers.map(t => <p key={t.id}>{when(t.createdAtUtc)} · {zar(t.amount)} ·
+                   {procById.get(t.fromProcedureId)?.description} → {procById.get(t.toProcedureId)?.description}
+                   · {t.reason}</p>)}
+               </div>}
+               {detail.agreed && detail.balance > 0 && (
                 <form className="pa-form" onSubmit={submit}>
                   <h4 style={{ margin: 0 }}>Record payment received</h4>
                   <div className="pa-row2">

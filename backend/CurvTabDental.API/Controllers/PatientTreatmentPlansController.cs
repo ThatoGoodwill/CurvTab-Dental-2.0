@@ -27,6 +27,8 @@ public sealed class PatientTreatmentPlansController : ControllerBase
     public record AddProcedureRequest(string? Description, string? ToothCode, decimal? EstimatedCost, Guid? ProcedurePriceId = null);
     public record UpdatePlanRequest(string? Title, string? ClinicalRationale);
     public record RecordConsentRequest(string? PatientOrRepresentativeName, bool Acknowledged);
+    public record DeclineProcedureRequest(string? PatientOrRepresentative,
+        string? RisksAndAlternatives, string? ClinicalNotes);
 
     private static bool ValidTooth(string? value) =>
         string.IsNullOrEmpty(value) ||
@@ -130,6 +132,62 @@ public sealed class PatientTreatmentPlansController : ControllerBase
         return Created($"/api/dentist/patients/{patientId}/treatment-plans/{planId}/procedures", new { procedure.Id });
     }
 
+    // Document informed refusal; never delete the proposed treatment or its
+    // associated advance. Finance must resolve its refundable/reallocatable credit.
+    [HttpPost("{planId:guid}/procedures/{procedureId:guid}/decline")]
+    public async Task<IActionResult> DeclineProcedure(
+        Guid patientId, Guid planId, Guid procedureId,
+        [FromBody] DeclineProcedureRequest req, CancellationToken ct)
+    {
+        if (_current.PracticeId is not Guid practiceId) return Forbid();
+        if (_current.UserId is not Guid clinicianId) return Unauthorized();
+        if (string.IsNullOrWhiteSpace(req.PatientOrRepresentative) ||
+            req.PatientOrRepresentative.Length > 200 ||
+            string.IsNullOrWhiteSpace(req.RisksAndAlternatives) ||
+            req.RisksAndAlternatives.Length > 4000 ||
+            string.IsNullOrWhiteSpace(req.ClinicalNotes) ||
+            req.ClinicalNotes.Length > 4000)
+            return BadRequest(new { message = "Record the patient's name, risks, alternatives, and clinical refusal notes." });
+        await using var transaction = await _db.Database.BeginTransactionAsync(ct);
+        var plan = await _db.PatientTreatmentPlans
+            .FromSqlInterpolated($@"SELECT * FROM ""PatientTreatmentPlans""
+                WHERE ""Id"" = {planId} AND ""PatientId"" = {patientId}
+                  AND ""DentalPracticeId"" = {practiceId} FOR UPDATE")
+            .SingleOrDefaultAsync(ct);
+        if (plan is null) return NotFound();
+        if (plan.ConsentRecordedAtUtc is null)
+            return Conflict(new { message = "A treatment-plan acknowledgement is required before recording a refusal." });
+        var procedure = await _db.PatientTreatmentProcedures.FirstOrDefaultAsync(p =>
+            p.Id == procedureId && p.TreatmentPlanId == planId &&
+            p.PatientId == patientId && p.DentalPracticeId == practiceId, ct);
+        if (procedure is null) return NotFound();
+        if (procedure.Status == "Completed")
+            return Conflict(new { message = "A completed treatment cannot be marked unperformed. Use the audited clinical correction process." });
+        var existing = await _db.TreatmentProcedureRefusals.AsNoTracking()
+            .FirstOrDefaultAsync(r => r.DentalPracticeId == practiceId && r.ProcedureId == procedureId, ct);
+        if (existing is not null)
+            return Conflict(new { message = "This refusal is already recorded; open its history rather than replacing it.", existing.Id });
+        if (procedure.Status is "Declined" or "Cancelled")
+            return Conflict(new { message = "This procedure was already cancelled." });
+        var record = new TreatmentProcedureRefusal {
+            DentalPracticeId = practiceId, PatientId = patientId,
+            TreatmentPlanId = planId, ProcedureId = procedureId,
+            ClinicianUserId = clinicianId,
+            PatientOrRepresentative = req.PatientOrRepresentative.Trim(),
+            RisksAndAlternatives = req.RisksAndAlternatives.Trim(),
+            ClinicalNotes = req.ClinicalNotes.Trim()
+        };
+        procedure.Status = "Declined";
+        plan.UpdatedAtUtc = DateTime.UtcNow;
+        _db.TreatmentProcedureRefusals.Add(record);
+        await _db.SaveChangesAsync(ct);
+        await _audit.WriteAsync("TREATMENT_PROCEDURE_DECLINED",
+            "TreatmentProcedureRefusal", record.Id.ToString(), ct: ct);
+        await transaction.CommitAsync(ct);
+        return Ok(new { procedure.Id, procedure.Status,
+            refusalId = record.Id, advanceRequiresResolution = true });
+    }
+
     // Marks a planned procedure as performed. Allowed only after the patient agreed to the plan.
     [HttpPost("{planId:guid}/procedures/{procedureId:guid}/complete")]
     public async Task<IActionResult> CompleteProcedure(Guid patientId, Guid planId, Guid procedureId, CancellationToken ct)
@@ -144,6 +202,8 @@ public sealed class PatientTreatmentPlansController : ControllerBase
             p.Id == procedureId && p.TreatmentPlanId == planId && p.DentalPracticeId == practiceId, ct);
         if (procedure is null) return NotFound();
         if (procedure.Status == "Completed") return NoContent();
+        if (procedure.Status is "Declined" or "Cancelled")
+            return Conflict(new { message = "Declined or cancelled procedures cannot be marked performed." });
         procedure.Status = "Completed";
         procedure.CompletedAtUtc = DateTime.UtcNow;
         var all = await _db.PatientTreatmentProcedures

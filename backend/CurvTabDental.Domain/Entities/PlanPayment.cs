@@ -31,3 +31,21 @@ public sealed class PlanPaymentAllocation : IPracticeOwned
     public decimal Amount { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 }
+
+ 
+// Immutable authorisation and allocation movement. An advance transfer NEVER
+// creates another cash receipt or changes the original PlanPayment.
+public sealed class PlanAllocationTransfer : IPracticeOwned
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid DentalPracticeId { get; set; }
+    public Guid TreatmentPlanId { get; set; }
+    public Guid FromProcedureId { get; set; }
+    public Guid ToProcedureId { get; set; }
+    public Guid RequestId { get; set; }
+    public decimal Amount { get; set; }
+    public string PatientAuthorization { get; set; } = string.Empty;
+    public string Reason { get; set; } = string.Empty;
+    public Guid AuthorizedByUserId { get; set; }
+    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+}
