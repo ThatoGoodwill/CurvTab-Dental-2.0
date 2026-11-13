@@ -533,6 +533,34 @@ public sealed class LaboratoryController : ControllerBase
                     Notes = "Lab " + order.Reference + ": " + item.Procedure + ". " + Trim(request.Notes)
                 });
         }
+        if (request.Outcome == "Fitted" && order.TreatmentPlanId is Guid planId)
+        {
+            // The lab item must correspond to exactly one acknowledged planned
+            // procedure. Never complete an ambiguous or unapproved plan by name.
+            var planned = await _db.PatientTreatmentProcedures
+                .Where(p => p.DentalPracticeId == order.DentalPracticeId &&
+                    p.PatientId == order.PatientId && p.TreatmentPlanId == planId &&
+                    p.RequiresLab && p.ToothCode == item.ToothCode &&
+                    p.Description == item.Procedure)
+                .ToListAsync(ct);
+            var plan = await _db.PatientTreatmentPlans.FirstOrDefaultAsync(p =>
+                p.Id == planId && p.PatientId == order.PatientId &&
+                p.DentalPracticeId == order.DentalPracticeId, ct);
+            if (planned.Count != 1 || plan?.ConsentRecordedAtUtc is null)
+                return Conflict(new { message = "Cannot automatically complete an unacknowledged or ambiguously linked treatment-plan procedure." });
+            var procedure = planned[0];
+            if (procedure.Status is "Declined" or "Cancelled")
+                return Conflict(new { message = "A declined or cancelled procedure cannot be completed by lab fitting." });
+            procedure.Status = "Completed";
+            procedure.CompletedAtUtc ??= DateTime.UtcNow;
+            plan.UpdatedAtUtc = DateTime.UtcNow;
+            var procedures = await _db.PatientTreatmentProcedures
+                .Where(p => p.DentalPracticeId == order.DentalPracticeId && p.TreatmentPlanId == planId)
+                .ToListAsync(ct);
+            if (procedures.Where(p => p.Status is not ("Cancelled" or "Declined"))
+                .All(p => p.Status == "Completed"))
+                plan.Status = "Completed";
+        }
         Log(order, request.Outcome == "Fitted" ? "CLINICAL_FITMENT_ACCEPTED" : "CLINICAL_FITMENT_FAILED", Trim(request.Notes), id);
         await _db.SaveChangesAsync(ct);
         await RefreshOrder(order.Id, ct);

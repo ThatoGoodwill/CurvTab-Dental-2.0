@@ -1,6 +1,7 @@
 using CurvTabDental.Application.Abstractions;
 using CurvTabDental.Domain.Entities;
 using CurvTabDental.Infrastructure.Persistence;
+using CurvTabDental.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -146,7 +147,9 @@ public sealed class ReceptionPaymentsController : ControllerBase
             .Where(p => p.DentalPracticeId == practiceId &&
                         p.AppointmentId == appointmentId)
             .SumAsync(p => (decimal?)p.Amount, ct) ?? 0m;
-        var balance = charged - paid;
+        var credit = await PlanCreditCalculator.ForConsultation(_db, practiceId,
+            appointment.PatientId, consultation.Id, ct);
+        var balance = charged - paid - credit.Total;
         if (balance <= 0m || request.Amount > balance)
             return Conflict(new { message = "Payment exceeds the outstanding balance or no amount is due.", balance });
 
@@ -251,7 +254,9 @@ public sealed class ReceptionPaymentsController : ControllerBase
         var paid = await _db.Payments
             .Where(p => p.DentalPracticeId == practiceId && p.AppointmentId == appointmentId)
             .SumAsync(p => (decimal?)p.Amount, ct) ?? 0m;
-        var balance = charged - paid;
+        var credit = await PlanCreditCalculator.ForConsultation(_db, practiceId,
+            appointment.PatientId, consultation.Id, ct);
+        var balance = charged - paid - credit.Total;
         if (balance <= 0m || total > balance)
             return Conflict(new { message = "The split total exceeds the outstanding balance.", balance });
         if (request.CompleteCheckout && total != balance)
@@ -331,11 +336,14 @@ public sealed class ReceptionPaymentsController : ControllerBase
             .Where(p => p.DentalPracticeId == practiceId &&
                         p.AppointmentId == appointmentId)
             .SumAsync(p => (decimal?)p.Amount, ct) ?? 0m;
-        if (charged != paid)
+        var credit = await PlanCreditCalculator.ForConsultation(_db, practiceId,
+            appointment.PatientId, consultation.Id, ct);
+        if (charged != paid + credit.Total)
             return Conflict(new
             {
                 message = "Outstanding balance must be zero to complete checkout.",
-                balance = charged - paid
+                balance = charged - paid - credit.Total,
+                planAdvanceApplied = credit.Total
             });
 
         appointment.Status = "CheckedOut";
@@ -380,8 +388,9 @@ public sealed class ReceptionPaymentsController : ControllerBase
             payment.ReceivedAtUtc,
             currency = "ZAR",
             amountBilled = details.AmountDue,
+            planCreditsApplied = details.PlanCreditsApplied,
             totalPaid = paidAtReceipt,
-            balance = details.AmountDue - paidAtReceipt,
+            balance = details.AmountDue - details.PlanCreditsApplied - paidAtReceipt,
             details.Status
         });
     }
@@ -391,7 +400,7 @@ public sealed class ReceptionPaymentsController : ControllerBase
     private sealed record CheckoutDetails(
         Guid AppointmentId, Guid PatientId, string PatientName, string Status,
         DateTime? CompletedAtUtc, DateTime? CheckedOutAtUtc,
-        decimal AmountDue, decimal AmountPaid, decimal Balance,
+        decimal AmountDue, decimal AmountPaid, decimal PlanCreditsApplied, decimal Balance,
         string Currency, List<PaymentRow> Payments);
 
     private async Task<CheckoutDetails?> LoadDetails(
@@ -422,9 +431,10 @@ public sealed class ReceptionPaymentsController : ControllerBase
                 p.Method, p.Reference, p.ReceivedAtUtc))
             .ToListAsync(ct);
         var paid = payments.Sum(p => p.Amount);
+        var credit = await PlanCreditCalculator.ForConsultation(_db, practiceId, patient.Id, consultation.Id, ct);
         return new CheckoutDetails(appointment.Id, patient.Id,
             patient.FirstName + " " + patient.LastName, appointment.Status,
             appointment.ConsultationEndedAtUtc, appointment.CheckedOutAtUtc,
-            due, paid, due - paid, "ZAR", payments);
+            due, paid, credit.Total, due - paid - credit.Total, "ZAR", payments);
     }
 }

@@ -2,6 +2,7 @@
 using CurvTabDental.Application.Abstractions;
 using CurvTabDental.Domain.Entities;
 using CurvTabDental.Infrastructure.Persistence;
+using CurvTabDental.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -173,8 +174,10 @@ public sealed class FinancialCorrectionsController : ControllerBase
                 x.InvoiceId == invoiceId)
             .SumAsync(x => (decimal?)x.Amount, ct) ?? 0m;
 
+        var planAdvance = await PlanCreditCalculator.ForConsultation(_db, practiceId,
+            invoice.PatientId, invoice.ConsultationId, ct);
         var availableCredit =
-            invoice.TotalAmount - credits - allocated - schemePaid;
+            invoice.TotalAmount - credits - allocated - schemePaid - planAdvance.Total;
 
         if (request.Amount > availableCredit)
             return Conflict(new {

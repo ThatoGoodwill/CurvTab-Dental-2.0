@@ -11,6 +11,7 @@ type WaitingCheckout = {
   status: string
   completedAtUtc: string | null
   amountDue: number
+  planCreditsApplied?: number
   currency: string
 }
 type HistoryRow = {
@@ -36,6 +37,7 @@ type Details = {
   checkedOutAtUtc: string | null
   amountDue: number
   amountPaid: number
+  planCreditsApplied?: number
   balance: number
   currency: string
   payments: Payment[]
@@ -52,6 +54,7 @@ type Receipt = {
   receivedAtUtc: string
   currency: string
   amountBilled: number
+  planCreditsApplied?: number
   totalPaid: number
   balance: number
   status: string
@@ -273,7 +276,7 @@ export default function ReceptionCheckoutPage({ initialAppointmentId }: { initia
                 onClick={() => choose(row.appointmentId)}>
                 <strong>{row.patientName}</strong>
                 <small>Consultation completed {when(row.completedAtUtc)}</small>
-                <span>{money(row.amountDue)} billed</span>
+                <span>{money(row.amountDue - (row.planCreditsApplied ?? 0))} after plan advances</span>
               </button>)
             )
           ) : completed.length === 0 ? (
@@ -298,7 +301,10 @@ export default function ReceptionCheckoutPage({ initialAppointmentId }: { initia
               </div>
               <div className="checkout-amounts">
                 <div><span>Amount charged by Dentist</span><strong>{money(detail.amountDue)}</strong></div>
-                <div><span>Payments received</span><strong>{money(detail.amountPaid)}</strong></div>
+                <div><span>Payments at checkout</span><strong>{money(detail.amountPaid)}</strong></div>
+                {(detail.planCreditsApplied ?? 0) > 0 && (
+                  <div><span>Previously collected plan advances</span><strong>−{money(detail.planCreditsApplied ?? 0)}</strong></div>
+                )}
                 <div className="checkout-due"><span>Remaining balance</span><strong>{money(detail.balance)}</strong></div>
               </div>
               {detail.status === 'AwaitingCheckout' && detail.balance > 0 && (

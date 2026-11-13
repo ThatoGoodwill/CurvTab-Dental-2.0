@@ -2406,6 +2406,26 @@ namespace CurvTabDental.Infrastructure.Migrations
                     b.ToTable("PatientMedicalHistories");
                 });
 
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.PatientProcedureDecision", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<Guid?>("AppointmentId").HasColumnType("uuid");
+                    b.Property<string>("AlternativesExplained").IsRequired().HasMaxLength(3000).HasColumnType("character varying(3000)");
+                    b.Property<string>("ClinicalReason").IsRequired().HasMaxLength(3000).HasColumnType("character varying(3000)");
+                    b.Property<string>("Decision").IsRequired().HasMaxLength(24).HasColumnType("character varying(24)");
+                    b.Property<Guid>("DentalPracticeId").HasColumnType("uuid");
+                    b.Property<string>("PatientResponse").IsRequired().HasMaxLength(3000).HasColumnType("character varying(3000)");
+                    b.Property<Guid>("PatientId").HasColumnType("uuid");
+                    b.Property<Guid>("ProcedureId").HasColumnType("uuid");
+                    b.Property<DateTime>("RecordedAtUtc").HasColumnType("timestamp with time zone");
+                    b.Property<Guid>("RecordedByUserId").HasColumnType("uuid");
+                    b.Property<string>("RisksExplained").IsRequired().HasMaxLength(3000).HasColumnType("character varying(3000)");
+                    b.Property<Guid>("TreatmentPlanId").HasColumnType("uuid");
+                    b.HasKey("Id");
+                    b.HasIndex("DentalPracticeId", "ProcedureId").IsUnique();
+                    b.ToTable("PatientProcedureDecisions", (string)null);
+                });
+
             modelBuilder.Entity("CurvTabDental.Domain.Entities.PatientRegistrationDetails", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2748,6 +2768,28 @@ namespace CurvTabDental.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("PaymentAllocationReversal");
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.PlanAdvanceTransfer", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<decimal>("Amount").HasPrecision(12, 2).HasColumnType("numeric(12,2)");
+                    b.Property<string>("AuthorizationName").IsRequired().HasMaxLength(200).HasColumnType("character varying(200)");
+                    b.Property<string>("AuthorizationNote").IsRequired().HasMaxLength(2000).HasColumnType("character varying(2000)");
+                    b.Property<Guid>("AuthorizedByUserId").HasColumnType("uuid");
+                    b.Property<DateTime>("CreatedAtUtc").HasColumnType("timestamp with time zone");
+                    b.Property<Guid>("DentalPracticeId").HasColumnType("uuid");
+                    b.Property<Guid>("FromProcedureId").HasColumnType("uuid");
+                    b.Property<Guid>("PatientId").HasColumnType("uuid");
+                    b.Property<Guid>("RequestId").HasColumnType("uuid");
+                    b.Property<Guid>("ToProcedureId").HasColumnType("uuid");
+                    b.Property<Guid>("TreatmentPlanId").HasColumnType("uuid");
+                    b.HasKey("Id");
+                    b.HasIndex("DentalPracticeId", "FromProcedureId");
+                    b.HasIndex("DentalPracticeId", "RequestId").IsUnique();
+                    b.HasIndex("DentalPracticeId", "ToProcedureId");
+                    b.HasIndex("DentalPracticeId", "TreatmentPlanId");
+                    b.ToTable("PlanAdvanceTransfers", (string)null);
                 });
 
             modelBuilder.Entity("CurvTabDental.Domain.Entities.PlanPayment", b =>

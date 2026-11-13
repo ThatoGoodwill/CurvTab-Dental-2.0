@@ -27,6 +27,8 @@ public sealed class PatientTreatmentPlansController : ControllerBase
     public record AddProcedureRequest(string? Description, string? ToothCode, decimal? EstimatedCost, Guid? ProcedurePriceId = null);
     public record UpdatePlanRequest(string? Title, string? ClinicalRationale);
     public record RecordConsentRequest(string? PatientOrRepresentativeName, bool Acknowledged);
+    public record RefuseProcedureRequest(string Decision, string ClinicalReason,
+        string RisksExplained, string AlternativesExplained, string PatientResponse, Guid? AppointmentId);
 
     private static bool ValidTooth(string? value) =>
         string.IsNullOrEmpty(value) ||
@@ -144,6 +146,21 @@ public sealed class PatientTreatmentPlansController : ControllerBase
             p.Id == procedureId && p.TreatmentPlanId == planId && p.DentalPracticeId == practiceId, ct);
         if (procedure is null) return NotFound();
         if (procedure.Status == "Completed") return NoContent();
+        if (procedure.Status is "Declined" or "Cancelled")
+            return Conflict(new { message = "A declined or cancelled procedure cannot be completed without a new acknowledged plan." });
+        if (procedure.RequiresLab)
+        {
+            var completedFit = await (
+                from order in _db.Set<LaboratoryOrder>().AsNoTracking()
+                join item in _db.Set<LaboratoryItem>().AsNoTracking() on order.Id equals item.LaboratoryOrderId
+                where order.PatientId == patientId && order.DentalPracticeId == practiceId &&
+                    order.TreatmentPlanId == planId && item.ToothCode == procedure.ToothCode &&
+                    item.Procedure == procedure.Description && item.ClinicalStatus == "Completed" &&
+                    item.QaStatus == "Passed"
+                select item.Id).AnyAsync(ct);
+            if (!completedFit)
+                return Conflict(new { message = "A lab-required procedure cannot be marked complete until a dentist verifies the fitting of a QA-passed laboratory item." });
+        }
         procedure.Status = "Completed";
         procedure.CompletedAtUtc = DateTime.UtcNow;
         var all = await _db.PatientTreatmentProcedures
@@ -155,6 +172,78 @@ public sealed class PatientTreatmentPlansController : ControllerBase
         await _db.SaveChangesAsync(ct);
         await _audit.WriteAsync("TREATMENT_PROCEDURE_COMPLETED", "PatientTreatmentProcedure", procedure.Id.ToString(), ct: ct);
         return NoContent();
+    }
+
+    [HttpPost("{planId:guid}/procedures/{procedureId:guid}/decision")]
+    public async Task<IActionResult> RecordProcedureDecision(Guid patientId, Guid planId,
+        Guid procedureId, [FromBody] RefuseProcedureRequest request, CancellationToken ct)
+    {
+        if (_current.PracticeId is not Guid practiceId) return Forbid();
+        if (_current.UserId is not Guid clinicianId) return Unauthorized();
+        if (request.Decision is not ("Declined" or "Cancelled"))
+            return BadRequest(new { message = "A procedure may only be declined or cancelled through this endpoint." });
+        var notes = new[] { request.ClinicalReason, request.RisksExplained,
+            request.AlternativesExplained, request.PatientResponse };
+        if (notes.Any(x => string.IsNullOrWhiteSpace(x) || x.Trim().Length > 3000))
+            return BadRequest(new { message = "Document the clinical reason, explained risks, alternatives, and patient's response." });
+        await using var transaction = await _db.Database.BeginTransactionAsync(ct);
+        var plan = await _db.PatientTreatmentPlans
+            .FromSqlInterpolated($"SELECT * FROM \"PatientTreatmentPlans\" WHERE \"Id\" = {planId} AND \"DentalPracticeId\" = {practiceId} FOR UPDATE")
+            .SingleOrDefaultAsync(ct);
+        if (plan is null || plan.PatientId != patientId) return NotFound();
+        var procedure = await _db.PatientTreatmentProcedures
+            .FirstOrDefaultAsync(p => p.Id == procedureId && p.TreatmentPlanId == planId &&
+                p.PatientId == patientId && p.DentalPracticeId == practiceId, ct);
+        if (procedure is null) return NotFound();
+        if (procedure.Status == "Completed")
+            return Conflict(new { message = "A performed procedure cannot be changed to declined. Use an audited correction." });
+        if (procedure.Status is "Declined" or "Cancelled")
+            return Conflict(new { message = "This procedure already has a recorded decision. Its history is protected." });
+        if (plan.ConsentRecordedAtUtc is null)
+            return Conflict(new { message = "A signed-off or acknowledged treatment plan is required before documenting its change." });
+        if (request.AppointmentId is Guid appointmentId)
+        {
+            var isPatientVisit = await _db.Appointments.AsNoTracking()
+                .AnyAsync(a => a.Id == appointmentId && a.PatientId == patientId &&
+                    a.DentalPracticeId == practiceId, ct);
+            if (!isPatientVisit) return NotFound();
+        }
+        var decision = new PatientProcedureDecision {
+            DentalPracticeId = practiceId, PatientId = patientId,
+            TreatmentPlanId = planId, ProcedureId = procedureId, AppointmentId = request.AppointmentId,
+            Decision = request.Decision, ClinicalReason = request.ClinicalReason.Trim(),
+            RisksExplained = request.RisksExplained.Trim(),
+            AlternativesExplained = request.AlternativesExplained.Trim(),
+            PatientResponse = request.PatientResponse.Trim(), RecordedByUserId = clinicianId
+        };
+        procedure.Status = request.Decision;
+        plan.UpdatedAtUtc = DateTime.UtcNow;
+        _db.PatientProcedureDecisions.Add(decision);
+        await _db.SaveChangesAsync(ct);
+        await _audit.WriteAsync("PATIENT_PROCEDURE_" + request.Decision.ToUpperInvariant(),
+            "PatientProcedureDecision", decision.Id.ToString(), ct: ct);
+        await transaction.CommitAsync(ct);
+        // Advance money remains in the original receipt ledger until explicitly
+        // transferred or refunded. This operation does NOT erase the receipt.
+        return Ok(new { procedureId, procedure.Status, decisionId = decision.Id,
+            heldAdvanceRequiresResolution = true });
+    }
+
+    [HttpGet("{planId:guid}/procedure-decisions")]
+    public async Task<IActionResult> ProcedureDecisions(Guid patientId, Guid planId, CancellationToken ct)
+    {
+        if (_current.PracticeId is not Guid practiceId) return Forbid();
+        if (!await _db.PatientTreatmentPlans.AsNoTracking().AnyAsync(p =>
+            p.Id == planId && p.PatientId == patientId && p.DentalPracticeId == practiceId, ct))
+            return NotFound();
+        return Ok(await _db.PatientProcedureDecisions.AsNoTracking()
+            .Where(d => d.TreatmentPlanId == planId && d.PatientId == patientId &&
+                d.DentalPracticeId == practiceId)
+            .OrderBy(d => d.RecordedAtUtc)
+            .Select(d => new { d.Id, d.ProcedureId, d.AppointmentId, d.Decision,
+                d.ClinicalReason, d.RisksExplained, d.AlternativesExplained,
+                d.PatientResponse, d.RecordedByUserId, d.RecordedAtUtc })
+            .ToListAsync(ct));
     }
 
     [HttpPost("{planId:guid}/consent")]

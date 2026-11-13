@@ -1,5 +1,6 @@
 using CurvTabDental.Application.Abstractions;
 using CurvTabDental.Infrastructure.Persistence;
+using CurvTabDental.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -127,10 +128,27 @@ public sealed class PatientBalancesController : ControllerBase
         var paidByPatient = payments.ToDictionary(
             x => x.PatientId, x => x.Amount);
 
+        // Verified advances allocated to completed procedures offset consultation
+        // debt, without being posted as another reception receipt.
+        var linkedConsultations = await (
+            from consultation in _db.Consultations.AsNoTracking()
+            join appointment in _db.Appointments.AsNoTracking() on consultation.AppointmentId equals appointment.Id
+            where consultation.DentalPracticeId == practiceId && consultation.IsFinalized &&
+                appointment.DentalPracticeId == practiceId && ids.Contains(appointment.PatientId)
+            select new { consultation.Id, appointment.PatientId }).ToListAsync(ct);
+        var advanceByPatient = selected.ToDictionary(p => p.Id, _ => 0m);
+        foreach (var linked in linkedConsultations)
+        {
+            var credit = await PlanCreditCalculator.ForConsultation(_db, practiceId,
+                linked.PatientId, linked.Id, ct);
+            advanceByPatient[linked.PatientId] += credit.Total;
+        }
+
         var rows = selected.Select(p =>
         {
             var charged = chargedByPatient.GetValueOrDefault(p.Id);
             var paid = paidByPatient.GetValueOrDefault(p.Id);
+            var planCredit = advanceByPatient.GetValueOrDefault(p.Id);
 
             return new
             {
@@ -138,8 +156,9 @@ public sealed class PatientBalancesController : ControllerBase
                 patientName = p.FirstName + " " + p.LastName,
                 totalCharges = charged,
                 totalPayments = paid,
-                balance = charged - paid,
-                requiresReview = paid > charged
+                planCreditsApplied = planCredit,
+                balance = charged - paid - planCredit,
+                requiresReview = paid + planCredit > charged
             };
         }).ToList();
 
@@ -154,10 +173,11 @@ public sealed class PatientBalancesController : ControllerBase
             displayedPatients = rows.Count,
             displayedCharges = rows.Sum(x => x.totalCharges),
             displayedPayments = rows.Sum(x => x.totalPayments),
+            displayedPlanCredits = rows.Sum(x => x.planCreditsApplied),
             displayedBalance = rows.Sum(x => x.balance),
             patients = rows,
-            scope = "Finalized consultation charges and " +
-                    "existing appointment payment receipts only.",
+            scope = "Finalized consultation charges, existing checkout receipts and " +
+                    "verified treatment-plan advances applied once to completed procedures.",
             note = "This is not an issued-invoice or " +
                    "complete accounts-receivable ledger."
         });
