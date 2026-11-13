@@ -427,6 +427,58 @@ namespace CurvTabDental.Infrastructure.Migrations
                     b.ToTable("ClinicalImages");
                 });
 
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.ClinicalMedicalCertificate", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<Guid>("AppointmentId").HasColumnType("uuid");
+                    b.Property<DateTime>("AuthorizedAtUtc").HasColumnType("timestamp with time zone");
+                    b.Property<string>("ClinicalJustification").IsRequired().HasMaxLength(4000).HasColumnType("character varying(4000)");
+                    b.Property<Guid>("ConsultationId").HasColumnType("uuid");
+                    b.Property<Guid>("DentalPracticeId").HasColumnType("uuid");
+                    b.Property<DateOnly>("FromDate").HasColumnType("date");
+                    b.Property<Guid>("PatientId").HasColumnType("uuid");
+                    b.Property<string>("PatientOrRepresentativeName").IsRequired().HasMaxLength(200).HasColumnType("character varying(200)");
+                    b.Property<string>("PractitionerName").IsRequired().HasMaxLength(200).HasColumnType("character varying(200)");
+                    b.Property<string>("PractitionerRegistrationNumber").IsRequired().HasMaxLength(60).HasColumnType("character varying(60)");
+                    b.Property<Guid>("PractitionerUserId").HasColumnType("uuid");
+                    b.Property<DateOnly>("ThroughDate").HasColumnType("date");
+                    b.Property<string>("WorkCapacityStatement").IsRequired().HasMaxLength(1000).HasColumnType("character varying(1000)");
+                    b.HasKey("Id");
+                    b.HasIndex("AppointmentId");
+                    b.HasIndex("ConsultationId");
+                    b.HasIndex("PatientId");
+                    b.HasIndex("DentalPracticeId", "PatientId", "AuthorizedAtUtc");
+                    b.ToTable("ClinicalMedicalCertificates");
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.ClinicalPrescription", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<Guid>("AppointmentId").HasColumnType("uuid");
+                    b.Property<DateTime>("AuthorizedAtUtc").HasColumnType("timestamp with time zone");
+                    b.Property<string>("ClinicalIndication").IsRequired().HasMaxLength(2000).HasColumnType("character varying(2000)");
+                    b.Property<Guid>("ConsultationId").HasColumnType("uuid");
+                    b.Property<Guid>("DentalPracticeId").HasColumnType("uuid");
+                    b.Property<string>("Dosage").IsRequired().HasMaxLength(300).HasColumnType("character varying(300)");
+                    b.Property<string>("Duration").IsRequired().HasMaxLength(200).HasColumnType("character varying(200)");
+                    b.Property<string>("Frequency").IsRequired().HasMaxLength(200).HasColumnType("character varying(200)");
+                    b.Property<string>("Instructions").IsRequired().HasMaxLength(2000).HasColumnType("character varying(2000)");
+                    b.Property<string>("MedicationName").IsRequired().HasMaxLength(200).HasColumnType("character varying(200)");
+                    b.Property<Guid>("PatientId").HasColumnType("uuid");
+                    b.Property<string>("PractitionerName").IsRequired().HasMaxLength(200).HasColumnType("character varying(200)");
+                    b.Property<string>("PractitionerRegistrationNumber").IsRequired().HasMaxLength(60).HasColumnType("character varying(60)");
+                    b.Property<Guid>("PrescriberUserId").HasColumnType("uuid");
+                    b.Property<string>("Quantity").IsRequired().HasMaxLength(100).HasColumnType("character varying(100)");
+                    b.Property<string>("Route").IsRequired().HasMaxLength(100).HasColumnType("character varying(100)");
+                    b.Property<string>("Strength").IsRequired().HasMaxLength(100).HasColumnType("character varying(100)");
+                    b.HasKey("Id");
+                    b.HasIndex("AppointmentId");
+                    b.HasIndex("ConsultationId");
+                    b.HasIndex("PatientId");
+                    b.HasIndex("DentalPracticeId", "PatientId", "AuthorizedAtUtc");
+                    b.ToTable("ClinicalPrescriptions");
+                });
+
             modelBuilder.Entity("CurvTabDental.Domain.Entities.Consultation", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3995,6 +4047,25 @@ namespace CurvTabDental.Infrastructure.Migrations
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.ClinicalMedicalCertificate", b =>
+                {
+                    b.HasOne("CurvTabDental.Domain.Entities.Appointment", null).WithMany()
+                        .HasForeignKey("AppointmentId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+                    b.HasOne("CurvTabDental.Domain.Entities.Consultation", null).WithMany()
+                        .HasForeignKey("ConsultationId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+                    b.HasOne("CurvTabDental.Domain.Entities.Patient", null).WithMany()
+                        .HasForeignKey("PatientId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+                });
+            modelBuilder.Entity("CurvTabDental.Domain.Entities.ClinicalPrescription", b =>
+                {
+                    b.HasOne("CurvTabDental.Domain.Entities.Appointment", null).WithMany()
+                        .HasForeignKey("AppointmentId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+                    b.HasOne("CurvTabDental.Domain.Entities.Consultation", null).WithMany()
+                        .HasForeignKey("ConsultationId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+                    b.HasOne("CurvTabDental.Domain.Entities.Patient", null).WithMany()
+                        .HasForeignKey("PatientId").OnDelete(DeleteBehavior.Restrict).IsRequired();
                 });
 
             modelBuilder.Entity("CurvTabDental.Domain.Entities.PlanAdvanceTransfer", b =>
