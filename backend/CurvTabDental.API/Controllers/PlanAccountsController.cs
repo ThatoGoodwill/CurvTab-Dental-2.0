@@ -30,6 +30,94 @@ public sealed class PlanAccountsController : ControllerBase
     public record AllocationLine(Guid ProcedureId, decimal Amount);
     public record PlanPaymentRequest(
         Guid BatchId, List<TenderLine> Tenders, List<AllocationLine> Allocations);
+    public record AdvanceTransferRequest(
+        Guid RequestId, Guid FromProcedureId, Guid ToProcedureId, decimal Amount,
+        string PatientAuthorization, string Reason);
+
+    private static decimal NetAllocated(Guid procedureId,
+        IEnumerable<PlanPaymentAllocation> allocations,
+        IEnumerable<PlanAllocationTransfer> transfers) =>
+        allocations.Where(a => a.ProcedureId == procedureId).Sum(a => a.Amount)
+        + transfers.Where(t => t.ToProcedureId == procedureId).Sum(t => t.Amount)
+        - transfers.Where(t => t.FromProcedureId == procedureId).Sum(t => t.Amount);
+
+    // Reallocate a previously RECEIVED advance. No money enters or leaves the
+    // practice, so no receipt, bank movement, or payment row is created.
+    [HttpPost("{planId:guid}/transfers")]
+    [Authorize(Roles = "PracticeAdmin")]
+    public async Task<IActionResult> Transfer(Guid planId,
+        [FromBody] AdvanceTransferRequest request, CancellationToken ct)
+    {
+        if (_current.PracticeId is not Guid practiceId) return Forbid();
+        if (_current.UserId is not Guid actorId) return Unauthorized();
+        if (request.RequestId == Guid.Empty ||
+            request.FromProcedureId == request.ToProcedureId ||
+            request.FromProcedureId == Guid.Empty || request.ToProcedureId == Guid.Empty ||
+            request.Amount <= 0 || request.Amount != decimal.Round(request.Amount, 2) ||
+            request.PatientAuthorization?.Trim().Length is not > 2 or > 200 ||
+            request.Reason?.Trim().Length is not > 9 or > 1000)
+            return BadRequest(new { message = "Request ID, different procedures, positive amount, patient's explicit authorization and reason are required." });
+
+        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+        var plan = await _db.PatientTreatmentPlans
+            .FromSqlInterpolated($@"SELECT * FROM ""PatientTreatmentPlans""
+                WHERE ""Id"" = {planId} AND ""DentalPracticeId"" = {practiceId} FOR UPDATE")
+            .SingleOrDefaultAsync(ct);
+        if (plan is null) return NotFound();
+        var existing = await _db.PlanAllocationTransfers.AsNoTracking()
+            .FirstOrDefaultAsync(t => t.DentalPracticeId == practiceId &&
+                t.RequestId == request.RequestId, ct);
+        if (existing is not null)
+        {
+            if (existing.TreatmentPlanId != planId ||
+                existing.FromProcedureId != request.FromProcedureId ||
+                existing.ToProcedureId != request.ToProcedureId ||
+                existing.Amount != request.Amount ||
+                existing.PatientAuthorization != request.PatientAuthorization.Trim() ||
+                existing.Reason != request.Reason.Trim())
+                return Conflict(new { message = "This transfer request ID was used with different details." });
+            return Ok(new { existing.Id, alreadyRecorded = true });
+        }
+        if (plan.ConsentRecordedAtUtc is null)
+            return Conflict(new { message = "The treatment plan must have the patient's recorded acknowledgement." });
+        var procedures = await _db.PatientTreatmentProcedures.AsNoTracking()
+            .Where(p => p.DentalPracticeId == practiceId && p.PatientId == plan.PatientId &&
+                p.TreatmentPlanId == planId).ToListAsync(ct);
+        var source = procedures.FirstOrDefault(p => p.Id == request.FromProcedureId);
+        var destination = procedures.FirstOrDefault(p => p.Id == request.ToProcedureId);
+        if (source is null || destination is null) return NotFound();
+        if (source.Status != "Declined" && source.Status != "Cancelled")
+            return Conflict(new { message = "An advance can be transferred from this procedure only after its clinical cancellation or refusal is recorded." });
+        if (!IsBillable(destination))
+            return Conflict(new { message = "The receiving procedure is not active." });
+        var allocations = await _db.PlanPaymentAllocations.AsNoTracking()
+            .Where(a => a.DentalPracticeId == practiceId && a.TreatmentPlanId == planId)
+            .ToListAsync(ct);
+        var transfers = await _db.PlanAllocationTransfers.AsNoTracking()
+            .Where(t => t.DentalPracticeId == practiceId && t.TreatmentPlanId == planId)
+            .ToListAsync(ct);
+        var available = NetAllocated(source.Id, allocations, transfers);
+        var destinationDue = (destination.EstimatedCost ?? 0m) -
+            NetAllocated(destination.Id, allocations, transfers);
+        if (available < request.Amount || destinationDue < request.Amount)
+            return Conflict(new { message = "Insufficient advance or receiving procedure balance.",
+                available, destinationDue });
+        var transfer = new PlanAllocationTransfer {
+            DentalPracticeId = practiceId, TreatmentPlanId = planId,
+            FromProcedureId = source.Id, ToProcedureId = destination.Id,
+            RequestId = request.RequestId, Amount = request.Amount,
+            PatientAuthorization = request.PatientAuthorization.Trim(),
+            Reason = request.Reason.Trim(), AuthorizedByUserId = actorId
+        };
+        _db.PlanAllocationTransfers.Add(transfer);
+        await _db.SaveChangesAsync(ct);
+        await _audit.WriteAsync("PLAN_ADVANCE_TRANSFER_AUTHORIZED",
+            "PlanAllocationTransfer", transfer.Id.ToString(), ct: ct);
+        await tx.CommitAsync(ct);
+        return Created($"/api/billing/plan-accounts/{planId}",
+            new { transfer.Id, alreadyRecorded = false, remainingAdvance = available - transfer.Amount,
+                newDestinationBalance = destinationDue - transfer.Amount });
+    }
 
     private static bool IsBillable(PatientTreatmentProcedure p) =>
         p.Status != "Cancelled" && p.Status != "Declined";
@@ -58,11 +146,14 @@ public sealed class PlanAccountsController : ControllerBase
             .Where(a => a.DentalPracticeId == practiceId && planIds.Contains(a.TreatmentPlanId))
             .ToListAsync(ct);
 
+        var transfers = await _db.PlanAllocationTransfers.AsNoTracking()
+            .Where(t => t.DentalPracticeId == practiceId && planIds.Contains(t.TreatmentPlanId))
+            .ToListAsync(ct);
         var rows = plans.Select(plan =>
         {
             var procs = procedures.Where(x => x.TreatmentPlanId == plan.Id && IsBillable(x)).ToList();
             var total = procs.Sum(x => x.EstimatedCost ?? 0m);
-            var paid = allocations.Where(a => a.TreatmentPlanId == plan.Id).Sum(a => a.Amount);
+            var paid = procs.Sum(p => NetAllocated(p.Id, allocations, transfers));
             return new
             {
                 planId = plan.Id,
@@ -106,6 +197,9 @@ public sealed class PlanAccountsController : ControllerBase
         var allocations = await _db.PlanPaymentAllocations.AsNoTracking()
             .Where(a => a.DentalPracticeId == practiceId && a.TreatmentPlanId == planId)
             .ToListAsync(ct);
+        var transfers = await _db.PlanAllocationTransfers.AsNoTracking()
+            .Where(t => t.DentalPracticeId == practiceId && t.TreatmentPlanId == planId)
+            .OrderBy(t => t.CreatedAtUtc).ToListAsync(ct);
         var payments = await _db.PlanPayments.AsNoTracking()
             .Where(p => p.DentalPracticeId == practiceId && p.TreatmentPlanId == planId)
             .OrderBy(p => p.ReceivedAtUtc).ToListAsync(ct);
@@ -114,7 +208,7 @@ public sealed class PlanAccountsController : ControllerBase
 
         var procRows = procedures.Select(p =>
         {
-            var paid = allocations.Where(a => a.ProcedureId == p.Id).Sum(a => a.Amount);
+            var paid = NetAllocated(p.Id, allocations, transfers);
             var cost = IsBillable(p) ? (p.EstimatedCost ?? 0m) : 0m;
             return new
             {
@@ -150,7 +244,13 @@ public sealed class PlanAccountsController : ControllerBase
             allocations = allocations.Select(a => new
             {
                 a.BatchId, a.ProcedureId, a.Amount, a.CreatedAtUtc
-            })
+            }),
+            transfers = transfers.Select(t => new {
+                t.Id, t.FromProcedureId, t.ToProcedureId, t.Amount,
+                t.PatientAuthorization, t.Reason, t.AuthorizedByUserId, t.CreatedAtUtc
+            }),
+            unallocatedAdvance = procRows.Where(p => p.Status is "Cancelled" or "Declined")
+                .Sum(p => p.paid)
         });
     }
 
@@ -225,8 +325,9 @@ public sealed class PlanAccountsController : ControllerBase
             .ToListAsync(ct);
         var paidByProc = await _db.PlanPaymentAllocations.AsNoTracking()
             .Where(a => a.DentalPracticeId == practiceId && a.TreatmentPlanId == planId)
-            .GroupBy(a => a.ProcedureId)
-            .Select(g => new { g.Key, Sum = g.Sum(x => x.Amount) })
+            .ToListAsync(ct);
+        var previousTransfers = await _db.PlanAllocationTransfers.AsNoTracking()
+            .Where(t => t.DentalPracticeId == practiceId && t.TreatmentPlanId == planId)
             .ToListAsync(ct);
 
         foreach (var a in request.Allocations)
@@ -235,7 +336,7 @@ public sealed class PlanAccountsController : ControllerBase
             if (proc is null || !IsBillable(proc))
                 return BadRequest(new { message = "A selected procedure is not part of this plan." });
             var due = (proc.EstimatedCost ?? 0m) -
-                (paidByProc.FirstOrDefault(x => x.Key == proc.Id)?.Sum ?? 0m);
+                NetAllocated(proc.Id, paidByProc, previousTransfers);
             if (a.Amount > due)
                 return Conflict(new { message = $"'{proc.Description}' only has R{due:0.00} outstanding.", due });
         }
