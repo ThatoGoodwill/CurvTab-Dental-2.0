@@ -2753,9 +2753,11 @@ namespace CurvTabDental.Infrastructure.Migrations
             modelBuilder.Entity("CurvTabDental.Domain.Entities.PlanAllocationTransfer", b =>
                 {
                     b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("Amount")
+                        .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)");
 
                     b.Property<Guid>("AuthorizedByUserId")
@@ -2771,9 +2773,13 @@ namespace CurvTabDental.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("PatientAuthorization")
+                        .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
                     b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
                     b.Property<Guid>("RequestId")
@@ -2787,7 +2793,8 @@ namespace CurvTabDental.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DentalPracticeId", "RequestId").IsUnique();
+                    b.HasIndex("DentalPracticeId", "RequestId")
+                        .IsUnique();
 
                     b.HasIndex("DentalPracticeId", "TreatmentPlanId");
 
@@ -2797,9 +2804,12 @@ namespace CurvTabDental.Infrastructure.Migrations
             modelBuilder.Entity("CurvTabDental.Domain.Entities.TreatmentProcedureRefusal", b =>
                 {
                     b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("ClinicalNotes")
+                        .IsRequired()
+                        .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)");
 
                     b.Property<Guid>("ClinicianUserId")
@@ -2812,6 +2822,8 @@ namespace CurvTabDental.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("PatientOrRepresentative")
+                        .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
                     b.Property<Guid>("ProcedureId")
@@ -2821,6 +2833,8 @@ namespace CurvTabDental.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("RisksAndAlternatives")
+                        .IsRequired()
+                        .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)");
 
                     b.Property<Guid>("TreatmentPlanId")
@@ -2828,7 +2842,8 @@ namespace CurvTabDental.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DentalPracticeId", "ProcedureId").IsUnique();
+                    b.HasIndex("DentalPracticeId", "ProcedureId")
+                        .IsUnique();
 
                     b.ToTable("TreatmentProcedureRefusals", (string)null);
                 });
