@@ -25,6 +25,7 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
     // CT_RECOVERED_TREATMENT_PLANS_V1
     public DbSet<PatientTreatmentPlan> PatientTreatmentPlans => Set<PatientTreatmentPlan>();
     public DbSet<PatientTreatmentProcedure> PatientTreatmentProcedures => Set<PatientTreatmentProcedure>();
+    public DbSet<TreatmentProcedureRefusal> TreatmentProcedureRefusals => Set<TreatmentProcedureRefusal>();
 
     public DbSet<DentalPractice> DentalPractices => Set<DentalPractice>();
 
@@ -102,6 +103,16 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
             e.HasIndex(x => new { x.DentalPracticeId, x.ProcedureId });
         });
 
+        modelBuilder.Entity<TreatmentProcedureRefusal>(e =>
+        {
+            e.ToTable("TreatmentProcedureRefusals");
+            e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.Property(x => x.PatientOrRepresentative).IsRequired().HasMaxLength(200);
+            e.Property(x => x.RisksAndAlternatives).IsRequired().HasMaxLength(4000);
+            e.Property(x => x.ClinicalNotes).IsRequired().HasMaxLength(4000);
+            e.HasIndex(x => new { x.DentalPracticeId, x.ProcedureId }).IsUnique();
+        });
         modelBuilder.Entity<PlanAllocationTransfer>(e =>
         {
             e.ToTable("PlanAllocationTransfers");
