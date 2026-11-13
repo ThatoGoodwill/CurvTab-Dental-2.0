@@ -43,6 +43,17 @@ public sealed class BillingLedgerController : ControllerBase
 
         var from = fromUtc.UtcDateTime;
         var to = toUtc.UtcDateTime;
+        // Reception's live cash/receipt view is strictly the current South
+        // African business day. A broader query must not expose prior days.
+        var receptionDayOnly = _current.Role == "Receptionist";
+        if (receptionDayOnly)
+        {
+            var clinicZone = TimeZoneInfo.FindSystemTimeZoneById("Africa/Johannesburg");
+            var localToday = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, clinicZone).Date;
+            from = TimeZoneInfo.ConvertTimeToUtc(
+                DateTime.SpecifyKind(localToday, DateTimeKind.Unspecified), clinicZone);
+            to = from.AddDays(1);
+        }
 
         var payments = _db.Payments
             .AsNoTracking()
@@ -193,6 +204,7 @@ public sealed class BillingLedgerController : ControllerBase
         return Ok(new
         {
             currency = "ZAR",
+            receptionDayOnly,
             fromUtc = from,
             toUtc = to,
             transactionCount = transactionCount + schemeMatches.Count,
