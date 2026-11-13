@@ -1,5 +1,6 @@
 using CurvTabDental.Application.Abstractions;
 using CurvTabDental.Infrastructure.Persistence;
+using CurvTabDental.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -55,6 +56,17 @@ public sealed class FrontDeskCheckoutController : ControllerBase
                         consultationIds.Contains(c.ConsultationId))
             .Select(c => new { c.ConsultationId, c.Amount })
             .ToListAsync(ct);
+        // For a small bounded queue, use the same procedure-scoped credit
+        // calculation as the checkout/payment endpoints.
+        var planCredits = new Dictionary<Guid, decimal>();
+        foreach (var row in waiting)
+        {
+            var consult = consultations.FirstOrDefault(c => c.AppointmentId == row.appointmentId);
+            if (consult is null) continue;
+            var credit = await PlanCreditCalculator.ForConsultation(_db,
+                practiceId, row.patientId, consult.Id, ct);
+            planCredits[row.appointmentId] = credit.Total;
+        }
         var totals = charges.GroupBy(c => c.ConsultationId)
             .ToDictionary(g => g.Key, g => g.Sum(c => c.Amount));
         var consultationByAppointment = consultations
@@ -71,6 +83,10 @@ public sealed class FrontDeskCheckoutController : ControllerBase
                 v.completedAtUtc,
                 amountDue = totals.GetValueOrDefault(
                     consultationByAppointment[v.appointmentId], 0m),
+                planCreditsApplied = planCredits.GetValueOrDefault(v.appointmentId, 0m),
+                remainingBeforeNewPayments = totals.GetValueOrDefault(
+                    consultationByAppointment[v.appointmentId], 0m)
+                    - planCredits.GetValueOrDefault(v.appointmentId, 0m),
                 currency = "ZAR"
             })
             .ToList());
