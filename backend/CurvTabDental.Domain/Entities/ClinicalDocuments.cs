@@ -20,6 +20,7 @@ public sealed class ClinicalPrescription : IPracticeOwned
     public string Quantity { get; set; } = string.Empty;
     public string Directions { get; set; } = string.Empty;
     public string ClinicalRationale { get; set; } = string.Empty;
+    public bool MedicalHistoryReviewed { get; set; }
     public DateTime IssuedAtUtc { get; set; } = DateTime.UtcNow;
 }
 
