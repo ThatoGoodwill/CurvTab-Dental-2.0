@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { createPortal } from 'react-dom'
-import { FileText, Printer, RefreshCw, X } from 'lucide-react'
+import { Printer, RefreshCw, X } from 'lucide-react'
 import { apiRequest } from '../services/api'
 import './ClinicalDocumentsPanel.css'
 
