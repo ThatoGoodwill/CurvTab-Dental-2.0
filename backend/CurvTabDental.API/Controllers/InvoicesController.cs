@@ -2,6 +2,7 @@
 using CurvTabDental.Application.Abstractions;
 using CurvTabDental.Domain.Entities;
 using CurvTabDental.Infrastructure.Persistence;
+using CurvTabDental.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -185,6 +186,14 @@ public sealed class InvoicesController : ControllerBase
         var schemePaid = schemeRows.ToDictionary(
             x => x.InvoiceId, x => x.Amount);
 
+        var planCredits = new Dictionary<Guid, decimal>();
+        foreach (var invoice in invoices)
+        {
+            var credit = await PlanCreditCalculator.ForConsultation(_db, practiceId,
+                invoice.PatientId, invoice.ConsultationId, ct);
+            planCredits[invoice.Id] = credit.Total;
+        }
+
         Response.Headers.CacheControl = "private, no-store";
 
         return Ok(invoices.Select(x => new
@@ -200,9 +209,11 @@ public sealed class InvoicesController : ControllerBase
             allocatedAmount = allocated.GetValueOrDefault(x.Id),
             schemePaidAmount = schemePaid.GetValueOrDefault(x.Id),
             creditedAmount = credits.GetValueOrDefault(x.Id),
+            planCreditsApplied = planCredits.GetValueOrDefault(x.Id),
             netAmount = x.TotalAmount - credits.GetValueOrDefault(x.Id),
             balance = x.TotalAmount
                       - credits.GetValueOrDefault(x.Id)
+                      - planCredits.GetValueOrDefault(x.Id)
                       - allocated.GetValueOrDefault(x.Id)
                       - schemePaid.GetValueOrDefault(x.Id)
         }));
@@ -325,6 +336,8 @@ public sealed class InvoicesController : ControllerBase
         var allocatedTotal = allocations
             .Where(x => !reversedSet.Contains(x.Id))
             .Sum(x => x.Amount);
+        var planCredit = await PlanCreditCalculator.ForConsultation(_db, practiceId,
+            invoice.PatientId, invoice.ConsultationId, ct);
 
         Response.Headers.CacheControl = "private, no-store";
 
@@ -342,9 +355,11 @@ public sealed class InvoicesController : ControllerBase
             allocatedAmount = allocatedTotal,
             schemePaidAmount = schemePaidTotal,
             creditedAmount = creditsTotal,
+            planCreditsApplied = planCredit.Total,
             netAmount = invoice.TotalAmount - creditsTotal,
             balance = invoice.TotalAmount
                       - creditsTotal
+                      - planCredit.Total
                       - allocatedTotal
                       - schemePaidTotal,
             lines,
@@ -619,8 +634,10 @@ public sealed class InvoicesController : ControllerBase
                 x.InvoiceId == invoice.Id)
             .SumAsync(x => (decimal?)x.Amount, ct) ?? 0m;
 
+        var planCredit = await PlanCreditCalculator.ForConsultation(_db,
+            practiceId, invoice.PatientId, invoice.ConsultationId, ct);
         if (request.Amount >
-            invoice.TotalAmount - credited - invoicePaid - schemePaid)
+            invoice.TotalAmount - credited - invoicePaid - schemePaid - planCredit.Total)
             return Conflict(new
             {
                 message = "Allocation exceeds the invoice's remaining balance."
@@ -656,7 +673,7 @@ public sealed class InvoicesController : ControllerBase
                 allocation.InvoiceId,
                 allocation.Amount,
                 remainingBalance =
-                    invoice.TotalAmount - credited - invoicePaid - schemePaid - allocation.Amount
+                    invoice.TotalAmount - credited - invoicePaid - schemePaid - planCredit.Total - allocation.Amount
             });
     }
 }
