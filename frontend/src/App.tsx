@@ -1609,7 +1609,7 @@ export default function App() {
                 isManager={role === 'PracticeAdmin'}
                 checkout={<ReceptionCheckoutPage initialAppointmentId={selectedCheckoutAppointmentId} />}
                 ledger={<BillingLedgerPanel />}
-                plans={<PlanAccountsPanel />}
+                plans={<PlanAccountsPanel isManager={role === 'PracticeAdmin'} />
                 medicalAid={<MedicalAidPanel canManage={role === 'PracticeAdmin'} />}
                 balances={<PatientBalancesPanel />}
                 invoices={<InvoicesPanel canIssue={role === 'PracticeAdmin'} />}
