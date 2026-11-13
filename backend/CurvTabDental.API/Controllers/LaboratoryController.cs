@@ -517,6 +517,10 @@ public sealed class LaboratoryController : ControllerBase
         if (item.CustodyStatus != "AtPractice" || item.QaStatus != "Passed" ||
             item.ClinicalStatus == "Completed" || item.ManufacturingStatus != "Complete")
             return Invalid("Only uncompleted, QA-passed items physically at the practice may be fitted.");
+        if (!await _db.Appointments.AsNoTracking().AnyAsync(a =>
+            a.DentalPracticeId == order.DentalPracticeId && a.PatientId == order.PatientId &&
+            a.Status == "InConsultation", ct))
+            return Conflict(new { title = "Clinical fitting requires an active patient consultation for the dentist to document the actual fitting." });
         if (request.Outcome is not ("Fitted" or "NotFitted") || !Has(request.Notes, 2000) || request.GuaranteeNote?.Length > 1000)
             return BadRequest(new { title = "Record fitment outcome and clinical findings; any guarantee must be expressly agreed." });
         // When fitted gold is linked to a patient treatment plan, the same
