@@ -34,6 +34,30 @@ public sealed class ReceptionPaymentsController : ControllerBase
     public record SplitPaymentRequest(
         Guid BatchId, List<SplitLine> Lines, bool CompleteCheckout);
 
+    // Apply only advance payments allocated to procedures explicitly linked to this visit.
+    // A separate, unrelated consultation charge must never consume a patient's plan deposit.
+    private async Task<decimal> GetPlanCredit(Guid consultationId, Guid practiceId, CancellationToken ct)
+    {
+        var linked = await _db.ConsultationCharges.AsNoTracking()
+            .Where(c => c.DentalPracticeId == practiceId && c.ConsultationId == consultationId &&
+                        c.TreatmentProcedureId != null)
+            .Select(c => new { ProcedureId = c.TreatmentProcedureId!.Value, c.Amount })
+            .ToListAsync(ct);
+        if (linked.Count == 0) return 0m;
+
+        var ids = linked.Select(c => c.ProcedureId).Distinct().ToList();
+        var allocations = await _db.PlanPaymentAllocations.AsNoTracking()
+            .Where(a => a.DentalPracticeId == practiceId && ids.Contains(a.ProcedureId))
+            .GroupBy(a => a.ProcedureId)
+            .Select(g => new { ProcedureId = g.Key, Amount = g.Sum(a => a.Amount) })
+            .ToListAsync(ct);
+        var allocated = allocations.ToDictionary(a => a.ProcedureId, a => a.Amount);
+        // A procedure can be invoiced in only one consultation (enforced by clinical workflow).
+        // Clamp credit to its billed charge; never credit another unrelated treatment.
+        return linked.GroupBy(c => c.ProcedureId)
+            .Sum(g => Math.Min(g.Sum(c => c.Amount), allocated.GetValueOrDefault(g.Key, 0m)));
+    }
+
     // GET /api/frontdesk/checkouts/{appointmentId}
     [HttpGet("{appointmentId:guid}")]
     public async Task<IActionResult> Details(Guid appointmentId, CancellationToken ct)
@@ -146,7 +170,8 @@ public sealed class ReceptionPaymentsController : ControllerBase
             .Where(p => p.DentalPracticeId == practiceId &&
                         p.AppointmentId == appointmentId)
             .SumAsync(p => (decimal?)p.Amount, ct) ?? 0m;
-        var balance = charged - paid;
+        var planCredit = await GetPlanCredit(consultation.Id, practiceId, ct);
+        var balance = charged - paid - planCredit;
         if (balance <= 0m || request.Amount > balance)
             return Conflict(new { message = "Payment exceeds the outstanding balance or no amount is due.", balance });
 
@@ -251,7 +276,8 @@ public sealed class ReceptionPaymentsController : ControllerBase
         var paid = await _db.Payments
             .Where(p => p.DentalPracticeId == practiceId && p.AppointmentId == appointmentId)
             .SumAsync(p => (decimal?)p.Amount, ct) ?? 0m;
-        var balance = charged - paid;
+        var planCredit = await GetPlanCredit(consultation.Id, practiceId, ct);
+        var balance = charged - paid - planCredit;
         if (balance <= 0m || total > balance)
             return Conflict(new { message = "The split total exceeds the outstanding balance.", balance });
         if (request.CompleteCheckout && total != balance)
@@ -331,11 +357,12 @@ public sealed class ReceptionPaymentsController : ControllerBase
             .Where(p => p.DentalPracticeId == practiceId &&
                         p.AppointmentId == appointmentId)
             .SumAsync(p => (decimal?)p.Amount, ct) ?? 0m;
-        if (charged != paid)
+        var planCredit = await GetPlanCredit(consultation.Id, practiceId, ct);
+        if (charged != paid + planCredit)
             return Conflict(new
             {
                 message = "Outstanding balance must be zero to complete checkout.",
-                balance = charged - paid
+                balance = charged - paid - planCredit
             });
 
         appointment.Status = "CheckedOut";
@@ -365,7 +392,7 @@ public sealed class ReceptionPaymentsController : ControllerBase
         var previouslyPaid = details.Payments
             .TakeWhile(p => p.Id != payment.Id)
             .Sum(p => p.Amount);
-        var paidAtReceipt = previouslyPaid + payment.Amount;
+        var paidAtReceipt = previouslyPaid + payment.Amount + details.PlanCredit;
 
         return Ok(new
         {
@@ -392,7 +419,7 @@ public sealed class ReceptionPaymentsController : ControllerBase
         Guid AppointmentId, Guid PatientId, string PatientName, string Status,
         DateTime? CompletedAtUtc, DateTime? CheckedOutAtUtc,
         decimal AmountDue, decimal AmountPaid, decimal Balance,
-        string Currency, List<PaymentRow> Payments);
+        string Currency, List<PaymentRow> Payments, decimal PlanCredit);
 
     private async Task<CheckoutDetails?> LoadDetails(
         Guid appointmentId, Guid practiceId, CancellationToken ct)
@@ -421,10 +448,11 @@ public sealed class ReceptionPaymentsController : ControllerBase
             .Select(p => new PaymentRow(p.Id, p.ReceiptNumber, p.Amount,
                 p.Method, p.Reference, p.ReceivedAtUtc))
             .ToListAsync(ct);
+        var planCredit = await GetPlanCredit(consultation.Id, practiceId, ct);
         var paid = payments.Sum(p => p.Amount);
         return new CheckoutDetails(appointment.Id, patient.Id,
             patient.FirstName + " " + patient.LastName, appointment.Status,
             appointment.ConsultationEndedAtUtc, appointment.CheckedOutAtUtc,
-            due, paid, due - paid, "ZAR", payments);
+            due, paid + planCredit, due - paid - planCredit, "ZAR", payments, planCredit);
     }
 }
