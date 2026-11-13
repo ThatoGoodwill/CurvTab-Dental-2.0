@@ -1,0 +1,68 @@
+/* Compact clinical document authoring, respecting practice light/dark theme. */
+.ct-clinical-documents { width:100%; max-width:760px; margin:auto; color:var(--text,inherit); font-size:12px; }
+.ct-clinical-documents-heading,.ct-clinical-documents-actions,.ct-clinical-document-dialog-head,.ct-clinical-document-footer {
+ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.ct-clinical-documents-heading h3,.ct-clinical-document-dialog-head h3 {margin:0;font-size:15px;}
+.ct-clinical-documents-heading p {margin:3px 0;color:var(--muted,#60748b);font-size:11px;}
+.ct-clinical-documents button {min-height:29px;font-size:11px;}
+.ct-clinical-documents-tabs {display:flex;gap:7px;margin:14px 0;}
+.ct-clinical-documents-tabs button {border:1px solid var(--border-color,#d8e2ed);border-radius:8px;padding:7px 12px;background:var(--surface,#fff);color:inherit;cursor:pointer;}
+.ct-clinical-documents-tabs button.active {background:#216bd0;color:#fff;border-color:#216bd0;}
+.ct-clinical-documents-list {display:grid;gap:8px;margin-top:10px;}
+.ct-clinical-document-card {display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:60px;padding:9px 12px;border:1px solid var(--border-color,#d8e2ed);border-radius:9px;background:var(--surface,#fff);color:inherit;}
+.ct-clinical-document-card strong,.ct-clinical-document-card small {display:block;}
+.ct-clinical-document-card strong {font-size:12px;}
+.ct-clinical-document-card small {font-size:10px;color:var(--muted,#60748b);margin-top:3px;}
+.ct-clinical-document-card p {margin:4px 0 0;font-size:11px;}
+.ct-clinical-documents-error {color:#b42332;}
+.ct-clinical-documents-success {color:#187b56;}
+.ct-clinical-document-overlay {
+ position:fixed;inset:0 0 0 258px;z-index:8800;display:grid;place-items:center;
+ background:rgba(8,24,43,.35);padding:15px;box-sizing:border-box;
+}
+.ct-clinical-document-dialog {
+ box-sizing:border-box;width:min(550px,100%);max-height:min(82dvh,690px);overflow-y:auto;
+ background:var(--surface,var(--card-bg,#fff));color:var(--text,inherit);
+ border:1px solid var(--border-color,#d8e2ed);border-radius:12px;
+ box-shadow:0 16px 45px rgba(8,25,47,.24);padding:14px;scrollbar-width:thin;
+}
+.ct-clinical-document-dialog-head {position:sticky;top:-14px;z-index:1;
+ padding:10px 0;border-bottom:1px solid var(--border-color,#d8e2ed);
+ background:var(--surface,var(--card-bg,#fff));}
+.ct-clinical-document-dialog-head button {
+ display:grid;place-items:center;border:1px solid var(--border-color,#d8e2ed);
+ border-radius:7px;background:transparent;color:inherit;min-width:30px;
+}
+.ct-clinical-document-dialog form {display:grid;gap:10px;padding-top:10px;}
+.ct-clinical-document-dialog label {display:grid;gap:4px;font-weight:650;font-size:11px;}
+.ct-clinical-document-dialog input:not([type=checkbox]),
+.ct-clinical-document-dialog select,
+.ct-clinical-document-dialog textarea {
+ width:100%;box-sizing:border-box;padding:8px 9px;min-height:34px;
+ border:1px solid var(--border-color,#cbd8e4);border-radius:7px;
+ background:var(--surface-secondary,var(--surface,#fff));color:inherit;
+ font-size:12px;font-family:inherit;
+}
+.ct-clinical-document-dialog textarea {resize:vertical;min-height:58px;}
+.ct-clinical-document-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}
+.ct-clinical-document-dialog .ct-doc-authorize {display:flex;align-items:flex-start;gap:8px;font-size:11px;font-weight:500;line-height:1.5;}
+.ct-clinical-document-dialog .ct-doc-authorize input {margin-top:3px;flex-shrink:0;}
+.ct-clinical-document-footer {justify-content:flex-end;margin-top:6px;}
+.ct-clinical-document-print-portal {display:none;}
+@media(max-width:700px){
+ .ct-clinical-document-overlay{left:0;padding:8px}
+ .ct-clinical-document-dialog{max-height:calc(100dvh - 20px)}
+ .ct-clinical-document-grid{grid-template-columns:1fr;}
+}
+@media print{
+ body > #root {display:none!important;}
+ body > .ct-clinical-document-print-portal {
+  display:block!important;position:static!important;visibility:visible!important;
+  background:#fff!important;color:#000!important;
+  padding:24px 28px;font-family:Arial,sans-serif;font-size:12pt;
+ }
+ .ct-clinical-document-print-portal h1{font-size:15pt;border-bottom:1px solid #aaa;padding-bottom:9px}
+ .ct-clinical-document-print-portal h2{font-size:13pt;margin-top:18px}
+ .ct-clinical-document-print-portal p{margin:7px 0;line-height:1.5}
+ .ct-doc-print-attestation{border-top:1px solid #aaa;margin-top:28px!important;padding-top:10px;font-size:9pt;color:#555;}
+}

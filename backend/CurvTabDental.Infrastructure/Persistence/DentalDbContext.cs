@@ -63,6 +63,8 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
     public DbSet<PlanPaymentAllocation> PlanPaymentAllocations => Set<PlanPaymentAllocation>();
     public DbSet<PlanAdvanceTransfer> PlanAdvanceTransfers => Set<PlanAdvanceTransfer>();
     public DbSet<TreatmentProcedureDecision> TreatmentProcedureDecisions => Set<TreatmentProcedureDecision>();
+    public DbSet<ClinicalPrescription> ClinicalPrescriptions => Set<ClinicalPrescription>();
+    public DbSet<ClinicalMedicalCertificate> ClinicalMedicalCertificates => Set<ClinicalMedicalCertificate>();
     public DbSet<OrthodonticFinancialAgreement> OrthodonticFinancialAgreements => Set<OrthodonticFinancialAgreement>();
     public DbSet<OrthodonticInstallment> OrthodonticInstallments => Set<OrthodonticInstallment>();
     public DbSet<DentalChartEntry> DentalChartEntries => Set<DentalChartEntry>();
@@ -134,6 +136,43 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
                 .OnDelete(DeleteBehavior.Restrict);
             e.HasOne<PatientTreatmentProcedure>().WithMany().HasForeignKey(x => x.ProcedureId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ClinicalPrescription>(e =>
+        {
+            e.ToTable("ClinicalPrescriptions");
+            e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.HasIndex(x => new { x.DentalPracticeId, x.PatientId, x.AuthorizedAtUtc });
+            e.HasOne<Patient>().WithMany().HasForeignKey(x => x.PatientId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<Consultation>().WithMany().HasForeignKey(x => x.ConsultationId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<Appointment>().WithMany().HasForeignKey(x => x.AppointmentId).OnDelete(DeleteBehavior.Restrict);
+            e.Property(x => x.PractitionerName).IsRequired().HasMaxLength(200);
+            e.Property(x => x.PractitionerRegistrationNumber).IsRequired().HasMaxLength(60);
+            e.Property(x => x.MedicationName).IsRequired().HasMaxLength(200);
+            e.Property(x => x.Strength).IsRequired().HasMaxLength(100);
+            e.Property(x => x.Dosage).IsRequired().HasMaxLength(300);
+            e.Property(x => x.Route).IsRequired().HasMaxLength(100);
+            e.Property(x => x.Frequency).IsRequired().HasMaxLength(200);
+            e.Property(x => x.Duration).IsRequired().HasMaxLength(200);
+            e.Property(x => x.Quantity).IsRequired().HasMaxLength(100);
+            e.Property(x => x.Instructions).IsRequired().HasMaxLength(2000);
+            e.Property(x => x.ClinicalIndication).IsRequired().HasMaxLength(2000);
+        });
+        modelBuilder.Entity<ClinicalMedicalCertificate>(e =>
+        {
+            e.ToTable("ClinicalMedicalCertificates");
+            e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.HasIndex(x => new { x.DentalPracticeId, x.PatientId, x.AuthorizedAtUtc });
+            e.HasOne<Patient>().WithMany().HasForeignKey(x => x.PatientId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<Consultation>().WithMany().HasForeignKey(x => x.ConsultationId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<Appointment>().WithMany().HasForeignKey(x => x.AppointmentId).OnDelete(DeleteBehavior.Restrict);
+            e.Property(x => x.PractitionerName).IsRequired().HasMaxLength(200);
+            e.Property(x => x.PractitionerRegistrationNumber).IsRequired().HasMaxLength(60);
+            e.Property(x => x.WorkCapacityStatement).IsRequired().HasMaxLength(1000);
+            e.Property(x => x.ClinicalJustification).IsRequired().HasMaxLength(4000);
+            e.Property(x => x.PatientOrRepresentativeName).IsRequired().HasMaxLength(200);
         });
 
         // CT_PROCEDURE_PRICING_V1
