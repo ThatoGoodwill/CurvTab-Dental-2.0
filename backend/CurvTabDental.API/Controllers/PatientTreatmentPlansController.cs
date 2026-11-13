@@ -227,7 +227,7 @@ public sealed class PatientTreatmentPlansController : ControllerBase
             .SumAsync(t => (decimal?)t.Amount, ct) ?? 0m;
         return Ok(new { procedureId, status = decision, decisionId = decisionRecord.Id,
             heldAdvance = held + received - sent,
-            requiresAuthorisedResolution = decision is "Cancelled" or "Declined" && held + received - sent > 0m });
+            requiresAuthorisedResolution = (decision is "Cancelled" or "Declined") && held + received - sent > 0m });
     }
 
     [HttpPost("{planId:guid}/consent")]
