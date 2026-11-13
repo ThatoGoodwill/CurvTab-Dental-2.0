@@ -61,6 +61,7 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<PlanPayment> PlanPayments => Set<PlanPayment>();
     public DbSet<PlanPaymentAllocation> PlanPaymentAllocations => Set<PlanPaymentAllocation>();
+    public DbSet<PlanAdvanceTransfer> PlanAdvanceTransfers => Set<PlanAdvanceTransfer>();
     public DbSet<OrthodonticFinancialAgreement> OrthodonticFinancialAgreements => Set<OrthodonticFinancialAgreement>();
     public DbSet<OrthodonticInstallment> OrthodonticInstallments => Set<OrthodonticInstallment>();
     public DbSet<DentalChartEntry> DentalChartEntries => Set<DentalChartEntry>();
@@ -99,6 +100,20 @@ public class DentalDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
             e.Property(x => x.Amount).HasPrecision(12, 2);
             e.HasIndex(x => new { x.DentalPracticeId, x.TreatmentPlanId });
             e.HasIndex(x => new { x.DentalPracticeId, x.ProcedureId });
+        });
+
+        modelBuilder.Entity<PlanAdvanceTransfer>(e =>
+        {
+            e.ToTable("PlanAdvanceTransfers");
+            e.HasKey(x => x.Id);
+            e.HasQueryFilter(x => x.DentalPracticeId == CurrentPracticeId);
+            e.Property(x => x.Amount).HasPrecision(12, 2);
+            e.Property(x => x.AuthorizationName).IsRequired().HasMaxLength(200);
+            e.Property(x => x.AuthorizationNote).IsRequired().HasMaxLength(2000);
+            e.HasIndex(x => new { x.DentalPracticeId, x.RequestId }).IsUnique();
+            e.HasIndex(x => new { x.DentalPracticeId, x.TreatmentPlanId });
+            e.HasIndex(x => new { x.DentalPracticeId, x.FromProcedureId });
+            e.HasIndex(x => new { x.DentalPracticeId, x.ToProcedureId });
         });
 
         // CT_PROCEDURE_PRICING_V1
