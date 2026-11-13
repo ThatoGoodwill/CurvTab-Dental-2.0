@@ -48,6 +48,20 @@ public sealed class PlanAdvancesAndTransfers : Migration
                 ON "PlanPaymentAllocations" ("DentalPracticeId","TreatmentPlanId");
             CREATE INDEX IF NOT EXISTS "IX_PlanPaymentAllocations_DentalPracticeId_ProcedureId"
                 ON "PlanPaymentAllocations" ("DentalPracticeId","ProcedureId");
+            CREATE TABLE IF NOT EXISTS "TreatmentProcedureRefusals" (
+                "Id" uuid NOT NULL PRIMARY KEY,
+                "DentalPracticeId" uuid NOT NULL,
+                "PatientId" uuid NOT NULL,
+                "TreatmentPlanId" uuid NOT NULL,
+                "ProcedureId" uuid NOT NULL,
+                "ClinicianUserId" uuid NOT NULL,
+                "PatientOrRepresentative" varchar(200) NOT NULL,
+                "RisksAndAlternatives" varchar(4000) NOT NULL,
+                "ClinicalNotes" varchar(4000) NOT NULL,
+                "RecordedAtUtc" timestamptz NOT NULL DEFAULT now()
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS "IX_TreatmentProcedureRefusals_DentalPracticeId_ProcedureId"
+              ON "TreatmentProcedureRefusals" ("DentalPracticeId","ProcedureId");
             CREATE TABLE IF NOT EXISTS "PlanAllocationTransfers" (
                 "Id" uuid NOT NULL PRIMARY KEY,
                 "DentalPracticeId" uuid NOT NULL,
