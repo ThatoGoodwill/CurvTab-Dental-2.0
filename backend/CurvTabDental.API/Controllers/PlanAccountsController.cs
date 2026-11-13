@@ -256,13 +256,30 @@ public sealed class PlanAccountsController : ControllerBase
             .Select(g => new { g.Key, Sum = g.Sum(x => x.Amount) })
             .ToListAsync(ct);
 
+        var transfersExisting = await _db.PlanAdvanceTransfers.AsNoTracking()
+            .Where(t => t.DentalPracticeId == practiceId && t.TreatmentPlanId == planId)
+            .ToListAsync(ct);
+
         foreach (var a in request.Allocations)
         {
             var proc = procedures.FirstOrDefault(p => p.Id == a.ProcedureId);
             if (proc is null || !IsBillable(proc))
                 return BadRequest(new { message = "A selected procedure is not part of this plan." });
-            var due = (proc.EstimatedCost ?? 0m) -
-                (paidByProc.FirstOrDefault(x => x.Key == proc.Id)?.Sum ?? 0m);
+            var applied = (paidByProc.FirstOrDefault(x => x.Key == proc.Id)?.Sum ?? 0m)
+                + transfersExisting.Where(t => t.ToProcedureId == proc.Id).Sum(t => t.Amount)
+                - transfersExisting.Where(t => t.FromProcedureId == proc.Id).Sum(t => t.Amount);
+            var due = (proc.EstimatedCost ?? 0m) - applied;
+            // A visit already collected at reception must not be made
+            // overpaid by a later plan advance.
+            var finalisedVisitWithPayment = await (
+                from charge in _db.ConsultationCharges.AsNoTracking()
+                join consultation in _db.Consultations.AsNoTracking() on charge.ConsultationId equals consultation.Id
+                join payment in _db.Payments.AsNoTracking() on consultation.AppointmentId equals payment.AppointmentId
+                where charge.DentalPracticeId == practiceId && charge.TreatmentProcedureId == proc.Id &&
+                    payment.DentalPracticeId == practiceId
+                select payment.Id).AnyAsync(ct);
+            if (finalisedVisitWithPayment)
+                return Conflict(new { message = "An advance cannot be collected after a linked consultation has received a checkout payment." });
             if (a.Amount > due)
                 return Conflict(new { message = $"'{proc.Description}' only has R{due:0.00} outstanding.", due });
         }
