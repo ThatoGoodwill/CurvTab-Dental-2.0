@@ -27,6 +27,8 @@ public sealed class PatientTreatmentPlansController : ControllerBase
     public record AddProcedureRequest(string? Description, string? ToothCode, decimal? EstimatedCost, Guid? ProcedurePriceId = null);
     public record UpdatePlanRequest(string? Title, string? ClinicalRationale);
     public record RecordConsentRequest(string? PatientOrRepresentativeName, bool Acknowledged);
+    public record ProcedureDecisionRequest(string? Decision, string? Reason,
+        string? RisksAndAlternativesExplained, string? PatientOrRepresentativeName);
 
     private static bool ValidTooth(string? value) =>
         string.IsNullOrEmpty(value) ||
@@ -144,6 +146,22 @@ public sealed class PatientTreatmentPlansController : ControllerBase
             p.Id == procedureId && p.TreatmentPlanId == planId && p.DentalPracticeId == practiceId, ct);
         if (procedure is null) return NotFound();
         if (procedure.Status == "Completed") return NoContent();
+        if (procedure.Status is "Declined" or "Cancelled")
+            return Conflict(new { message = "A cancelled or declined procedure cannot be completed. Retain the refusal history." });
+        if (procedure.RequiresLab)
+        {
+            var matched = await (
+                from order in _db.Set<LaboratoryOrder>().AsNoTracking()
+                join item in _db.Set<LaboratoryItem>().AsNoTracking() on order.Id equals item.LaboratoryOrderId
+                where order.DentalPracticeId == practiceId && item.DentalPracticeId == practiceId &&
+                      order.PatientId == patientId && order.TreatmentPlanId == planId &&
+                      item.ToothCode == procedure.ToothCode && item.Procedure == procedure.Description
+                select new { item.ClinicalStatus, item.QaStatus, item.CustodyStatus }
+            ).ToListAsync(ct);
+            if (matched.Count == 0 || matched.Any(i => i.ClinicalStatus != "Completed" ||
+                i.QaStatus != "Passed" || i.CustodyStatus != "AtPractice"))
+                return Conflict(new { message = "Lab-required treatment cannot be completed until all linked work is QA-passed and clinically fitted." });
+        }
         procedure.Status = "Completed";
         procedure.CompletedAtUtc = DateTime.UtcNow;
         var all = await _db.PatientTreatmentProcedures
@@ -155,6 +173,61 @@ public sealed class PatientTreatmentPlansController : ControllerBase
         await _db.SaveChangesAsync(ct);
         await _audit.WriteAsync("TREATMENT_PROCEDURE_COMPLETED", "PatientTreatmentProcedure", procedure.Id.ToString(), ct: ct);
         return NoContent();
+    }
+
+    // Explicit decisions are appended to the clinical record; performed
+    // procedures cannot be marked cancelled. No receipt is deleted or refunded.
+    [HttpPost("{planId:guid}/procedures/{procedureId:guid}/decision")]
+    public async Task<IActionResult> RecordProcedureDecision(Guid patientId, Guid planId,
+        Guid procedureId, [FromBody] ProcedureDecisionRequest request, CancellationToken ct)
+    {
+        if (_current.PracticeId is not Guid practiceId) return Forbid();
+        if (_current.UserId is not Guid dentistId) return Unauthorized();
+        var decision = request.Decision?.Trim();
+        var reason = request.Reason?.Trim() ?? "";
+        var explanation = request.RisksAndAlternativesExplained?.Trim() ?? "";
+        var patientName = request.PatientOrRepresentativeName?.Trim() ?? "";
+        if (decision is not ("Deferred" or "Declined" or "Cancelled") ||
+            reason.Length is < 8 or > 2000 ||
+            explanation.Length > 4000 || patientName.Length > 200 ||
+            (decision is "Declined" or "Cancelled" &&
+             (explanation.Length < 12 || patientName.Length < 2)))
+            return BadRequest(new { message = "Record a reason; for refusal/cancellation, also record risks, alternatives and the patient's/representative's name." });
+
+        var plan = await _db.PatientTreatmentPlans.FirstOrDefaultAsync(p =>
+            p.Id == planId && p.DentalPracticeId == practiceId && p.PatientId == patientId, ct);
+        if (plan is null) return NotFound();
+        var procedure = await _db.PatientTreatmentProcedures.FirstOrDefaultAsync(p =>
+            p.Id == procedureId && p.TreatmentPlanId == planId &&
+            p.DentalPracticeId == practiceId && p.PatientId == patientId, ct);
+        if (procedure is null) return NotFound();
+        if (procedure.Status is "Completed" or "Cancelled" or "Declined")
+            return Conflict(new { message = "Completed or already declined/cancelled procedures are immutable. Use an audited correction process." });
+
+        var decisionRecord = new TreatmentProcedureDecision {
+            DentalPracticeId = practiceId, PatientId = patientId, TreatmentPlanId = planId,
+            ProcedureId = procedureId, DentistUserId = dentistId, Decision = decision!,
+            Reason = reason, RisksAndAlternativesExplained = explanation,
+            PatientOrRepresentativeName = patientName
+        };
+        procedure.Status = decision!;
+        plan.UpdatedAtUtc = DateTime.UtcNow;
+        _db.TreatmentProcedureDecisions.Add(decisionRecord);
+        await _db.SaveChangesAsync(ct);
+        await _audit.WriteAsync("TREATMENT_PROCEDURE_" + decision!.ToUpperInvariant(),
+            "TreatmentProcedureDecision", decisionRecord.Id.ToString(), ct: ct);
+        var held = await _db.PlanPaymentAllocations.AsNoTracking()
+            .Where(a => a.DentalPracticeId == practiceId && a.TreatmentPlanId == planId &&
+                        a.ProcedureId == procedureId).SumAsync(a => (decimal?)a.Amount, ct) ?? 0m;
+        var sent = await _db.PlanAdvanceTransfers.AsNoTracking()
+            .Where(t => t.DentalPracticeId == practiceId && t.FromProcedureId == procedureId)
+            .SumAsync(t => (decimal?)t.Amount, ct) ?? 0m;
+        var received = await _db.PlanAdvanceTransfers.AsNoTracking()
+            .Where(t => t.DentalPracticeId == practiceId && t.ToProcedureId == procedureId)
+            .SumAsync(t => (decimal?)t.Amount, ct) ?? 0m;
+        return Ok(new { procedureId, status = decision, decisionId = decisionRecord.Id,
+            heldAdvance = held + received - sent,
+            requiresAuthorisedResolution = decision is "Cancelled" or "Declined" && held + received - sent > 0m });
     }
 
     [HttpPost("{planId:guid}/consent")]
