@@ -53,8 +53,21 @@ public sealed class FrontDeskCheckoutController : ControllerBase
         var charges = await _db.ConsultationCharges.AsNoTracking()
             .Where(c => c.DentalPracticeId == practiceId &&
                         consultationIds.Contains(c.ConsultationId))
-            .Select(c => new { c.ConsultationId, c.Amount })
+            .Select(c => new { c.ConsultationId, c.Amount, c.TreatmentProcedureId })
             .ToListAsync(ct);
+        var linkedIds = charges.Where(c => c.TreatmentProcedureId.HasValue)
+            .Select(c => c.TreatmentProcedureId!.Value).Distinct().ToList();
+        var allocations = await _db.PlanPaymentAllocations.AsNoTracking()
+            .Where(a => a.DentalPracticeId == practiceId && linkedIds.Contains(a.ProcedureId))
+            .GroupBy(a => a.ProcedureId)
+            .Select(g => new { ProcedureId = g.Key, Amount = g.Sum(a => a.Amount) })
+            .ToListAsync(ct);
+        var creditByProcedure = allocations.ToDictionary(a => a.ProcedureId, a => a.Amount);
+        var credits = charges.Where(c => c.TreatmentProcedureId.HasValue)
+            .GroupBy(c => c.ConsultationId)
+            .ToDictionary(g => g.Key, g => g.GroupBy(c => c.TreatmentProcedureId!.Value)
+                .Sum(proc => Math.Min(proc.Sum(c => c.Amount),
+                    creditByProcedure.GetValueOrDefault(proc.Key, 0m))));
         var totals = charges.GroupBy(c => c.ConsultationId)
             .ToDictionary(g => g.Key, g => g.Sum(c => c.Amount));
         var consultationByAppointment = consultations
@@ -69,8 +82,10 @@ public sealed class FrontDeskCheckoutController : ControllerBase
                 v.patientName,
                 status = "AwaitingCheckout",
                 v.completedAtUtc,
-                amountDue = totals.GetValueOrDefault(
-                    consultationByAppointment[v.appointmentId], 0m),
+                amountDue = Math.Max(0m, totals.GetValueOrDefault(
+                    consultationByAppointment[v.appointmentId], 0m) -
+                    credits.GetValueOrDefault(consultationByAppointment[v.appointmentId], 0m)),
+                planCredit = credits.GetValueOrDefault(consultationByAppointment[v.appointmentId], 0m),
                 currency = "ZAR"
             })
             .ToList());

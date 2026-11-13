@@ -52,7 +52,7 @@ public class PatientsController : ControllerBase
         else if (_current.Role == StaffRoles.Dentist)
             query = query.Where(p => !_db.OrthodonticIntakes.Any(i =>
                 i.PatientId == p.Id && i.DentalPracticeId == p.DentalPracticeId &&
-                i.ClosedAtUtc == null && i.ReferralAuthorUserId != _current.UserId));
+                i.ClosedAtUtc == null));
 
         if (!string.IsNullOrWhiteSpace(q))
         {
