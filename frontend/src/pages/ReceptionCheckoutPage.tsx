@@ -11,6 +11,8 @@ type WaitingCheckout = {
   status: string
   completedAtUtc: string | null
   amountDue: number
+  advanceApplied: number
+  remainingBalance: number
   currency: string
 }
 type HistoryRow = {
@@ -275,7 +277,7 @@ export default function ReceptionCheckoutPage({ initialAppointmentId }: { initia
                 onClick={() => choose(row.appointmentId)}>
                 <strong>{row.patientName}</strong>
                 <small>Consultation completed {when(row.completedAtUtc)}</small>
-                <span>{money(row.amountDue)} billed</span>
+                <span>{money(row.remainingBalance)} outstanding{row.advanceApplied > 0 ? ` · ${money(row.advanceApplied)} advance applied` : ''}</span>
               </button>)
             )
           ) : completed.length === 0 ? (
