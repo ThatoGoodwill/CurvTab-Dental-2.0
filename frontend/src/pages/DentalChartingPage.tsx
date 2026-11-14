@@ -66,8 +66,10 @@ function findingColour(value?: string): string {
 export default function DentalChartingPage({
   initialPatientId,
   initialClinicalTab = 'Dental Chart',
+  onOpenLaboratory,
 }: {
   initialPatientId?: string | null
+  onOpenLaboratory?: (patientId: string) => void
   initialClinicalTab?: 'Dental Chart' | 'Treatment Plan' | 'Clinical Notes & Encounters' | 'Medical Records' | 'Clinical Images' | 'Tooth History'
 }) {
   const [clinicalTab, setClinicalTab] = useState<'Treatment Home' | 'Dental Chart' | 'Treatment Plan' | 'Clinical Notes & Encounters' | 'Medical Records' | 'Clinical Images' | 'Tooth History'>(initialClinicalTab)
@@ -495,6 +497,7 @@ export default function DentalChartingPage({
               key={`${patientId}-${clinicalTab}`}
               patientId={patientId}
               panel={clinicalTab}
+              onOpenLaboratory={onOpenLaboratory}
             />
 
             {clinicalTab === 'Medical Records' && (
