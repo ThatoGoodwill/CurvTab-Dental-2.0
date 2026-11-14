@@ -170,6 +170,14 @@ export default function LaboratoryModule({ initialPatientId, requestId }: {
       await apiRequest(path, 'POST', body)
       setNotice(success); setModal(''); setMarked([])
       await load()
+      if (path === '/laboratory/orders' && !isLab) {
+        try {
+          const remaining = await apiRequest<LabNeed[]>('/laboratory/lab-required')
+          setLabNeeded(remaining)
+        } catch {
+          setLabNeeded([])
+        }
+      }
       if (nextScreen === 1) setSection('dispatch')
     } catch (e) { setError(e instanceof Error ? e.message : 'Action failed') }
     finally { setBusy(false) }
