@@ -332,3 +332,23 @@ body[data-theme="dark"] .ct-chart-workspace-heading,
   color: #f1f5f9;
   border-color: #3c5069;
 }
+
+
+/* Keep successful tooth observations actionable without returning to the top. */
+.specialty-page .ct-chart-next-step {
+  position: sticky;
+  top: 8px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border-color, #cbd5e1);
+  box-shadow: 0 8px 24px rgba(16, 40, 67, .12);
+}
+.specialty-page .ct-chart-next-step button { font-size: 11px; padding: 7px 10px; white-space: nowrap; }
+@media (max-width: 680px) {
+  .specialty-page .ct-chart-next-step { flex-direction: column; align-items: stretch; }
+}
