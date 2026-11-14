@@ -129,7 +129,11 @@ export default function LaboratoryModule({ initialPatientId, requestId }: {
     if (modal !== 'order' || isLab) return
     const t = setTimeout(() => {
       apiRequest<PatientList>(`/patients?q=${encodeURIComponent(form.patientQuery || '')}&pageSize=100`)
-        .then(r => setPatients(r.items)).catch(() => {})
+        .then(r => setPatients(previous => {
+           const selected = previous.find(patient => patient.id === form.patientId)
+           return selected && !r.items.some(patient => patient.id === selected.id)
+             ? [selected, ...r.items] : r.items
+         })).catch(() => {})
     }, 300)
     return () => clearTimeout(t)
   }, [modal, form.patientQuery, isLab])
@@ -163,6 +167,7 @@ export default function LaboratoryModule({ initialPatientId, requestId }: {
     setForm({
       patientId: initialPatientId,
       treatmentPlanId: pending?.planId || '',
+      procedureId: pending?.procedureId || '',
       patientQuery: pending?.patientName || '',
       instructions: '',
     })
@@ -176,7 +181,7 @@ export default function LaboratoryModule({ initialPatientId, requestId }: {
 
   const openLabRequest = (item: LabNeed) => {
     setSection('orders')
-    setForm({ patientId: item.patientId, treatmentPlanId: item.planId, patientQuery: item.patientName, instructions: '' })
+    setForm({ patientId: item.patientId, treatmentPlanId: item.planId, patientQuery: item.patientName, procedureId: item.procedureId, instructions: '' })
     setDraftItems([{ toothCode: item.toothCode || '', procedure: item.description, isRemovable: false }])
     setError('')
     setNotice('')
@@ -187,7 +192,11 @@ export default function LaboratoryModule({ initialPatientId, requestId }: {
     if (selectedItem) setItemId(selectedItem)
     if (selectedManifest) setManifestId(selectedManifest)
     setForm({}); setUploadFile(null); setError(''); setModal(name)
-    if (name === 'order') setDraftItems([{ toothCode: '', procedure: '', isRemovable: false }])
+    if (name === 'order') {
+      const pending = initialPatientId ? labNeeded.find(item => item.patientId === initialPatientId) : undefined
+      setForm(pending ? { patientId: pending.patientId, patientQuery: pending.patientName, treatmentPlanId: pending.planId, procedureId: pending.procedureId, instructions: '' } : {})
+      setDraftItems(pending ? [{ toothCode: pending.toothCode || '', procedure: pending.description, isRemovable: false }] : [{ toothCode: '', procedure: '', isRemovable: false }])
+    }
   }
   const set = (key: string, value: string) => setForm(prev => ({ ...prev, [key]: value }))
   const selected = (id: string) => setMarked(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
@@ -234,6 +243,10 @@ export default function LaboratoryModule({ initialPatientId, requestId }: {
     e.preventDefault()
     if (modal === 'partner') void act('/laboratory/partners', { name: form.name, contact: form.contact, phone: form.phone }, 'Partner added.')
     if (modal === 'assign') void act(`/laboratory/partners/${form.partnerId}/members`, { userId: form.userId }, 'Technician account assigned to laboratory.')
+    if (modal === 'order' && labNeeded.some(need => need.patientId === form.patientId) && !form.procedureId) {
+      setError('Select the approved patient treatment-plan procedure before prescribing laboratory work.')
+      return
+    }
     if (modal === 'order') void act('/laboratory/orders', {
       patientId: form.patientId, laboratoryPartnerId: form.partnerId,
       treatmentPlanId: form.treatmentPlanId || null, instructions: form.instructions,
@@ -477,14 +490,20 @@ export default function LaboratoryModule({ initialPatientId, requestId }: {
           <Field label="LabTechnician staff account" required><select required value={form.userId||''} onChange={e=>set('userId',e.target.value)}><option value="">Select technician</option>{staff.filter(s=>s.role==='LabTechnician' && s.isActive).map(s=><option key={s.id} value={s.id}>{s.fullName} ({s.email})</option>)}</select></Field></>}
         {modal==='order' && <><p>Create a prescription only after the dentist has clinically assessed and approved the work.</p>
           <Field label="Find patient by name"><input placeholder="Search registered patients…" value={form.patientQuery||''} onChange={e=>set('patientQuery',e.target.value)} /></Field>
-          <Field label="Patient" required><select required value={form.patientId||''} onChange={e=>set('patientId',e.target.value)}><option value="">Select registered patient</option>{patients.map(p=><option key={p.id} value={p.id}>{p.firstName} {p.lastName}</option>)}</select></Field>
+          <Field label="Patient" required><select required value={form.patientId||''} onChange={e=>{ const patientId = e.target.value; setForm(previous => ({...previous, patientId, treatmentPlanId: '', procedureId: ''})); setDraftItems([{toothCode: '',procedure: '',isRemovable: false}]) }}><option value="">Select registered patient</option>{patients.map(p=><option key={p.id} value={p.id}>{p.firstName} {p.lastName}</option>)}</select></Field>
+          {form.patientId && labNeeded.some(need => need.patientId === form.patientId) && <Field label="Treatment plan laboratory procedure" required><select required value={form.procedureId||''} onChange={e=>{
+            const chosen = labNeeded.find(need => need.procedureId === e.target.value)
+            if (!chosen) return
+            setForm(previous => ({ ...previous, treatmentPlanId: chosen.planId, procedureId: chosen.procedureId }))
+            setDraftItems([{ toothCode: chosen.toothCode || '', procedure: chosen.description, isRemovable: false }])
+          }}><option value="">Select approved laboratory procedure…</option>{labNeeded.filter(need => need.patientId === form.patientId).map(need => <option key={need.procedureId} value={need.procedureId}>{need.description} · tooth {need.toothCode}</option>)}</select></Field>}
           <Field label="Destination laboratory" required><select required value={form.partnerId||''} onChange={e=>set('partnerId',e.target.value)}><option value="">Select laboratory</option>{data.partners.filter(p=>p.isActive).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></Field>
           <Field label="Dentist instructions" required><textarea required maxLength={5000} rows={3} value={form.instructions||''} onChange={e=>set('instructions',e.target.value)} placeholder="Material, shade, design, due date and clinical requirements…"/></Field>
-          <h4>Independent tooth / appliance items</h4>{draftItems.map((d,idx)=><div className="lab-item-editor" key={idx}><input placeholder="FDI tooth / Arch" value={d.toothCode} maxLength={10} required onChange={e=>setDraftItems(v=>v.map((x,k)=>k===idx?{...x,toothCode:e.target.value}:x))}/>
-            <input placeholder="Gold inlay, crown, denture…" required maxLength={240} value={d.procedure} onChange={e=>setDraftItems(v=>v.map((x,k)=>k===idx?{...x,procedure:e.target.value}:x))}/>
+          <h4>Independent tooth / appliance items</h4>{draftItems.map((d,idx)=><div className="lab-item-editor" key={idx}><input placeholder="FDI tooth / Arch" value={d.toothCode} maxLength={10} required readOnly={Boolean(form.procedureId)} onChange={e=>setDraftItems(v=>v.map((x,k)=>k===idx?{...x,toothCode:e.target.value}:x))}/>
+            <input placeholder="Gold inlay, crown, denture…" required maxLength={240} readOnly={Boolean(form.procedureId)} value={d.procedure} onChange={e=>setDraftItems(v=>v.map((x,k)=>k===idx?{...x,procedure:e.target.value}:x))}/>
             <label><input type="checkbox" checked={d.isRemovable} onChange={e=>setDraftItems(v=>v.map((x,k)=>k===idx?{...x,isRemovable:e.target.checked}:x))}/> Removable</label>
             <button type="button" className="lab-icon-button" onClick={()=>setDraftItems(v=>v.length>1?v.filter((_,k)=>k!==idx):v)}><X size={14}/></button></div>)}
-          <button type="button" className="lab-secondary" onClick={()=>setDraftItems(v=>[...v,{toothCode:'',procedure:'',isRemovable:false}])}><Plus size={15}/> Add another item</button></>}
+          {!form.procedureId && <button type="button" className="lab-secondary" onClick={()=>setDraftItems(v=>[...v,{toothCode:'',procedure:'',isRemovable:false}])}><Plus size={15}/> Add another item</button>}</>}
         {modal==='handover' && activeManifest && <><p>{activeManifest.reference} · {partnerName(activeManifest.laboratoryPartnerId)}. This action changes custody to <strong>In Transit</strong>.</p>
           <Field label="Collector / courier name" required><input required maxLength={140} value={form.collectorName||''} onChange={e=>set('collectorName',e.target.value)}/></Field>
           <Field label="Waybill / reference"><input maxLength={120} value={form.waybill||''} onChange={e=>set('waybill',e.target.value)}/></Field>
