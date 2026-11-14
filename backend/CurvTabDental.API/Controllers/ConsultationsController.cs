@@ -408,6 +408,40 @@ public sealed class ConsultationsController : ControllerBase
               consultation.TreatmentPerformed?.Contains("no treatment performed", StringComparison.OrdinalIgnoreCase) == true))
             return Conflict(new { message = "No priced treatment charge was recorded. Add the approved procedure or document 'No charge' with the clinical reason in Treatment performed before finalizing a genuine R0 encounter." });
 
+        // A billed, lab-required treatment cannot be sent to reception before
+        // the dentist has recorded its actual linked laboratory prescription.
+        // Unrelated future treatment-plan items do not block this visit.
+        var chargeDescriptions = await _db.ConsultationCharges.AsNoTracking()
+            .Where(c => c.DentalPracticeId == practiceId && c.ConsultationId == consultation.Id)
+            .Select(c => c.Description).ToListAsync(ct);
+        if (chargeDescriptions.Count > 0)
+        {
+            var missingPrescription = await (
+                from procedure in _db.PatientTreatmentProcedures.AsNoTracking()
+                join plan in _db.PatientTreatmentPlans.AsNoTracking()
+                    on procedure.TreatmentPlanId equals plan.Id
+                where procedure.DentalPracticeId == practiceId &&
+                      procedure.PatientId == consultation.PatientId &&
+                      procedure.RequiresLab &&
+                      procedure.Status != "Cancelled" && procedure.Status != "Declined" &&
+                      plan.DentalPracticeId == practiceId &&
+                      plan.ConsentRecordedAtUtc != null &&
+                      chargeDescriptions.Contains(procedure.Description) &&
+                      !_db.Set<LaboratoryOrder>().Any(order =>
+                          order.DentalPracticeId == practiceId &&
+                          order.PatientId == consultation.PatientId &&
+                          order.TreatmentPlanId == plan.Id &&
+                          _db.Set<LaboratoryItem>().Any(item =>
+                              item.LaboratoryOrderId == order.Id &&
+                              item.DentalPracticeId == practiceId &&
+                              item.ToothCode == procedure.ToothCode &&
+                              item.Procedure == procedure.Description))
+                select procedure.Id
+            ).AnyAsync(ct);
+            if (missingPrescription)
+                return Conflict(new { message = "This visit includes a laboratory-required treatment without a linked dentist prescription. Open Laboratory, select the exact approved procedure and tooth, and record the actual lab instructions before finishing the consultation." });
+        }
+
         var changedAt = DateTime.UtcNow;
         var changed = await _db.Appointments
             .Where(a => a.Id == appointmentId &&
