@@ -1781,3 +1781,36 @@
     font-size: 11px !important;
   }
 }
+
+
+/* 14 Nov four-role clinical walkthrough: make calendar and selected-day panel fit. */
+@media (min-width: 900px) {
+  .ct-appt-page-overlay {
+    left: var(--ct-modal-nav, 258px) !important;
+    background: rgba(12, 27, 44, .22) !important;
+    backdrop-filter: none !important;
+  }
+}
+.ct-appointments-modal-calendar {
+  border-radius: 12px !important;
+  box-shadow: 0 18px 46px rgba(12, 32, 55, .23) !important;
+}
+.ct-appointments-modal-calendar .ct-appt-daily.ct-appt-daily-panel {
+  top: 105px !important;
+  right: 12px !important;
+  max-height: min(425px, calc(100dvh - 185px)) !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  background: var(--appt-dialog-bg, #fff) !important;
+}
+.ct-appointments-modal-calendar .ct-appt-compact .appointment-calendar {
+  gap: 3px !important;
+}
+@media (max-width: 760px) {
+  .ct-appointments-modal-calendar .ct-appt-daily.ct-appt-daily-panel {
+    top: 105px !important;
+    right: 8px !important;
+    max-height: calc(100dvh - 175px) !important;
+  }
+}
