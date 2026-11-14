@@ -106,7 +106,7 @@ public sealed class LaboratoryController : ControllerBase
                   proc.Status != "Declined" && plan.ConsentRecordedAtUtc != null &&
                   !_db.Set<LaboratoryOrder>().Any(o =>
                       o.DentalPracticeId == practiceId && o.PatientId == patient.Id &&
-                      o.TreatmentPlanId == plan.Id && o.Status != "Closed" &&
+                      o.TreatmentPlanId == plan.Id &&
                       _db.Set<LaboratoryItem>().Any(i => i.LaboratoryOrderId == o.Id &&
                           i.ToothCode == proc.ToothCode && i.Procedure == proc.Description))
             orderby plan.UpdatedAtUtc descending
@@ -270,7 +270,7 @@ public sealed class LaboratoryController : ControllerBase
                 from existingOrder in _db.Set<LaboratoryOrder>().AsNoTracking()
                 join item in _db.Set<LaboratoryItem>().AsNoTracking() on existingOrder.Id equals item.LaboratoryOrderId
                 where existingOrder.DentalPracticeId == practice && existingOrder.PatientId == request.PatientId &&
-                      existingOrder.TreatmentPlanId == planId && existingOrder.Status != "Closed"
+                      existingOrder.TreatmentPlanId == planId
                 select new { item.Procedure, item.ToothCode }).ToListAsync(ct);
             if (request.Items.Any(item => alreadyPrescribed.Any(p =>
                 p.Procedure == item.Procedure.Trim() &&

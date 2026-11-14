@@ -902,3 +902,45 @@
 }
 
 /* CT_LAB_CARDS_THEME_V2_END */
+
+
+/* Treatment-to-lab QA: keep the sidebar available and the form footer visible. */
+.lab-modal-backdrop {
+  left: var(--ct-modal-nav, 258px) !important;
+  padding: 12px 16px !important;
+  background: rgba(10, 25, 45, .22) !important;
+  backdrop-filter: none !important;
+}
+.lab-modal-backdrop .lab-modal {
+  width: min(590px, 100%) !important;
+  max-height: calc(100dvh - 28px) !important;
+  overflow: hidden !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--lab-line, #cbd8e5) !important;
+  box-shadow: 0 18px 42px rgba(11, 29, 51, .22) !important;
+}
+.lab-modal-backdrop .lab-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  gap: 9px;
+  padding: 12px 16px;
+  scrollbar-width: thin;
+}
+.lab-modal-backdrop .lab-modal header {
+  flex: 0 0 auto;
+  padding: 12px 16px;
+}
+.lab-modal-backdrop .lab-modal-footer {
+  position: sticky;
+  bottom: -12px;
+  z-index: 2;
+  background: var(--lab-bg, #fff);
+  padding: 10px 0 2px;
+}
+.lab-modal-backdrop .lab-alert {
+  flex-shrink: 0;
+}
+@media (max-width: 760px) {
+  .lab-modal-backdrop { left: 0 !important; padding: 8px !important; }
+}

@@ -193,3 +193,18 @@
 @media (prefers-reduced-motion: reduce) {
   .ct-patient-treatment .ct-recovered-plan-chevron { transition: none; }
 }
+
+
+/* Keep clinical status and next action near treatment rows instead of the top. */
+.ct-recovered-panel .ct-recovered-notice,
+.ct-recovered-panel .ct-recovered-error {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  border-radius: 8px;
+  padding: 9px 12px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border-color, #cbd5e1);
+}
+.ct-recovered-plan-disclosure[open] { scroll-margin-top: 12px; }
+.ct-recovered-plan-disclosure button { min-height: 29px; padding: 5px 9px; font-size: 11px; }

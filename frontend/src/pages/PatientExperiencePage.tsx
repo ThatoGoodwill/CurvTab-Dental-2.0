@@ -838,10 +838,11 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
           </div>
         ) : (
           <>
-            {treatmentSection === 'Treatment Plan' && labNeeds.length > 0 && (
+            {(treatmentSection === 'Treatment Plan' || treatmentSection === 'Consultation') && labNeeds.length > 0 && (
               <div className="ct-treatment-lab-note" role="status">
                 <strong>{labNeeds.length} lab-required procedure(s)</strong> on this acknowledged patient plan.
-                The dentist must prescribe real lab work before technicians receive a job.
+                The dentist must create a linked laboratory prescription and record material, shade and instructions before finalizing any visit that bills this lab-dependent treatment.
+                {onOpenLaboratory && <button type="button" className="secondary-button" onClick={() => onOpenLaboratory(selected.id)}>Open laboratory prescription →</button>}
               </div>
             )}
             <div className="ct-treatment-progress-actions">
@@ -895,6 +896,8 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
                 key={`${selected.id}-${treatmentSection}`}
                 initialPatientId={selected.id}
                 initialClinicalTab={treatmentSection}
+                onOpenLaboratory={onOpenLaboratory}
+                onOpenTreatmentPlan={() => setTreatmentSection('Treatment Plan')}
               />
             )}
           </>
