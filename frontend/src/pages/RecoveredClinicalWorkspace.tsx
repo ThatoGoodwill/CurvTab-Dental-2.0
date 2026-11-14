@@ -25,7 +25,7 @@ type Panel = 'Treatment Plan' | 'Clinical Notes & Encounters' | 'Medical Records
 const date = (v?: string | null) => v ? new Date(v).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 const details = (v?: string | null) => v?.trim() || 'Not recorded'
 
-export default function RecoveredClinicalWorkspace({ patientId, panel }: { patientId: string; panel: Panel }) {
+export default function RecoveredClinicalWorkspace({ patientId, panel, onOpenLaboratory }: { patientId: string; panel: Panel; onOpenLaboratory?: (patientId: string) => void }) {
   const [plans, setPlans] = useState<Plan[]>([])
   const [openPlanId, setOpenPlanId] = useState<string | null>(null)
   const [encounters, setEncounters] = useState<Encounter[]>([])
@@ -52,9 +52,8 @@ export default function RecoveredClinicalWorkspace({ patientId, panel }: { patie
     let active = true
     setLoading(true)
     setError('')
-    setNotice('')
     const request = panel === 'Treatment Plan'
-      ? apiRequest<Plan[]>(path).then(v => { if (active) { setPlans(v); setOpenPlanId(v[0]?.id ?? null) } })
+      ? apiRequest<Plan[]>(path).then(v => { if (active) { setPlans(v); setOpenPlanId(current => v.some(plan => plan.id === current) ? current : (v[0]?.id ?? null)) } })
       : panel === 'Clinical Notes & Encounters'
         ? apiRequest<Encounter[]>(`/dentist/patients/${encodeURIComponent(patientId)}/consultations`).then(v => { if (active) setEncounters(v) })
         : apiRequest<History>(`/dentist/patients/${encodeURIComponent(patientId)}/medical-history`).then(v => { if (active) setHistory(v) })
@@ -74,7 +73,7 @@ export default function RecoveredClinicalWorkspace({ patientId, panel }: { patie
     setBusy(true); setError(''); setNotice('')
     try {
       await apiRequest(`${path}/${planId}/procedures/${procedureId}/complete`, 'POST')
-      setNotice('Procedure marked as completed.')
+      setNotice('Procedure completed and saved. The treatment remains available in this plan; link it to the active consultation for billing.')
       setReload(n => n + 1)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to update procedure.')
@@ -146,7 +145,7 @@ export default function RecoveredClinicalWorkspace({ patientId, panel }: { patie
         <p>{details(plan.clinicalRationale)}</p>
         <h4>Planned procedures</h4>
         {plan.procedures.length ? <div className="ct-recovered-table-wrap"><table><thead><tr><th>Procedure</th><th>Tooth</th><th>Estimated cost</th><th>Status</th></tr></thead><tbody>
-          {plan.procedures.map(p => <tr key={p.id}><td>{p.description}{p.requiresLab && <> <strong title="Needs a laboratory order">· LAB REQUIRED</strong></>}</td><td>{p.toothCode || '—'}</td><td>{p.estimatedCost === null ? '—' : `R ${p.estimatedCost.toFixed(2)}`}</td><td>{p.status}{plan.consentRecordedAtUtc && p.status !== 'Completed' && p.status !== 'Cancelled' && <> <button type="button" disabled={busy} onClick={() => void completeProcedure(plan.id, p.id)}>Mark completed</button></>}</td></tr>)}
+          {plan.procedures.map(p => <tr key={p.id}><td>{p.description}{p.requiresLab && <> <strong title="Needs a laboratory order">· LAB REQUIRED</strong></>}</td><td>{p.toothCode || '—'}</td><td>{p.estimatedCost === null ? '—' : `R ${p.estimatedCost.toFixed(2)}`}</td><td>{p.status}{p.requiresLab && p.status !== 'Completed' && onOpenLaboratory && <> <button type="button" onClick={() => onOpenLaboratory(patientId)}>Prescribe / track lab work</button></>}{plan.consentRecordedAtUtc && p.status !== 'Completed' && p.status !== 'Cancelled' && p.status !== 'Declined' && <> <button type="button" disabled={busy || p.requiresLab} title={p.requiresLab ? 'Complete laboratory manufacture, QA and dentist fitment first; status is recorded in Laboratory.' : 'Confirm this procedure was performed'} onClick={() => void completeProcedure(plan.id, p.id)}>{p.requiresLab ? 'Complete through Laboratory' : 'Mark completed'}</button></>}</td></tr>)}
         </tbody></table></div> : <p>No procedures added.</p>}
         {plan.consentRecordedAtUtc && <p className="ct-recovered-notice">Acknowledgement recorded for {plan.consentName} on {date(plan.consentRecordedAtUtc)}. This is a recorded acknowledgement, not a digital signature.</p>}
         {!plan.consentRecordedAtUtc && <div className="ct-recovered-actions">
