@@ -372,7 +372,12 @@ export default function DentistConsultationsPage({
     }
     if (finish && (!chargesConfirmed ||
       fields.some(field => field.required && !form[field.key].trim()))) {
-      setError('To finish, complete the complaint, examination, diagnosis, treatment and confirm all charges (including R0 visits).')
+      setError('Complete required clinical notes and confirm the treatment charges before finishing.')
+      return
+    }
+    if (finish && prepared.length === 0 &&
+      !/no charge|no billable|no treatment performed/i.test(form.treatmentPerformed)) {
+      setError('No approved charge was added. Select a priced procedure, or explicitly document a genuine no-charge encounter and its clinical reason under Treatment performed.')
       return
     }
     setSaving(true)
@@ -633,7 +638,7 @@ export default function DentistConsultationsPage({
                 <label className="clinical-checkbox">
                   <input type="checkbox" checked={chargesConfirmed} disabled={!editable || saving}
                     onChange={event => setChargesConfirmed(event.target.checked)}/>
-                  I have checked and confirmed all treatment charges, including a zero-charge visit.
+                  I have checked and confirmed all treatment charges. R0 encounters need an explicitly documented reason.
                 </label>
                 {editable && <div className="clinical-actions">
                   <button type="submit" className="secondary-button" disabled={saving}>
@@ -644,6 +649,7 @@ export default function DentistConsultationsPage({
                     <Stethoscope size={17}/> Finish Consultation
                   </button>
                 </div>}
+                {(error || message) && <p role={error ? 'alert' : 'status'} className={error ? 'clinical-error clinical-action-feedback' : 'clinical-success clinical-action-feedback'}>{error || message}</p>}
               </form>
             </>
           ) : <p>Record not found.</p>}
