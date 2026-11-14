@@ -67,9 +67,11 @@ export default function DentalChartingPage({
   initialPatientId,
   initialClinicalTab = 'Dental Chart',
   onOpenLaboratory,
+  onOpenTreatmentPlan,
 }: {
   initialPatientId?: string | null
   onOpenLaboratory?: (patientId: string) => void
+  onOpenTreatmentPlan?: () => void
   initialClinicalTab?: 'Dental Chart' | 'Treatment Plan' | 'Clinical Notes & Encounters' | 'Medical Records' | 'Clinical Images' | 'Tooth History'
 }) {
   const [clinicalTab, setClinicalTab] = useState<'Treatment Home' | 'Dental Chart' | 'Treatment Plan' | 'Clinical Notes & Encounters' | 'Medical Records' | 'Clinical Images' | 'Tooth History'>(initialClinicalTab)
@@ -331,7 +333,7 @@ export default function DentalChartingPage({
       {error && <div className="specialty-alert specialty-error" role="alert">{error}</div>}
       {success && <div className="specialty-alert specialty-success ct-chart-next-step" role="status">
         <strong>{success}</strong>
-        <button type="button" className="primary-button" onClick={() => { setClinicalTab('Treatment Plan'); setSuccess('') }}>Continue to Treatment Plan →</button>
+        <button type="button" className="primary-button" onClick={() => { setClinicalTab('Treatment Plan'); setSuccess(''); onOpenTreatmentPlan?.() }}>Continue to Treatment Plan →</button>
       </div>}
 
       
