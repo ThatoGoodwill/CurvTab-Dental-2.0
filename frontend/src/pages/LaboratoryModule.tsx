@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import {
   ClipboardList, Truck, PackageCheck, ScanLine,
@@ -90,6 +90,7 @@ export default function LaboratoryModule({ initialPatientId, requestId }: {
   const [data, setData] = useState<Dashboard>(empty)
   const [labNeeded, setLabNeeded] = useState<LabNeed[]>([])
   const [labNeedsLoaded, setLabNeedsLoaded] = useState(false)
+  const handledReferral = useRef<number | null>(null)
   const [section, setSection] = useState<Section>('orders') // CT_LAB_WORKBENCH_V3
   const [orderId, setOrderId] = useState('')
   const [itemId, setItemId] = useState('')
@@ -174,8 +175,22 @@ export default function LaboratoryModule({ initialPatientId, requestId }: {
     finally { setBusy(false) }
   }
   useEffect(() => {
-    if (!dentist || !initialPatientId || !requestId || !labNeedsLoaded) return
+    if (!dentist || !initialPatientId || !requestId || !labNeedsLoaded || loading ||
+        handledReferral.current === requestId) return
+    handledReferral.current = requestId
     const pending = labNeeded.find(item => item.patientId === initialPatientId)
+    if (!pending) {
+      // Returning to an existing prescribed lab case must not silently create a
+      // second unlinked prescription or discard previously recorded instructions.
+      const existing = data.orders.find(order =>
+        order.patientId === initialPatientId && order.status !== 'Closed')
+      if (existing) {
+        setOrderId(existing.id)
+        setSection('case')
+        setModal('')
+        return
+      }
+    }
     setSection('orders')
     setForm({
       patientId: initialPatientId,
@@ -188,9 +203,7 @@ export default function LaboratoryModule({ initialPatientId, requestId }: {
       ? [{ toothCode: pending.toothCode || '', procedure: pending.description, isRemovable: false }]
       : [{ toothCode: '', procedure: '', isRemovable: false }])
     setModal('order')
-  // Only re-initialise on a new explicit request, not when forms are edited.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [requestId, labNeedsLoaded])
+  }, [dentist, initialPatientId, requestId, labNeedsLoaded, loading, labNeeded, data.orders])
 
   const openLabRequest = (item: LabNeed) => {
     setSection('orders')
