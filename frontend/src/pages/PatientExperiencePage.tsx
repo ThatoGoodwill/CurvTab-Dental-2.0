@@ -895,6 +895,7 @@ export default function PatientExperiencePage({ role, onClose, onOpenAppointment
                 key={`${selected.id}-${treatmentSection}`}
                 initialPatientId={selected.id}
                 initialClinicalTab={treatmentSection}
+                onOpenLaboratory={onOpenLaboratory}
               />
             )}
           </>
