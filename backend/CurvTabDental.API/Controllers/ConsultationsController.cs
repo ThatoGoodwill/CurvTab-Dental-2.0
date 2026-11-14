@@ -394,7 +394,19 @@ public sealed class ConsultationsController : ControllerBase
             string.IsNullOrWhiteSpace(consultation.TreatmentPerformed))
             return BadRequest(new { message = "Complete the complaint, examination, diagnosis and treatment before finishing." });
         if (!consultation.ChargesConfirmed)
-            return BadRequest(new { message = "Confirm the treatment charges, even if the amount is R0.00." });
+            return BadRequest(new { message = "Confirm the approved treatment charges before finishing." });
+
+        var chargeCount = await _db.ConsultationCharges.AsNoTracking()
+            .Where(c => c.DentalPracticeId == practiceId && c.ConsultationId == consultation.Id)
+            .CountAsync(ct);
+        // A genuine no-charge encounter is possible (e.g. an assessment or review),
+        // but an accidental zero-value bill must not silently proceed to reception.
+        // Require an explicit no-charge clinical statement; a checkbox alone is insufficient.
+        if (chargeCount == 0 &&
+            !(consultation.TreatmentPerformed?.Contains("no charge", StringComparison.OrdinalIgnoreCase) == true ||
+              consultation.TreatmentPerformed?.Contains("no billable", StringComparison.OrdinalIgnoreCase) == true ||
+              consultation.TreatmentPerformed?.Contains("no treatment performed", StringComparison.OrdinalIgnoreCase) == true))
+            return Conflict(new { message = "No priced treatment charge was recorded. Add the approved procedure or document 'No charge' with the clinical reason in Treatment performed before finalizing a genuine R0 encounter." });
 
         var changedAt = DateTime.UtcNow;
         var changed = await _db.Appointments
