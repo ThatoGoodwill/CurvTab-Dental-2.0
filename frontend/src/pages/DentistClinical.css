@@ -558,3 +558,12 @@
   .ct-consultation-floating-content > .clinical-editor { max-height: calc(100dvh - 16px); }
   .ct-consultation-floating-content .clinical-actions { bottom: -10px; }
 }
+
+
+/* Lock the patient dialog's competing scroll when its foreground clinical record opens. */
+.app-shell:has(.ct-consultation-floating-layer) .ct-pv5-dialog {
+  overflow: hidden !important;
+}
+.app-shell:has(.ct-consultation-floating-layer) .ct-pv5-overlay {
+  overscroll-behavior: contain;
+}
