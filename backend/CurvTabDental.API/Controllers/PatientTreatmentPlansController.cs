@@ -144,6 +144,31 @@ public sealed class PatientTreatmentPlansController : ControllerBase
             p.Id == procedureId && p.TreatmentPlanId == planId && p.DentalPracticeId == practiceId, ct);
         if (procedure is null) return NotFound();
         if (procedure.Status == "Completed") return NoContent();
+        if (procedure.Status == "Cancelled" || procedure.Status == "Declined")
+            return Conflict(new { message = "A cancelled or declined procedure cannot be completed." });
+        if (procedure.RequiresLab)
+        {
+            // The dentist cannot mark a lab-dependent restoration as performed before
+            // the prescribed tooth/item has returned, passed QA and been clinically fitted.
+            var labReady = await (
+                from order in _db.Set<LaboratoryOrder>().AsNoTracking()
+                join item in _db.Set<LaboratoryItem>().AsNoTracking()
+                    on order.Id equals item.LaboratoryOrderId
+                where order.DentalPracticeId == practiceId &&
+                    order.PatientId == patientId &&
+                    order.TreatmentPlanId == planId &&
+                    item.DentalPracticeId == practiceId &&
+                    item.ToothCode == procedure.ToothCode &&
+                    item.Procedure == procedure.Description &&
+                    item.ManufacturingStatus == "Complete" &&
+                    item.QaStatus == "Passed" &&
+                    item.CustodyStatus == "AtPractice" &&
+                    item.ClinicalStatus == "Completed"
+                select item.Id
+            ).AnyAsync(ct);
+            if (!labReady)
+                return Conflict(new { message = "This procedure requires a dentist laboratory prescription, completed laboratory work, practice QA and recorded clinical fitment before it can be marked completed. Open Laboratory and follow the linked tooth/item workflow." });
+        }
         procedure.Status = "Completed";
         procedure.CompletedAtUtc = DateTime.UtcNow;
         var all = await _db.PatientTreatmentProcedures
