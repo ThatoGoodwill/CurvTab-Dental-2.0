@@ -484,6 +484,7 @@ export default function LaboratoryModule({ initialPatientId, requestId }: {
         <Field label="Evidence file" required><input type="file" accept="image/jpeg,image/png,application/pdf" required onChange={e=>setUploadFile(e.target.files?.[0] ?? null)}/></Field>
         <button className="lab-primary" disabled={busy || !uploadFile}>Save evidence</button></form> :
       <form className="lab-modal-body" onSubmit={submitModal}>
+        {error && <div role="alert" className="lab-alert lab-error"><AlertTriangle size={16}/>{error}</div>}
         {modal==='partner' && <><Field label="Laboratory name" required><input required maxLength={160} value={form.name||''} onChange={e=>set('name',e.target.value)}/></Field><Field label="Contact person"><input maxLength={120} value={form.contact||''} onChange={e=>set('contact',e.target.value)}/></Field><Field label="Phone"><input maxLength={50} value={form.phone||''} onChange={e=>set('phone',e.target.value)}/></Field></>}
         {modal==='assign' && <><p>Technician accounts are only allowed access to their assigned laboratory orders. Provision accounts under Staff Management first.</p>
           <Field label="Laboratory" required><select required value={form.partnerId||''} onChange={e=>set('partnerId',e.target.value)}><option value="">Select lab</option>{data.partners.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></Field>
