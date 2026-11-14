@@ -137,6 +137,19 @@ export default function LaboratoryModule({ initialPatientId, requestId }: {
     }, 300)
     return () => clearTimeout(t)
   }, [modal, form.patientQuery, isLab])
+  // Make sure a preselected patient remains in the select even when search
+  // results are paginated, stale, or no longer match the typed search term.
+  useEffect(() => {
+    if (modal !== 'order' || !form.patientId || patients.some(patient => patient.id === form.patientId)) return
+    let active = true
+    apiRequest<PatientRow>(`/patients/${encodeURIComponent(form.patientId)}`)
+      .then(patient => {
+        if (active) setPatients(previous => previous.some(row => row.id === patient.id) ? previous : [patient, ...previous])
+      })
+      .catch(() => {})
+    return () => { active = false }
+  }, [modal, form.patientId, patients])
+
   useEffect(() => {
     if (isLab) return
     apiRequest<PatientList>('/patients?pageSize=100').then(r => setPatients(r.items)).catch(() => {})
