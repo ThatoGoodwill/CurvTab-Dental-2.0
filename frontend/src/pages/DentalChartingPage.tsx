@@ -292,7 +292,7 @@ export default function DentalChartingPage({
       await apiRequest(`/dentist/patients/${encodeURIComponent(patientId)}/chart`, 'POST', {
         toothCode, surface, finding, notes: notes.trim() || null, consultationId: null,
       })
-      setSuccess(`Observation for tooth ${toothCode} saved to the clinical chart. Continue to Treatment Plan when ready.`)
+      setSuccess(`Tooth ${toothCode} observation saved. Next: open Treatment Plan to add the actual procedure.`)
       setNotes('')
       setToothChosen(false)
       setLoading(true)
@@ -329,7 +329,10 @@ export default function DentalChartingPage({
       </div>
 
       {error && <div className="specialty-alert specialty-error" role="alert">{error}</div>}
-      {success && <div className="specialty-alert specialty-success" role="status">{success}</div>}
+      {success && <div className="specialty-alert specialty-success ct-chart-next-step" role="status">
+        <strong>{success}</strong>
+        <button type="button" className="primary-button" onClick={() => { setClinicalTab('Treatment Plan'); setSuccess('') }}>Continue to Treatment Plan →</button>
+      </div>}
 
       
       {/* CT_CHARTING_PATIENT_NAV_V1 */}
